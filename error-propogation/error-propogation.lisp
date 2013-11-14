@@ -10,15 +10,8 @@
 
 ;;; Reader macro: #e(value error) yields an err-num with value and error
 (defun err-num-transformer-reader-macro (stream subchar arg)
-  (flet ((if-else-zero (x)
-	   (if x
-	       x
-	       0)))
-    (let* ((expr (read stream t))
-	   (val (first expr))
-	   (err (second expr)))
-      `(make-err-num ,(if-else-zero val)
-		     ,(if-else-zero err)))))
+  (let* ((expr (read stream t)))
+    `(make-err-num ,@expr)))
 
 (set-dispatch-macro-character
  #\# #\e #'err-num-transformer-reader-macro)
@@ -39,9 +32,17 @@
       e
     (format stream "~a +- ~a" val err)))
 
-(defun make-err-num (value error)
-  "Constructs a numerical value along with its error"
-  (make-instance 'err-num :value value :error error))
+(defun make-err-num (&rest val-errs)
+  "Constructs a numerical value along with errors.  Note that the
+structure allows for errors in errors to arbitrary depth."
+  (when val-errs
+    (let ((val (first val-errs))
+	  (errs (rest val-errs)))
+      (if errs
+	  (make-instance 'err-num
+			 :value val
+			 :error (apply #'make-err-num errs))
+	  val))))
 
 (defun err-num-+ (&rest err-nums)
   (make-err-num (reduce #'+ (mapcar #'err-num-value err-nums))
@@ -162,12 +163,17 @@
 	 (error1 (err-num-error x))
 	 (error2 (err-num-error y))
 	 (result-value (expt value1 value2))
-	 (result-error1 (* error1
-			   value2
-			   (expt value1 (- value2 1))))
-	 (result-error2 (* error2
-			   result-value
-			   (log value1))))
+	 (result-error1
+	  (* error1
+	     value2
+	     (expt value1 (- value2 1))))
+	 (result-error2
+	  ;; had to handle limits more carefully with this
+	  (if (zerop value1)
+	      0
+	      (* error2
+		 result-value
+		 (log value1)))))
     (make-err-num result-value
 		  (sum-in-quadrature
 		   (list result-error1 result-error2)))))
