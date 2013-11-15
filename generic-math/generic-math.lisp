@@ -51,7 +51,7 @@
   (:documentation "Binary addition function"))
 
 (defun - (&rest xs)
-  (if (= (length xs) 1)
+  (if (singletonp xs)
       (unary-sub (first xs))
       (reduce #'sub xs)))
 
@@ -67,12 +67,12 @@
   (:documentation "Binary multiplication function"))
 
 (defun / (&rest xs)
-  (if (= 1 (length xs))
+  (if (singletonp xs)
       (unary-div (first xs))
       (reduce #'div xs)))
 
 (defun protected-/ (&rest xs)
-  (if (= 1 (length xs))
+  (if (singletonp xs)
       (protected-unary-div (first xs))
       (reduce #'protected-div xs)))
 

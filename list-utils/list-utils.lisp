@@ -13,6 +13,12 @@
 			   (cons s result)))))
     (nreverse (range-helper start end step ()))))
 
+;; Learned this from On Lisp by Paul Graham, changed the name:
+(defun singletonp (list)
+  "Checks to see if list is a list with exactly one element."
+  (and (consp list)
+       (null (rest list))))
+
 ;; Sorry: I learned Haskell before Common Lisp, so I like
 ;; zipping/unzipping lists
 
@@ -44,7 +50,7 @@
 ;; Can't go without the Cartesian Product
 (defun cartesian-product (&rest xs)
   (if xs
-      (if (= (length xs) 1)
+      (if (singletonp xs)
 	  (mapcar #'list (car xs))
 	  (reduce
 	   #'append

@@ -4,6 +4,7 @@
   (:use :cl
 	:functional-utils)
   (:export :range
+	   :singletonp
 	   :zip
 	   :unzip
 	   :transpose

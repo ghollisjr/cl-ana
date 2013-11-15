@@ -2,7 +2,8 @@
 
 (defpackage #:generic-math
   (:nicknames :gmath)
-  (:use :cl)
+  (:use :cl
+	:list-utils)
   (:shadow :+
 	   :-
 	   :*

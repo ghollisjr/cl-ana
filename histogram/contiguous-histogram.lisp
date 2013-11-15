@@ -286,7 +286,7 @@ nil if the point is not inside the histogram domain."
 (defun make-contiguous-hist-contents (size-list initial-value)
   (if size-list
       (let ((size (first size-list)))
-	(if (= 1 (length size-list))
+	(if (singletonp size-list)
 	    (make-array (first size-list) :initial-element initial-value)
 	    (let* ((result (make-array size)))
 	      (loop for i from 0 below size
