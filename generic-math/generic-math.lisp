@@ -25,10 +25,13 @@
 (defun use-gmath (package)
   "shadowing-imports all the exported symbols from gmath into the
   current package"
-  (let ((gmath-package (find-package :generic-math)))
+  (let ((gmath-package (find-package :generic-math))
+	(dest-package (find-package package)))
     (do-external-symbols (s gmath-package)
-      (shadowing-import (find-symbol (string s) gmath-package)
-			(find-package package)))))
+      (let ((gmath-symbol (find-symbol (string s) gmath-package)))
+	(unintern gmath-symbol dest-package)
+	(shadowing-import gmath-symbol
+			  dest-package)))))
 
 ;; for all those cases where you want a commutative operator
 (defmacro defmethod-commutative (method-name (left-arg right-arg) &body body)
