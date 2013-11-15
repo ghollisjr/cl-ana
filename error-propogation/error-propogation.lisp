@@ -13,9 +13,8 @@
   (let* ((expr (read stream t)))
     `(make-err-num ,@expr)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (set-dispatch-macro-character
-   #\# #\e #'err-num-transformer-reader-macro))
+(set-dispatch-macro-character
+ #\# #\e #'err-num-transformer-reader-macro)
 
 (defclass err-num ()
   ((val
