@@ -4,7 +4,7 @@
 ;;;; include ntuple tables as implemented via GSL.  The ntuples are
 ;;;; not aware of the number of rows they contain, so a while loop
 ;;;; would be more appropriate as the general table looping facility,
-;;;; which means that dotable needs to be changed to facilitate this
+;;;; which means that do-table needs to be changed to facilitate this
 ;;;; along with a new generic function being defined on the table
 ;;;; type: table-end-p.  This function will return nil if there is
 ;;;; more data to be read (more rows) and t if the row previously read
@@ -34,7 +34,14 @@
     :initform ()
     :accessor table-column-names
     :documentation "List of column names.  Make sure names do not
-    clash when lispified.")))
+    clash when lispified.")
+   (access-mode
+    :initarg :access-mode
+    :initform nil
+    :accessor table-access-mode
+    :documentation ":write for a writable table, :read for a readable
+    table, and :both for a table which has no restriction on being
+    written to or read from only.")))
 
 (defun table-column-symbols (table)
   (let* ((column-names (table-column-names table))
@@ -91,14 +98,19 @@
 	      (list tree)))))
 
 (defun unmark-symbol (s mark)
-  "returns unmarked version of symbol"
-  (intern (subseq (string s) (length (string mark)))))
+  "returns unmarked version of symbol if non-empty string results from
+removing the mark, nil otherwise."
+  (let ((unmarked-string (subseq (string s)
+				 (length (string mark)))))
+    (if (not (equal unmarked-string ""))
+	(intern unmarked-string)
+	nil)))
 
-;; I'm using the marked symbol approach in the body of dotable, so to
+;; I'm using the marked symbol approach in the body of do-table, so to
 ;; reference a column in the table, just prefix the lispified column
 ;; name with a slash.
 
-(defmacro dotable ((rowvar table &optional (mark "/")) &body body)
+(defmacro do-table ((rowvar table &optional (mark "/")) &body body)
   "Macro for iterating over a table.  The mark is to be prefixed in
 front of each of the column symbols; these marked symbols will be
 bound to the values they have in the table during the loop.  You can

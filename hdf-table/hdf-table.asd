@@ -10,6 +10,7 @@
 	       #:hdf-file
 	       #:table
 	       #:rread-table
+	       #:typed-table
 	       #:typespec
 	       #:hdf-typespec
 	       #:binary-tree

@@ -10,6 +10,8 @@
 ;;; I'll have to change the way I implement hdf-table to allow for a
 ;;; chunk buffer which stores multiple rows; shouldn't be too hard.
 
+(require 'hdf-table)
+
 (in-package :hdf-table)
 
 (defvar *table*)
@@ -18,11 +20,11 @@
       (make-instance 'hdf-table :column-names (list "x" "y" "z") :column-specs (list :int :float (list :compound (cons "weight" :double) (cons "direction vector" (list :array :double 1 (list 20)))))))
 
 ;; (defun hdf-table-test ()
-;;   (typespec-make-hdf-type (table-make-typespec *table*)))
+;;   (typespec->hdf-type (typed-table->typespec *table*)))
 
 (defun hdf-type-test ()
-  (hdf-type-make-typespec
-   (typespec-make-hdf-type
+  (hdf-type->typespec
+   (typespec->hdf-type
     '(:compound
       ("x" . :double)
       ("y" . :int)
@@ -31,8 +33,8 @@
 	       ("t" . :int)))))))
 
 (defun hdf-type-test2 ()
-  (hdf-type-make-typespec
-   (typespec-make-hdf-type
+  (hdf-type->typespec
+   (typespec->hdf-type
     '(:compound
       ("x" . :double)
       ("y" . :int)
@@ -60,11 +62,11 @@
     (setf *hdf-file* file)
     (let ((result 0)
 	  (last-row-index 0))
-      (setf *table-typespec* (table-make-typespec *table*))
+      (setf *table-typespec* (typed-table->typespec *table*))
       (setf *hdf-size* (h5tget-size (hdf-table-row-type *table*)))
-      (setf *hdf-typespec* (hdf-type-make-typespec (hdf-table-row-type *table*)))
+      (setf *hdf-typespec* (hdf-type->typespec (hdf-table-row-type *table*)))
       (setf *cstruct-size* (foreign-type-size (hdf-table-row-cstruct *table*)))
-      (dotable (row-index *table*)
+      (do-table (row-index *table*)
 	(incf result /gpart)
 	(setf last-row-index row-index))
       (format t "last-row-index: ~a~%" last-row-index)
@@ -84,7 +86,7 @@
 
 (defun hdf-read-test ()
   (setf *table* (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test"))
-  (dotable (row-index *table*) (format t "x: ~a, y: ~a~%" /x /y)))
+  (do-table (row-index *table*) (format t "x: ~a, y: ~a~%" /x /y)))
 
 (defun hdf-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
@@ -95,7 +97,7 @@
 					     (list :int :float))))
 	  (input-table
 	   (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
-      (dotable (row-index input-table)
+      (do-table (row-index input-table)
 	(when (<= 25 /y 30)
 	  (table-set-field output-table 'x /x)
 	  (table-set-field output-table 'y /y)

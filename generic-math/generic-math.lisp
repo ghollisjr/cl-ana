@@ -33,6 +33,16 @@
 	(shadowing-import gmath-symbol
 			  dest-package)))))
 
+;; To allow use of incf (since we're touching +)
+(defmacro incf (place &optional (delta 1))
+  `(setf ,place
+	 (add ,place ,delta)))
+
+;; To allow use of decf (since we're touching -)
+(defmacro decf (place &optional (delta 1))
+  `(setf ,place
+	 (sub ,place ,delta)))
+
 ;; for all those cases where you want a commutative operator
 (defmacro defmethod-commutative (method-name (left-arg right-arg) &body body)
   `(progn

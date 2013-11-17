@@ -6,4 +6,7 @@
 	:string-utils
 	:memoization
 	:cffi)
-  (:export :typespec->cstruct))
+  (:export :typespec->cffi-type
+	   :typespec-compound-p
+	   :typespec-array-p
+	   :typespec-flatten-arrays))

@@ -4,7 +4,9 @@
   (:nicknames :gmath)
   (:use :cl
 	:list-utils)
-  (:shadow :+
+  (:shadow :incf
+	   :decf
+	   :+
 	   :-
 	   :*
 	   :/

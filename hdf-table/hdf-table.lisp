@@ -23,13 +23,8 @@
 ;;; something other than the entire file.  I've already got the buffer
 ;;; object, so it shoudn't be too hard.
 
-(defclass hdf-table (rread-table)
-  ((column-specs
-    :initarg :column-specs
-    :initform ()
-    :accessor hdf-table-column-specs
-    :documentation "list of typespecs, one per column")
-   (row-buffer-size
+(defclass hdf-table (rread-table typed-table)
+  ((row-buffer-size
     :initarg :buffer-size
     :initform nil
     :accessor hdf-table-buffer-size
@@ -40,18 +35,15 @@
     :accessor hdf-table-chunk-index
     :documentation "index to the in-memory chunk")
    (row-buffer
+    :initarg :row-buffer
     :initform nil
     :accessor hdf-table-row-buffer
     :documentation "Object for storing a row to be read from/written
     to hdf table.  It's stored as part of the table for efficiency
     purposes and should not be handled directly by the user; use the
     awesome higher level tools for that.")
-   (read-write-p
-    :initform nil
-    :accessor hdf-table-read-write-p
-    :documentation ":write for a writable hdf-table, :read for a
-    readable hdf-table")
    (row-buffer-index
+    :initarg :row-buffer-index
     :initform nil
     :accessor hdf-table-row-buffer-index
     :documentation "Index to the row in the buffer which is currently
@@ -60,15 +52,18 @@
    ;; creation, as they are created in a standard way based on the
    ;; other slots; they're slots for efficiency.
    (row-cstruct
+    :initarg :row-cstruct
     :initform nil
     :accessor hdf-table-row-cstruct
     :documentation "CFFI cstruct type designator for the row object")
    (hdf-dataset
+    :initarg :hdf-dataset
     :initform nil
     :accessor hdf-table-dataset
     :documentation "hdf dataset which the table is reading from/writing
     to.")
    (hdf-row-type
+    :initarg :hdf-row-type
     :initform nil
     :accessor hdf-table-row-type
     :documentation "hdf type for the row data object")))
@@ -86,30 +81,49 @@
     (with-foreign-string (cdataset-name dataset-name)
       (let* ((dataset (h5dopen2 hdf-file cdataset-name +H5P-DEFAULT+))
 	     (typespec (dataset-read-typespec dataset))
-	     (table (typespec->table typespec))
-	     (cstruct (typespec->cstruct typespec))
-	     (row-hdf-type (h5dget-type dataset)))
-	(setf (hdf-table-dataset table) dataset)
-	(setf (hdf-table-row-type table) row-hdf-type)
-	(setf (hdf-table-row-cstruct table) cstruct)
-	(when (null buffer-size)
-	  (let* ((create-plist (h5dget-create-plist dataset))
-		 (chunksize
-		  (with-foreign-object (chunkdims 'hsize-t 1)
-		    (h5pget-chunk create-plist
-				  1
-				  chunkdims)
-		    (mem-aref chunkdims 'hsize-t 0))))
-	    (setf buffer-size chunksize)))
-	(let ((row-buffer
-	       (foreign-alloc cstruct
-			      :count
-			      buffer-size)))
-	  (setf (hdf-table-row-buffer table) row-buffer))
-	(setf (hdf-table-buffer-size table) buffer-size)
-	(setf (hdf-table-read-write-p table) :read)
-	(setf (rread-table-nrows table) (get-dataset-length dataset))
-	table))))
+	     (cstruct (typespec->cffi-type typespec))
+	     (hdf-row-type (h5dget-type dataset))
+	     (buffer-size
+	      (if (null buffer-size)
+		  ;; get buffer-size from the dataset
+		  ;; chunk-size:
+		  (let* ((create-plist (h5dget-create-plist dataset)))
+		    (with-foreign-object (chunkdims 'hsize-t 1)
+		      (h5pget-chunk create-plist
+				    1
+				    chunkdims)
+		      (mem-aref chunkdims 'hsize-t 0)))
+		  buffer-size))
+	     (row-buffer
+	      (foreign-alloc cstruct
+			     :count
+			     buffer-size)))
+	;; (setf (hdf-table-row-buffer table) row-buffer)
+	;; (setf (hdf-table-dataset table) dataset)
+	;; (setf (hdf-table-row-type table) row-hdf-type)
+	;; (setf (hdf-table-row-cstruct table) cstruct)
+	;; (when (null buffer-size)
+	;;   (let* ((create-plist (h5dget-create-plist dataset))
+	;; 	 (chunksize
+	;; 	  (with-foreign-object (chunkdims 'hsize-t 1)
+	;; 	    (h5pget-chunk create-plist
+	;; 			  1
+	;; 			  chunkdims)
+	;; 	    (mem-aref chunkdims 'hsize-t 0))))
+	;;     (setf buffer-size chunksize)))
+	;; (setf (hdf-table-buffer-size table) buffer-size)
+	;; (setf (table-access-mode table) :read)
+	;; (setf (rread-table-nrows table) (get-dataset-length dataset))
+	(make-instance 'hdf-table
+		       :column-names (typespec->column-names typespec)
+		       :column-specs (typespec->column-specs typespec)
+		       :row-buffer row-buffer
+		       :hdf-dataset dataset
+		       :hdf-row-type hdf-row-type
+		       :row-cstruct cstruct
+		       :buffer-size buffer-size
+		       :access-mode :read
+		       :nrows (get-dataset-length dataset))))))
 
 (defun make-hdf-table (hdf-file dataset-path names-specs &key (buffer-size 1000))
   "Creates a hdf-table for writing in hdf-file with dataset-path as
@@ -119,8 +133,7 @@
   used as both the chunksize for the hdf dataset and as the size of
   the buffer for writing into the file."
   (let* ((typespec (cons :compound names-specs))
-	 (table (typespec->table typespec))
-	 (cstruct (typespec->cstruct typespec))
+	 (cstruct (typespec->cffi-type typespec))
 	 (row-buffer (foreign-alloc cstruct
 				    :count
 				    buffer-size))
@@ -144,15 +157,15 @@
 			    hdf-type
 			    dataspace
 			    cparms))))))
-    (setf (hdf-table-row-cstruct table) cstruct)
-    (setf (hdf-table-row-buffer table) row-buffer)
-    (setf (hdf-table-buffer-size table) buffer-size)
-    (setf (hdf-table-chunk-index table) 0)
-    (setf (hdf-table-row-buffer-index table) 0)
-    (setf (hdf-table-row-type table) hdf-type)
-    (setf (hdf-table-dataset table) dataset)
-    (setf (hdf-table-read-write-p table) :write)
-    table))
+    (make-instance 'hdf-table
+		   :row-cstruct cstruct
+		   :row-buffer row-buffer
+		   :buffer-size buffer-size
+		   :chunk-index 0
+		   :row-buffer-index 0
+		   :hdf-row-type hdf-type
+		   :hdf-dataset dataset
+		   :access-mode :write)))
 
 (defmethod table-close ((table hdf-table))
   "Cleanup function only to be called on an hdf-table for writing.
@@ -165,9 +178,9 @@ the dataset."
 		   (row-buffer hdf-table-row-buffer)
 		   (buffer-size hdf-table-buffer-size)
 		   (cstruct hdf-table-row-cstruct)
-		   (read-write-p hdf-table-read-write-p))
+		   (access-mode table-access-mode))
       table
-    (when (equal read-write-p :write)
+    (when (equal access-mode :write)
       (when (not (zerop row-buffer-index))
 	(let ((dataspace (h5dget-space dataset))
 	      memspace)
@@ -254,27 +267,10 @@ the dataset."
 (defun table->cstruct (table)
   "Function which, given an hdf-table, defines a cffi cstruct for use
   in reading/writing from the hdf file."
-  (typespec->cstruct (table->typespec table)))
+  (typespec->cffi-type (typed-table->typespec table)))
 
 (defun table->hdf-type (table)
-  (typespec->hdf-type (table->typespec table)))
-
-(defun table->typespec (table)
-  "Creates a typespec from the table"
-  (append (list :compound)
-	  (zip (table-column-names table)
-		   (hdf-table-column-specs table))))
-
-(defun typespec->table (typespec)
-  "Creates a table from the typespec with name"
-  (if (not (equal :compound (first typespec)))
-      (error "Cannot construct table from non-compound type.")
-      (let* ((namespecs (rest typespec))
-	     (names (mapcar #'car namespecs))
-	     (specs (mapcar #'cdr namespecs)))
-	(make-instance 'hdf-table
-		       :column-names names
-		       :column-specs specs))))
+  (typespec->hdf-type (typed-table->typespec table)))
 
 (defun dataset-read-typespec (dataset)
   "Reads the typespec from the dataset"

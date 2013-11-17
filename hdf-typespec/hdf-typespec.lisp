@@ -24,7 +24,7 @@
 		(hdf-types (mapcar #'typespec->hdf-type specs))
 		(slot-symbols (mapcar (compose #'intern #'lispify)
 				      names))
-		(cstruct (typespec->cstruct typespec))
+		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar #'(lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
 		(compound-tid (h5tcreate +H5T-COMPOUND+ (foreign-type-size cstruct))))

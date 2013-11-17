@@ -9,13 +9,14 @@
 	#:alexandria)
   (:export :table
 	   :table-column-names
+	   :table-access-mode
 	   :table-column-symbols
 	   :table-load-next-row
 	   :table-get-field
 	   :table-set-field
 	   :table-commit-row
 	   :table-close
-	   :dotable
+	   :do-table
 	   ;; table-chain:
 	   :open-table-chain
 	   :reset-table-chain
