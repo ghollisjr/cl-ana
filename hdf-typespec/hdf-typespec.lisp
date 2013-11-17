@@ -3,13 +3,13 @@
 (in-package :hdf-typespec)
 
 ;; defines the structure as an hdf type if necessary from the typespec.
-(defun-memoized typespec-make-hdf-type (typespec)
+(defun-memoized typespec->hdf-type (typespec)
   (if (listp typespec)
       ;; handle compound and array types
       (case (first typespec)
 	;; array typespec: (:array type rank dim-list)
 	(:array
-	 (let ((type (typespec-make-hdf-type (second typespec)))
+	 (let ((type (typespec->hdf-type (second typespec)))
 	       (rank (third typespec))
 	       (dim-list (fourth typespec)))
 	   (with-foreign-object (dims 'hsize-t rank)
@@ -21,10 +21,10 @@
 	 (let* ((names-specs (rest typespec))
 		(names (mapcar #'car names-specs))
 		(specs (mapcar #'cdr names-specs))
-		(hdf-types (mapcar #'typespec-make-hdf-type specs))
+		(hdf-types (mapcar #'typespec->hdf-type specs))
 		(slot-symbols (mapcar (compose #'intern #'lispify)
 				      names))
-		(cstruct (typespec-make-cstruct typespec))
+		(cstruct (typespec->cstruct typespec))
 		(offsets (mapcar #'(lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
 		(compound-tid (h5tcreate +H5T-COMPOUND+ (foreign-type-size cstruct))))
@@ -38,7 +38,7 @@
       (hdf-native-type typespec)))
 
 ;; Construct typespec from hdf type:
-(defun-memoized hdf-type-make-typespec (hdf-type)
+(defun-memoized hdf-type->typespec (hdf-type)
   (let ((hdf-class (h5tget-class hdf-type)))
     (case hdf-class
       (:H5T-INTEGER
@@ -65,7 +65,7 @@
 		    collecting (h5tget-member-name hdf-type i)))
 	      (member-typespecs
 	       (loop for i from 0 to (1- nmembers)
-		    collecting (hdf-type-make-typespec
+		    collecting (hdf-type->typespec
 				(h5tget-member-type hdf-type i))))
 	      (names-specs (zip names member-typespecs)))
 	 (cons :compound names-specs))))))

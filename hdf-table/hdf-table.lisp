@@ -86,8 +86,8 @@
     (with-foreign-string (cdataset-name dataset-name)
       (let* ((dataset (h5dopen2 hdf-file cdataset-name +H5P-DEFAULT+))
 	     (typespec (dataset-read-typespec dataset))
-	     (table (typespec-make-table typespec))
-	     (cstruct (typespec-make-cstruct typespec))
+	     (table (typespec->table typespec))
+	     (cstruct (typespec->cstruct typespec))
 	     (row-hdf-type (h5dget-type dataset)))
 	(setf (hdf-table-dataset table) dataset)
 	(setf (hdf-table-row-type table) row-hdf-type)
@@ -119,12 +119,12 @@
   used as both the chunksize for the hdf dataset and as the size of
   the buffer for writing into the file."
   (let* ((typespec (cons :compound names-specs))
-	 (table (typespec-make-table typespec))
-	 (cstruct (typespec-make-cstruct typespec))
+	 (table (typespec->table typespec))
+	 (cstruct (typespec->cstruct typespec))
 	 (row-buffer (foreign-alloc cstruct
 				    :count
 				    buffer-size))
-	 (hdf-type (typespec-make-hdf-type typespec))
+	 (hdf-type (typespec->hdf-type typespec))
 	 (dataset
 	  (progn
 	    (let (cparms dataspace)
@@ -251,21 +251,21 @@ the dataset."
       (incf chunk-index)
       (setf row-buffer-index 0))))
 
-(defun table-make-cstruct (table)
+(defun table->cstruct (table)
   "Function which, given an hdf-table, defines a cffi cstruct for use
   in reading/writing from the hdf file."
-  (typespec-make-cstruct (table-make-typespec table)))
+  (typespec->cstruct (table->typespec table)))
 
-(defun table-make-hdf-type (table)
-  (typespec-make-hdf-type (table-make-typespec table)))
+(defun table->hdf-type (table)
+  (typespec->hdf-type (table->typespec table)))
 
-(defun table-make-typespec (table)
+(defun table->typespec (table)
   "Creates a typespec from the table"
   (append (list :compound)
 	  (zip (table-column-names table)
 		   (hdf-table-column-specs table))))
 
-(defun typespec-make-table (typespec)
+(defun typespec->table (typespec)
   "Creates a table from the typespec with name"
   (if (not (equal :compound (first typespec)))
       (error "Cannot construct table from non-compound type.")
@@ -279,7 +279,7 @@ the dataset."
 (defun dataset-read-typespec (dataset)
   "Reads the typespec from the dataset"
   (let* ((type (h5dget-type dataset)))
-    (hdf-type-make-typespec type)))
+    (hdf-type->typespec type)))
 
 ;; use foreign-slot-value to get the value of a slot
 

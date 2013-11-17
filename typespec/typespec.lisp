@@ -25,7 +25,7 @@
 ;;; (:array :double 1 (20))
 
 ;; Creates cstruct types recursively as per the typespec
-(defun-memoized typespec-make-cstruct (typespec)
+(defun-memoized typespec->cstruct (typespec)
   (labels
       ((make-slot-spec (name-cstruct)
 	 (let* ((name (car name-cstruct))
@@ -45,14 +45,14 @@
 	  ;;(:array typespec) ; not much to do
 	  (:array
 	   (append (list (first typespec))
-		   (list (typespec-make-cstruct (second typespec)))
+		   (list (typespec->cstruct (second typespec)))
 		   (rest (rest typespec))))
 	  (:compound
 	   ;; here's where the fun happens
 	   (let* ((names-specs (rest typespec))
 		  (names (mapcar #'car names-specs))
 		  (specs (mapcar #'cdr names-specs))
-		  (member-cstructs (mapcar #'typespec-make-cstruct specs))
+		  (member-cstructs (mapcar #'typespec->cstruct specs))
 		  (names-cstructs (zip names member-cstructs))
 		  (slotspecs (mapcar #'make-slot-spec names-cstructs)))
 	     (eval

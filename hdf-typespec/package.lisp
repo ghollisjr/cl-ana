@@ -9,5 +9,5 @@
 	:hdf-cffi
 	:typespec
 	:alexandria)
-  (:export :typespec-make-hdf-type
-	   :hdf-type-make-typespec))
+  (:export :typespec->hdf-type
+	   :hdf-type->typespec))

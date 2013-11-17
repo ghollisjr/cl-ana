@@ -6,4 +6,4 @@
 	:string-utils
 	:memoization
 	:cffi)
-  (:export :typespec-make-cstruct))
+  (:export :typespec->cstruct))
