@@ -115,7 +115,20 @@ as a symbol, 2. A list containing a symbol as the first element and
 the column name as the second which will be bound to the symbol given
 as the first element of the list.
 
-The code body will be run for each row in the table."
+The code body will be run for each row in the table.
+
+As an example:
+
+(do-table (row-index *table*)
+    (\"x\"
+     \"y\"
+     (zed \"z\"))
+  (format t \"~a ~a ~a\" x y zed))
+
+would print the values of x, y, and z for each row of a table *table*.
+Notice that to rename a column variable you simply replace the string
+column name with a list providing the bound variable name as the first
+element in the list."
   (let* ((selected-column-names
 	  (mapcar #'(lambda (x)
 		      (if (listp x)

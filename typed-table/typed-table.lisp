@@ -35,8 +35,23 @@
 ;; Specified column version:
 (defmacro do-typed-table ((rowvar table) (&rest column-selections)
 			  &body body)
-  "Macro for providing table loop like dotable, but where column
-values are automatically converted into LISP types."
+
+  "Macro for iterating over a typed-table in the way that do-table
+does, except with data automatically converted from foreign types into
+LISP types.
+
+rowvar is a symbol which will be bound to the row number inside the
+loop body.
+
+table is the table which will be looped upon.
+
+column-selections are a list of 1. column names to access during the
+loop, by default the value will be bound to the lispified column name
+as a symbol, 2. A list containing a symbol as the first element and
+the column name as the second which will be bound to the symbol given
+as the first element of the list.
+
+The code body will be run for each row in the table."
   (with-gensyms (read-status column-type-map symbol-specs)
     (let* ((selected-column-names
 	    (mapcar #'(lambda (x)
