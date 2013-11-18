@@ -32,11 +32,80 @@
    (string symbol)
    (package-name :keyword)))
 
-(defmacro do-typed-table ((rowvar table &optional (mark "/"))
+;; Specified column version:
+(defmacro do-typed-table ((rowvar table) (&rest column-selections)
 			  &body body)
   "Macro for providing table loop like dotable, but where column
 values are automatically converted into LISP types."
-  (with-gensyms (read-status column-type-map symbol-specs keywordify)
+  (with-gensyms (read-status column-type-map symbol-specs)
+    (let* ((selected-column-names
+	    (mapcar #'(lambda (x)
+			(if (listp x)
+			    (second x)
+			    x))
+		    column-selections))
+	   (bound-column-symbols
+	    (mapcar #'(lambda (x)
+			(if (listp x)
+			    (first x)
+			    (intern (lispify x))))
+		    column-selections))
+	   (selected-column-symbols
+	    (mapcar (compose #'intern #'lispify)
+		    selected-column-names))
+	   (selected-symbol-bindings
+	    (loop
+	       for s in bound-column-symbols
+	       for c in selected-column-symbols
+	       collecting `(,s (table-get-field ,table ',c))))
+	   (quoted-selected-column-symbols
+	    (mapcar
+	     #'(lambda (x)
+		 `(quote ,x))
+	     selected-column-symbols))
+	   (quoted-bound-column-symbols
+	    (mapcar
+	     #'(lambda (x)
+		 `(quote ,x))
+	     bound-column-symbols))
+	   (conversion-bindings
+	    (loop
+	       for s in bound-column-symbols
+	       collecting `(,s
+			    (convert-from-foreign
+			     ,s
+			     (gethash ,(typed-table::keywordify s)
+				      ,column-type-map))))))
+      ;; I've thought about dynamically (with memoization)
+      ;; generating structures instead of using a hash table,
+      ;; we'll see if there is a performance hit first
+      `(let ((,column-type-map (make-hash-table :test 'equal))
+	     (,symbol-specs
+	      (zip (mapcar #'typed-table::keywordify (table-column-symbols ,table))
+		   (typed-table-column-specs ,table))))
+	   (loop
+	      for m in (list ,@quoted-bound-column-symbols)
+	      for u in (list ,@quoted-selected-column-symbols)
+	      do (setf (gethash (typed-table::keywordify m) ,column-type-map)
+		       (typespec-flatten-arrays
+			(typespec->cffi-type
+			 (cdr
+			  (assoc (typed-table::keywordify u) ,symbol-specs))))))
+	   (do ((,read-status
+		 (table-load-next-row ,table)
+		 (table-load-next-row ,table))
+		(,rowvar 0 (1+ ,rowvar)))
+	       ((not ,read-status))
+	     (let ,selected-symbol-bindings
+	       (let ,conversion-bindings
+		 ,@body)))))))
+
+;; Marked column version:
+(defmacro do-typed-table-marked ((rowvar table &optional (mark "/"))
+			  &body body)
+  "Macro for providing table loop like dotable, but where column
+values are automatically converted into LISP types."
+  (with-gensyms (read-status column-type-map symbol-specs)
     (let* ((marked-column-symbols
 	    (table::collect-marked-symbols body mark))
 	   (unmarked-column-symbols
@@ -71,7 +140,7 @@ values are automatically converted into LISP types."
       ;; we'll see if there is a performance hit first
       `(let ((,column-type-map (make-hash-table :test 'equal))
 	     (,symbol-specs
-	      (zip (mapcar #'keywordify (table-column-symbols ,table))
+	      (zip (mapcar #'typed-table::keywordify (table-column-symbols ,table))
 		   (typed-table-column-specs ,table))))
 	   (loop
 	      for m in (list ,@quoted-marked-column-symbols)
@@ -80,7 +149,7 @@ values are automatically converted into LISP types."
 		       (typespec-flatten-arrays
 			(typespec->cffi-type
 			 (cdr
-			  (assoc (keywordify u) ,symbol-specs))))))
+			  (assoc (typed-table::keywordify u) ,symbol-specs))))))
 	   (do ((,read-status
 		 (table-load-next-row ,table)
 		 (table-load-next-row ,table))

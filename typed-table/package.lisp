@@ -9,6 +9,7 @@
 	#:typespec
 	#:alexandria)
   (:export :do-typed-table
+	   :do-typed-table-marked
 	   :typed-table
 	   :typed-table-column-specs
 	   :typespec->column-names

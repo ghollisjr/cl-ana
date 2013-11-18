@@ -67,7 +67,8 @@
       (setf *hdf-typespec* (hdf-type->typespec (hdf-table-row-type *table*)))
       (setf *cstruct-size* (foreign-type-size (hdf-table-row-cstruct *table*)))
       (do-table (row-index *table*)
-	(incf result /gpart)
+	  ("gpart")
+	(incf result gpart)
 	(setf last-row-index row-index))
       (format t "last-row-index: ~a~%" last-row-index)
       result)))
@@ -86,7 +87,9 @@
 
 (defun hdf-read-test ()
   (setf *table* (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test"))
-  (do-table (row-index *table*) (format t "x: ~a, y: ~a~%" /x /y)))
+  (do-table (row-index *table*)
+      ("x" "y")
+    (format t "x: ~a, y: ~a~%" x y)))
 
 (defun hdf-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
@@ -97,10 +100,11 @@
 					     (list :int :float))))
 	  (input-table
 	   (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
-      (do-table (row-index input-table)
-	(when (<= 25 /y 30)
-	  (table-set-field output-table 'x /x)
-	  (table-set-field output-table 'y /y)
+      (do-typed-table (row-index input-table)
+	  ("x" "y")
+	(when (<= 25 y 30)
+	  (table-set-field output-table 'x x)
+	  (table-set-field output-table 'y y)
 	  (table-commit-row output-table)))
       (table-close output-table)
       (table-close input-table))))

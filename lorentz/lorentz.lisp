@@ -33,7 +33,12 @@
 	  (lisp-matrix::vector-orientation
 	   (lorentz-vector-val-vector l))))
 
-(defun make-lorentz-vector (time x y z &optional (type :column))
+(defun make-lorentz-vector (&optional
+			      (time 0d0)
+			      (x 0d0)
+			      (y 0d0)
+			      (z 0d0)
+			      (type :column))
   (let ((val-vector
 	 (make-double-float-vector (list time x y z)
 				   type)))

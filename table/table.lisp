@@ -1,20 +1,11 @@
 ;;;; table.lisp
 
-;;;; I have to make a few changes to the table type if I want to
-;;;; include ntuple tables as implemented via GSL.  The ntuples are
-;;;; not aware of the number of rows they contain, so a while loop
-;;;; would be more appropriate as the general table looping facility,
-;;;; which means that do-table needs to be changed to facilitate this
-;;;; along with a new generic function being defined on the table
-;;;; type: table-end-p.  This function will return nil if there is
-;;;; more data to be read (more rows) and t if the row previously read
-;;;; was the last one in the table.
-;;;;
-;;;; This also means I need to make changes to the table types already
-;;;; implemented assuming that a table could always be randomly
-;;;; accessed.  There should be a table subtype called
-;;;; random-access-table which provides the random-access functions
-;;;; already implemented by the table types.
+;;;; I've been thinking about the way I currently implement dotable,
+;;;; and I may in fact change my mind to let the user explicitly state
+;;;; which variables should be accessed inside the body of the loop.
+;;;; The present method is a bit ugly in that it doesn't take into
+;;;; account any lexical scoping issues which would shadow the
+;;;; bindings of column variables.
 
 ;;;; Some thoughts on the even higher-level interface: I could create
 ;;;; a heterogeneous table type which would contain a list of row
@@ -106,11 +97,57 @@ removing the mark, nil otherwise."
 	(intern unmarked-string)
 	nil)))
 
-;; I'm using the marked symbol approach in the body of do-table, so to
-;; reference a column in the table, just prefix the lispified column
-;; name with a slash.
+;; Specified column version: This version requires the user to specify
+;; which columns are to be loaded.  The advantage is that the user
+;; doesn't have to rely on markings attached to the symbols.
+(defmacro do-table ((rowvar table) (&rest column-selections)
+		    &body body)
+  "Macro for iterating over a table.
 
-(defmacro do-table ((rowvar table &optional (mark "/")) &body body)
+rowvar is a symbol which will be bound to the row number inside the
+loop body.
+
+table is the table which will be looped upon.
+
+column-selections are a list of 1. column names to access during the
+loop, by default the value will be bound to the lispified column name
+as a symbol, 2. A list containing a symbol as the first element and
+the column name as the second which will be bound to the symbol given
+as the first element of the list.
+
+The code body will be run for each row in the table."
+  (let* ((selected-column-names
+	  (mapcar #'(lambda (x)
+		      (if (listp x)
+			  (second x)
+			  x))
+		  column-selections))
+	 (bound-column-symbols
+	  (mapcar #'(lambda (x)
+		      (if (listp x)
+			  (first x)
+			  (intern (lispify x))))
+		  column-selections))
+	 (selected-column-symbols
+	  (mapcar (compose #'intern #'lispify)
+		  selected-column-names))
+	 (selected-symbol-bindings
+	  (loop
+	     for s in bound-column-symbols
+	     for c in selected-column-symbols
+	     collecting `(,s (table-get-field ,table ',c)))))
+    (with-gensyms (read-status)
+      `(do ((,read-status (table-load-next-row ,table) (table-load-next-row ,table))
+	    (,rowvar 0 (1+ ,rowvar)))
+	   ((not ,read-status))
+	 (let* ,selected-symbol-bindings
+	   ,@body)))))
+
+
+;; Marked symbol version: I'm using the marked symbol approach in the
+;; body of do-table, so to reference a column in the table, just
+;; prefix the lispified column name with a slash.
+(defmacro do-table-marked ((rowvar table &optional (mark "/")) &body body)
   "Macro for iterating over a table.  The mark is to be prefixed in
 front of each of the column symbols; these marked symbols will be
 bound to the values they have in the table during the loop.  You can
