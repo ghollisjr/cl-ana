@@ -18,54 +18,73 @@
 ;;; parentheses which will become the time, x, y, and z components
 ;;; respectively.
 
-(defclass lorentz-vector ()
+(defclass lorentz-vector (vector-like)
   ((val-vector
-    :accessor lorentz-val-vector
-    :initform (make-vector 4 :type :column)
-    :initarg :val-vector
-    :documentation "lorentz vector contents")))
+   :initarg :val-vector
+   :initform (make-double-float-vector (list 0 0 0 0))
+   :accessor lorentz-vector-val-vector)))
 
 (defmethod print-object ((l lorentz-vector) stream)
-  (with-accessors ((val-vector lorentz-val-vector))
-      l
-    (format stream "#L(")
-    (iter
-      (for vector-index from 0 below 3)
-      (format stream "~a " (vref val-vector vector-index)))
-    (format stream "~a)" (vref val-vector 3))))
+  (format stream "#L(")
+  (iter
+    (for vector-index from 0 below 3)
+    (format stream "~a " (vref l vector-index)))
+  (format stream "~a :~a)" (vref l 3)
+	  (lisp-matrix::vector-orientation
+	   (lorentz-vector-val-vector l))))
 
-(defun make-lorentz-vector (time x y z)
-  (make-instance 'lorentz-vector
-		 :val-vector (make-double-float-vector
-			      (list time x y z) :column)))
-    
+(defun make-lorentz-vector (time x y z &optional (type :column))
+  (let ((val-vector
+	 (make-double-float-vector (list time x y z)
+				   type)))
+    (make-instance 'lorentz-vector :val-vector val-vector)))
 
-(defmethod add ((v1 lorentz-vector) (v2 lorentz-vector))
+(defmethod transpose-matrix ((l lorentz-vector))
   (make-instance 'lorentz-vector
 		 :val-vector
-		 (v+ (lorentz-val-vector v1)
-		     (lorentz-val-vector v2))))
+		 (transpose-matrix
+		  (lorentz-vector-val-vector l))))
+
+(defmethod vref ((l lorentz-vector) index)
+  (vref (lorentz-vector-val-vector l) index))
+
+(defmethod add ((v1 lorentz-vector) (v2 lorentz-vector))
+  (v+ (lorentz-vector-val-vector v1)
+      (lorentz-vector-val-vector v2)))
 
 (defmethod sub ((v1 lorentz-vector) (v2 lorentz-vector))
   (make-instance 'lorentz-vector
 		 :val-vector
-		 (v- (lorentz-val-vector v1)
-		     (lorentz-val-vector v2))))
+		 (v- (lorentz-vector-val-vector v1)
+		     (lorentz-vector-val-vector v2))))
 
 (defmethod mult ((v1 lorentz-vector) (v2 lorentz-vector))
-  (minkowski-dot (lorentz-val-vector v1)
-		 (lorentz-val-vector v2)))
+  (minkowski-dot v1
+		 v2))
 
-(defmethod-commutative mult (x (v lorentz-vector))
+(defmethod-commutative mult (x (l lorentz-vector))
   (make-instance 'lorentz-vector
-		 :val-vector (scal (float x 0d0)
-				   (lorentz-val-vector v))))
+		 :val-vector
+		 (scal (float x 0d0)
+		       (lorentz-vector-val-vector l))))
 
-(defmethod div ((v lorentz-vector) x)
+(defmethod mult ((l lorentz-vector) (m matrix-like))
+  (let* ((val-vector (lorentz-vector-val-vector l))
+	 (result-val-vector (m* val-vector m)))
+    (make-instance 'lorentz-vector
+		   :val-vector result-val-vector)))
+
+(defmethod mult ((m matrix-like) (l lorentz-vector))
+  (let* ((val-vector (lorentz-vector-val-vector l))
+	 (result-val-vector (m* m val-vector)))
+    (make-instance 'lorentz-vector
+		   :val-vector result-val-vector)))
+
+(defmethod div ((l lorentz-vector) x)
   (make-instance 'lorentz-vector
 		 :val-vector
 		 (scal (unary-div (float x 0d0))
-		       (lorentz-val-vector v))))
+		       (lorentz-vector-val-vector l))))
 
 ;; Reader macro:
 (defun lorentz-vector-transformer-reader-macro (stream subchar arg)
@@ -75,37 +94,18 @@
 (set-dispatch-macro-character
  #\# #\l #'lorentz-vector-transformer-reader-macro)
 
-;;; internal use functions:
-
-(defun make-double-float-vector (list &optional (type :row))
-  "Constructs a vector of type from list, converting elements into
-double-floats"
-  (let* ((result-length (length list))
-	 (result (make-vector result-length :type type)))
-    (loop
-       for i from 0 below result-length
-       for element in list
-       do (setf (vref result i) (float element 0d0))
-       finally (return result))))
-
-(defun euclidean-norm (vector)
-  "Euclidean norm, from the Pythagorean theorem"
-  (sqrt (euclidean-norm2 vector)))
-
-(defun euclidean-norm2 (vector)
-  "Euclidean norm^2"
-  (dot vector vector))
-
 (defun minkowski-dot (left-vector right-vector)
-  "Computes the inner product using the Minkowski metric"
+  "Computes the inner product using the Minkowski metric; only
+requires the vref function to be defined and that the vectors each
+have exactly 4 elements each."
   (flet ((variance-flip-factor (i)
 	   (if (zerop i)
 	       1
 	       -1)))
      (with-accessors ((left-length lisp-matrix::vector-dimension))
-	 left-vector
+	 (lorentz-vector-val-vector left-vector)
        (with-accessors ((right-length lisp-matrix::vector-dimension))
-	   right-vector
+	   (lorentz-vector-val-vector right-vector)
 	 (loop
 	    for i from 0 below left-length
 	    for j from 0 below right-length
@@ -172,11 +172,11 @@ double-floats"
   (/ (sqrt (- 1
 	      beta2))))
 
-(defun lorentz-val-vector-spatial (vector)
+(defun lorentz-vector-spatial (vector)
   "Returns spatial part of the lorentz-vector"
   (with-accessors ((length lisp-matrix::vector-dimension)
 		   (orientation lisp-matrix::vector-orientation))
-      vector
+      (lorentz-vector-val-vector vector)
     (let ((spatial-part (make-vector (1- length) :type orientation)))
       (loop
 	 for i from 1 below length
@@ -184,13 +184,11 @@ double-floats"
 		  (vref vector i)))
       spatial-part)))
 
-(defun four-momentum-beta-vector (four-momentum-lorentz-vector)
+(defun four-momentum-beta-vector (four-momentum)
   "Returns the beta vector from the four-momentum.  Assumes that your
 units are chosen such that c is effectively 1 (e.g. GeV/c^2 for mass,
 GeV/c for momentum, etc.)"
-  (with-accessors ((four-momentum lorentz-val-vector))
-      four-momentum-lorentz-vector
-    (let ((momentum-vector (lorentz-val-vector-spatial four-momentum))
-	  (energy (vref four-momentum 0)))
-      (scal (/ energy)
-	    momentum-vector))))
+  (let ((momentum-vector (lorentz-vector-spatial four-momentum))
+	(energy (vref four-momentum 0)))
+    (scal (/ energy)
+	  momentum-vector)))

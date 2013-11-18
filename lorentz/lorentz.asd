@@ -8,6 +8,7 @@
   :license ""
   :depends-on (#:generic-math
 	       #:lisp-matrix
+	       #:lisp-matrix-utils
 	       #:xarray
 	       #:iterate)
   :components ((:file "package")
