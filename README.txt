@@ -206,8 +206,8 @@ In the process of creating the other functionality, I've had to create
 several small utilities & libraries.
 
 For example, there a number of x-utils libraries: list-utils,
-string-utils, functional-utils, and macro-utils.  These provide small
-functionality in the appropriate subdomains.
+string-utils, functional-utils, macro-utils, and lisp-matrix-utils.
+These provide small functionality in the appropriate subdomains.
 
 Of special note is the memoization library, which provides a new
 function definition operator defun-memoized which defines a memoized
