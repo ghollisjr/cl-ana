@@ -4,4 +4,5 @@
   (:use #:cl
 	#:alexandria)
   (:export :inrange
+	   :cond-setf
 	   :print-eval))

@@ -54,8 +54,10 @@
   (vref (lorentz-vector-val-vector l) index))
 
 (defmethod add ((v1 lorentz-vector) (v2 lorentz-vector))
-  (v+ (lorentz-vector-val-vector v1)
-      (lorentz-vector-val-vector v2)))
+  (make-instance 'lorentz-vector
+		 :val-vector
+		 (v+ (lorentz-vector-val-vector v1)
+		     (lorentz-vector-val-vector v2))))
 
 (defmethod sub ((v1 lorentz-vector) (v2 lorentz-vector))
   (make-instance 'lorentz-vector

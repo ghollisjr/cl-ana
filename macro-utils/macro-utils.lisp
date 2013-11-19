@@ -22,6 +22,30 @@
 	    (,op2 ,x (+ ,xhi ,prec))
 	    t)))
 
+(defmacro cond-setf (place value &optional (condition t))
+  "Only sets the place when the condition is met.
+
+condition may be one of three values: :place, :value, or :both.
+
+:place specifies that the place must evaluate to a non-nil value,
+
+:value specifies that the value must evaluate to a non-nil value, and
+
+:both specifies that both place and value must evaluate to non-nil
+values."
+  (let ((test
+	 (case condition
+	   (:place
+	    place)
+	   (:value
+	    value)
+	   (:both
+	    `(and ,place ,value))
+	   (:otherwise
+	    t))))
+    `(when ,test
+       (setf ,place ,value))))
+
 (defmacro print-eval (arg)
   (with-gensyms (varname)
     `(let ((,varname ,arg))

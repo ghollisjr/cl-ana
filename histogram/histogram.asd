@@ -5,6 +5,7 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:list-utils
+	       #:macro-utils
 	       #:iterate
 	       #:generic-math
 	       #:tensor

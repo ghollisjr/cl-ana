@@ -4,6 +4,7 @@
   (:use #:cl
 	#:tensor
 	#:list-utils
+	#:macro-utils
 	#:iter
 	#:alexandria
 	#:fitting)
