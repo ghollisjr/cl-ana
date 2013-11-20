@@ -15,4 +15,5 @@
 	   :compress
 	   :list-less-than
 	   :list-greater-than
-	   :aref-by-list))
+	   :aref-by-list
+	   :make-offsets))

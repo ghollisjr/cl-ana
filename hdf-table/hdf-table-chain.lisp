@@ -213,13 +213,3 @@
     (get-tree-index-worker binary-tree
 			   row-index
 			   nil)))
-
-;; utilities:
-
-(defun make-offsets (sizes)
-  (nreverse
-   (rest
-    (reduce #'(lambda (x y)
-		(cons (+ y (car x)) x))
-	    sizes
-	    :initial-value (list 0)))))

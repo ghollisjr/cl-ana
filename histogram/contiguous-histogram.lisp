@@ -148,26 +148,23 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
   "Unchecked, assumes you know what the allowed index values are."
   (with-accessors ((bin-values contiguous-hist-bin-values))
       hist
-    (reduce #'aref index-list :initial-value bin-values)))
+    (apply #'tensor-ref bin-values index-list)))
 
 (defmethod (setf hist-index-ref) (value (hist contiguous-histogram) index-list)
   "Unchecked, assumes you know what the allowed index values are."
   (with-accessors ((bin-values contiguous-hist-bin-values))
       hist
-    (let* ((last-array
-	    (reduce #'aref (butlast index-list) :initial-value bin-values))
-	   (last-index (first (last index-list))))
-      (setf (aref last-array last-index) value))))
+    (setf (apply #'tensor-ref bin-values index-list)
+	  value)))
 
 (defmethod hist-point-ref ((hist contiguous-histogram) data-list)
   "Checked access to the bin value via a point.  Returns nil if the
 point is not inside the histogram domain."
-  (with-accessors ((bin-specs contiguous-hist-bin-specs)
-		   (bin-values contiguous-hist-bin-values))
+  (with-accessors ((bin-specs contiguous-hist-bin-specs))
       hist
     (let ((bin-index (get-bin-index data-list bin-specs)))
       (when bin-index
-	(reduce #'aref bin-index :initial-value bin-values)))))
+	(hist-index-ref hist bin-index)))))
 
 (defmethod (setf hist-point-ref) (value (hist contiguous-histogram) data-list)
   "Checked setf to the bin value via a point.  Does nothing & returns
@@ -177,10 +174,8 @@ nil if the point is not inside the histogram domain."
       hist
     (let ((bin-index (get-bin-index data-list bin-specs)))
       (when bin-index
-	(let ((last-array
-	       (reduce #'aref (butlast bin-index) :initial-value bin-values))
-	      (last-index (first (last bin-index))))
-	  (setf (aref last-array last-index) value))))))
+	(setf (hist-index-ref hist bin-index)
+	      value)))))
 
 (defmethod hist-bin-values ((hist contiguous-histogram))
   (with-accessors ((bin-specs contiguous-hist-bin-specs)

@@ -189,3 +189,18 @@ ambiguity in the result."
 	  (list-equal (rest list1) (rest list2))
 	  nil)
       nil))
+
+(defun make-offsets (sizes)
+  "Takes a list of sizes and returns a list containing 0, (first
+sizes), (+ (first sizes) (second sizes)), ... summing the sizes as the
+list goes.
+
+This pattern has turned out to be recurrent, and the result can be
+interpreted as finding the starting index of the ith list in the
+concatenation of n lists."
+  (nreverse
+   (rest
+    (reduce #'(lambda (x y)
+		(cons (+ y (car x)) x))
+	    sizes
+	    :initial-value (list 0)))))

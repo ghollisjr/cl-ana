@@ -7,8 +7,7 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:generic-math
-	       #:lisp-matrix
-	       #:lisp-matrix-utils
+	       #:linear-algebra
 	       #:xarray
 	       #:iterate)
   :components ((:file "package")

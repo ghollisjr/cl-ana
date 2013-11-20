@@ -2,8 +2,7 @@
 
 (defpackage :lorentz
   (:use :cl
-	:lisp-matrix
-	:lisp-matrix-utils
+	:linear-algebra
 	:xarray
 	:iterate)
   (:export :lorentz-vector
@@ -11,7 +10,6 @@
 	   :make-double-float-vector
 	   :lorentz-boost
 	   :minkowski-norm
-	   :minkowski-norm2
-	   )) ; square of norm
+	   :minkowski-norm2)) ; minkowski-norm^2
 
 (gmath:use-gmath :lorentz)
