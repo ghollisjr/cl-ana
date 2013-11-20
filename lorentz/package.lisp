@@ -3,7 +3,7 @@
 (defpackage :lorentz
   (:use :cl
 	:linear-algebra
-	:xarray
+	:tensor
 	:iterate)
   (:export :lorentz-vector
 	   :make-lorentz-vector

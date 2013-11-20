@@ -234,6 +234,12 @@ the first index of B."
 (defmethod sub (x (y sequence))
   (tensor-map (curry #'sub x) y))
 
+(defmethod div ((x sequence) y)
+  (tensor-map (rcurry #'div y) x))
+
+(defmethod div (x (y sequence))
+  (tensor-map (curry #'div x) y))
+
 (defmethod protected-unary-div ((xs sequence) &key (protected-value 0))
   (tensor-map #'(lambda (x) (protected-unary-div x :protected-value protected-value))
 	      xs))

@@ -47,3 +47,9 @@
 
 (defun euclidean-dot (x y &optional (type 'vector))
   (tensor-contract type (list x 0) (list y 0)))
+
+(defun euclidean-norm2 (x)
+  (euclidean-dot x x))
+
+(defun euclidean-norm (x)
+  (sqrt (euclidean-norm2 x)))

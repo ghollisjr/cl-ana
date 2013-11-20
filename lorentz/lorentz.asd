@@ -8,7 +8,7 @@
   :license ""
   :depends-on (#:generic-math
 	       #:linear-algebra
-	       #:xarray
+	       #:tensor
 	       #:iterate)
   :components ((:file "package")
 	       (:file "lorentz")))
