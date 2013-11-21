@@ -19,3 +19,8 @@
 (defun to-pair-function (f)
   "Makes f apply to a pair instead of two arguments"
   #'(lambda (x) (funcall f (car x ) (cdr x))))
+
+(defun lfuncall (fn &rest args)
+  "Applies a function which takes a single list argument to an
+arbitrary number of arguments."
+  (funcall fn args))

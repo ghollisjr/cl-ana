@@ -3,4 +3,5 @@
 (defpackage #:functional-utils
   (:use :cl)
   (:export :flip
-	   :to-pair-function))
+	   :to-pair-function
+	   :lfuncall))

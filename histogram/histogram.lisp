@@ -84,7 +84,11 @@ the lower bound over which to integrate, and the upper bound."))
   center of the bin"))
 
 (defmethod get-value-alist ((hist histogram))
-  (hist-bin-values hist))
+  (mapcar #'(lambda (x)
+	      (let ((car (car x))
+		    (cdr (cdr x)))
+		(cons cdr car)))
+	  (hist-bin-values hist)))
 
 (defun get-dim-indices (dim-names axes)
   "Converts axes from a list of either index or name into a list of

@@ -36,5 +36,5 @@
   (with-accessors ((nrows rread-table-nrows)
 		   (read-row-index rread-table-read-row-index))
       table
-    (incf read-row-index)
-    (< read-row-index nrows)))
+    
+    (< (incf read-row-index) nrows)))

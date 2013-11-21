@@ -28,6 +28,8 @@
   (mapcar #'cons x y))
 
 (defun unzip (xs)
+  "Returns a cons with the car being the cars of the zipped xs and the
+cdr being the cdrs."
   (labels
       ((unzip-helper (xs ls rs)
 	 (if xs

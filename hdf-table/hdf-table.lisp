@@ -208,7 +208,8 @@ the dataset."
 	  ;;(h5dwrite dataset hdf-type +H5S-ALL+ dataspace +H5P-DEFAULT+ row-buffer)))
 	  (h5dwrite dataset hdf-type memspace dataspace +H5P-DEFAULT+ row-buffer)
 	  (h5sclose dataspace))))
-    (h5dclose dataset)))
+    (h5dclose dataset)
+    (foreign-free row-buffer)))
 
 (defmethod table-set-field ((table hdf-table) column-symbol value)
   (with-accessors ((row-buffer hdf-table-row-buffer)

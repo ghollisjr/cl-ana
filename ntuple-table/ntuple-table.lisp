@@ -94,6 +94,8 @@ limitation of the ntuple file format itself."
 ;;; Cleanup:
 
 (defmethod table-close ((table ntuple-table))
-  (with-accessors ((ntuple ntuple-table-ntuple))
+  (with-accessors ((ntuple ntuple-table-ntuple)
+		   (row ntuple-table-row))
       table
-    (gsll:close-ntuple ntuple)))
+    (gsll:close-ntuple ntuple)
+    (foreign-free row)))
