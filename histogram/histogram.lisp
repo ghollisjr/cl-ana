@@ -84,11 +84,22 @@ the lower bound over which to integrate, and the upper bound."))
   center of the bin"))
 
 (defmethod get-value-alist ((hist histogram))
-  (mapcar #'(lambda (x)
-	      (let ((car (car x))
-		    (cdr (cdr x)))
-		(cons cdr car)))
-	  (hist-bin-values hist)))
+  "Since fitting needs 1-D histograms to give not a list with the cdr
+being a singleton list but a cons with the cdr being the actual bin
+center, we have to do some footwork here."
+  (let* ((hist-bin-values (hist-bin-values hist))
+	 (alist-maker
+	  (if (singletonp (cdr (first hist-bin-values)))
+	      #'(lambda (x)
+		  (let ((car (car x))
+			(cdr (first (cdr x))))
+		    (cons cdr car)))
+	      #'(lambda (x)
+		  (let ((car (car x))
+			(cdr (cdr x)))
+		    (cons cdr car))))))
+    (mapcar alist-maker
+	    (hist-bin-values hist))))
 
 (defun get-dim-indices (dim-names axes)
   "Converts axes from a list of either index or name into a list of
