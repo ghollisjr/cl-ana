@@ -41,8 +41,8 @@
 
 (defun fit (fn data-source init-params &key
 				  (max-iterations 25)
-				  (prec 1.0d-4)
-				  (derivative-delta 1d-9))
+				  (prec 1.0d-6)
+				  (derivative-delta 1d-11))
   "Fits a function fn against data from data-source using the initial
 parameters init-params.  Use err-num data type in the dependent
 variable's value if you want to do a weighted least squares fit.
