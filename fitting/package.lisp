@@ -2,7 +2,8 @@
 
 (defpackage #:fitting
   (:use :cl
-	:err-prop)
+	:err-prop
+	:map)
   (:export :fit
 	   :get-value-alist
 	   ;; fit functions:

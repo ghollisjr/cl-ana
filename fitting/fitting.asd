@@ -9,6 +9,7 @@
   :depends-on (#:gsll
 	       #:generic-math
 	       #:error-propogation
+	       #:map
 	       #:alexandria)
   :components ((:file "package")
 	       (:file "fitting")

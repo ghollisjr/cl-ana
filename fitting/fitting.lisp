@@ -15,7 +15,7 @@
 ;;;; technique itself.
 ;;;;
 ;;;; To be able to call the fit function for your data object, just
-;;;; define a specialization on the generic function get-value-alist
+;;;; define a specialization on the generic function map->alist
 ;;;; which returns an alist mapping the independent values to the
 ;;;; dependent value (which must be either a regular common lisp
 ;;;; number or an err-num).
@@ -39,14 +39,6 @@
        for i from 0 below dim
        collect (grid:aref grid i))))
 
-(defgeneric get-value-alist (object)
-  (:documentation "Returns the values of a data-source as an alist
-  mapping the independent value to the dependent one.
-  Multidimensional independent variable data can be represented as a
-  list of values.")
-  (:method ((obj list))
-    obj))
-
 (defun fit (fn data-source init-params &key
 				  (max-iterations 25)
 				  (prec 1.0d-4)
@@ -59,7 +51,7 @@ fn: A function which takes two arguments: 1. A fit parameter
 list (must be a list), 2. The independent variable value which will
 come from the data to be fitted against.
 
-data-source: A generic object which has a get-value-alist function
+data-source: A generic object which has a map->alist function
 defined for it.  This is the data which will be fitted against.
 
 There is however one restriction when using err-num values as the
@@ -76,7 +68,7 @@ The return values of fit are:
 2. The list of uncertainties in the best-fit parameters,
 3. The value of chi^2/(degrees of freedom) for the fit,
 4. The number of iterations it took to converge on the solution."
-  (let* ((data (get-value-alist data-source))
+  (let* ((data (map->alist data-source))
 	 (xlist (mapcar #'car data))
 	 (ylist (mapcar #'cdr data))
 	 (n-params (length init-params))

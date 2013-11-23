@@ -7,7 +7,8 @@
 	#:macro-utils
 	#:iter
 	#:alexandria
-	#:fitting)
+	#:fitting
+	#:map)
   (:export :histogram
 	   :contiguous-histogram
 	   :sparse-histogram

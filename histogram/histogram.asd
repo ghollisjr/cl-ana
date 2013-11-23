@@ -8,6 +8,7 @@
 	       #:macro-utils
 	       #:iterate
 	       #:generic-math
+	       #:map
 	       #:tensor
 	       #:alexandria
 	       #:fitting)

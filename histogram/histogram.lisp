@@ -83,7 +83,7 @@ the lower bound over which to integrate, and the upper bound."))
   (:documentation "Returns a list of bin values consed to the bin
   center of the bin"))
 
-(defmethod get-value-alist ((hist histogram))
+(defmethod map->alist ((hist histogram))
   "Since fitting needs 1-D histograms to give not a list with the cdr
 being a singleton list but a cons with the cdr being the actual bin
 center, we have to do some footwork here."
