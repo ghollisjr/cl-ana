@@ -54,14 +54,12 @@ cdr being the cdrs."
   (if xs
       (if (singletonp xs)
 	  (mapcar #'list (car xs))
-	  (reduce
-	   #'append
-	   (mapcar
-	    #'(lambda (c)
-		(mapcar 
-		 #'(lambda (x) (cons x c))
-		 (car xs)))
-	    (apply #'cartesian-product (cdr xs)))))))
+          (mapcan
+           #'(lambda (c)
+               (mapcar 
+                #'(lambda (x) (cons x c))
+                (car xs)))
+           (apply #'cartesian-product (cdr xs))))))
 
 ;; Selects every nth term from a list (including the first term):
 (defun every-nth (list n &optional (start 0))
