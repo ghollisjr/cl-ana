@@ -1,5 +1,7 @@
 (require 'plotting)
 
+(require 'alexandria)
+
 (in-package :plotting)
 
 (defparameter *page*
@@ -37,3 +39,14 @@
                              (cons 2 2)
                              (cons 3 3)
                              (cons 4 4))))))))
+
+(defparameter *hist*
+  (make-contiguous-hist
+   (list (list :name "x" :nbins 100 :low -3d0 :high 3d0)
+         (list :name "y" :nbins 100 :low -3d0 :high 3d0))))
+
+(defun gaus () (alexandria:gaussian-random -3d0 3d0))
+
+(loop for i below 100000 do (hist-insert *hist* (list (gaus) (gaus))))
+
+(quick-plot *hist*)

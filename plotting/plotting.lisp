@@ -40,9 +40,12 @@
 
 (defvar *gnuplot-session* (gnuplot-init))
 
+(gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10")
+
 (defun restart-gnuplot-session ()
   (gnuplot-close *gnuplot-session*)
-  (setf *gnuplot-session* (gnuplot-init)))
+  (setf *gnuplot-session* (gnuplot-init))
+  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
 
 (defgeneric generate-cmd (object)
   (:documentation "Generates a command string (with new-line at end)
@@ -291,7 +294,13 @@ in the page."
     :accessor line-plot-arg
     :documentation "The string denoting the plot argument which should
     directly proceed the plot/splot command; can be a function body,
-    '-', or a file name.")))
+    '-', or a file name.")
+   (options
+    :initarg :options
+    :initform ""
+    :accessor line-options
+    :documentation "Miscellaneous options not covered by the standard
+    ones above; this is to permit things like image plotting.")))
 
 (defmethod line-data-cmd ((l line))
   "")
@@ -301,10 +310,12 @@ in the page."
     (with-accessors ((title title)
                      (style line-style)
                      (plot-arg line-plot-arg)
-                     (color line-color))
+                     (color line-color)
+                     (options line-options))
         l
       (format s "~a with " plot-arg)
       (format s "~a " style)
+      (format s "~a " options)
       (when color
         (format s "linecolor rgb '~a' " color))
       (format s "title '~a'" title))))
@@ -341,6 +352,22 @@ in the page."
            for d in data
            do (funcall extractor d))
         (format s "e~%")))))
+
+(defclass histogram2d-line (data-line)
+  ())
+
+(defmethod initialize-instance :after ((l histogram2d-line) &key)
+  (with-slots (plot-arg style)
+      l
+    (setf plot-arg (string-append plot-arg " using 1:2:3 "))
+    (setf style "image")))
+
+(defun histogram2d->line (hist)
+  (let* ((bin-data (map->alist hist)))
+    (when (not (= 2 (length (car (first bin-data)))))
+      (error "Must be 2-d independent variable"))
+    (make-instance 'histogram2d-line
+                   :data bin-data)))
 
 (defclass analytic-line (line)
   ((fn-string
@@ -379,3 +406,24 @@ in the page."
     or do nothing.  Strategy is functional, i.e. it should return a
     lew legend based on the old one and the new line, not actually
     change the state of the current legend.")))
+
+;;; Convenience functions:
+
+(defgeneric quick-plot (object &key &allow-other-keys)
+  (:documentation "Returns a page which stores a single plot and
+  single line while plotting object."))
+
+(defmethod quick-plot ((hist histogram)
+                       &key
+                         (title "histogram")
+                         (x-title "x")
+                         (y-title "y"))
+  (let ((page
+         (make-instance
+          'page
+          :plots (list (make-instance
+                        'plot2d
+                        :title title
+                        :lines (list (histogram2d->line hist)))))))
+    (draw page)
+    page))

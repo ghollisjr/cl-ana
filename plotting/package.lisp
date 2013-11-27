@@ -4,7 +4,8 @@
   (:use :cl
         :gnuplot-i-cffi
 	:map
-        :string-utils)
+        :string-utils
+        :histogram)
   (:export :*gnuplot-session*
            :reset-gnuplot-session
            :page

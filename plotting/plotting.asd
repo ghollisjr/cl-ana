@@ -7,7 +7,8 @@
   :license ""
   :depends-on (#:gnuplot-i-cffi
                #:map
-               #:string-utils)
+               #:string-utils
+               #:histogram)
   :components ((:file "package")
 	       (:file "plotting")
                (:file "histogram-plotting")))
