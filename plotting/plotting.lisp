@@ -205,15 +205,6 @@ in the page."
       (setf legend
             (legend-update legend line)))))
 
-(defgeneric legend-update (legend line)
-  (:documentation "Updates the legend for the plot based on the
-  legend's update strategy.")
-  (:method (legend line)
-    (with-accessors ((strategy legend-update-strategy))
-        legend
-      (setf legend
-            (funcall strategy legend line)))))
-
 ;; A two-dimensional plot has up to four labelled axes:
 ;;
 ;; "x" for the axis along the bottom,
@@ -319,7 +310,6 @@ in the page."
       (when color
         (format s "linecolor rgb '~a' " color))
       (format s "title '~a'" title))))
-      
 
 (defclass data-line (line)
   ((data
@@ -406,6 +396,15 @@ in the page."
     or do nothing.  Strategy is functional, i.e. it should return a
     lew legend based on the old one and the new line, not actually
     change the state of the current legend.")))
+
+(defgeneric legend-update (legend line)
+  (:documentation "Updates the legend for the plot based on the
+  legend's update strategy.")
+  (:method (legend line)
+    (with-accessors ((strategy legend-update-strategy))
+        legend
+      (setf legend
+            (funcall strategy legend line)))))
 
 ;;; Convenience functions:
 
