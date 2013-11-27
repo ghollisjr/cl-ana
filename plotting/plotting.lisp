@@ -233,10 +233,11 @@ in the page."
       (if x-range
           (format s "[~a:~a] "
                   (car x-range) (cdr x-range))
-          (format s "[] "))
+          (format s "[*:*] "))
       (when y-range
         (format s "[~a:~a] "
-                (car y-range) (cdr y-range))))))
+                (car y-range) (cdr y-range))
+        (format s "[*:*] ")))))
 
 ;; (defmethod plot-cmd ((p plot2d))
 ;;   (with-slots (x-range y-range)
@@ -414,12 +415,14 @@ in the page."
 
 (defmethod quick-plot ((hist histogram)
                        &key
+                         (type "wxt")
                          (title "histogram")
                          (x-title "x")
                          (y-title "y"))
   (let ((page
          (make-instance
           'page
+          :type type
           :plots (list (make-instance
                         'plot2d
                         :title title
