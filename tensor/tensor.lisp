@@ -24,7 +24,7 @@
   "Creates a tensor with each dimension in dimension-list denoting the
 length of the sequence at that dimension with the type of the
 sequences given by the optional type argument."
-  (if (singletonp dimension-list)
+  (if (single dimension-list)
       (make-sequence type (first dimension-list) :initial-element initial-element)
       (map type
 	   #'(lambda (&rest xs)

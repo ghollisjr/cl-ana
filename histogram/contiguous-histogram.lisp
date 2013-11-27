@@ -5,19 +5,12 @@
 
 (in-package :histogram)
 
-(defclass contiguous-histogram (histogram)
+(defclass contiguous-histogram (rectangular-histogram)
   ((bin-values
     :accessor contiguous-hist-bin-values
     :initarg :bin-values
     :initform nil
-    :documentation "Nested arrays representing the bin values")
-   (bin-specs
-    :accessor contiguous-hist-bin-specs
-    :initarg :bin-specs
-    :initform nil
-    :documentation "List of number of bins, bin low edge, and bin high
-    edge.  Should be computed from a bin specification plist and then
-    stored in said order as a list (not a plist).")))
+    :documentation "Nested arrays representing the bin values")))
 
 (defun make-contiguous-hist (dim-spec-plists &key empty-bin-value default-increment)
   "dim-spec-plist is a plist with the following
@@ -63,7 +56,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 		   (empty-bin-value hist-empty-bin-value)
 		   (default-increment hist-default-increment)
 		   (bin-values contiguous-hist-bin-values)
-		   (bin-specs contiguous-hist-bin-specs))
+		   (bin-specs rectangular-hist-bin-specs))
       histogram
     (flet ((index-key (x)
 	     (if (listp x)
@@ -160,7 +153,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 (defmethod hist-point-ref ((hist contiguous-histogram) data-list)
   "Checked access to the bin value via a point.  Returns nil if the
 point is not inside the histogram domain."
-  (with-accessors ((bin-specs contiguous-hist-bin-specs))
+  (with-accessors ((bin-specs rectangular-hist-bin-specs))
       hist
     (let ((bin-index (get-bin-index data-list bin-specs)))
       (when bin-index
@@ -169,7 +162,7 @@ point is not inside the histogram domain."
 (defmethod (setf hist-point-ref) (value (hist contiguous-histogram) data-list)
   "Checked setf to the bin value via a point.  Does nothing & returns
 nil if the point is not inside the histogram domain."
-  (with-accessors ((bin-specs contiguous-hist-bin-specs)
+  (with-accessors ((bin-specs rectangular-hist-bin-specs)
 		   (bin-values contiguous-hist-bin-values))
       hist
     (let ((bin-index (get-bin-index data-list bin-specs)))
@@ -178,7 +171,7 @@ nil if the point is not inside the histogram domain."
 	      value)))))
 
 (defmethod hist-bin-values ((hist contiguous-histogram))
-  (with-accessors ((bin-specs contiguous-hist-bin-specs)
+  (with-accessors ((bin-specs rectangular-hist-bin-specs)
 		   (bin-values contiguous-hist-bin-values))
       hist
     (let* ((nbin-list (mapcar #'first bin-specs))
@@ -200,7 +193,7 @@ nil if the point is not inside the histogram domain."
 (defun map-contiguous-hist (fn &rest histograms)
   "Defines the map operation over contiguous histograms."
   (let ((h1 (first histograms)))
-    (with-accessors ((bin-specs contiguous-hist-bin-specs)
+    (with-accessors ((bin-specs rectangular-hist-bin-specs)
 		     (ndims hist-ndims)
 		     (dim-names hist-dim-names)
 		     (empty-bin-value hist-empty-bin-value)
@@ -282,7 +275,7 @@ nil if the point is not inside the histogram domain."
 (defun make-contiguous-hist-contents (size-list initial-value)
   (if size-list
       (let ((size (first size-list)))
-	(if (singletonp size-list)
+	(if (single size-list)
 	    (make-array (first size-list) :initial-element initial-value)
 	    (let* ((result (make-array size)))
 	      (loop for i from 0 below size
@@ -293,7 +286,7 @@ nil if the point is not inside the histogram domain."
       nil))
 
 (defun point-in-bounds (hist point)
-  (with-accessors ((bin-specs contiguous-hist-bin-specs))
+  (with-accessors ((bin-specs rectangular-hist-bin-specs))
       hist
     (let ((lower-bounds (mapcar #'second bin-specs))
 	  (upper-bounds (mapcar #'third bin-specs)))

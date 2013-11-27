@@ -10,11 +10,13 @@
 	#:fitting
 	#:map)
   (:export :histogram
+           :rectangular-histogram
 	   :contiguous-histogram
 	   :sparse-histogram
 	   :make-contiguous-hist
 	   :make-sparse-hist
-	   :contiguous-hist-map
+	   :map-contiguous-hist
+           :rectangular-hist-bin-specs
 	   :hist-ndims
 	   :hist-dim-names
 	   :hist-empty-bin-value

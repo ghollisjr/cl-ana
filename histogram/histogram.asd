@@ -13,7 +13,7 @@
 	       #:alexandria
 	       #:fitting)
   :components ((:file "package")
-	       (:file "uniform-binning")
 	       (:file "histogram")
+	       (:file "rectangular-histogram")
 	       (:file "contiguous-histogram")
 	       (:file "sparse-histogram")))

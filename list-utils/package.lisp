@@ -4,7 +4,6 @@
   (:use :cl
 	:functional-utils)
   (:export :range
-	   :singletonp
 	   :zip
 	   :unzip
 	   :transpose
@@ -16,4 +15,16 @@
 	   :list-less-than
 	   :list-greater-than
 	   :aref-by-list
-	   :make-offsets))
+	   :make-offsets
+           ;; Paul Graham's stuff
+	   :single
+           :append1
+           :conc1
+           :mklist
+           :longer
+           :group
+           :prune
+           :find2
+           :before
+           :after
+           :duplicate))

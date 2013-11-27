@@ -4,20 +4,13 @@
 
 (in-package :histogram)
 
-(defclass sparse-histogram (histogram)
+(defclass sparse-histogram (rectangular-histogram)
   ((bin-value-map
     :accessor sparse-hist-value-map
     :initarg :value-map
     :initform nil
     :documentation "Hash table storing the histogram bin values which
-    have been set.")
-   (bin-specs
-    :accessor sparse-hist-bin-specs
-    :initarg :bin-specs
-    :initform nil
-    :documentation "List of number of bins, bin low edge, and bin high
-    edge.  Should be computed from a bin specification plist and then
-    stored in said order as a list (not a plist).")))
+    have been set.")))
 
 (defun make-sparse-hist (dim-spec-plists &key
 					   empty-bin-value
@@ -65,7 +58,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 		   (empty-bin-value hist-empty-bin-value)
 		   (default-increment hist-default-increment)
 		   (value-map sparse-hist-value-map)
-		   (bin-specs sparse-hist-bin-specs))
+		   (bin-specs rectangular-hist-bin-specs))
       histogram
     (flet ((index-key (x)
 	     (if (listp x)
@@ -165,7 +158,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 (defmethod hist-point-ref ((hist sparse-histogram) point)
   "Checked access to the bin value via a point.  Returns nil if the
 point is not inside the histogram domain."
-  (with-accessors ((bin-specs sparse-hist-bin-specs)
+  (with-accessors ((bin-specs rectangular-hist-bin-specs)
 		   (value-map sparse-hist-value-map)
 		   (empty-bin-value hist-empty-bin-value))
       hist
@@ -176,7 +169,7 @@ point is not inside the histogram domain."
 (defmethod (setf hist-point-ref) (value (hist sparse-histogram) point)
   "Checked setf to the bin value via a point.  Does nothing & returns
 nil if the point is not inside the histogram domain."
-  (with-accessors ((bin-specs sparse-hist-bin-specs)
+  (with-accessors ((bin-specs rectangular-hist-bin-specs)
 		   (value-map sparse-hist-value-map))
       hist
     (let ((bin-index (get-bin-index point bin-specs)))
@@ -185,7 +178,7 @@ nil if the point is not inside the histogram domain."
 
 (defmethod hist-bin-values ((hist sparse-histogram))
   (with-accessors ((value-map sparse-hist-value-map)
-		   (bin-specs sparse-hist-bin-specs))
+		   (bin-specs rectangular-hist-bin-specs))
       hist
     (iter
       (for (key val) in-hashtable value-map)

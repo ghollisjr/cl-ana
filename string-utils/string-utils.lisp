@@ -12,3 +12,6 @@
 			    (#\_         #\-)
 			    (otherwise   c)))
 		      string)))
+
+(defun string-append (&rest strings)
+  (apply #'concatenate 'string strings))

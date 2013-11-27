@@ -2,4 +2,5 @@
 
 (defpackage #:string-utils
   (:use :cl)
-  (:export :lispify))
+  (:export :lispify
+           :string-append))

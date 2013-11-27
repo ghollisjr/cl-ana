@@ -2,8 +2,12 @@
 
 (defpackage #:plotting
   (:use :cl
-	:map)
-  (:export :page
+        :gnuplot-i-cffi
+	:map
+        :string-utils)
+  (:export :*gnuplot-session*
+           :reset-gnuplot-session
+           :page
 	   :plot
 	   :plot2d
 	   :plot3d

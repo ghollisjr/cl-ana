@@ -13,12 +13,6 @@
 			   (cons s result)))))
     (nreverse (range-helper start end step ()))))
 
-;; Learned this from On Lisp by Paul Graham, changed the name:
-(defun singletonp (list)
-  "Checks to see if list is a list with exactly one element."
-  (and (consp list)
-       (null (rest list))))
-
 ;; Sorry: I learned Haskell before Common Lisp, so I like
 ;; zipping/unzipping lists
 
@@ -52,7 +46,7 @@ cdr being the cdrs."
 ;; Can't go without the Cartesian Product
 (defun cartesian-product (&rest xs)
   (if xs
-      (if (singletonp xs)
+      (if (single xs)
 	  (mapcar #'list (car xs))
           (mapcan
            #'(lambda (c)
@@ -204,3 +198,106 @@ concatenation of n lists."
 		(cons (+ y (car x)) x))
 	    sizes
 	    :initial-value (list 0)))))
+
+;;; Stuff from Paul Graham's On Lisp:
+
+(declaim (inline single append1 conc1 mklist))
+
+;; Would include last1, but Alexandria has last-elt, which is last1
+;; for sequences
+
+(defun single (list)
+  "Checks to see if list is a list with exactly one element."
+  (and (consp list)
+       (null (rest list))))
+
+(defun append1 (list object)
+  "Creates a list containing object and appends list to it."
+  (append list (list object)))
+
+(defun conc1 (list object)
+  "Like append1, but uses nconc instead of append"
+  (nconc list (list object)))
+
+(defun mklist (object)
+  "Ensures that object is a list, if not object is packaged in a
+list."
+  (if (listp object)
+      object
+      (list object)))
+
+(defun longer (x y)
+  "Efficiently compares two lists, or if they're not both lists simply
+calls length on each and compares.  This could be sped up a bit if one
+argument is a list and the other not, so it's a work in progress."
+  (labels ((compare (x y)
+             (and (consp x)
+                  (or (null y)
+                      (compare (cdr x) (cdr y))))))
+    (if (and (listp x) (listp y))
+        (compare x y)
+        (> (length x) (length y)))))
+
+;; filter is already in CL as remove-if-not
+
+(defun group (source n)
+  "Takes a list and returns a list of lists of the elements in the
+list grouped in lists of size n with the remainder in the last list."
+  (if (zerop n)
+      (error "zero length")
+      (labels ((group-worker (source acc)
+                 (let ((rest (nthcdr n source)))
+                   (if (consp rest)
+                       (group-worker rest
+                                     (cons (subseq source 0 n) acc))
+                       (nreverse (cons source acc))))))
+        (if source
+            (group-worker source nil)
+            nil))))
+
+;; flatten is already provided by Alexandria.  To reduce a tree just
+;; flatten the list first and then reduce it.
+
+(defun prune (test tree)
+  "Like remove-if, but for lists treated as trees."
+  (labels ((prune-worker (tree acc)
+             (cond ((null tree) (nreverse acc))
+                   ((consp (car tree))
+                    (prune-worker
+                     (cdr tree)
+                     (cons (prune-worker (car tree) nil) acc)))
+                   (t (prune-worker (cdr tree)
+                                    (if (funcall test (car tree))
+                                        acc
+                                        (cons (car tree) acc)))))))
+    (prune-worker tree nil)))
+
+(defun find2 (fn list)
+  "Like find, but it returns two values: the list element and the
+value that fn returned."
+  (if (null list)
+      nil
+      (let ((val (funcall fn (car list))))
+        (if val
+            (values (car list) val)
+            (find2 fn (cdr list))))))
+
+(defun before (x y list &key (test #'eql))
+  "Tells you if x is found before y in list."
+  (and list
+       (let ((first (car list)))
+         (cond ((funcall test y first) nil)
+               ((funcall test x first) list)
+               (t (before x y (cdr list) :test test))))))
+
+(defun after (x y list &key (test #'eql))
+  "Tells you if x is found after y in list."
+  (let ((rest (before y x list :test test)))
+    (and rest (member x rest :test test))))
+
+(defun duplicate (object list &key (test #'eql))
+  "Tells you if the object occurs more than once in the list."
+  (member object (cdr (member object list :test test))
+          :test test))
+
+;; split-if is provided by split-sequence:split-sequence-if

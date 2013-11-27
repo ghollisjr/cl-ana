@@ -4,4 +4,5 @@
   (:use :cl
 	:cffi)
   (:export :gnuplot-init
-	   :gnuplot-cmd))
+	   :gnuplot-cmd
+           :gnuplot-close))
