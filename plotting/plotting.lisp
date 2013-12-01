@@ -423,29 +423,22 @@ in the page."
 
 ;; histogram plotting:
 
-(defun histogram2d->line (hist)
-  (let* ((bin-data (map->alist hist))
-         (first-independent (car (first bin-data))))
-    (when
-        (or (not (consp first-independent))
-            (not (length-equal first-independent 2)))
-      (error "Must be 2-d independent variable"))
-    (make-instance 'data-line
-                   :data bin-data
-                   :style "image")))
-
-(defun histogram1d->line (hist)
-  (let* ((bin-data (map->alist hist))
-         (first-independent (car (first bin-data))))
-    (when (not (atom first-independent))
-      (error "Must be 1-d independent variable"))
-    (make-instance 'data-line
-                   :data bin-data
-                   :style "boxes")))
-
 (defmethod make-line ((hist histogram) &key)
-  (let ((ndims (hist-ndims hist)))
-            (case ndims
-              (1 (histogram1d->line hist))
-              (2 (histogram2d->line hist))
-              (otherwise (error "Can only plot 1-D or 2-D histograms")))))
+  (let* ((ndims (hist-ndims hist))
+         (bin-data (map->alist hist))
+         (first-independent (car (first bin-data))))
+    (case ndims
+      (1
+       (if (not (atom first-independent))
+           (error "Must be 1-d independent variable")
+           (make-instance 'data-line
+                          :data bin-data
+                          :style "boxes")))
+      (2 
+       (if (or (not (consp first-independent))
+               (not (length-equal first-independent 2)))
+           (error "Must be 2-d independent variable")
+           (make-instance 'data-line
+                          :data bin-data
+                          :style "image")))
+      (otherwise (error "Can only plot 1-D or 2-D histograms")))))
