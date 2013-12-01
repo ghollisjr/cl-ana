@@ -16,7 +16,8 @@
 	   :list-greater-than
 	   :aref-by-list
 	   :make-offsets
-           ;; Paul Graham's stuff
+           ;; Paul Graham's stuff (and some of my improvements)
+           :length-equal
 	   :single
            :append1
            :conc1

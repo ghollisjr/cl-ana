@@ -5,6 +5,7 @@
         :gnuplot-i-cffi
 	:map
         :string-utils
+        :list-utils
         :histogram)
   (:export :*gnuplot-session*
            :reset-gnuplot-session
@@ -38,8 +39,6 @@
            :line-options
            ;; data-line functions
            :data-line-data
-           ;; histogram2d-line functions
-           :histogram2d->line
            ;; analytic-line functions
            :analytic-line-fn-string
            ;; legend functions
@@ -47,4 +46,5 @@
            :legend-update-strategy
            :legend-update
            ;; ease of use
-           :quick-plot))
+           :quick-plot
+           :make-line))

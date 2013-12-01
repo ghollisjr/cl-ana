@@ -393,9 +393,29 @@ in the page."
 
 ;;; Convenience functions:
 
+(defgeneric make-line (object &key &allow-other-keys)
+  (:documentation "Returns a line appropriate for plotting object."))
+
 (defgeneric quick-plot (object &key &allow-other-keys)
   (:documentation "Returns a page which stores a single plot and
-  single line while plotting object."))
+  single line as well as drawing the page.")
+  ;; Default method for 2-D plotting
+  (:method (object &key
+                     (type "wxt")
+                     (title "histogram")
+                     (x-title "x")
+                     (y-title "y"))
+    (let* ((line (make-line object))
+           (page
+            (make-instance
+             'page
+             :type type
+             :plots (list (make-instance
+                           'plot2d
+                           :title title
+                           :lines (list line))))))
+      (draw page)
+      page)))
 
 ;; histogram plotting:
 
@@ -411,22 +431,17 @@ in the page."
                    :style "image")))
 
 (defun histogram1d->line (hist)
-  (let ((bin-data (map->alist hist)))
-    (when (not (= 1
+  (let* ((bin-data (map->alist hist))
+         (first-independent (car (first bin-data))))
+    (when (not (atom first-independent))
+      (error "Must be 1-d independent variable"))
+    (make-instance 'data-line
+                   :data bin-data
+                   :style "boxes")))
 
-(defmethod quick-plot ((hist histogram)
-                       &key
-                         (type "wxt")
-                         (title "histogram")
-                         (x-title "x")
-                         (y-title "y"))
-  (let ((page
-         (make-instance
-          'page
-          :type type
-          :plots (list (make-instance
-                        'plot2d
-                        :title title
-                        :lines (list (histogram2d->line hist)))))))
-    (draw page)
-    page))
+(defmethod make-line ((hist histogram) &key)
+  (let ((ndims (hist-ndims hist)))
+            (case ndims
+              (1 (histogram1d->line hist))
+              (2 (histogram2d->line hist))
+              (otherwise (error "Can only plot 1-D or 2-D histograms")))))

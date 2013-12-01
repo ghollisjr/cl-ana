@@ -199,12 +199,29 @@ concatenation of n lists."
 	    sizes
 	    :initial-value (list 0)))))
 
-;;; Stuff from Paul Graham's On Lisp:
+;;; Stuff (mostly) from Paul Graham's On Lisp, as well as some of my
+;;; own improvements.
 
 (declaim (inline single append1 conc1 mklist))
 
 ;; Would include last1, but Alexandria has last-elt, which is last1
 ;; for sequences
+
+(defun length-equal (list length)
+  "Returns t/nil as soon as it is apparent that the list does not
+contain exactly length elements."
+  (declare (integer length))
+  (labels ((rec (list length)
+             (if (zerop length)
+                 (if (null list)
+                     t
+                     nil)
+                 (if (consp list)
+                     (length-equal (cdr list) (1- length))
+                     nil))))
+    (if (< length 0)
+        nil
+        (rec list length))))
 
 (defun single (list)
   "Checks to see if list is a list with exactly one element."

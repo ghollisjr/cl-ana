@@ -8,6 +8,7 @@
   :depends-on (#:gnuplot-i-cffi
                #:map
                #:string-utils
+               #:list-utils
                #:histogram)
   :components ((:file "package")
 	       (:file "plotting")
