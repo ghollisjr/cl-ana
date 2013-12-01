@@ -1,8 +1,12 @@
 (require 'plotting)
 
+(require 'fitting)
+
 (require 'alexandria)
 
 (in-package :plotting)
+
+(use-package :fitting)
 
 ;; Long example of how to use raw types for structure:
 (defparameter *page*
@@ -44,9 +48,10 @@
 ;; Quick example of how to draw a single plot with a function and some
 ;; data:
 (defparameter *quick-page*
-  (quick-multidraw (list (list (zip (list 1 2 3)
-                                    (list 1 2 3))
-                               :title "test data")
+  (quick-multidraw (list (list (zip (list 1 1.5 2 2.5 3)
+                                    (list 0.9 1.2 1 0.3 0.1))
+                               :title "test data"
+                               :point-type 3)
                          (list "sin(x)" :title "sine"))
                    :page-title "Test plot"
                    :plot-title "Test plot"))
@@ -65,4 +70,20 @@
 (defparameter *hist1d*
   (hist-project *hist2d* "x")) 
 
-(quick-draw *hist1d* :title "histogram" :color "black")
+;;(quick-draw *hist1d* :title "histogram" :color "black")
+
+(defparameter *fit-results*
+  (multiple-value-list
+   (fit *hist1d*
+        #'gaussian
+        (list 1500d0 1d0 1d0)
+        :max-iterations 25
+        :prec 1e-8
+        :derivative-delta 1e-12)))
+
+(defparameter *fitfunc* (first *fit-results*))
+
+(quick-multidraw (list (list *hist1d* :title "Gaussian Data")
+                       (list *fitfunc* :title "Fitted Gaussian"))
+                 :x-title "x"
+                 :y-title "N")

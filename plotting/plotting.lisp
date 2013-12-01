@@ -276,8 +276,8 @@ in the page."
 (defmethod plot-axis-commands ((p plot2d))
   (flet ((maybe-make-str (label var)
            (when var
-             (with-output-to-string (s)
-               (format s "set ~a ~a~%" label var)))))
+             (list
+               (format nil "set ~a ~a~%" label var)))))
   (with-slots (x-title x2-title y-title y2-title)
       p
     (append
@@ -324,6 +324,12 @@ in the page."
     :initarg :color
     :accessor line-color
     :documentation "Color for plotting the line.")
+   (point-type
+    :initform nil
+    :initarg :point-type
+    :accessor line-point-type
+    :documentation "Type of point to draw when using style points or
+    linespoints.")
    (plot-arg
     :initarg :plot-arg
     :initform ""
@@ -345,12 +351,15 @@ in the page."
   (with-output-to-string (s)
     (with-accessors ((title title)
                      (style line-style)
+                     (point-type line-point-type)
                      (plot-arg line-plot-arg)
                      (color line-color)
                      (options line-options))
         l
       (format s "~a with " plot-arg)
       (format s "~a " style)
+      (when point-type
+        (format s "pt ~a " point-type))
       (format s "~a " options)
       (when color
         (format s "linecolor rgb '~a' " color))
@@ -511,12 +520,14 @@ in the page."
 (defmethod make-line ((data-alist list) &key
                                           (title "data")
                                           (style "points")
+                                          point-type
                                           color)
   "Assumes"
   (make-instance 'data-line
                  :title title
                  :data data-alist
                  :style style
+                 :point-type point-type
                  :color color))
 
 ;; functions:
@@ -582,10 +593,12 @@ up to two double-float arguments."
                                      (err-num-error e))))
                          bin-data)))
                    (make-instance 'data-line
+                                  :title title
                                   :data bin-data
                                   :style "boxerrorbars"
                                   :color color))
                  (make-instance 'data-line
+                                :title title
                                 :data bin-data
                                 :style "boxes"
                                 :color color)))))

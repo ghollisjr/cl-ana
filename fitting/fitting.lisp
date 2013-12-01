@@ -39,7 +39,7 @@
        for i from 0 below dim
        collect (grid:aref grid i))))
 
-(defun fit (fn data-source init-params &key
+(defun fit (data-source fn init-params &key
 				  (max-iterations 25)
 				  (prec 1.0d-6)
 				  (derivative-delta 1d-11))
@@ -47,12 +47,12 @@
 parameters init-params.  Use err-num data type in the dependent
 variable's value if you want to do a weighted least squares fit.
 
+data-source: A generic object which has a map->alist function
+defined for it.  This is the data which will be fitted against.
+
 fn: A function which takes two arguments: 1. A fit parameter
 list (must be a list), 2. The independent variable value which will
 come from the data to be fitted against.
-
-data-source: A generic object which has a map->alist function
-defined for it.  This is the data which will be fitted against.
 
 There is however one restriction when using err-num values as the
 dependent variable value: You must either use err-num values for every

@@ -10,7 +10,7 @@
         :histogram
         :tensor)
   (:export :*gnuplot-session*
-           :reset-gnuplot-session
+           :restart-gnuplot-session
            :titled
            :page
 	   :plot
