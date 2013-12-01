@@ -40,12 +40,16 @@
 
 (defvar *gnuplot-session* (gnuplot-init))
 
-(gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10")
+;; run any initialization functions:
+(defun gnuplot-settings ()
+  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
+
+(gnuplot-settings)
 
 (defun restart-gnuplot-session ()
   (gnuplot-close *gnuplot-session*)
   (setf *gnuplot-session* (gnuplot-init))
-  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
+  (gnuplot-settings))
 
 (defgeneric generate-cmd (object)
   (:documentation "Generates a command string (with new-line at end)
