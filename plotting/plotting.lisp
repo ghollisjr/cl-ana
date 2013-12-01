@@ -344,22 +344,6 @@ in the page."
            do (funcall extractor d))
         (format s "e~%")))))
 
-(defclass histogram2d-line (data-line)
-  ())
-
-(defmethod initialize-instance :after ((l histogram2d-line) &key)
-  (with-slots (plot-arg style)
-      l
-    (setf plot-arg (string-append plot-arg " using 1:2:3 "))
-    (setf style "image")))
-
-(defun histogram2d->line (hist)
-  (let* ((bin-data (map->alist hist)))
-    (when (not (= 2 (length (car (first bin-data)))))
-      (error "Must be 2-d independent variable"))
-    (make-instance 'histogram2d-line
-                   :data bin-data)))
-
 (defclass analytic-line (line)
   ((fn-string
     :initarg :fn-string
@@ -412,6 +396,23 @@ in the page."
 (defgeneric quick-plot (object &key &allow-other-keys)
   (:documentation "Returns a page which stores a single plot and
   single line while plotting object."))
+
+;; histogram plotting:
+
+(defun histogram2d->line (hist)
+  (let* ((bin-data (map->alist hist))
+         (first-independent (car (first bin-data))))
+    (when
+        (or (not (consp first-independent))
+            (not (length-equal first-independent 2)))
+      (error "Must be 2-d independent variable"))
+    (make-instance 'data-line
+                   :data bin-data
+                   :style "image")))
+
+(defun histogram1d->line (hist)
+  (let ((bin-data (map->alist hist)))
+    (when (not (= 1
 
 (defmethod quick-plot ((hist histogram)
                        &key
