@@ -4,6 +4,7 @@
 
 (in-package :plotting)
 
+;; Long example of how to use raw types for structure:
 (defparameter *page*
   (make-instance
    'page
@@ -40,13 +41,28 @@
                              (cons 3 3)
                              (cons 4 4))))))))
 
-(defparameter *hist*
+;; Quick example of how to draw a single plot with a function and some
+;; data:
+(defparameter *quick-page*
+  (quick-multidraw (list (list (zip (list 1 2 3)
+                                    (list 1 2 3))
+                               :title "test data")
+                         (list "sin(x)" :title "sine"))
+                   :page-title "Test plot"
+                   :plot-title "Test plot"))
+
+(defparameter *hist2d*
   (make-contiguous-hist
    (list (list :name "x" :nbins 100 :low -3d0 :high 3d0)
          (list :name "y" :nbins 100 :low -3d0 :high 3d0))))
 
 (defun gaus () (alexandria:gaussian-random -3d0 3d0))
 
-(loop for i below 100000 do (hist-insert *hist* (list (gaus) (gaus))))
+(loop for i below 100000 do (hist-insert *hist2d* (list (gaus) (gaus))))
 
-(quick-plot *hist*)
+(quick-draw *hist2d*)
+
+(defparameter *hist1d*
+  (hist-project *hist2d* "x")) 
+
+(quick-draw *hist1d* :title "histogram")

@@ -6,7 +6,8 @@
 	:map
         :string-utils
         :list-utils
-        :histogram)
+        :histogram
+        :tensor)
   (:export :*gnuplot-session*
            :reset-gnuplot-session
            :titled
@@ -46,5 +47,8 @@
            :legend-update-strategy
            :legend-update
            ;; ease of use
-           :quick-plot
+           :quick-multidraw
+           :quick-draw
            :make-line))
+
+(gmath:use-gmath :plotting)

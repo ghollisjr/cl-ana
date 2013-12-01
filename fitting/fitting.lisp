@@ -64,10 +64,11 @@ init-params: a list of the initial parameter values.
 
 The return values of fit are:
 
-1. The list of best-fit parameters,
-2. The list of uncertainties in the best-fit parameters,
-3. The value of chi^2/(degrees of freedom) for the fit,
-4. The number of iterations it took to converge on the solution."
+1. fn with the best-fit parameters applied,
+2. The list of best-fit parameters,
+3. The list of uncertainties in the best-fit parameters,
+4. The value of chi^2/(degrees of freedom) for the fit,
+5. The number of iterations it took to converge on the solution."
   (let* ((data (map->alist data-source))
 	 (xlist (mapcar #'car data))
 	 (ylist (mapcar #'cdr data))
@@ -150,11 +151,16 @@ The return values of fit are:
 					;(c (max 1.0d0 (/ chi (sqrt dof))))) ;; not sure why
 					;they made the cutoff
 		   (c (/ chi (sqrt dof))))
-	      (values (loop
-			 for i from 0 below n-params
-			 collect (fitx i))
-		      (loop
-			 for i from 0 below n-params
-			 collect (* c (err i)))
-		      (expt c 2)
-		      num-iterations))))))))
+              (let ((fit-params
+                     (loop
+                        for i from 0 below n-params
+                        collect (fitx i)))
+                    (fit-errors
+                     (loop
+                        for i from 0 below n-params
+                        collect (* c (err i)))))
+                (values (curry fn fit-params)
+                        fit-params
+                        fit-errors
+                        (expt c 2)
+                        num-iterations)))))))))

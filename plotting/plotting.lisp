@@ -1,40 +1,42 @@
 ;;;; plotting.lisp
 
-;;;; Interesting macro to use: with-output-to-string.  Use it to
-;;;; create a string-stream object and write to it inside the body.
-;;;; The resulting string is returned as the value.  This could be
-;;;; extremely useful when generating the command sequences to send to
-;;;; gnuplot.
-
-;;;; Sequence of commands to generate a 2-d histogram plot in gnuplot
-;;;; with the rainbow color pallete:
+;;;; This library provides access to gnuplot from CL via
+;;;; gnuplot-i-cffi, which in turn uses gnuplot_i (see
+;;;; gnuplot-i-cffi's files for appropriate copyright info).
 ;;;;
-;;;; set view map
-;;;; set pm3d at b
-;;;; set dgrid 100,100 # for a 100x100 histogram
-;;;; set palette rgb 33,13,10 # you can get more options with command help palette rgbformulae
-;;;; splot '-' with pm3d
-;;;; <The data here should be given as four corners, not just the
-;;;; center value.  A blank line should separate the left 2 corners
-;;;; from the right corners, and two blank lines should separate each
-;;;; bin.>
-;;;; ...
-;;;; e
+;;;; The structure of the classes follows gnuplot, with the exception
+;;;; of the plot/graph distinction being seen as unnecessary.
 ;;;;
-;;;; Note that you need to match the dgrid to the exact binning of the
-;;;; histogram, and that this method is limited to uniformly-binned
-;;;; histograms; you'll have to do more advanced things to handle
-;;;; other cases.
+;;;; The structure is as follows:
 ;;;;
-;;;; Also can do "splot ... title ''" to not have the annoying
-;;;; title-legend.
-
-;;;; Commands to do plotting with separate windows which have zoom etc.
+;;;; Page: The most basic thing which can be plotted upon.  Pages
+;;;; contain some number of plots which are drawn on the page.
 ;;;;
-;;;; set term wxt <window-#> [options]
-;;;; [plotting commands]...
-;;;; set term wxt <other-window-#> [other options]
-;;;; [other plotting commands]...
+;;;; Plot: A plot is either 2-D or 3-D, and defines the appropriate
+;;;; axis.  A plot contains some number of lines which are drawn
+;;;; together in the plot.
+;;;;
+;;;; Line: A line is a single function or collection of data which can
+;;;; be plotted inside of a plot.
+;;;;
+;;;; There are a couple of convenience generic functions for plotting:
+;;;; quick-draw and make-line.
+;;;;
+;;;; quick-draw is for quickly drawing some object in graphical form.
+;;;;
+;;;; make-line is for generating a line representing some object.
+;;;;
+;;;; quick-draw by the default method creates a 2-D plot using
+;;;; make-line on the object, which means that in most cases all you
+;;;; have to do is define a method of make-line for your type and you
+;;;; can already use quick-draw.
+;;;;
+;;;; test.lisp demonstrates an example of using the full structure for
+;;;; creating more complex plots; one can presumably define his own
+;;;; functions for generating complex plots with certain conventions.
+;;;; However I do intend to write a few convenience functions for
+;;;; this, perhaps using plists to denote the structure of the
+;;;; plotting objects.
 
 (in-package :plotting)
 
@@ -81,6 +83,14 @@
     gnuplot to know to create a distinct page rather than reuse the
     last one used.")
    ;;; actually set-able slots:
+   (shown-title
+    :initform nil
+    :initarg :shown-title
+    :accessor page-shown-title
+    :documentation "Since I implement the plotting with multiplot in
+    gnuplot, there is the possibility of the page having a title as
+    well as the plots having a collective title.  This sets the shown
+    title.")
    (dimensions
     :initform nil
     :initarg :dimensions
@@ -120,6 +130,7 @@
 
 (defmethod generate-cmd ((p page))
   (with-accessors ((title title)
+                   (shown-title page-shown-title)
                    (id page-id)
                    (type page-type)
                    (layout page-layout)
@@ -134,7 +145,10 @@
          (format s " size ~a,~a" (car dimensions) (cdr dimensions)))
        (format s "~%")
        (format s "set multiplot layout ~a,~a title '~a'"
-               (car layout) (cdr layout) title)
+               (car layout) (cdr layout)
+               (if shown-title
+                   shown-title
+                   ""))
        (when scale
          (format s "scale ~a,~a" (car scale) (cdr scale)))
        (format s "~%"))
@@ -242,23 +256,6 @@ in the page."
         (format s "[~a:~a] "
                 (car y-range) (cdr y-range))
         (format s "[*:*] ")))))
-
-;; (defmethod plot-cmd ((p plot2d))
-;;   (with-slots (x-range y-range)
-;;       p
-;;     (with-output-to-string (s)
-;;       (when x-range
-;;         (format s "set xrange [~a:~a]~%"
-;;                 (car x-range) (cdr x-range)))
-;;       (when y-range
-;;         (format s "set yrange [~a:~a]~%"
-;;                 (car y-range) (cdr y-range)))
-;;       (format s "set view map~%")
-;;       (format s "set parametric~%")
-;;       (format s "splot [x=")
-;;       (when x-range
-;;         (format s "~a:~a" (car x-range) (cdr x-range)))
-;;       (format s "] "))))
 
 ;; A three dimensional plot has up to three labelled axes, "x", "y",
 ;; and "z".
@@ -397,16 +394,44 @@ in the page."
 
 ;;; Convenience functions:
 
+(defun quick-multidraw (object-specs &key
+                                       (type "wxt")
+                                       (page-title "")
+                                       (shown-page-title "")
+                                       (plot-title "")
+                                       (x-title "x")
+                                       (y-title "y"))
+  "Plots objects all on one plot similarly to quick-draw but
+  pluralized, as well as optionally giving each object's line a title.
+
+  An object-spec is a list being the object to plot consed onto a
+  plist specifying the keyword arguments to give to make-line."
+  (let ((page
+         (make-instance
+          'page
+          :title page-title
+          :shown-title shown-page-title
+          :type "wxt"
+          :plots (list (make-instance
+                        'plot2d
+                        :title plot-title
+                        :lines (mapcar
+                                #'(lambda (object-spec)
+                                    (apply #'make-line object-spec))
+                                object-specs))))))
+    (draw page)
+    page))
+
 (defgeneric make-line (object &key &allow-other-keys)
   (:documentation "Returns a line appropriate for plotting object."))
 
-(defgeneric quick-plot (object &key &allow-other-keys)
+(defgeneric quick-draw (object &key &allow-other-keys)
   (:documentation "Returns a page which stores a single plot and
   single line as well as drawing the page.")
   ;; Default method for 2-D plotting
   (:method (object &key
                      (type "wxt")
-                     (title "histogram")
+                     (title "plot")
                      (x-title "x")
                      (y-title "y"))
     (let* ((line (make-line object))
@@ -421,9 +446,74 @@ in the page."
       (draw page)
       page)))
 
+;; analytic functions:
+(defmethod make-line ((s string) &key
+                                   (title "" title-given-p)
+                                   color)
+  (apply #'make-instance 'analytic-line
+         :fn-string s
+         :color color
+         (if title-given-p
+             (list :title title)
+             (list :title s))))
+
+;; data:
+(defmethod make-line ((data-alist list) &key
+                                          (title "data")
+                                          (style "points")
+                                          color)
+  "Assumes"
+  (make-instance 'data-line
+                 :title title
+                 :data data-alist
+                 :style style
+                 :color color))
+
+;; functions:
+(defmethod make-line ((fn function) &key
+                                      (title "function")
+                                      (style "lines")
+                                      (lower-bounds -3d0)
+                                      (upper-bounds 3d0)
+                                      (samples 100)
+                                      color)
+  "Samples your function based on the keyword arguments and creates a
+  data-line mapping your function to the output values.
+
+Conventions are:
+
+fn must evaluate to a float (single or double).
+
+All bounds/samples arguments must be of the same type, and must be
+either atoms or lists.
+
+If the bounds/samples arguments are atoms, then fn is assumed to take
+a single double-float argument.
+
+If the bounds/samples are lists, then fn is assumed to take a list of
+up to two double-float arguments."
+  (let* (; taking advantage of the tensor functions:
+         (deltas (/ (- upper-bounds lower-bounds)
+                    (- samples 1)))
+         (raw-domain
+          (apply #'cartesian-product
+                 (mapcar #'range
+                         (mklist lower-bounds)
+                         (mklist upper-bounds)
+                         (mklist deltas))))
+         (domain (if (atom deltas)
+                     (first (transpose raw-domain))
+                     raw-domain)))
+    (make-line (zip domain (mapcar fn domain))
+               :title title
+               :style style
+               :color color)))
 ;; histogram plotting:
 
-(defmethod make-line ((hist histogram) &key)
+;; still need to allow for error bars
+(defmethod make-line ((hist histogram) &key
+                                         (title "histogram")
+                                         color)
   (let* ((ndims (hist-ndims hist))
          (bin-data (map->alist hist))
          (first-independent (car (first bin-data))))
@@ -433,12 +523,15 @@ in the page."
            (error "Must be 1-d independent variable")
            (make-instance 'data-line
                           :data bin-data
-                          :style "boxes")))
+                          :style "boxes"
+                          :color color)))
       (2 
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))
            (error "Must be 2-d independent variable")
            (make-instance 'data-line
+                          :title title
                           :data bin-data
-                          :style "image")))
+                          :style "image"
+                          :color color)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))

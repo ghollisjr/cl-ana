@@ -3,7 +3,8 @@
 (defpackage #:fitting
   (:use :cl
 	:err-prop
-	:map)
+	:map
+        :alexandria)
   (:export :fit
 	   :get-value-alist
 	   ;; fit functions:
