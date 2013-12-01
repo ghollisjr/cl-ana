@@ -6,6 +6,7 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:generic-math
+               #:error-propogation
                #:gnuplot-i-cffi
                #:map
                #:string-utils

@@ -65,4 +65,4 @@
 (defparameter *hist1d*
   (hist-project *hist2d* "x")) 
 
-(quick-draw *hist1d* :title "histogram")
+(quick-draw *hist1d* :title "histogram" :color "black")

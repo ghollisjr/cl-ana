@@ -45,9 +45,9 @@
 ;; run any initialization functions:
 (defun gnuplot-settings ()
   ;; Image style settings:
-  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10")
+  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
   ;; Boxes style settings:
-  (gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
+  ;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
 (gnuplot-settings)
 
@@ -197,6 +197,10 @@ in the page."
   (:documentation "The command used for plotting the plot in gnuplot;
   can be plot, splot, etc."))
 
+(defgeneric plot-axis-commands (plot)
+  (:documentation "Returns a list of the commands to send to gnuplot
+  which will set the proper axis labels"))
+
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
                    (lines plot-lines)
@@ -204,6 +208,9 @@ in the page."
       p
     (with-output-to-string (s)
       (format s "set title '~a'~%" title)
+      (loop
+         for a in (plot-axis-commands p)
+         do (format s "~a~%" a))
       (format s "~a " (plot-cmd p))
       (loop
          for cons on lines
@@ -244,7 +251,40 @@ in the page."
     :initform nil
     :accessor plot2d-y-range
     :documentation "Sets the range for the plot; a cons where the car
-    is the lower bound and the cdr is the upper bound.")))
+    is the lower bound and the cdr is the upper bound.")
+   (x-title
+    :initform nil
+    :initarg :x-title
+    :accessor plot2d-x-title
+    :documentation "Title for bottom x axis")
+   (x2-title
+    :initform nil
+    :initarg :x2-title
+    :accessor plot2d-x2-title
+    :documentation "Title for top x axis")
+   (y-title
+    :initform nil
+    :initarg :y-title
+    :accessor plot2d-y-title
+    :documentation "Title for left y axis")
+   (y2-title
+    :initform nil
+    :initarg :y2-title
+    :accessor plot2d-y2-title
+    :documentation "Title for right y axis")))
+
+(defmethod plot-axis-commands ((p plot2d))
+  (flet ((maybe-make-str (label var)
+           (when var
+             (with-output-to-string (s)
+               (format s "set ~a ~a~%" label var)))))
+  (with-slots (x-title x2-title y-title y2-title)
+      p
+    (append
+     (maybe-make-str "xlabel" x-title)
+     (maybe-make-str "x2label" x2-title)
+     (maybe-make-str "ylabel" y-title)
+     (maybe-make-str "y2label" y2-title)))))
 
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range y-range)
@@ -402,8 +442,10 @@ in the page."
                                        (page-title "")
                                        (shown-page-title "")
                                        (plot-title "")
-                                       (x-title "x")
-                                       (y-title "y"))
+                                       x-title
+                                       y-title
+                                       x2-title
+                                       y2-title)
   "Plots objects all on one plot similarly to quick-draw but
   pluralized, as well as optionally giving each object's line a title.
 
@@ -418,6 +460,10 @@ in the page."
           :plots (list (make-instance
                         'plot2d
                         :title plot-title
+                        :x-title x-title
+                        :x2-title x2-title
+                        :y-title y-title
+                        :y2-title y2-title
                         :lines (mapcar
                                 #'(lambda (object-spec)
                                     (apply #'make-line object-spec))
@@ -436,8 +482,9 @@ in the page."
                      (type "wxt")
                      (title "plot")
                      (x-title "x")
-                     (y-title "y"))
-    (let* ((line (make-line object))
+                     (y-title "y")
+                     color)
+    (let* ((line (make-line object :color color))
            (page
             (make-instance
              'page
@@ -524,10 +571,25 @@ up to two double-float arguments."
       (1
        (if (not (atom first-independent))
            (error "Must be 1-d independent variable")
-           (make-instance 'data-line
-                          :data bin-data
-                          :style "boxes"
-                          :color color)))
+           (let ((first-dependent (cdr (first bin-data))))
+             (if (subtypep (type-of first-dependent) 'err-num)
+                 (let ((bin-data
+                        (mapcar
+                         #'(lambda (x)
+                             (let ((e (cdr x)))
+                               (cons (cons (car x)
+                                           (list (err-num-value e)))
+                                     (err-num-error e))))
+                         bin-data)))
+                   (make-instance 'data-line
+                                  :data bin-data
+                                  :style "boxerrorbars"
+                                  :color color))
+                 (make-instance 'data-line
+                                :data bin-data
+                                :style "boxes"
+                                :color color)))))
+             
       (2 
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))
