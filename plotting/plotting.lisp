@@ -400,7 +400,8 @@ in the page."
         (format s "linewidth ~a " line-width))
       (when fill-style
         (format s "fillstyle ~a " fill-style)
-	(when fill-density
+	(when (and (equal fill-style "solid")
+		   fill-density)
 	  (format s "~a " fill-density)))
       (when color
         (format s "linecolor rgb '~a' " color))
