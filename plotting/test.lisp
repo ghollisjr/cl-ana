@@ -68,7 +68,7 @@
 (quick-draw *hist2d*)
 
 (defparameter *hist1d*
-  (hist-project *hist2d* "x")) 
+  (hist-project *hist2d* "x"))
 
 ;;(quick-draw *hist1d* :title "histogram" :color "black")
 
@@ -85,11 +85,11 @@
 
 (quick-multidraw (list (list *hist1d*
                              :title "Data Histogram"
-                             :fill-style "solid"
-                             :fill-density 0.3
-			     :color "green")
+                             :fill-style "empty"
+                             ;;:fill-density 0.1
+			     :color "black")
                        (list *fitfunc*
                              :title "Fitted Gaussian"
-                             :color "black"))
+                             :color "red"))
                  :x-title "x"
                  :y-title "N")

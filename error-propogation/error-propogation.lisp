@@ -26,11 +26,24 @@
     :initarg :error
     :initform 0)))
 
+(defvar *err-num-pretty-print* t
+  "Tells print-object whether to use the +- version of printing or the
+  direct reader macro version #e(...)")
+
 (defmethod print-object ((e err-num) stream)
-  (with-accessors ((val err-num-value)
-		   (err err-num-error))
-      e
-    (format stream "~a +- ~a" val err)))
+  (labels ((rec (e result)
+	     (if (subtypep (type-of e)
+			   'err-num)
+		 (with-slots (val err)
+		     e
+		   (rec err (cons val result)))
+		 (nreverse (cons e result)))))
+    (if *err-num-pretty-print*
+	(with-accessors ((val err-num-value)
+			 (err err-num-error))
+	    e
+	  (format stream "~a +- ~a" val err))
+	(format stream "#e~a" (rec e nil)))))
 
 (defun make-err-num (&rest val-errs)
   "Constructs a numerical value along with errors.  Note that the

@@ -3,7 +3,8 @@
 (defpackage #:error-propogation
   (:nicknames #:err-prop)
   (:use :cl)
-  (:export :err-num
+  (:export :*err-num-pretty-print* ; for print style
+	   :err-num
 	   :make-err-num
 	   :err-num-value
 	   :err-num-error
