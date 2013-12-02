@@ -94,6 +94,11 @@
     gnuplot, there is the possibility of the page having a title as
     well as the plots having a collective title.  This sets the shown
     title.")
+   (default-dimensions
+     :initform (cons 800 600)
+     :accessor page-default-dimensions
+     :allocation :class
+     :documentation "Default page size.")
    (dimensions
     :initform nil
     :initarg :dimensions
@@ -138,14 +143,18 @@
                    (type page-type)
                    (layout page-layout)
                    (dimensions page-dimensions)
+		   (default-dimensions page-default-dimensions)
                    (scale page-scale)
                    (plots page-plots))
       p
     (string-append
      (with-output-to-string (s)
        (format s "set term ~a ~a title '~a'" type id title)
-       (when dimensions
-         (format s " size ~a,~a" (car dimensions) (cdr dimensions)))
+       (if dimensions
+	   (format s " size ~a,~a" (car dimensions) (cdr dimensions))
+	   (format s " size ~a,~a"
+		   (car default-dimensions)
+		   (cdr default-dimensions)))
        (format s "~%")
        (format s "set multiplot layout ~a,~a title '~a'"
                (car layout) (cdr layout)
@@ -281,6 +290,10 @@ in the page."
   (with-slots (x-title x2-title y-title y2-title)
       p
     (append
+     (list "unset xlabel"
+	   "unset x2label"
+	   "unset ylabel"
+	   "unset y2label")
      (maybe-make-str "xlabel" x-title)
      (maybe-make-str "x2label" x2-title)
      (maybe-make-str "ylabel" y-title)
@@ -508,6 +521,8 @@ in the page."
                                        (page-title "")
                                        (shown-page-title "")
                                        (plot-title "")
+				       x-range
+				       y-range
                                        x-title
                                        y-title
                                        x2-title
@@ -530,6 +545,8 @@ in the page."
                         :x2-title x2-title
                         :y-title y-title
                         :y2-title y2-title
+			:x-range x-range
+			:y-range y-range
                         :lines (mapcar
                                 #'(lambda (object-spec)
                                     (apply #'make-line object-spec))
@@ -559,6 +576,8 @@ in the page."
                      y-title
                      x2-title
                      y2-title
+		     x-range
+		     y-range
                      color)
     (let* ((line (make-line object :color color))
            (page
@@ -574,6 +593,8 @@ in the page."
                            :y-title y-title
                            :x2-title x2-title
                            :y2-title y2-title
+			   :x-range x-range
+			   :y-range y-range
                            :lines (list line))))))
       (draw page)
       page)))

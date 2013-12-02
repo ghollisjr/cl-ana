@@ -45,6 +45,8 @@
                              (cons 3 3)
                              (cons 4 4))))))))
 
+(draw *page*)
+
 ;; Quick example of how to draw a single plot with a function and some
 ;; data:
 (defparameter *quick-page*
@@ -61,9 +63,13 @@
    (list (list :name "x" :nbins 100 :low -3d0 :high 3d0)
          (list :name "y" :nbins 100 :low -3d0 :high 3d0))))
 
-(defun gaus () (alexandria:gaussian-random -3d0 3d0))
+(defun gaus ()
+  (alexandria:gaussian-random -3d0 3d0))
 
-(loop for i below 100000 do (hist-insert *hist2d* (list (gaus) (gaus))))
+(loop
+   for i below 100000
+   do (hist-insert *hist2d*
+		   (list (gaus) (gaus))))
 
 (quick-draw *hist2d*)
 
