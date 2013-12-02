@@ -12,6 +12,11 @@
     :initform nil
     :documentation "Nested arrays representing the bin values")))
 
+;; I was thinking about making this a method on initialize-instance,
+;; but it seems cleaner to keep this as a distinct function, since if
+;; I wish to directly copy histogram contents the initialize-instance
+;; method would have to handle these two cases separately, or I would
+;; have to implement the copying in a strange way.
 (defun make-contiguous-hist (dim-spec-plists &key empty-bin-value default-increment)
   "dim-spec-plist is a plist with the following
 fields: :name :low :high :nbins, which specify the axis name,
