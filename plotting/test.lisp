@@ -86,9 +86,10 @@
 (quick-multidraw (list (list *hist1d*
                              :title "Data Histogram"
                              :fill-style "solid"
-                             :fill-density 0.3)
+                             :fill-density 0.3
+			     :color "green")
                        (list *fitfunc*
                              :title "Fitted Gaussian"
-                             :color "blue"))
+                             :color "black"))
                  :x-title "x"
                  :y-title "N")

@@ -399,9 +399,9 @@ in the page."
       (when line-width
         (format s "linewidth ~a " line-width))
       (when fill-style
-        (format s "fillstyle ~a " fill-style))
-      (when fill-density
-        (format s "~a " fill-density))
+        (format s "fillstyle ~a " fill-style)
+	(when fill-density
+	  (format s "~a " fill-density)))
       (when color
         (format s "linecolor rgb '~a' " color))
       (format s "title '~a'" title)
