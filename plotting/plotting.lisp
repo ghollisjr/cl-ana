@@ -277,7 +277,7 @@ in the page."
   (flet ((maybe-make-str (label var)
            (when var
              (list
-               (format nil "set ~a ~a~%" label var)))))
+               (format nil "set ~a '~a'~%" label var)))))
   (with-slots (x-title x2-title y-title y2-title)
       p
     (append
@@ -330,6 +330,33 @@ in the page."
     :accessor line-point-type
     :documentation "Type of point to draw when using style points or
     linespoints.")
+   (point-size
+    :initform nil
+    :initarg :point-size
+    :accessor line-point-size
+    :documentation "Size of points when appropriate.")
+   (line-type
+    :initform nil
+    :initarg :line-type
+    :accessor line-line-type
+    :documentation "Line type")
+   (line-width
+    :initform nil
+    :initarg :line-width
+    :accessor line-line-width
+    :documentation "Thickness of line when appropriate.")
+   (fill-style
+    :initform nil
+    :initarg :fill-style
+    :accessor line-fill-style
+    :documentation "The fill style for boxes: either solid or empty")
+   (fill-density
+    :initform nil
+    :initarg :fill-density
+    :accessor line-fill-density
+    :documentation "The amount of coloration to fill when using boxes
+    with fill style solid; must be a floating point number between 0
+    and 1.")
    (plot-arg
     :initarg :plot-arg
     :initform ""
@@ -352,6 +379,11 @@ in the page."
     (with-accessors ((title title)
                      (style line-style)
                      (point-type line-point-type)
+                     (point-size line-point-size)
+                     (line-type line-line-type)
+                     (line-width line-line-width)
+                     (fill-style line-fill-style)
+                     (fill-density line-fill-density)
                      (plot-arg line-plot-arg)
                      (color line-color)
                      (options line-options))
@@ -359,11 +391,22 @@ in the page."
       (format s "~a with " plot-arg)
       (format s "~a " style)
       (when point-type
-        (format s "pt ~a " point-type))
-      (format s "~a " options)
+        (format s "pointtype ~a " point-type))
+      (when point-size
+        (format s "pointsize ~a " point-size))
+      (when line-type
+        (format s "linetype ~a " line-type))
+      (when line-width
+        (format s "linewidth ~a " line-width))
+      (when fill-style
+        (format s "fillstyle ~a " fill-style))
+      (when fill-density
+        (format s "~a " fill-density))
       (when color
         (format s "linecolor rgb '~a' " color))
-      (format s "title '~a'" title))))
+      (format s "title '~a'" title)
+      (when options
+        (format s "~a " options)))))
 
 (defclass data-line (line)
   ((data
@@ -375,7 +418,20 @@ in the page."
     independent value (or values as a list) to the dependent value.")))
 
 (defmethod initialize-instance :after ((l data-line) &key)
-  (setf (slot-value l 'plot-arg) "'-'"))
+  (with-slots (data plot-arg style)
+      l
+    (setf plot-arg "'-'")
+    (let ((first-dependent (cdr (first data))))
+      (when (subtypep (type-of first-dependent) 'err-num)
+        (setf data
+              (mapcar
+               #'(lambda (x)
+                   (let ((e (cdr x)))
+                     (cons (cons (car x)
+                                 (list (err-num-value e)))
+                           (err-num-error e))))
+               data))
+        (setf style "yerrorbars")))))
 
 (defmethod line-data-cmd ((line data-line))
   (with-output-to-string (s)
@@ -465,7 +521,7 @@ in the page."
           'page
           :title page-title
           :shown-title shown-page-title
-          :type "wxt"
+          :type type
           :plots (list (make-instance
                         'plot2d
                         :title plot-title
@@ -483,24 +539,40 @@ in the page."
 (defgeneric make-line (object &key &allow-other-keys)
   (:documentation "Returns a line appropriate for plotting object."))
 
+;; There is an awful lot of redundant code being shared between
+;; quick-draw and quick-multidraw, which could make it cumbersome if
+;; too many changes need to be made.  But: gnuplot's interface seems
+;; to be very stable, so this hopefully won't be the case.  If it
+;; becomes a problem, I'll think of some sort of way to share the
+;; code.
 (defgeneric quick-draw (object &key &allow-other-keys)
   (:documentation "Returns a page which stores a single plot and
   single line as well as drawing the page.")
   ;; Default method for 2-D plotting
   (:method (object &key
                      (type "wxt")
-                     (title "plot")
-                     (x-title "x")
-                     (y-title "y")
+                     (page-title "")
+                     (shown-page-title "")
+                     (plot-title "")
+                     x-title
+                     y-title
+                     x2-title
+                     y2-title
                      color)
     (let* ((line (make-line object :color color))
            (page
             (make-instance
              'page
              :type type
+             :title page-title
+             :shown-title shown-page-title
              :plots (list (make-instance
                            'plot2d
-                           :title title
+                           :title plot-title
+                           :x-title x-title
+                           :y-title y-title
+                           :x2-title x2-title
+                           :y2-title y2-title
                            :lines (list line))))))
       (draw page)
       page)))
@@ -508,10 +580,14 @@ in the page."
 ;; analytic functions:
 (defmethod make-line ((s string) &key
                                    (title "" title-given-p)
+                                   line-type
+                                   line-width
                                    color)
   (apply #'make-instance 'analytic-line
          :fn-string s
          :color color
+         :line-type line-type
+         :line-width line-width
          (if title-given-p
              (list :title title)
              (list :title s))))
@@ -521,6 +597,9 @@ in the page."
                                           (title "data")
                                           (style "points")
                                           point-type
+                                          point-size
+                                          line-type
+                                          line-width
                                           color)
   "Assumes"
   (make-instance 'data-line
@@ -528,15 +607,22 @@ in the page."
                  :data data-alist
                  :style style
                  :point-type point-type
+                 :point-size point-size
+                 :line-type line-type
+                 :line-width line-width
                  :color color))
 
 ;; functions:
 (defmethod make-line ((fn function) &key
-                                      (title "function")
-                                      (style "lines")
                                       (lower-bounds -3d0)
                                       (upper-bounds 3d0)
                                       (samples 100)
+                                      (title "function")
+                                      (style "lines")
+                                      point-type
+                                      point-size
+                                      line-type
+                                      line-width
                                       color)
   "Samples your function based on the keyword arguments and creates a
   data-line mapping your function to the output values.
@@ -568,12 +654,19 @@ up to two double-float arguments."
     (make-line (zip domain (mapcar fn domain))
                :title title
                :style style
+               :point-type point-type
+               :point-size point-size
+               :line-type line-type
+               :line-width line-width
                :color color)))
+
 ;; histogram plotting:
 
 ;; still need to allow for error bars
 (defmethod make-line ((hist histogram) &key
                                          (title "histogram")
+                                         fill-style
+                                         fill-density
                                          color)
   (let* ((ndims (hist-ndims hist))
          (bin-data (map->alist hist))
@@ -583,26 +676,17 @@ up to two double-float arguments."
        (if (not (atom first-independent))
            (error "Must be 1-d independent variable")
            (let ((first-dependent (cdr (first bin-data))))
-             (if (subtypep (type-of first-dependent) 'err-num)
-                 (let ((bin-data
-                        (mapcar
-                         #'(lambda (x)
-                             (let ((e (cdr x)))
-                               (cons (cons (car x)
-                                           (list (err-num-value e)))
-                                     (err-num-error e))))
-                         bin-data)))
-                   (make-instance 'data-line
-                                  :title title
-                                  :data bin-data
-                                  :style "boxerrorbars"
-                                  :color color))
-                 (make-instance 'data-line
-                                :title title
-                                :data bin-data
-                                :style "boxes"
-                                :color color)))))
-             
+             (make-instance 'data-line
+                            :title title
+                            :data bin-data
+                            :fill-style fill-style
+                            :fill-density fill-density
+                            :style
+                            (if (subtypep (type-of first-dependent)
+                                          'err-num)
+                                "boxerrorbars"
+                                "boxes")
+                            :color color))))
       (2 
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))

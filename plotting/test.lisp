@@ -83,7 +83,12 @@
 
 (defparameter *fitfunc* (first *fit-results*))
 
-(quick-multidraw (list (list *hist1d* :title "Gaussian Data")
-                       (list *fitfunc* :title "Fitted Gaussian"))
+(quick-multidraw (list (list *hist1d*
+                             :title "Data Histogram"
+                             :fill-style "solid"
+                             :fill-density 0.3)
+                       (list *fitfunc*
+                             :title "Fitted Gaussian"
+                             :color "blue"))
                  :x-title "x"
                  :y-title "N")
