@@ -149,7 +149,9 @@
       p
     (string-append
      (with-output-to-string (s)
-       (format s "set term ~a ~a title '~a'" type id title)
+       (if (equal title "")
+	   (format s "set term ~a ~a title 'Page ~a'" type id id)
+	   (format s "set term ~a ~a title '~a'" type id title))
        (if dimensions
 	   (format s " size ~a,~a" (car dimensions) (cdr dimensions))
 	   (format s " size ~a,~a"
