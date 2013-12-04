@@ -39,11 +39,6 @@
     :accessor hdf-table-row-buffer-index
     :documentation "Index to the row in the buffer which is currently
     being modified prior to writing.")
-   (row-cstruct
-    :initarg :row-cstruct
-    :initform nil
-    :accessor hdf-table-row-cstruct
-    :documentation "CFFI cstruct type designator for the row object")
    (hdf-dataset
     :initarg :hdf-dataset
     :initform nil
@@ -132,6 +127,9 @@
 			    cparms))))))
     (make-instance 'hdf-table
 		   :row-cstruct cstruct
+                   :column-names (mapcar #'car names-specs)
+                   :column-specs
+                   (mapcar #'cdr names-specs)
 		   :row-buffer row-buffer
 		   :buffer-size buffer-size
 		   :chunk-index 0
@@ -150,7 +148,7 @@ the dataset."
 		   (chunk-index hdf-table-chunk-index)
 		   (row-buffer hdf-table-row-buffer)
 		   (buffer-size hdf-table-buffer-size)
-		   (cstruct hdf-table-row-cstruct)
+		   (cstruct typed-table-row-cstruct)
 		   (access-mode table-access-mode))
       table
     (when (equal access-mode :write)
@@ -190,7 +188,7 @@ the dataset."
 
 (defmethod table-set-field ((table hdf-table) column-symbol value)
   (with-accessors ((row-buffer hdf-table-row-buffer)
-		   (cstruct hdf-table-row-cstruct)
+		   (cstruct typed-table-row-cstruct)
 		   (row-buffer-index hdf-table-row-buffer-index))
       table
     (setf
@@ -206,7 +204,7 @@ the dataset."
 		   (row-buffer-index hdf-table-row-buffer-index)
 		   (buffer-size hdf-table-buffer-size)
 		   (chunk-index hdf-table-chunk-index)
-		   (cstruct hdf-table-row-cstruct)
+		   (cstruct typed-table-row-cstruct)
 		   (dataset hdf-table-dataset)
 		   (hdf-type hdf-table-row-type))
       table
@@ -280,7 +278,7 @@ the dataset."
   (with-accessors ((buffer-size hdf-table-buffer-size)
 		   (current-chunk-index hdf-table-chunk-index)
 		   (row-buffer hdf-table-row-buffer)
-		   (cstruct hdf-table-row-cstruct))
+		   (cstruct typed-table-row-cstruct))
       table
     (load-chunk table row-number)
     (foreign-slot-value
@@ -294,7 +292,7 @@ the dataset."
     (with-accessors ((buffer-size hdf-table-buffer-size)
 		     (current-chunk-index hdf-table-chunk-index)
 		     (row-buffer hdf-table-row-buffer)
-		     (cstruct hdf-table-row-cstruct))
+		     (cstruct typed-table-row-cstruct))
 	table
       (let ((chunk-index (get-chunk-index row-number buffer-size)))
 	(when (not (= current-chunk-index chunk-index))

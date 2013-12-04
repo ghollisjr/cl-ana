@@ -6,6 +6,8 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:list-utils
+               #:string-utils
+               #:symbol-utils
 	       #:table
 	       #:typespec
 	       #:alexandria)

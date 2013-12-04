@@ -65,7 +65,7 @@
       (setf *table-typespec* (typed-table->typespec *table*))
       (setf *hdf-size* (h5tget-size (hdf-table-row-type *table*)))
       (setf *hdf-typespec* (hdf-type->typespec (hdf-table-row-type *table*)))
-      (setf *cstruct-size* (foreign-type-size (hdf-table-row-cstruct *table*)))
+      (setf *cstruct-size* (foreign-type-size (typed-table-row-cstruct *table*)))
       (do-table (row-index *table*)
 	  ("gpart")
 	(incf result gpart)
@@ -78,10 +78,15 @@
 		       "/home/ghollisjr/hdfwork/test.h5"
 		       :direction :output
 		       :if-exists :supersede)
-    (let* ((table (make-hdf-table file "/test" (list (cons "x" :int) (cons "y" :float)))))
+    (let* ((table
+            (make-hdf-table file
+                            "/test"
+                            (list (cons "x" :int)
+                                  (cons "y" :float)))))
+      (print (typed-table-type-map table))
       (dotimes (i 1000000)
-	(table-set-field table 'x i)
-	(table-set-field table 'y (sqrt i))
+	(typed-table-set-field table 'x i)
+	(typed-table-set-field table 'y (sqrt i))
 	(table-commit-row table))
       (table-close table))))
 
@@ -105,6 +110,24 @@
 	(when (<= 25 y 30)
 	  (table-set-field output-table 'x x)
 	  (table-set-field output-table 'y y)
+	  (table-commit-row output-table)))
+      (table-close output-table)
+      (table-close input-table))))
+
+(defun hdf-typed-table-test ()
+  (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
+			       :direction :output
+			       :if-exists :supersede)
+    (let ((output-table (make-hdf-table outfile "/output-dataset"
+					(zip (list "x" "y")
+					     (list :int :float))))
+	  (input-table
+	   (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
+      (do-typed-table (row-index input-table)
+	  ("x" "y")
+	(when (<= 25 y 30)
+	  (typed-table-set-field output-table 'x x)
+	  (typed-table-set-field output-table 'y y)
 	  (table-commit-row output-table)))
       (table-close output-table)
       (table-close input-table))))

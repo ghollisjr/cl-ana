@@ -12,7 +12,40 @@
     :initarg :column-specs
     :initform ()
     :accessor typed-table-column-specs
-    :documentation "list of typespecs, one per column")))
+    :documentation "list of typespecs, one per column")
+   (row-cstruct
+    :initarg :row-cstruct
+    :initform nil
+    :accessor typed-table-row-cstruct
+    :documentation "CFFI cstruct type designator for the row object")
+   (type-map
+    :initarg :type-map
+    :initform nil
+    :accessor typed-table-type-map
+    :documentation "Hash table which maps the lispified column names
+    to the appropriate CFFI type.")))
+
+(defmethod initialize-instance :after ((table typed-table) &key)
+  (with-accessors ((column-specs typed-table-column-specs)
+                   (type-map typed-table-type-map))
+      table
+    (setf type-map (make-hash-table :test 'equal))
+    ;; (print (table-column-names table))
+    ;; (print column-specs)
+    (loop
+       for s in (table-column-symbols table)
+       for cs in column-specs
+       do (setf (gethash s type-map)
+                (typespec->cffi-type cs)))))
+    ;;(print (typed-table-type-map table))))
+
+(defun typed-table-set-field (table column-symbol value)
+  (with-slots (type-map)
+      table
+    (table-set-field table column-symbol
+                     (convert-to-foreign value
+                                         (gethash column-symbol
+                                                  type-map)))))
 
 (defun typespec->column-names (compound-typespec)
   "Returns column names from the compound type designation."
@@ -31,11 +64,6 @@
   (append (list :compound)
 	  (zip (table-column-names table)
 		   (typed-table-column-specs table))))
-
-(defun keywordify (symbol)
-  (intern
-   (string symbol)
-   (package-name :keyword)))
 
 ;; Specified column version:
 (defmacro do-typed-table ((rowvar table) (&rest column-selections)

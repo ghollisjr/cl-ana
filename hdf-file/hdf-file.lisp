@@ -47,16 +47,16 @@ if-does-not-exist can be :create :error nil"
 		(:error (error "File exists"))
 		(nil nil)
 		(:supersede
-		 (h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
+		 (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
 		(:rename
 		 (progn
 		   ;; rename "file" to "file.bak"
 		   ;; then create new file
 		   (rename-file filename (concatenate 'string filename ".bak"))
-		   (h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))))
+		   (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))))
 	     (case if-does-not-exist
 	       (:create
-		(h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
+		(apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
 	       (:error (error "file does not exist"))
 	       (nil nil)))))))
 

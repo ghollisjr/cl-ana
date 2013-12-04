@@ -9,6 +9,7 @@
   :depends-on (#:list-utils
 	       #:string-utils
 	       #:memoization
+               #:alexandria
 	       #:cffi)
   :components ((:file "package")
 	       (:file "typespec")))
