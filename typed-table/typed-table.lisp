@@ -40,6 +40,12 @@
     ;;(print (typed-table-type-map table))))
 
 (defun typed-table-set-field (table column-symbol value)
+  "Like table-set-field, but automatically converts the value into the
+appropriate CFFI type for the field given by column-symbol.  Note that
+this function is still pedantic about which particular numerical type
+you are giving it, e.g. float vs. integer.  Use plists to represent a
+structure (works for nested as well), and vectors to represent foreign
+arrays."
   (with-slots (type-map)
       table
     (table-set-field table column-symbol
