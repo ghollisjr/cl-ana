@@ -17,7 +17,15 @@
 (defvar *table*)
 
 (setf *table*
-      (make-instance 'hdf-table :column-names (list "x" "y" "z") :column-specs (list :int :float (list :compound (cons "weight" :double) (cons "direction vector" (list :array :double 1 (list 20)))))))
+      (make-instance 'hdf-table
+                     :column-names (list "x" "y" "z")
+                     :column-specs
+                     (list :int
+                           :float
+                           (list :compound
+                                 (cons "weight" :double)
+                                 (cons "direction vector"
+                                       (list :array :double 1 (list 20)))))))
 
 ;; (defun hdf-table-test ()
 ;;   (typespec->hdf-type (typed-table->typespec *table*)))
