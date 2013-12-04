@@ -44,14 +44,17 @@
    (current-table-index
     :initform -1
     :accessor hdf-table-chain-current-table-index
+    :type integer
     :documentation "index for in-memory hdf-table in (virtual) list of tables")
    (current-table-start
     :initform -1
     :accessor hdf-table-chain-current-table-start
+    :type integer
     :documentation "starting row index for the current table")
    (current-table-end
     :initform -1
     :accessor hdf-table-chain-current-table-end
+    :type integer
     :documentation "last row index for the current table")
    (table-index-binary-tree
     :initform ()
@@ -148,10 +151,12 @@ dataset-path"
 (defmethod rread-table-get-row-field ((table hdf-table-chain)
 				      row-number
 				      row-symbol)
+  (declare (integer row-number))
   (let* ((current-table-start (hdf-table-chain-current-table-start
 			       table))
 	 (current-table-end (hdf-table-chain-current-table-end
 			     table)))
+    (declare (integer current-table-start current-table-end))
     (if (<= current-table-start
 	    row-number
 	    current-table-end)
@@ -180,8 +185,9 @@ dataset-path"
 		(elt (hdf-table-chain-table-index-offsets table)
                      table-index))
 	  (setf (hdf-table-chain-current-table-end table)
-		(+ (elt (hdf-table-chain-table-lengths table)
-                        table-index)
+		(+ (the integer
+                        (elt (hdf-table-chain-table-lengths table)
+                             table-index))
 		   (hdf-table-chain-current-table-start table)
 		   -1))
 	  (rread-table-get-row-field
@@ -206,6 +212,7 @@ dataset-path"
   (declare (integer row-index))
   (labels
       ((get-tree-index-worker (binary-tree row-index lastright)
+         (declare (integer row-index))
 	 (if binary-tree
 	     (let* ((node-value (node-value binary-tree))
 		    (node-start-index (car node-value)))

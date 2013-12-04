@@ -91,7 +91,7 @@
                             "/test"
                             (list (cons "x" :int)
                                   (cons "y" :float)))))
-      (print (typed-table-type-map table))
+      ;;(print (typed-table-type-map table))
       (dotimes (i 1000000)
 	(typed-table-set-field table 'x i)
 	(typed-table-set-field table 'y (sqrt i))
