@@ -209,6 +209,7 @@ dataset-path"
 	 (if binary-tree
 	     (let* ((node-value (node-value binary-tree))
 		    (node-start-index (car node-value)))
+               (declare (integer node-start-index))
 	       (cond
 		 ((< row-index node-start-index)
 		  (get-tree-index-worker

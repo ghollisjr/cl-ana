@@ -150,6 +150,7 @@ The code body will be run for each row in the table."
 		 (table-load-next-row ,table))
 		(,rowvar 0 (1+ ,rowvar)))
 	       ((not ,read-status))
+             (declare (integer ,rowvar))
 	     (let ,selected-symbol-bindings
 	       (let ,conversion-bindings
 		 ,@body)))))))
@@ -209,6 +210,7 @@ values are automatically converted into LISP types."
 		 (table-load-next-row ,table))
 		(,rowvar 0 (1+ ,rowvar)))
 	       ((not ,read-status))
+             (declare (integer ,rowvar))
 	     (let ,marked-symbol-bindings
 	       (let ,conversion-bindings
 		 ,@body)))))))
