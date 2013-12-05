@@ -10,6 +10,7 @@
 	       #:gsll
 	       #:gsl-cffi
 	       #:table
+               #:typed-table
 	       #:typespec
 	       #:alexandria)
   :components ((:file "package")

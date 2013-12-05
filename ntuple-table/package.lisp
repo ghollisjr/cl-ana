@@ -4,7 +4,7 @@
   (:use :cl
 	:cffi
 	:table
+        :typed-table
 	:typespec)
   (:export :open-ntuple-table
-	   :make-ntuple-table)
-  (:shadow :row))
+	   :make-ntuple-table))

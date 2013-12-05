@@ -2,7 +2,7 @@
 
 (in-package :ntuple-table)
 
-(defclass ntuple-table (table)
+(defclass ntuple-table (typed-table)
   ((ntuple
     :initarg :ntuple
     :initform nil
@@ -17,11 +17,7 @@
     :initarg :row
     :initform nil
     :accessor ntuple-table-row
-    :documentation "CFFI row pointer storing row data")
-   (column-specs
-    :initarg :column-specs
-    :initform ()
-    :accessor ntuple-table-column-specs)))
+    :documentation "CFFI row pointer storing row data")))
 
 ;;; Writing functions:
 
@@ -30,7 +26,7 @@
 to filename and names-specs being an alist mapping the column names to
 their typespecs."
   (let* ((typespec (cons :compound names-specs))
-	 (cstruct (typespec-make-cstruct typespec))
+	 (cstruct (typespec->cffi-type typespec))
 	 (column-names (mapcar #'car names-specs))
 	 (column-specs (mapcar #'cdr names-specs))
 	 (row (foreign-alloc cstruct)))
@@ -65,7 +61,7 @@ their typespecs."
 typespecs of each of the column types (and names); this is a
 limitation of the ntuple file format itself."
   (let* ((typespec (cons :compound names-specs))
-	 (cstruct (typespec-make-cstruct typespec))
+	 (cstruct (typespec->cffi-type typespec))
 	 (column-names (mapcar #'car names-specs))
 	 (column-specs (mapcar #'cdr names-specs))
 	 (row (foreign-alloc cstruct)))
