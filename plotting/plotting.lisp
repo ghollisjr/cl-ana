@@ -663,26 +663,37 @@ a single double-float argument.
 
 If the bounds/samples are lists, then fn is assumed to take a list of
 up to two double-float arguments."
-  (let* (; taking advantage of the tensor functions:
-         (deltas (/ (- upper-bounds lower-bounds)
-                    (- samples 1)))
-         (raw-domain
-          (apply #'cartesian-product
-                 (mapcar #'range
-                         (mklist lower-bounds)
-                         (mklist upper-bounds)
-                         (mklist deltas))))
-         (domain (if (atom deltas)
-                     (first (transpose raw-domain))
-                     raw-domain)))
-    (make-line (zip domain (mapcar fn domain))
-               :title title
-               :style style
-               :point-type point-type
-               :point-size point-size
-               :line-type line-type
-               :line-width line-width
-               :color color)))
+  (flet ((->double (x)
+           (float x 0d0)))
+    (let* ((lower-bounds-list
+            (mapcar #'->double
+                    (mklist lower-bounds)))
+           (upper-bounds-list
+            (mapcar #'->double
+                    (mklist upper-bounds)))
+           (samples-list
+            (mapcar #'->double
+                    (mklist samples)))
+           ;; taking advantage of the tensor functions:
+           (deltas (/ (- upper-bounds-list lower-bounds-list)
+                      (- samples-list 1)))
+           (raw-domain
+            (apply #'cartesian-product
+                   (mapcar #'range
+                           lower-bounds-list
+                           upper-bounds-list
+                           deltas)))
+           (domain (if (single deltas)
+                       (first (transpose raw-domain))
+                       raw-domain)))
+      (make-line (zip domain (mapcar fn domain))
+                 :title title
+                 :style style
+                 :point-type point-type
+                 :point-size point-size
+                 :line-type line-type
+                 :line-width line-width
+                 :color color))))
 
 ;; histogram plotting:
 
