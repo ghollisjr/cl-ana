@@ -23,6 +23,7 @@
   (:export :use-gmath
 	   :defmethod-commutative
 	   :+
+	   :sum
 	   :add
 	   :-
 	   :sub

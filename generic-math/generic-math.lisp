@@ -60,6 +60,11 @@
 
 (reduce-defun + add)
 
+(defun sum (xs)
+  "Convience function for summing a list of values (it's reducing +
+across them)."
+  (reduce #'+ xs))
+
 (defgeneric add (x y)
   (:documentation "Binary addition function"))
 
