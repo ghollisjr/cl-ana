@@ -2,10 +2,10 @@
 
 (in-package :hdf-table)
 
-(declaim (optimize (speed 3)
-                   (safety 0)
-                   (compilation-speed 0)
-                   (debug 0)))
+;; (declaim (optimize (speed 3)
+;;                    (safety 0)
+;;                    (compilation-speed 0)
+;;                    (debug 0)))
 
 ;;;; hdf-table-chain: A read-only chain of hdf-tables which can be
 ;;;; randomly accessed unlike the general table-chain.
