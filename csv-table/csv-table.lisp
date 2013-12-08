@@ -26,18 +26,24 @@
     :documentation "Storing the lispified column symbols for
     efficiency.")))
 
-(defun open-csv-table (filename &optional (delimeter #\,))
+(defun open-csv-table (filename &key
+                                  (delimeter #\,)
+                                  column-names)
   "Open a CSV file to be read as a table.  Assumes that the first row
-  consists of the column names and are separated by the delimeter."
+  consists of the column names and are separated by the delimeter
+  unless column-names keyword argument is given."
   (let* ((file (open filename :direction :input))
-	 (column-names
-	  (first (read-csv (read-line file) :separator delimeter)))
 	 (row (make-hash-table :test #'equal))
-	 (table (make-instance 'csv-table
-			       :column-names column-names
-			       :file file
-			       :delimeter delimeter
-			       :row row)))
+	 (table
+          (make-instance 'csv-table
+                         :column-names
+                         (if column-names
+                             column-names
+                             (first (read-csv (read-line file)
+                                              :separator delimeter)))
+                         :file file
+                         :delimeter delimeter
+                         :row row)))
     (setf (csv-table-column-symbols table)
 	  (table-column-symbols table))
     table))
