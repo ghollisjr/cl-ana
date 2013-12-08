@@ -2,8 +2,8 @@
 
 (asdf:defsystem #:fitting
   :serial t
-  :description "Library for linear & non-linear least squares fitting
-  which uses the MINPACK code as converted to LISP by f2cl."
+  :description "Library for linear & non-linear least squares fitting;
+  makes use of GSLL's fit functions."
   :author "Gary Hollis"
   :license ""
   :depends-on (#:gsll
