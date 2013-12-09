@@ -12,6 +12,7 @@
   (:export :*gnuplot-session*
            :restart-gnuplot-session
            :titled
+           :title
            :page
 	   :plot
 	   :plot2d
@@ -36,6 +37,12 @@
            :plot2d-y-range
            ;; line functions
            :line-style
+           :line-line-style
+           :line-point-type
+           :line-line-type
+           :line-line-width
+           :line-fill-style
+           :line-fill-density
            :line-color
            :line-plot-arg
            :line-options

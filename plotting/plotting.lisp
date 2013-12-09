@@ -350,6 +350,14 @@ in the page."
     :initarg :point-size
     :accessor line-point-size
     :documentation "Size of points when appropriate.")
+   (line-style
+    :initform nil
+    :initarg :line-style
+    :accessor line-line-style
+    :documentation "linestyle, can refer to custom-defined linestyles.
+    Linestyles should be defined prior to reference, so you should
+    send the gnuplot session appropriate commands to define them prior
+    to plotting.")
    (line-type
     :initform nil
     :initarg :line-type
@@ -393,6 +401,7 @@ in the page."
   (with-output-to-string (s)
     (with-accessors ((title title)
                      (style line-style)
+                     (line-style line-line-style)
                      (point-type line-point-type)
                      (point-size line-point-size)
                      (line-type line-line-type)
@@ -409,6 +418,8 @@ in the page."
         (format s "pointtype ~a " point-type))
       (when point-size
         (format s "pointsize ~a " point-size))
+      (when line-style
+        (format s "linestyle ~a " line-style))
       (when line-type
         (format s "linetype ~a " line-type))
       (when line-width
