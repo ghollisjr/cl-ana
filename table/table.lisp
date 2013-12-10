@@ -57,6 +57,20 @@
 (defgeneric table-commit-row (table)
   (:documentation "Commits (writes) the current output row to the table"))
 
+(defmacro table-push-fields (table &body field-specs)
+  "Sets fields and commits row of table using field-specs.
+
+Each field-spec is either a symbol which represents both the
+column-symbol and the variable storing the field data."
+  `(progn
+     ,@(loop
+          for fs in field-specs
+          collecting
+            (if (listp fs)
+                `(table-set-field ,table ',(first fs) ,(second fs))
+                `(table-set-field ,table ',fs ,fs)))
+     (table-commit-row ,table)))
+
 ;; Closing tables, sometimes necessary but always call just in case
 (defgeneric table-close (table)
   (:documentation "Close any open files, etc."))

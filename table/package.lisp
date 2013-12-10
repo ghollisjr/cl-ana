@@ -14,6 +14,7 @@
 	   :table-load-next-row
 	   :table-get-field
 	   :table-set-field
+           :table-push-fields
 	   :table-commit-row
 	   :table-close
 	   :do-table
