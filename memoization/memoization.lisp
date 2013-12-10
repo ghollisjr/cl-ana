@@ -19,6 +19,10 @@
   "Returns the memoized function's value hash table."
   (gethash memo-fn *memoized-map*))
 
+(defun reset-memo-map (memo-fn)
+  "Resets the memoization hash table for memo-fn"
+  (clrhash (gethash memo-fn *memoized-map*)))
+
 (defmacro defun-memoized (function-name arg-list &body body)
   "Macro for defining a memoized function"
   (with-gensyms (memo-hash-table result memoed-values)

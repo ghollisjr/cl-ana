@@ -3,4 +3,6 @@
 (defpackage #:memoization
   (:use #:cl
         #:alexandria)
-  (:export :defun-memoized))
+  (:export :defun-memoized
+           :get-memo-map
+           :reset-memo-map))
