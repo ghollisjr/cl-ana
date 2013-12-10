@@ -5,6 +5,6 @@
   :description "Provides memoized functions"
   :author "Gary Hollis"
   :license ""
-  :depends-on ()
+  :depends-on (#:alexandria)
   :components ((:file "package")
 	       (:file "memoization")))

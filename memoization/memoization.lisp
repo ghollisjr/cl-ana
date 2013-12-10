@@ -11,16 +11,27 @@
 
 (in-package :memoization)
 
+(defvar *memoized-map* (make-hash-table :test 'equal)
+  "Hash table mapping each memoized function to its value hash
+  table.")
+
+(defun get-memo-map (memo-fn)
+  "Returns the memoized function's value hash table."
+  (gethash memo-fn *memoized-map*))
+
 (defmacro defun-memoized (function-name arg-list &body body)
   "Macro for defining a memoized function"
-  (let ((memo-hash-table (gensym))
-	(result (gensym)))
-    `(progn
-       (defvar ,memo-hash-table (make-hash-table :test 'equal))
+  (with-gensyms (memo-hash-table result memoed-values)
+    `(let ((,memo-hash-table
+            (make-hash-table :test 'equal)))
        (defun ,function-name ,arg-list
-	 (let ((memoed-values (multiple-value-list (gethash (list ,@arg-list) ,memo-hash-table))))
-	   (if (second memoed-values)
-	       (first memoed-values)
+	 (let ((,memoed-values
+                (multiple-value-list (gethash (list ,@arg-list)
+                                              ,memo-hash-table))))
+	   (if (second ,memoed-values)
+	       (first ,memoed-values)
 	       (let ((,result (progn ,@body)))
 		 (setf (gethash (list ,@arg-list) ,memo-hash-table) ,result)
-		 ,result)))))))
+		 ,result))))
+       (setf (gethash #',function-name *memoized-map*)
+             ,memo-hash-table))))

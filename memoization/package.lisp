@@ -1,5 +1,6 @@
 ;;;; package.lisp
 
 (defpackage #:memoization
-  (:use #:cl)
+  (:use #:cl
+        #:alexandria)
   (:export :defun-memoized))
