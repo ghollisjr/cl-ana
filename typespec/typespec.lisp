@@ -37,12 +37,13 @@
       ((make-slot-spec (name-cstruct)
 	 (let* ((name (car name-cstruct))
 		(cstruct (cdr name-cstruct))
-		(type (if (symbolp cstruct)
-			  cstruct
-			  (second cstruct))) ; array type
-		(count (if (symbolp cstruct)
-			   1
-			   (reduce #'* (fourth cstruct))))) ; array type
+		(type (if (typespec-array-p cstruct)
+			  (second cstruct)
+			  cstruct))
+		(count (if (typespec-array-p cstruct)
+			   (third cstruct)
+                           1)))
+           ;;(reduce #'* (fourth cstruct))))) ; array type
 	   (list (intern (lispify name))
 		 type
 		 :count count))))
@@ -53,7 +54,8 @@
 	  (:array
 	   (append (list (first typespec))
 		   (list (typespec->cffi-type (second typespec)))
-		   (rest (rest typespec))))
+		   ;;(rest (rest typespec))))
+                   (list (reduce #'* (fourth typespec)))))
 	  (:compound
 	   ;; here's where the fun happens
 	   (let* ((names-specs (rest typespec))
@@ -72,11 +74,13 @@
 
 (defun typespec-compound-p (typespec)
   "Tests a typespec for being a compound typespec."
-  (equal (first typespec) :compound))
+  (when (consp typespec)
+    (equal (first typespec) :compound)))
 
 (defun typespec-array-p (typespec)
   "Tests a typespec for being an array typespec."
-  (equal (first typespec) :array))
+  (when (consp typespec)
+    (equal (first typespec) :array)))
 
 (defun typespec-flatten-arrays (typespec)
   "Flattens an array typespec if typespec is an array typespec,

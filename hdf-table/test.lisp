@@ -14,18 +14,18 @@
 
 (in-package :hdf-table)
 
-(defvar *table*)
+;; (defvar *table*)
 
-(setf *table*
-      (make-instance 'hdf-table
-                     :column-names (list "x" "y" "z")
-                     :column-specs
-                     (list :int
-                           :float
-                           (list :compound
-                                 (cons "weight" :double)
-                                 (cons "direction vector"
-                                       (list :array :double 1 (list 20)))))))
+;; (setf *table*
+;;       (make-instance 'hdf-table
+;;                      :column-names (list "x" "y" "z")
+;;                      :column-specs
+;;                      (list :int
+;;                            :float
+;;                            (list :compound
+;;                                  (cons "weight" :double)
+;;                                  (cons "direction vector"
+;;                                        (list :array :double 1 (list 20)))))))
 
 ;; (defun hdf-table-test ()
 ;;   (typespec->hdf-type (typed-table->typespec *table*)))
@@ -139,3 +139,30 @@
 	  (table-commit-row output-table)))
       (table-close output-table)
       (table-close input-table))))
+
+(defun struct-test ()
+  (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/struct.h5"
+                               :direction :output
+                               :if-exists :supersede
+                               :if-does-not-exist :create)
+    (let* ((table
+            (make-hdf-table
+             outfile "/struct"
+             (list (cons "x"
+                         (list :compound
+                               (cons "x.p"
+                                     :float)
+                               (cons "x.t"
+                                     :float))))))
+           (x-type
+            (typespec->cffi-type
+             (first (typed-table-column-specs table)))))
+      (loop
+         for i below 30
+         do (progn
+              (table-push-fields table
+                (x
+                 (convert-to-foreign
+                  (list 'x.p (float i) 'x.t (sqrt (float i)))
+                  x-type)))))
+    (table-close table))))

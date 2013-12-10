@@ -141,10 +141,13 @@ The code body will be run for each row in the table."
 	      for m in (list ,@quoted-bound-column-symbols)
 	      for u in (list ,@quoted-selected-column-symbols)
 	      do (setf (gethash (typed-table::keywordify m) ,column-type-map)
-		       (typespec-flatten-arrays
+		       ;;(typespec-flatten-arrays
 			(typespec->cffi-type
 			 (cdr
-			  (assoc (typed-table::keywordify u) ,symbol-specs))))))
+			  (assoc (typed-table::keywordify u)
+                                 ,symbol-specs)))
+                        ;;)
+                       ))
 	   (do ((,read-status
 		 (table-load-next-row ,table)
 		 (table-load-next-row ,table))
@@ -201,10 +204,13 @@ values are automatically converted into LISP types."
 	      for m in (list ,@quoted-marked-column-symbols)
 	      for u in (list ,@quoted-unmarked-column-symbols)
 	      do (setf (gethash (typed-table::keywordify m) ,column-type-map)
-		       (typespec-flatten-arrays
+		       ;;(typespec-flatten-arrays
 			(typespec->cffi-type
 			 (cdr
-			  (assoc (typed-table::keywordify u) ,symbol-specs))))))
+			  (assoc (typed-table::keywordify u)
+                                 ,symbol-specs)))
+                        ;;)
+                       ))
 	   (do ((,read-status
 		 (table-load-next-row ,table)
 		 (table-load-next-row ,table))

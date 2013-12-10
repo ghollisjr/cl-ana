@@ -9,10 +9,10 @@
 ;;; close them; mostly for memory usage so it might not even be
 ;;; necessary.
 
-(declaim (optimize (speed 3)
-                   (safety 0)
-                   (compilation-speed 0)
-                   (debug 0)))
+;; (declaim (optimize (speed 3)
+;;                    (safety 0)
+;;                    (compilation-speed 0)
+;;                    (debug 0)))
 
 (defclass hdf-table (rread-table typed-table)
   ((row-buffer-size
