@@ -14,7 +14,7 @@
 ;;                    (compilation-speed 0)
 ;;                    (debug 0)))
 
-(defclass hdf-table (rread-table typed-table)
+(defclass hdf-table (typed-table)
   ((row-buffer-size
     :initarg :buffer-size
     :initform nil
@@ -49,7 +49,18 @@
     :initarg :hdf-row-type
     :initform nil
     :accessor hdf-table-row-type
-    :documentation "hdf type for the row data object")))
+    :documentation "hdf type for the row data object")
+   (read-row-index
+    :initarg :read-row-index
+    :initform -1
+    :accessor hdf-table-read-row-index
+    :documentation "Index to row which should be sequentually read
+    next")
+   (nrows
+    :initarg :nrows
+    :initform nil
+    :accessor hdf-table-nrows
+    :documentation "number of rows in hdf-table")))
 
 ;; define high-level table access from files here
 (defun open-hdf-table (hdf-file dataset-name &key buffer-size)
@@ -209,16 +220,16 @@ the dataset."
 ;; 			 column-symbol)
 ;;      value)))
 
-(defmethod table-load-next-row :after ((table hdf-table))
-  (with-accessors ((row-pointer typed-table-row-pointer)
-                   (read-row-index rread-table-read-row-index)
-                   (buffer-size hdf-table-buffer-size)
-                   (cstruct typed-table-row-cstruct))
-      table
-    (setf row-pointer
-          (mem-aptr row-pointer
-                    cstruct
-                    (mod read-row-index buffer-size)))))
+;; (defmethod table-load-next-row :after ((table hdf-table))
+;;   (with-accessors ((row-pointer typed-table-row-pointer)
+;;                    (read-row-index hdf-table-read-row-index)
+;;                    (buffer-size hdf-table-buffer-size)
+;;                    (cstruct typed-table-row-cstruct))
+;;       table
+;;     (setf row-pointer
+;;           (mem-aptr row-pointer
+;;                     cstruct
+;;                     (mod read-row-index buffer-size)))))
 
 (defmethod table-commit-row ((table hdf-table))
   (with-accessors ((row-buffer hdf-table-row-buffer)
@@ -299,18 +310,18 @@ the dataset."
 ;;
 ;; * The row object hdf type has been created
 
-(defmethod rread-table-get-row-field
-    ((table hdf-table) row-number column-symbol)
-  (with-accessors ((buffer-size hdf-table-buffer-size)
-		   (current-chunk-index hdf-table-chunk-index)
-		   (row-buffer hdf-table-row-buffer)
-		   (cstruct typed-table-row-cstruct))
+(defmethod table-load-next-row ((table hdf-table))
+  (with-accessors ((row-number hdf-table-read-row-index)
+                   (row-pointer typed-table-row-pointer)
+                   (buffer-size hdf-table-buffer-size)
+                   (cstruct typed-table-row-cstruct))
       table
-    (load-chunk table row-number)
-    (foreign-slot-value
-     (mem-aptr row-buffer cstruct (rem row-number buffer-size))
-     cstruct
-     column-symbol)))
+    (incf row-number)
+    (setf row-pointer
+          (mem-aptr row-pointer
+                    cstruct
+                    (mod row-number buffer-size)))
+    (load-chunk table row-number)))
 
 (defun load-chunk (table row-number)
   (labels ((get-chunk-index (row-index buffer-size)
@@ -318,48 +329,54 @@ the dataset."
     (with-accessors ((buffer-size hdf-table-buffer-size)
 		     (current-chunk-index hdf-table-chunk-index)
 		     (row-buffer hdf-table-row-buffer)
-		     (cstruct typed-table-row-cstruct))
+		     (cstruct typed-table-row-cstruct)
+                     (nrows hdf-table-nrows))
 	table
       (let ((chunk-index (get-chunk-index row-number buffer-size)))
-	(when (not (= current-chunk-index chunk-index))
-	  ;; read data from file:
-	  (with-accessors ((row-hdf-type hdf-table-row-type)
-			   (dataset hdf-table-dataset)
-			   (table-length rread-table-nrows))
-	      table
-	    (let ((dataspace (h5dget-space dataset))
-		  (chunk-size (min (- table-length
-                                      (* chunk-index
+        (if (< row-number nrows)
+            (progn
+              (when (not (= current-chunk-index chunk-index))
+                ;; read data from file:
+                (with-accessors ((row-hdf-type hdf-table-row-type)
+                                 (dataset hdf-table-dataset)
+                                 (table-length hdf-table-nrows))
+                    table
+                  (let ((dataspace (h5dget-space dataset))
+                        (chunk-size (min (- table-length
+                                            (* chunk-index
+                                               buffer-size))
                                          buffer-size))
-				   buffer-size))
-		  memspace)
-	      (with-foreign-objects ((start 'hsize-t 1)
-				     (stride 'hsize-t 1)
-				     (count 'hsize-t 1)
-				     (blck 'hsize-t 1)
-				     (memdims 'hsize-t 1)
-				     (memmaxdims 'hsize-t 1))
-		(setf (mem-aref start 'hsize-t 0)
-                      (* chunk-index buffer-size))
-		(setf (mem-aref stride 'hsize-t 0) 1)
-		(setf (mem-aref count 'hsize-t 0) 1)
-		(setf (mem-aref blck 'hsize-t 0) chunk-size)
-		(setf (mem-aref memdims 'hsize-t 0) chunk-size)
-		(setf (mem-aref memmaxdims 'hsize-t 0) chunk-size)
-		(setf memspace (h5screate-simple 1 memdims memmaxdims))
-		(h5sselect-hyperslab dataspace
-				     :H5S-SELECT-SET
-				     start
-				     stride
-				     count
-				     blck)
-		(h5dread dataset
-			 row-hdf-type
-			 memspace
-			 dataspace
-			 +H5P-DEFAULT+
-			 row-buffer))
-	      (setf (hdf-table-row-buffer table) row-buffer)
-	      (setf (hdf-table-chunk-index table) chunk-index)
-	      ;;cleanup
-	      (h5sclose dataspace))))))))
+                        memspace)
+                    (with-foreign-objects ((start 'hsize-t 1)
+                                           (stride 'hsize-t 1)
+                                           (count 'hsize-t 1)
+                                           (blck 'hsize-t 1)
+                                           (memdims 'hsize-t 1)
+                                           (memmaxdims 'hsize-t 1))
+                      (setf (mem-aref start 'hsize-t 0)
+                            (* chunk-index buffer-size))
+                      (setf (mem-aref stride 'hsize-t 0) 1)
+                      (setf (mem-aref count 'hsize-t 0) 1)
+                      (setf (mem-aref blck 'hsize-t 0) chunk-size)
+                      (setf (mem-aref memdims 'hsize-t 0) chunk-size)
+                      (setf (mem-aref memmaxdims 'hsize-t 0) chunk-size)
+                      (setf memspace
+                            (h5screate-simple 1 memdims memmaxdims))
+                      (h5sselect-hyperslab dataspace
+                                           :H5S-SELECT-SET
+                                           start
+                                           stride
+                                           count
+                                           blck)
+                      (h5dread dataset
+                               row-hdf-type
+                               memspace
+                               dataspace
+                               +H5P-DEFAULT+
+                               row-buffer))
+                    (setf (hdf-table-row-buffer table) row-buffer)
+                    (setf (hdf-table-chunk-index table) chunk-index)
+                    ;;cleanup
+                    (h5sclose dataspace))))
+              t)
+            nil)))))

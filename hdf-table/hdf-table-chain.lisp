@@ -10,7 +10,7 @@
 ;;;; hdf-table-chain: A read-only chain of hdf-tables which can be
 ;;;; randomly accessed unlike the general table-chain.
 
-(defclass hdf-table-chain (rread-table);; typed-table)
+(defclass hdf-table-chain (table)
   ((dataset-path
     :initform ""
     :initarg :dataset-path
@@ -61,7 +61,18 @@
     :initarg :binary-tree
     :accessor hdf-table-chain-binary-tree
     :documentation "binary search tree storing the indeces for
-    efficient searching")))
+    efficient searching")
+   (read-row-index
+    :initarg :read-row-index
+    :initform -1
+    :accessor hdf-table-chain-read-row-index
+    :documentation "Index to row which should be sequentually read
+    next")
+   (nrows
+    :initarg :nrows
+    :initform nil
+    :accessor hdf-table-chain-nrows
+    :documentation "number of rows in hdf-table")))
 
 ;; initialization:
 
@@ -113,20 +124,41 @@ dataset-path"
                         filename-list))
 	   (offsets (make-offsets file-nrows))
 	   (index-binary-tree
-	    (make-index-binary-tree offsets)))
-      (make-instance 'hdf-table-chain
-		     :column-names (get-column-names
-                                    (first filename-list)
-                                    dataset-path)
-		     ;; :column-specs (get-column-specs
-                     ;;                (first filename-list)
-                     ;;                dataset-path)
-		     :dataset-path dataset-path
-		     :file-paths filename-list
-		     :index-offsets offsets
-		     :table-lengths file-nrows
-		     :binary-tree index-binary-tree
-		     :nrows (reduce #'+ file-nrows)))))
+	    (make-index-binary-tree offsets))
+           (table
+            (make-instance 'hdf-table-chain
+                           :column-names (get-column-names
+                                          (first filename-list)
+                                          dataset-path)
+                           ;; :column-specs (get-column-specs
+                           ;;                (first filename-list)
+                           ;;                dataset-path)
+                           :dataset-path dataset-path
+                           :file-paths filename-list
+                           :index-offsets offsets
+                           :table-lengths file-nrows
+                           :binary-tree index-binary-tree
+                           :nrows (reduce #'+ file-nrows))))
+      (let* ((current-table (hdf-table-chain-active-table table))
+             (table-index 0)
+             (filename (elt (hdf-table-chain-file-paths table)
+                            table-index))
+             (dataset-path (hdf-table-chain-dataset-path table)))
+        (setf (hdf-table-chain-active-file table)
+              (open-hdf-file filename :direction :input))
+        (setf (hdf-table-chain-active-table table)
+              (open-hdf-table (hdf-table-chain-active-file table)
+                              dataset-path))
+        (setf (hdf-table-chain-current-table-start table)
+              (elt (hdf-table-chain-table-index-offsets table)
+                   table-index))
+        (setf (hdf-table-chain-current-table-end table)
+              (+ (the integer
+                      (elt (hdf-table-chain-table-lengths table)
+                           table-index))
+                 (hdf-table-chain-current-table-start table)
+                 -1))
+        table))))
 
 ;; finalization:
 (defmethod table-close ((table-chain hdf-table-chain))
@@ -148,53 +180,53 @@ dataset-path"
 ;; should be done before the call to table-get-field on the
 ;; active table.
 
-(defmethod rread-table-get-row-field ((table hdf-table-chain)
-				      row-number
-				      row-symbol)
-  (declare (integer row-number))
-  (let* ((current-table-start (hdf-table-chain-current-table-start
-			       table))
-	 (current-table-end (hdf-table-chain-current-table-end
-			     table)))
-    (declare (integer current-table-start current-table-end))
-    (if (<= current-table-start
-	    row-number
-	    current-table-end)
-        (rread-table-get-row-field (hdf-table-chain-active-table
-                                    table)
-                                   (- row-number current-table-start)
-                                   row-symbol)
-	(let* ((current-table (hdf-table-chain-active-table table))
-	       (table-index (get-tree-index
-                             (hdf-table-chain-binary-tree table)
-                             row-number))
-	       (filename (elt (hdf-table-chain-file-paths table)
-                              table-index))
-	       (dataset-path (hdf-table-chain-dataset-path table)))
-	  ;; free resources from previous table:
-	  (when current-table
-	    (table-close current-table)
-	    (close-hdf-file (hdf-table-chain-active-file table)))
-	  ;; establish next table:
-	  (setf (hdf-table-chain-active-file table)
-		(open-hdf-file filename :direction :input))
-	  (setf (hdf-table-chain-active-table table)
-		(open-hdf-table (hdf-table-chain-active-file table)
-				dataset-path))
-	  (setf (hdf-table-chain-current-table-start table)
-		(elt (hdf-table-chain-table-index-offsets table)
-                     table-index))
-	  (setf (hdf-table-chain-current-table-end table)
-		(+ (the integer
-                        (elt (hdf-table-chain-table-lengths table)
-                             table-index))
-		   (hdf-table-chain-current-table-start table)
-		   -1))
-	  (rread-table-get-row-field
-           (hdf-table-chain-active-table table)
-           (- row-number
-              (hdf-table-chain-current-table-start table))
-           row-symbol)))))
+(defmethod table-get-field ((table hdf-table-chain) column-symbol)
+  (with-accessors ((active-table hdf-table-chain-active-table))
+      table
+    (table-get-field active-table column-symbol)))
+
+(defmethod table-load-next-row ((table hdf-table-chain))
+  (with-accessors ((row-number hdf-table-chain-read-row-index))
+      table
+    (incf row-number)
+    (let* ((current-table-start (hdf-table-chain-current-table-start
+                                 table))
+           (current-table-end (hdf-table-chain-current-table-end
+                               table)))
+      (declare (integer current-table-start current-table-end))
+      (if (<= current-table-start
+              row-number
+              current-table-end)
+          (table-load-next-row (hdf-table-chain-active-table
+                                table))
+          (let* ((current-table (hdf-table-chain-active-table table))
+                 (table-index (get-tree-index
+                               (hdf-table-chain-binary-tree table)
+                               row-number))
+                 (filename (elt (hdf-table-chain-file-paths table)
+                                table-index))
+                 (dataset-path (hdf-table-chain-dataset-path table)))
+            ;; free resources from previous table:
+            (when current-table
+              (table-close current-table)
+              (close-hdf-file (hdf-table-chain-active-file table)))
+            ;; establish next table:
+            (setf (hdf-table-chain-active-file table)
+                  (open-hdf-file filename :direction :input))
+            (setf (hdf-table-chain-active-table table)
+                  (open-hdf-table (hdf-table-chain-active-file table)
+                                  dataset-path))
+            (setf (hdf-table-chain-current-table-start table)
+                  (elt (hdf-table-chain-table-index-offsets table)
+                       table-index))
+            (setf (hdf-table-chain-current-table-end table)
+                  (+ (the integer
+                          (elt (hdf-table-chain-table-lengths table)
+                               table-index))
+                     (hdf-table-chain-current-table-start table)
+                     -1))
+            (table-load-next-row
+             (hdf-table-chain-active-table table)))))))
 
 ;;; Behind the scenes functions:
 
