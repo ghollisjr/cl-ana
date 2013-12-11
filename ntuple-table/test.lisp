@@ -1,3 +1,5 @@
+(require 'ntuple-table)
+
 (in-package :ntuple-table)
 
 (defparameter *table*
@@ -18,6 +20,8 @@
 			 (list (cons "x" :int)
 			       (cons "y" :double))))
 
-(dotable (row-index *table*)
-  (print /x)
-  (print /y))
+(do-table (row-index *table*)
+    ("x"
+     "y")
+  (print x)
+  (print y))

@@ -12,12 +12,7 @@
     :initarg :cstruct
     :initform nil
     :accessor ntuple-table-cstruct
-    :documentation "CFFI cstruct for row buffer")
-   (row
-    :initarg :row
-    :initform nil
-    :accessor ntuple-table-row
-    :documentation "CFFI row pointer storing row data")))
+    :documentation "CFFI cstruct for row buffer")))
 
 ;;; Writing functions:
 
@@ -29,17 +24,17 @@ their typespecs."
 	 (cstruct (typespec->cffi-type typespec))
 	 (column-names (mapcar #'car names-specs))
 	 (column-specs (mapcar #'cdr names-specs))
-	 (row (foreign-alloc cstruct)))
-    (let ((ntuple (gsll:create-ntuple filename row cstruct)))
+	 (row-pointer (foreign-alloc cstruct)))
+    (let ((ntuple (gsll:create-ntuple filename row-pointer cstruct)))
       (make-instance 'ntuple-table
 		     :column-names column-names
 		     :column-specs column-specs
 		     :ntuple ntuple
 		     :cstruct cstruct
-		     :row row))))
+		     :row-pointer row-pointer))))
 
 (defmethod table-set-field ((table ntuple-table) column-symbol value)
-  (with-accessors ((row ntuple-table-row)
+  (with-accessors ((row typed-table-row-pointer)
 		   (cstruct ntuple-table-cstruct))
       table
     (setf
@@ -49,7 +44,7 @@ their typespecs."
      value)))
 
 (defmethod table-commit-row ((table ntuple-table))
-  (with-accessors ((row ntuple-table-row)
+  (with-accessors ((row typed-table-row-pointer)
 		   (ntuple ntuple-table-ntuple))
       table
     (gsll:write-ntuple ntuple)))
@@ -71,7 +66,7 @@ limitation of the ntuple file format itself."
 		     :column-specs column-specs
 		     :ntuple ntuple
 		     :cstruct cstruct
-		     :row row))))
+		     :row-pointer row))))
 
 (defmethod table-load-next-row ((table ntuple-table))
   (with-accessors ((ntuple ntuple-table-ntuple))
@@ -80,7 +75,7 @@ limitation of the ntuple file format itself."
       (not (equal read-status gsl-cffi:+GSL-EOF+)))))
 
 (defmethod table-get-field ((table ntuple-table) column-symbol)
-  (with-accessors ((row ntuple-table-row)
+  (with-accessors ((row typed-table-row-pointer)
 		   (cstruct ntuple-table-cstruct))
       table
     (foreign-slot-value row
@@ -91,7 +86,7 @@ limitation of the ntuple file format itself."
 
 (defmethod table-close ((table ntuple-table))
   (with-accessors ((ntuple ntuple-table-ntuple)
-		   (row ntuple-table-row))
+		   (row typed-table-row-pointer))
       table
     (gsll:close-ntuple ntuple)
     (foreign-free row)))
