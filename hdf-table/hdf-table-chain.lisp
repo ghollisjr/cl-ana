@@ -10,7 +10,7 @@
 ;;;; hdf-table-chain: A read-only chain of hdf-tables which can be
 ;;;; randomly accessed unlike the general table-chain.
 
-(defclass hdf-table-chain (rread-table typed-table)
+(defclass hdf-table-chain (rread-table);; typed-table)
   ((dataset-path
     :initform ""
     :initarg :dataset-path
@@ -118,9 +118,9 @@ dataset-path"
 		     :column-names (get-column-names
                                     (first filename-list)
                                     dataset-path)
-		     :column-specs (get-column-specs
-                                    (first filename-list)
-                                    dataset-path)
+		     ;; :column-specs (get-column-specs
+                     ;;                (first filename-list)
+                     ;;                dataset-path)
 		     :dataset-path dataset-path
 		     :file-paths filename-list
 		     :index-offsets offsets

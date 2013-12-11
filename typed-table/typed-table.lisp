@@ -78,12 +78,14 @@ represent foreign arrays."
                                    row-cstruct
                                    column-symbol))))
 
-(defmethod table-get-field :after ((table typed-table) column-symbol)
+(defmethod table-get-field ((table typed-table) column-symbol)
   "Automatically converts field pointer to lisp value."
-  (with-slots (c->lisp-converter-map
-               row-pointer
-               row-cstruct)
+  (with-accessors ((c->lisp-converter-map
+                    typed-table-c->lisp-converter-map)
+                   (row-pointer typed-table-row-pointer)
+                   (row-cstruct typed-table-row-cstruct))
       table
+    ;;(print row-cstruct)
     (funcall (gethash column-symbol c->lisp-converter-map)
              (foreign-slot-pointer row-pointer
                                    row-cstruct

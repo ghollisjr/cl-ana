@@ -78,9 +78,10 @@
 		      (mem-aref chunkdims 'hsize-t 0)))
 		  buffer-size))
 	     (row-buffer
-	      (foreign-alloc cstruct
-			     :count
-			     buffer-size)))
+	      ;; (foreign-alloc cstruct
+	      ;;   	     :count
+	      ;;   	     buffer-size)
+              (typespec-foreign-alloc typespec buffer-size)))
 	(make-instance 'hdf-table
 		       :column-names (typespec->column-names typespec)
 		       :column-specs (typespec->column-specs typespec)
@@ -106,9 +107,10 @@
   the buffer for writing into the file."
   (let* ((typespec (cons :compound names-specs))
 	 (cstruct (typespec->cffi-type typespec))
-	 (row-buffer (foreign-alloc cstruct
-				    :count
-				    buffer-size))
+	 (row-buffer ;; (foreign-alloc cstruct
+		     ;;    	    :count
+		     ;;    	    buffer-size)
+          (typespec-foreign-alloc typespec buffer-size))
 	 (hdf-type (typespec->hdf-type typespec))
 	 (dataset
 	  (progn
