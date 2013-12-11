@@ -8,6 +8,7 @@
   :license ""
   :depends-on (#:list-utils
 	       #:string-utils
+               #:tensor
 	       #:memoization
                #:alexandria
 	       #:cffi)

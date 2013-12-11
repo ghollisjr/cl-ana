@@ -34,6 +34,33 @@ sequences given by the optional type argument."
 (defun tensor-ref (tensor &rest subscripts)
   (reduce #'elt subscripts :initial-value tensor))
 
+(defun tensor-flat-ref (tensor subscript)
+  (let* ((dim-list (tensor-dimensions tensor))
+         (subscripts
+          (let ((sub subscript)
+                (result nil))
+            (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
+                  (dim-size (first rdim-lst) (first rdim-lst)))
+                 ((null rdim-lst) result)
+              (push (mod sub dim-size)
+                    result)
+              (setf sub (floor sub dim-size))))))
+    (reduce #'elt subscripts :initial-value tensor)))
+
+(defun (setf tensor-flat-ref) (value tensor subscript)
+  (let* ((dim-list (tensor-dimensions tensor))
+         (subscripts
+          (let ((sub subscript)
+                (result nil))
+            (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
+                  (dim-size (first rdim-lst) (first rdim-lst)))
+                 ((null rdim-lst) result)
+              (push (mod sub dim-size)
+                    result)
+              (setf sub (floor sub dim-size))))))
+    (setf (apply #'tensor-ref tensor subscripts)
+          value)))
+
 (defun (setf tensor-ref) (value tensor &rest subscripts)
   (let* ((last-sequence
 	  (apply #'tensor-ref tensor (butlast subscripts)))

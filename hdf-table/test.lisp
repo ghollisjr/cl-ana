@@ -140,20 +140,16 @@
       (table-close output-table)
       (table-close input-table))))
 
-(defun struct-test ()
-  (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/struct.h5"
+(defun array-test ()
+  (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/array.h5"
                                :direction :output
                                :if-exists :supersede
                                :if-does-not-exist :create)
     (let* ((table
             (make-hdf-table
-             outfile "/struct"
+             outfile "/array"
              (list (cons "x"
-                         (list :compound
-                               (cons "x.p"
-                                     :float)
-                               (cons "x.t"
-                                     :float))))))
+                         (list :array :float 1 (list 4))))))
            (x-type
             (typespec->cffi-type
              (first (typed-table-column-specs table)))))
@@ -163,6 +159,7 @@
               (table-push-fields table
                 (x
                  (convert-to-foreign
-                  (list 'x.p (float i) 'x.t (sqrt (float i)))
+                  (vector (float i) (sqrt (float i)) (float i)
+                          (sqrt (float i)))
                   x-type)))))
     (table-close table))))

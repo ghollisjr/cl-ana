@@ -6,6 +6,7 @@
 	#:alexandria)
   (:export :make-tensor
 	   :tensor-ref
+           :tensor-flat-ref ; for flattened-index reference
 	   :tensor-map
 	   :tensor-+
 	   :tensor--

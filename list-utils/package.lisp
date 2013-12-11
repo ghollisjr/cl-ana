@@ -2,7 +2,8 @@
 
 (defpackage :list-utils
   (:use :cl
-	:functional-utils)
+	:functional-utils
+        :alexandria)
   (:export :range
 	   :zip
 	   :unzip
@@ -16,6 +17,8 @@
 	   :list-greater-than
 	   :aref-by-list
 	   :make-offsets
+           ;; Useful looping macro over plists:
+           :do-plist
            ;; Paul Graham's stuff (and some of my improvements)
            :length-equal
 	   :single

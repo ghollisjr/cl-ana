@@ -82,6 +82,20 @@
   (when (consp typespec)
     (equal (first typespec) :array)))
 
+;; This is for automatically translating vectors into foreign arrays;
+;; only works for 1-D at the moment but that is ok.  Note that I had
+;; to look into the CFFI code to get to this solution, so if they
+;; change it significantly this may cease to work.
+;; (defmethod translate-to-foreign ((value simple-vector) type)
+;;   (let* ((size (reduce #'* (cffi::dimensions type)))
+;;          (element-type (cffi::element-type type))
+;;          (result (foreign-alloc element-type :count size)))
+;;     (loop
+;;        for i below size
+;;        do (setf (mem-aref result element-type i)
+;;                 (elt value i)))
+;;     result))
+
 (defun typespec-flatten-arrays (typespec)
   "Flattens an array typespec if typespec is an array typespec,
 otherwise returns typespec unchanged.  Note that this operation
@@ -102,3 +116,112 @@ component type(s), then they are flattened as well."
 			    (typespec-flatten-arrays (cdr cons))))
 		  (rest typespec)))))
 	typespec)))
+
+(defun typespec-foreign-alloc (typespec &optional (count 1))
+  "Allocates space for count foreign objects of type specified by
+typespec."
+  (foreign-alloc (typespec->cffi-type typespec) :count count))
+
+(defun typespec->lisp-to-c (typespec)
+  "Returns a function which takes
+
+1. a lisp object,
+2. a corresponding C pointer
+
+and sets the fields/values of the C object recursively.  The pointer
+to the C-object is returned."
+  (let ((cstruct (typespec->cffi-type typespec)))
+    (cond
+      ;; Compound types:
+      ((typespec-compound-p typespec)
+       (let ((field-setters
+              (loop
+                 for (_ . field-spec) in (rest typespec)
+                 collect (typespec->lisp-to-c field-spec))))
+         #'(lambda (plist c-pointer)
+             (do* ((lst plist (rest (rest lst)))
+                   (fs (first lst) (first lst))
+                   (fv (second lst) (second lst))
+                   (setter-lst field-setters (rest setter-lst))
+                   (field-setter (first setter-lst)
+                                 (first setter-lst)))
+                  ((or (null lst)
+                       (null setter-lst))
+                   c-pointer)
+               (funcall field-setter
+                        fv
+                        (foreign-slot-pointer c-pointer
+                                              cstruct
+                                              fs))))))
+      ;; Array types:
+      ((typespec-array-p typespec)
+       (destructuring-bind (element-type
+                            array-size)
+           (rest (typespec->cffi-type typespec))
+         (let ((field-setter (typespec->lisp-to-c element-type)))
+           #'(lambda (tensor c-pointer)
+               (dotimes (i array-size)
+                 (funcall field-setter
+                          (tensor-flat-ref tensor i)
+                          (mem-aptr c-pointer
+                                    element-type
+                                    i)))))))
+      ;; Primitive types:
+      (t
+       #'(lambda (primitive c-pointer)
+           (setf (mem-aref c-pointer cstruct)
+                 primitive))))))
+
+(defun typespec->c-to-lisp (typespec)
+  "Returns a function which takes a c-pointer argument and returns a
+lisp object containing the converted values."
+  (cond
+    ;; compound
+    ((typespec-compound-p typespec)
+     (multiple-value-bind (field-symbols field-getters)
+         (loop
+            for (field-name . field-spec) in (rest typespec)
+            collecting (intern (lispify field-name))
+            into field-symbols
+            collecting (typespec->c-to-lisp field-spec)
+            into field-getters
+            finally (return (values field-symbols
+                                    field-getters)))
+       (let ((cstruct (typespec->cffi-type typespec)))
+         #'(lambda (c-pointer)
+             (loop
+                for fs in field-symbols
+                for fg in field-getters
+                collecting fs into result
+                collecting
+                  (funcall fg
+                           (foreign-slot-pointer c-pointer
+                                                 cstruct
+                                                 fs))
+                into result
+                finally
+                  (return result))))))
+    ;; array 
+    ((typespec-array-p typespec)
+     (let* ((element-type (second typespec))
+            (dim-list (fourth typespec))
+            (num-elements (reduce #'* dim-list))
+            (element-cffi-type
+             (typespec->cffi-type element-type))
+            (element-getter
+             (typespec->c-to-lisp element-type)))
+       #'(lambda (c-pointer)
+           (let ((result-tensor
+                  (make-tensor dim-list)))
+             (loop
+                for i below num-elements
+                do (setf (tensor-flat-ref result-tensor i)
+                         (funcall element-getter
+                                  (mem-aptr c-pointer
+                                            element-cffi-type
+                                            i))))
+             result-tensor))))
+    ;; primitive
+    (t
+     #'(lambda (c-pointer)
+         (mem-aref c-pointer typespec)))))

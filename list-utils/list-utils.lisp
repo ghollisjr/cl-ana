@@ -318,3 +318,14 @@ value that fn returned."
           :test test))
 
 ;; split-if is provided by split-sequence:split-sequence-if
+
+;; Operator for looping over a plist:
+(defmacro do-plist ((field-symbol field-value plist) &body body)
+  "Executes body via looping over plist, binding each field symbol to
+field-symbol and each field value to field-value.  Returns nil."
+  (with-gensyms (lst)
+  `(do ((,lst ,plist (rest (rest ,lst))))
+       ((null ,lst))
+     (let ((,field-symbol (first ,lst))
+           (,field-value (second ,lst)))
+       ,@body))))
