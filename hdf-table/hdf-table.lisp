@@ -85,6 +85,10 @@
 		       :column-names (typespec->column-names typespec)
 		       :column-specs (typespec->column-specs typespec)
 		       :row-buffer row-buffer
+                       :row-pointer
+                       (mem-aptr row-buffer
+                                 cstruct
+                                 0)
 		       :hdf-dataset dataset
 		       :hdf-row-type hdf-row-type
 		       :row-cstruct cstruct
@@ -127,6 +131,10 @@
 			    cparms))))))
     (make-instance 'hdf-table
 		   :row-cstruct cstruct
+                   :row-pointer
+                   (mem-aptr row-buffer
+                             cstruct
+                             0)
                    :column-names (mapcar #'car names-specs)
                    :column-specs
                    (mapcar #'cdr names-specs)
@@ -186,21 +194,33 @@ the dataset."
     (h5dclose dataset)
     (foreign-free row-buffer)))
 
-(defmethod table-set-field ((table hdf-table) column-symbol value)
-  (with-accessors ((row-buffer hdf-table-row-buffer)
-		   (cstruct typed-table-row-cstruct)
-		   (row-buffer-index hdf-table-row-buffer-index))
+;; (defmethod table-set-field ((table hdf-table) column-symbol value)
+;;   (with-accessors ((row-buffer hdf-table-row-buffer)
+;; 		   (cstruct typed-table-row-cstruct)
+;; 		   (row-buffer-index hdf-table-row-buffer-index))
+;;       table
+;;     (setf
+;;      (foreign-slot-value (mem-aptr row-buffer
+;; 				   cstruct
+;; 				   row-buffer-index)
+;; 			 cstruct
+;; 			 column-symbol)
+;;      value)))
+
+(defmethod table-load-next-row :after ((table hdf-table))
+  (with-accessors ((row-pointer typed-table-row-pointer)
+                   (read-row-index rread-table-read-row-index)
+                   (buffer-size hdf-table-buffer-size)
+                   (cstruct typed-table-row-cstruct))
       table
-    (setf
-     (foreign-slot-value (mem-aptr row-buffer
-				   cstruct
-				   row-buffer-index)
-			 cstruct
-			 column-symbol)
-     value)))
+    (setf row-pointer
+          (mem-aptr row-pointer
+                    cstruct
+                    (mod read-row-index buffer-size)))))
 
 (defmethod table-commit-row ((table hdf-table))
   (with-accessors ((row-buffer hdf-table-row-buffer)
+                   (row-pointer typed-table-row-pointer)
 		   (row-buffer-index hdf-table-row-buffer-index)
 		   (buffer-size hdf-table-buffer-size)
 		   (chunk-index hdf-table-chunk-index)
@@ -209,7 +229,11 @@ the dataset."
 		   (hdf-type hdf-table-row-type))
       table
     (incf row-buffer-index)
-    (when (zerop (rem row-buffer-index buffer-size))
+    (setf row-pointer
+          (mem-aptr row-buffer
+                    cstruct
+                    (mod row-buffer-index buffer-size)))
+    (when (zerop (mod row-buffer-index buffer-size)) ;; was rem
       (let ((dataspace (h5dget-space dataset))
 	    memspace)
 	(with-foreign-objects ((start 'hsize-t 1)
