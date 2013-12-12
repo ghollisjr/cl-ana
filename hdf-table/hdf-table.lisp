@@ -203,6 +203,8 @@ the dataset."
                 (h5dwrite
                  dataset hdf-type memspace
                  dataspace +H5P-DEFAULT+ row-buffer))))))
+    (when (equal access-mode :read)
+      (h5tclose hdf-type))
     (h5dclose dataset)
     (foreign-free row-buffer)))
 
