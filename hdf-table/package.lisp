@@ -7,7 +7,6 @@
 	#:hdf-utils
 	#:hdf-cffi
 	#:table
-	#:rread-table
 	#:typed-table
 	#:typespec
 	#:hdf-typespec
