@@ -186,47 +186,49 @@ dataset-path"
     (table-get-field active-table column-symbol)))
 
 (defmethod table-load-next-row ((table hdf-table-chain))
-  (with-accessors ((row-number hdf-table-chain-read-row-index))
+  (with-accessors ((row-number hdf-table-chain-read-row-index)
+                   (nrows hdf-table-chain-nrows))
       table
     (incf row-number)
-    (let* ((current-table-start (hdf-table-chain-current-table-start
-                                 table))
-           (current-table-end (hdf-table-chain-current-table-end
-                               table)))
-      (declare (integer current-table-start current-table-end))
-      (if (<= current-table-start
-              row-number
-              current-table-end)
-          (table-load-next-row (hdf-table-chain-active-table
-                                table))
-          (let* ((current-table (hdf-table-chain-active-table table))
-                 (table-index (get-tree-index
-                               (hdf-table-chain-binary-tree table)
-                               row-number))
-                 (filename (elt (hdf-table-chain-file-paths table)
-                                table-index))
-                 (dataset-path (hdf-table-chain-dataset-path table)))
-            ;; free resources from previous table:
-            (when current-table
-              (table-close current-table)
-              (close-hdf-file (hdf-table-chain-active-file table)))
-            ;; establish next table:
-            (setf (hdf-table-chain-active-file table)
-                  (open-hdf-file filename :direction :input))
-            (setf (hdf-table-chain-active-table table)
-                  (open-hdf-table (hdf-table-chain-active-file table)
-                                  dataset-path))
-            (setf (hdf-table-chain-current-table-start table)
-                  (elt (hdf-table-chain-table-index-offsets table)
-                       table-index))
-            (setf (hdf-table-chain-current-table-end table)
-                  (+ (the integer
-                          (elt (hdf-table-chain-table-lengths table)
-                               table-index))
-                     (hdf-table-chain-current-table-start table)
-                     -1))
-            (table-load-next-row
-             (hdf-table-chain-active-table table)))))))
+    (when (< row-number nrows)
+      (let* ((current-table-start (hdf-table-chain-current-table-start
+                                   table))
+             (current-table-end (hdf-table-chain-current-table-end
+                                 table)))
+        (declare (integer current-table-start current-table-end))
+        (if (<= current-table-start
+                row-number
+                current-table-end)
+            (table-load-next-row (hdf-table-chain-active-table
+                                  table))
+            (let* ((current-table (hdf-table-chain-active-table table))
+                   (table-index (get-tree-index
+                                 (hdf-table-chain-binary-tree table)
+                                 row-number))
+                   (filename (elt (hdf-table-chain-file-paths table)
+                                  table-index))
+                   (dataset-path (hdf-table-chain-dataset-path table)))
+              ;; free resources from previous table:
+              (when current-table
+                (table-close current-table)
+                (close-hdf-file (hdf-table-chain-active-file table)))
+              ;; establish next table:
+              (setf (hdf-table-chain-active-file table)
+                    (open-hdf-file filename :direction :input))
+              (setf (hdf-table-chain-active-table table)
+                    (open-hdf-table (hdf-table-chain-active-file table)
+                                    dataset-path))
+              (setf (hdf-table-chain-current-table-start table)
+                    (elt (hdf-table-chain-table-index-offsets table)
+                         table-index))
+              (setf (hdf-table-chain-current-table-end table)
+                    (+ (the integer
+                            (elt (hdf-table-chain-table-lengths table)
+                                 table-index))
+                       (hdf-table-chain-current-table-start table)
+                       -1))
+              (table-load-next-row
+               (hdf-table-chain-active-table table))))))))
 
 ;;; Behind the scenes functions:
 

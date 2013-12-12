@@ -108,29 +108,27 @@
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
 			       :direction :output
 			       :if-exists :supersede)
-    (with-open-hdf-file (infile "/home/ghollisjr/hdfwork/test.h5"
-                                :direction :input)
-      (let ((output-table (make-hdf-table outfile "/output-dataset"
-                                          (zip (list "x" "y")
-                                               (list :int :float))))
-            (input-table
-             ;;(open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
-             (open-hdf-table infile "/test")))
-        (do-table (row-index input-table)
-            ("x" "y")
-          ;; (format t "~a ~a; ~a ~a~%"
-          ;;         row-index (sqrt row-index)
-          ;;         x y)
-          
-          (when (> row-index (hdf-table-nrows input-table))
-            (when (zerop (mod row-index 1000))
-              (print row-index)))
-          (when (<= 25 y 30)
-            (table-set-field output-table 'x x)
-            (table-set-field output-table 'y y)
-            (table-commit-row output-table)))
-        (table-close output-table)
-        (table-close input-table)))))
+    (let ((output-table (make-hdf-table outfile "/output-dataset"
+                                        (zip (list "x" "y")
+                                             (list :int :float))))
+          (input-table
+           (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
+      ;;(open-hdf-table infile "/test")))
+      (do-table (row-index input-table)
+          ("x" "y")
+        ;; (format t "~a ~a; ~a ~a~%"
+        ;;         row-index (sqrt row-index)
+        ;;         x y)
+        
+        (when (> row-index (hdf-table-chain-nrows input-table))
+          (when (zerop (mod row-index 1000))
+            (print row-index)))
+        (when (<= 25 y 30)
+          (table-set-field output-table 'x x)
+          (table-set-field output-table 'y y)
+          (table-commit-row output-table)))
+      (table-close output-table)
+      (table-close input-table))))
 
 (defun hdf-typed-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
