@@ -312,13 +312,15 @@ the dataset."
 
 (defmethod table-load-next-row ((table hdf-table))
   (with-accessors ((row-number hdf-table-read-row-index)
+                   (row-buffer hdf-table-row-buffer)
                    (row-pointer typed-table-row-pointer)
                    (buffer-size hdf-table-buffer-size)
                    (cstruct typed-table-row-cstruct))
       table
+    ;;(print row-number)
     (incf row-number)
     (setf row-pointer
-          (mem-aptr row-pointer
+          (mem-aptr row-buffer
                     cstruct
                     (mod row-number buffer-size)))
     (load-chunk table row-number)))
