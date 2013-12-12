@@ -124,9 +124,9 @@
           (when (zerop (mod row-index 1000))
             (print row-index)))
         (when (<= 25 y 30)
-          (table-set-field output-table 'x x)
-          (table-set-field output-table 'y y)
-          (table-commit-row output-table)))
+          (table-push-fields output-table
+            x
+            y)))
       (table-close output-table)
       (table-close input-table))))
 

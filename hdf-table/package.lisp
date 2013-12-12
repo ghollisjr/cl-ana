@@ -16,7 +16,9 @@
 	#:alexandria
 	#:binary-tree)
   (:export :hdf-table
+           :hdf-table-nrows
 	   :open-hdf-table
 	   :make-hdf-table
 	   :hdf-table-chain
+           :hdf-table-chain-nrows
 	   :open-hdf-table-chain))

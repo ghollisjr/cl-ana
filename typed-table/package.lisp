@@ -9,12 +9,7 @@
 	#:table
 	#:typespec
 	#:alexandria)
-  (:export :do-typed-table
-	   :do-typed-table-marked
-           :typed-table-set-field
-           ;; could implement typed-table-get-field but may not be
-           ;; necessary
-	   :typed-table
+  (:export :typed-table
 	   :typed-table-column-specs
            :typed-table-row-cstruct
            :typed-table-row-pointer
