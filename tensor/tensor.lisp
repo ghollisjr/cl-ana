@@ -17,6 +17,11 @@
 ;;;; take the square root of an array of numbers?  Just do (sqrt
 ;;;; array).
 
+(declaim (optimize (speed 3)
+                   (safety 0)
+                   (compilation-speed 0)
+                   (debug 0)))
+
 (defun sequencep (x)
   (subtypep (type-of x) 'sequence))
 

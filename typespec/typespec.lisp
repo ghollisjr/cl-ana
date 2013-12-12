@@ -2,6 +2,11 @@
 
 (in-package :typespec)
 
+(declaim (optimize (speed 3)
+                   (safety 0)
+                   (compilation-speed 0)
+                   (debug 0)))
+
 ;;; Typespec: A typespec (as I'm referring to it) is either
 ;;;
 ;;; 1. A symbol denoting the cffi type

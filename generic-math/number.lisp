@@ -8,6 +8,11 @@
 ;;; maybe I will at some point, but I don't want to obfuscate the code
 ;;; too much for the poor readers.
 
+(declaim (optimize (speed 3)
+                   (safety 0)
+                   (compilation-speed 0)
+                   (debug 0)))
+
 (defmethod add ((x number) (y number))
   (cl:+ x y))
 
