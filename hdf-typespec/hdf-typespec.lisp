@@ -13,9 +13,14 @@
 	       (rank (third typespec))
 	       (dim-list (fourth typespec)))
 	   (with-foreign-object (dims 'hsize-t rank)
-	     (loop for d in dim-list for i from 0
-	       do (setf (mem-aref dims :uint i) d))
-	     (h5tarray-create2 type rank dims))))
+           ;;(let ((dims (foreign-alloc 'hsize-t :count rank)))
+	     (loop
+                for d in dim-list
+                for i from 0
+                ;;do (setf (mem-aref dims :uint i) d))
+                do (setf (mem-aref dims 'hsize-t i) d))
+	     (h5tarray-create2 type rank dims))
+           ))
 	;; compound typespec: (:compound ("name1" . type1) ...)
 	(:compound
 	 (let* ((names-specs (rest typespec))

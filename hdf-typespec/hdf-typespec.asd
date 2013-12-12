@@ -10,6 +10,7 @@
 	       #:string-utils
 	       #:memoization
 	       #:cffi
+               #:hdf-cffi
 	       #:typespec
 	       #:alexandria)
   :components ((:file "package")
