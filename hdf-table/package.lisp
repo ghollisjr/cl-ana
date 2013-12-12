@@ -4,7 +4,7 @@
   (:use #:cl
 	#:list-utils
 	#:cffi
-	#:hdf-file
+	#:hdf-utils
 	#:hdf-cffi
 	#:table
 	#:rread-table

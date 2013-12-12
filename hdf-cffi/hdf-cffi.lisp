@@ -147,6 +147,9 @@
   (class h5t-class-t)
   (size size-t))
 
+(defcfun "H5Tclose" herr-t
+  (dtype-id hid-t))
+
 (defcfun "H5Tinsert" herr-t
   (dtype-id hid-t)
   (name :string)

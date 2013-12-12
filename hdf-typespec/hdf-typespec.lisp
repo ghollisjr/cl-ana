@@ -44,6 +44,7 @@
 
 ;; Construct typespec from hdf type:
 (defun-memoized hdf-type->typespec (hdf-type)
+  ;; may need cleaning up
   (let ((hdf-class (h5tget-class hdf-type)))
     (case hdf-class
       (:H5T-INTEGER

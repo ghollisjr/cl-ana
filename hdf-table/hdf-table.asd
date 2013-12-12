@@ -7,7 +7,7 @@
   :license ""
   :depends-on (#:list-utils
 	       #:hdf-cffi
-	       #:hdf-file
+	       #:hdf-utils
 	       #:table
 	       #:rread-table
 	       #:typed-table

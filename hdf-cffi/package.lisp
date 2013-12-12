@@ -71,6 +71,7 @@
    :h5pget-chunk
    :h5tarray-create2
    :h5tcreate
+   :h5tclose
    :h5tinsert
    :h5dcreate1
    :h5dopen2
