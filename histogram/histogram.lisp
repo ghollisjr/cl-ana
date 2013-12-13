@@ -55,10 +55,10 @@ the lower bound over which to integrate, and the upper bound."))
 			      selected-axis-indices)))
 	(hist-integrate histogram integrate-axes)))))
 
-(defgeneric hist-insert (histogram data-list &optional weight)
-  (:documentation "Inserts a value specified by the list of data into
-  the histogram; i.e. increments the bin value by weight (which
-  defaults to 1 or whatever you set)."))
+(defgeneric hist-insert (histogram datum &optional weight)
+  (:documentation "Inserts a value specified by the datum (a list of
+  values) into the histogram; i.e. increments the bin value by
+  weight (which defaults to 1 or whatever you set)."))
 
 (defgeneric hist-index-ref (histogram point)
   (:documentation "Like aref for an array, but for histograms using
@@ -110,3 +110,12 @@ indices by looking up the name when necessary."
          (position s dim-names :test #'equal)
          s))
    axes))
+
+;;;; Ease of use functions:
+
+(defun hist-insert-list (histogram data-list)
+  "Inserts each data list in data-lists into the histogram.  Accepts
+data as either atom for 1-D or lists for any dimensionality."
+  (loop
+     for datum in data-list
+     do (hist-insert histogram (mklist datum))))

@@ -52,6 +52,28 @@ values."
        (format t "~a: ~a~%" ',arg ,varname)
        ,varname)))
 
+;; Very useful macro for combining keyword arguments only when
+;; appropriate
+(defmacro when-keywords (&rest keyword-arg-specs)
+  "Creates a plist containing the keyword arguments only when the
+values are non-nil; if a keyword-arg-spec is a list, then the first
+element is taken to be the field symbol."
+  (let* ((specs
+          (loop
+             for kas in keyword-arg-specs
+             collecting
+               (if (consp kas)
+                   kas
+                   (list (keywordify kas)
+                         kas))))
+         (when-statements
+          (loop
+             for (field-name val) in specs
+             collecting
+               `(when ,val
+                  (list ,field-name ,val)))))
+    `(append ,@when-statements)))
+
 ;;;; From let-over-lambda:
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))

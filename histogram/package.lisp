@@ -9,7 +9,8 @@
 	#:alexandria
 	#:fitting
 	#:map)
-  (:export :histogram
+  (:export :quick-hist ; useful for quickly plotting small datasets
+           :histogram
            :rectangular-histogram
 	   :contiguous-histogram
 	   :sparse-histogram
@@ -24,6 +25,7 @@
 	   :hist-integrate
 	   :hist-project
 	   :hist-insert
+           :hist-insert-list
 	   :hist-index-ref ; setf-able
 	   :hist-point-ref ; setf-able
 	   ;; :subhist ; subhist is just integration over a subset of the axis

@@ -5,6 +5,7 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:string-utils
+               #:symbol-utils
                #:alexandria)
   :components ((:file "package")
 	       (:file "macro-utils")))
