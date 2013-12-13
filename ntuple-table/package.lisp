@@ -7,4 +7,4 @@
         :typed-table
 	:typespec)
   (:export :open-ntuple-table
-	   :make-ntuple-table))
+	   :create-ntuple-table))

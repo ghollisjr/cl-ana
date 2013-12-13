@@ -3,7 +3,7 @@
 (in-package :ntuple-table)
 
 (defparameter *table*
-  (make-ntuple-table "/home/ghollisjr/test.dat"
+  (create-ntuple-table "/home/ghollisjr/test.dat"
 		     (list (cons "x" :int)
 			   (cons "y" :double))))
 

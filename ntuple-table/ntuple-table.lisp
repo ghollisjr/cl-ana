@@ -7,16 +7,11 @@
     :initarg :ntuple
     :initform nil
     :accessor ntuple-table-ntuple
-    :documentation "GSL handler for ntuple object")
-   (cstruct
-    :initarg :cstruct
-    :initform nil
-    :accessor ntuple-table-cstruct
-    :documentation "CFFI cstruct for row buffer")))
+    :documentation "GSL handler for ntuple object")))
 
 ;;; Writing functions:
 
-(defun make-ntuple-table (filename names-specs)
+(defun create-ntuple-table (filename names-specs)
   "Creates an ntuple-table with file located at the path corresponding
 to filename and names-specs being an alist mapping the column names to
 their typespecs."
@@ -24,24 +19,24 @@ their typespecs."
 	 (cstruct (typespec->cffi-type typespec))
 	 (column-names (mapcar #'car names-specs))
 	 (column-specs (mapcar #'cdr names-specs))
-	 (row-pointer (foreign-alloc cstruct)))
+	 (row-pointer (typespec-foreign-alloc typespec)))
     (let ((ntuple (gsll:create-ntuple filename row-pointer cstruct)))
       (make-instance 'ntuple-table
 		     :column-names column-names
 		     :column-specs column-specs
 		     :ntuple ntuple
-		     :cstruct cstruct
+		     :row-cstruct cstruct
 		     :row-pointer row-pointer))))
 
-(defmethod table-set-field ((table ntuple-table) column-symbol value)
-  (with-accessors ((row typed-table-row-pointer)
-		   (cstruct ntuple-table-cstruct))
-      table
-    (setf
-     (foreign-slot-value row
-			 cstruct
-			 column-symbol)
-     value)))
+;; (defmethod table-set-field ((table ntuple-table) column-symbol value)
+;;   (with-accessors ((row typed-table-row-pointer)
+;; 		   (cstruct ntuple-table-cstruct))
+;;       table
+;;     (setf
+;;      (foreign-slot-value row
+;; 			 cstruct
+;; 			 column-symbol)
+;;      value)))
 
 (defmethod table-commit-row ((table ntuple-table))
   (with-accessors ((row typed-table-row-pointer)
@@ -59,13 +54,13 @@ limitation of the ntuple file format itself."
 	 (cstruct (typespec->cffi-type typespec))
 	 (column-names (mapcar #'car names-specs))
 	 (column-specs (mapcar #'cdr names-specs))
-	 (row (foreign-alloc cstruct)))
+	 (row (typespec-foreign-alloc typespec)))
     (let ((ntuple (gsll:open-ntuple filename row cstruct)))
       (make-instance 'ntuple-table
 		     :column-names column-names
 		     :column-specs column-specs
 		     :ntuple ntuple
-		     :cstruct cstruct
+		     :row-cstruct cstruct
 		     :row-pointer row))))
 
 (defmethod table-load-next-row ((table ntuple-table))
@@ -74,13 +69,13 @@ limitation of the ntuple file format itself."
     (let ((read-status (gsl-cffi:gsl-ntuple-read ntuple)))
       (not (equal read-status gsl-cffi:+GSL-EOF+)))))
 
-(defmethod table-get-field ((table ntuple-table) column-symbol)
-  (with-accessors ((row typed-table-row-pointer)
-		   (cstruct ntuple-table-cstruct))
-      table
-    (foreign-slot-value row
-			cstruct
-			column-symbol)))
+;; (defmethod table-get-field ((table ntuple-table) column-symbol)
+;;   (with-accessors ((row typed-table-row-pointer)
+;; 		   (cstruct ntuple-table-cstruct))
+;;       table
+;;     (foreign-slot-value row
+;; 			cstruct
+;; 			column-symbol)))
 
 ;;; Cleanup:
 
