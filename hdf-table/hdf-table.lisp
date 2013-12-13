@@ -109,7 +109,7 @@
 		       :access-mode :read
 		       :nrows (get-dataset-length dataset))))))
 
-(defun make-hdf-table
+(defun create-hdf-table
     (hdf-file dataset-path names-specs &key (buffer-size 1000))
   "Creates a hdf-table for writing in hdf-file with dataset-path as
   the path to the dataset in the hdf-file and the alist names-specs

@@ -17,7 +17,7 @@
   (:export :hdf-table
            :hdf-table-nrows
 	   :open-hdf-table
-	   :make-hdf-table
+	   :create-hdf-table
 	   :hdf-table-chain
            :hdf-table-chain-nrows
 	   :open-hdf-table-chain))

@@ -87,7 +87,7 @@
 		       :direction :output
 		       :if-exists :supersede)
     (let* ((table
-            (make-hdf-table file
+            (create-hdf-table file
                             "/test"
                             (list (cons "x" :int)
                                   (cons "y" :float)))))
@@ -108,7 +108,7 @@
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
 			       :direction :output
 			       :if-exists :supersede)
-    (let ((output-table (make-hdf-table outfile "/output-dataset"
+    (let ((output-table (create-hdf-table outfile "/output-dataset"
                                         (zip (list "x" "y")
                                              (list :int :float))))
           (input-table
@@ -134,7 +134,7 @@
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
 			       :direction :output
 			       :if-exists :supersede)
-    (let ((output-table (make-hdf-table outfile "/output-dataset"
+    (let ((output-table (create-hdf-table outfile "/output-dataset"
 					(zip (list "x" "y")
 					     (list :int :float))))
 	  (input-table
@@ -154,7 +154,7 @@
                                :if-exists :supersede
                                :if-does-not-exist :create)
     (let* ((table
-            (make-hdf-table
+            (create-hdf-table
              outfile "/array"
              (list (cons "x"
                          (list :array :float 1 (list 4))))))
