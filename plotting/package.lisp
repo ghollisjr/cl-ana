@@ -7,6 +7,7 @@
 	:map
         :string-utils
         :list-utils
+        :macro-utils
         :histogram
         :tensor)
   (:export :*gnuplot-session*

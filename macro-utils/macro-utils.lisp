@@ -54,7 +54,7 @@ values."
 
 ;; Very useful macro for combining keyword arguments only when
 ;; appropriate
-(defmacro when-keywords (&rest keyword-arg-specs)
+(defmacro when-keywords (&body keyword-arg-specs)
   "Creates a plist containing the keyword arguments only when the
 values are non-nil; if a keyword-arg-spec is a list, then the first
 element is taken to be the field symbol."

@@ -11,6 +11,7 @@
                #:map
                #:string-utils
                #:list-utils
+               #:macro-utils
                #:histogram
                #:tensor)
   :components ((:file "package")

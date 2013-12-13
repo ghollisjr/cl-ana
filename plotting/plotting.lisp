@@ -530,10 +530,10 @@ in the page."
 ;;; Convenience functions:
 
 (defun quick-multidraw (object-specs &key
-                                       (type "wxt")
-                                       (page-title "")
-                                       (shown-page-title "")
-                                       (plot-title "")
+                                       type
+                                       page-title
+                                       shown-page-title
+                                       plot-title
 				       x-range
 				       y-range
                                        x-title
@@ -546,24 +546,29 @@ in the page."
   An object-spec is a list being the object to plot consed onto a
   plist specifying the keyword arguments to give to make-line."
   (let ((page
-         (make-instance
+         (apply
+          #'make-instance
           'page
-          :title page-title
-          :shown-title shown-page-title
-          :type type
-          :plots (list (make-instance
-                        'plot2d
-                        :title plot-title
-                        :x-title x-title
-                        :x2-title x2-title
-                        :y-title y-title
-                        :y2-title y2-title
-			:x-range x-range
-			:y-range y-range
-                        :lines (mapcar
-                                (lambda (object-spec)
-                                  (apply #'make-line object-spec))
-                                object-specs))))))
+          (when-keywords
+            (:title page-title)
+            (:shown-title shown-page-title)
+            type
+            (:plots (list
+                     (apply
+                      #'make-instance
+                      'plot2d
+                      (when-keywords
+                        (:title plot-title)
+                        x-title
+                        x2-title
+                        y-title
+                        y2-title
+                        x-range
+                        y-range
+                        (:lines (mapcar
+                                 (lambda (object-spec)
+                                   (apply #'make-line object-spec))
+                                 object-specs))))))))))
     (draw page)
     page))
 
@@ -581,10 +586,10 @@ in the page."
   single line as well as drawing the page.")
   ;; Default method for 2-D plotting
   (:method (object &key
-                     (type "wxt")
-                     (page-title "")
-                     (shown-page-title "")
-                     (plot-title "")
+                     type
+                     page-title
+                     shown-page-title
+                     plot-title
                      x-title
                      y-title
                      x2-title
@@ -592,23 +597,29 @@ in the page."
 		     x-range
 		     y-range
                      color)
-    (let* ((line (make-line object :color color))
+    (let* ((line (apply #'make-line
+                        object
+                        (when-keywords color)))
            (page
-            (make-instance
+            (apply
+             #'make-instance
              'page
-             :type type
-             :title page-title
-             :shown-title shown-page-title
-             :plots (list (make-instance
-                           'plot2d
-                           :title plot-title
-                           :x-title x-title
-                           :y-title y-title
-                           :x2-title x2-title
-                           :y2-title y2-title
-			   :x-range x-range
-			   :y-range y-range
-                           :lines (list line))))))
+             (when-keywords
+               type
+               (:title page-title)
+               (:shown-title shown-page-title)
+               (:plots (list (apply
+                              #'make-instance
+                              'plot2d
+                              (when-keywords
+                                (:title plot-title)
+                                x-title
+                                y-title
+                                x2-title
+                                y2-title
+                                x-range
+                                y-range
+                                (:lines (list line))))))))))
       (draw page)
       page)))
 
