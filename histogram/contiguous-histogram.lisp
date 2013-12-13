@@ -27,13 +27,13 @@ Example usage: (make-contiguous-hist (list (list :name \"x\" :nbins
 10 :low 50 :high 55))) would create a contiguous histogram with one
 dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 55."
-  (let* ((dim-names (mapcar #'(lambda (spec) (getf spec :name))
+  (let* ((dim-names (mapcar (lambda (spec) (getf spec :name))
 			    dim-spec-plists))
 	 (ndims (length dim-names))
-	 (bin-specs (mapcar #'(lambda (s)
-				(list (getf s :nbins)
-				      (getf s :low)
-				      (getf s :high)))
+	 (bin-specs (mapcar (lambda (s)
+                              (list (getf s :nbins)
+                                    (getf s :low)
+                                    (getf s :high)))
 			    dim-spec-plists))
 	 (size-list (mapcar #'first bin-specs))
 	 (default-args (progn
@@ -67,38 +67,38 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 	     (if (listp x)
 		 (first x)
 		 x)))
-      (let* ((axis-name-or-indices (mapcar #'(lambda (x)
-					       (if (listp x)
-						   (first x)
-						   x))
+      (let* ((axis-name-or-indices (mapcar (lambda (x)
+                                             (if (listp x)
+                                                 (first x)
+                                                 x))
 					   axes))
 	     (dim-indices (get-dim-indices dim-names axis-name-or-indices))
 	     (point-bounds
-	      (mapcar #'(lambda (x)
-			  (when (listp x)
-			    (rest x)))
+	      (mapcar (lambda (x)
+                        (when (listp x)
+                          (rest x)))
 		      axes))
 	     (index-bounds
-	      (mapcar #'(lambda (point-bound bin-spec)
-			  (when point-bound
-			    (let ((low-index
-				   (get-axis-bin-index (first point-bound)
-							 bin-spec))
-				  (high-index
-				   (get-axis-bin-index (second point-bound)
-							 bin-spec)))
-			      (list (if (equal low-index :underflow)
-					0
-					low-index)
-				      (if (equal high-index :overflow)
-					  (1- (first bin-spec))
-					  high-index)))))
+	      (mapcar (lambda (point-bound bin-spec)
+                        (when point-bound
+                          (let ((low-index
+                                 (get-axis-bin-index (first point-bound)
+                                                     bin-spec))
+                                (high-index
+                                 (get-axis-bin-index (second point-bound)
+                                                     bin-spec)))
+                            (list (if (equal low-index :underflow)
+                                      0
+                                      low-index)
+                                  (if (equal high-index :overflow)
+                                      (1- (first bin-spec))
+                                      high-index)))))
 		      point-bounds
 		      bin-specs))
-	     (index-specs (mapcar #'(lambda (x y)
-				      (if y
-					  (cons x y)
-					  x))
+	     (index-specs (mapcar (lambda (x y)
+                                    (if y
+                                        (cons x y)
+                                        x))
 				  dim-indices
 				  index-bounds))
 	     (index-specs-copy (copy-list index-specs))
@@ -106,16 +106,16 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 				       :key #'index-key))
 	     (unique-sorted-index-specs
 	      (reduce
-	       #'(lambda (x y) (adjoin y x
-				       :test #'equal
-				       :key #'index-key))
+	       (lambda (x y) (adjoin y x
+                                     :test #'equal
+                                     :key #'index-key))
 	       sorted-index-specs
 	       :initial-value ()))
 	     (unique-sorted-indices
-	      (mapcar #'(lambda (x)
-			  (if (listp x)
-			      (first x)
-			      x))
+	      (mapcar (lambda (x)
+                        (if (listp x)
+                            (first x)
+                            x))
 		      unique-sorted-index-specs))
 	     (new-ndims (- ndims (length unique-sorted-indices)))
 	     (new-dim-names (except-at dim-names (reverse unique-sorted-indices)
@@ -181,10 +181,10 @@ nil if the point is not inside the histogram domain."
       hist
     (let* ((nbin-list (mapcar #'first bin-specs))
 	   (bin-indices (apply #'cartesian-product
-			       (mapcar #'(lambda (x) (range 0 (1- x))) nbin-list))))
-      (mapcar #'(lambda (bin-index)
-		  (cons (hist-index-ref hist bin-index)
-			(get-bin-center bin-specs bin-index)))
+			       (mapcar (lambda (x) (range 0 (1- x))) nbin-list))))
+      (mapcar (lambda (bin-index)
+                (cons (hist-index-ref hist bin-index)
+                      (get-bin-center bin-specs bin-index)))
 	      bin-indices))))
 
 ;;; Generic Math functions:
@@ -238,28 +238,28 @@ nil if the point is not inside the histogram domain."
 			  &key
 			    (protected-value 0))
   (map-contiguous-hist
-   #'(lambda (x y) (protected-div
-		    x y
-		    :protected-value
-		    protected-value))
+   (lambda (x y) (protected-div
+                  x y
+                  :protected-value
+                  protected-value))
    h1 h2))
 
 (defmethod protected-unary-div ((h contiguous-histogram)
 				&key
 				  (protected-value 0))
   (map-contiguous-hist
-   #'(lambda (x) (protected-unary-div
-		    x
-		    :protected-value
-		    protected-value))
+   (lambda (x) (protected-unary-div
+                x
+                :protected-value
+                protected-value))
    h))
 
 ;;; Internal-usage functions
 
 (defun contiguous-hist-integrate-contents (hist index-specs)
   "Assumes the index-specs are unique and sorted greatest to least."
-    (reduce #'contiguous-hist-integrate-contents-worker index-specs
-	    :initial-value hist))
+  (reduce #'contiguous-hist-integrate-contents-worker index-specs
+          :initial-value hist))
 
 (defun contiguous-hist-integrate-contents-worker (hist index-spec)
   (if (zerop (if (listp index-spec)
@@ -269,12 +269,12 @@ nil if the point is not inside the histogram domain."
 			     (subseq hist (second index-spec) (1+ (third index-spec)))
 			     hist))
       (map (type-of hist)
-	   #'(lambda (h)
-	       (contiguous-hist-integrate-contents-worker
-		h (if (listp index-spec)
-		      (cons (1- (first index-spec))
-			    (rest index-spec))
-		      (1- index-spec))))
+	   (lambda (h)
+             (contiguous-hist-integrate-contents-worker
+              h (if (listp index-spec)
+                    (cons (1- (first index-spec))
+                          (rest index-spec))
+                    (1- index-spec))))
 	   hist)))
 
 (defun make-contiguous-hist-contents (size-list initial-value)
@@ -295,6 +295,6 @@ nil if the point is not inside the histogram domain."
       hist
     (let ((lower-bounds (mapcar #'second bin-specs))
 	  (upper-bounds (mapcar #'third bin-specs)))
-      (every #'(lambda (x y z) (and (<= x y)
-				    (< y z)))
+      (every (lambda (x y z) (and (<= x y)
+                                  (< y z)))
 	     lower-bounds point upper-bounds))))

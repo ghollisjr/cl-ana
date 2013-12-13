@@ -25,13 +25,13 @@ Example usage: (make-sparse-hist (list (list :name \"x\" :nbins
 10 :low 50 :high 55))) would create a sparse histogram with one
 dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 55."
-  (let* ((dim-names (mapcar #'(lambda (spec) (getf spec :name))
+  (let* ((dim-names (mapcar (lambda (spec) (getf spec :name))
 			    dim-spec-plists))
 	 (ndims (length dim-names))
-	 (bin-specs (mapcar #'(lambda (s)
-				(list (getf s :nbins)
-				      (getf s :low)
-				      (getf s :high)))
+	 (bin-specs (mapcar (lambda (s)
+                              (list (getf s :nbins)
+                                    (getf s :low)
+                                    (getf s :high)))
 			    dim-spec-plists))
 	 (default-args (progn
 			 (let ((result ()))
@@ -64,38 +64,38 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 	     (if (listp x)
 		 (first x)
 		 x)))
-      (let* ((axis-name-or-indices (mapcar #'(lambda (x)
-					       (if (listp x)
-						   (first x)
-						   x))
+      (let* ((axis-name-or-indices (mapcar (lambda (x)
+                                             (if (listp x)
+                                                 (first x)
+                                                 x))
 					   axes))
 	     (dim-indices (get-dim-indices dim-names axis-name-or-indices))
 	     (point-bounds
-	      (mapcar #'(lambda (x)
-			  (when (listp x)
-			    (rest x)))
+	      (mapcar (lambda (x)
+                        (when (listp x)
+                          (rest x)))
 		      axes))
 	     (index-bounds
-	      (mapcar #'(lambda (point-bound bin-spec)
-			  (when point-bound
-			    (let ((low-index
-				   (get-axis-bin-index (first point-bound)
-							 bin-spec))
-				  (high-index
-				   (get-axis-bin-index (second point-bound)
-							 bin-spec)))
-			      (list (if (equal low-index :underflow)
-					0
-					low-index)
-				      (if (equal high-index :overflow)
-					  (1- (first bin-spec))
-					  high-index)))))
+	      (mapcar (lambda (point-bound bin-spec)
+                        (when point-bound
+                          (let ((low-index
+                                 (get-axis-bin-index (first point-bound)
+                                                     bin-spec))
+                                (high-index
+                                 (get-axis-bin-index (second point-bound)
+                                                     bin-spec)))
+                            (list (if (equal low-index :underflow)
+                                      0
+                                      low-index)
+                                  (if (equal high-index :overflow)
+                                      (1- (first bin-spec))
+                                      high-index)))))
 		      point-bounds
 		      bin-specs))
-	     (index-specs (mapcar #'(lambda (x y)
-				      (if y
-					  (cons x y)
-					  x))
+	     (index-specs (mapcar (lambda (x y)
+                                    (if y
+                                        (cons x y)
+                                        x))
 				  dim-indices
 				  index-bounds))
 	     (index-specs-copy (copy-list index-specs))
@@ -103,16 +103,16 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 				       :key #'index-key))
 	     (unique-sorted-index-specs
 	      (reduce
-	       #'(lambda (x y) (adjoin y x
-				       :test #'equal
-				       :key #'index-key))
+	       (lambda (x y) (adjoin y x
+                                     :test #'equal
+                                     :key #'index-key))
 	       sorted-index-specs
 	       :initial-value ()))
 	     (unique-sorted-indices
-	      (mapcar #'(lambda (x)
-			  (if (listp x)
-			      (first x)
-			      x))
+	      (mapcar (lambda (x)
+                        (if (listp x)
+                            (first x)
+                            x))
 		      unique-sorted-index-specs))
 	     (new-ndims (- ndims (length unique-sorted-indices)))
 	     (new-dim-names (except-at dim-names (reverse unique-sorted-indices)
@@ -216,18 +216,18 @@ and third elements respectively."
 	      (low-bound (second index-spec))
 	      (high-bound (third index-spec)))
 	  (iter
-	   (for (key val) in-hashtable value-map)
-	   (let ((this-axis (elt key axis)))
-	     (when (and (<= low-bound this-axis)
-			(< this-axis high-bound))
-	       (setf (gethash (except-nth key axis) result)
-		     (+ (gethash (except-nth key axis) result empty-bin-value)
-			val))))))
+            (for (key val) in-hashtable value-map)
+            (let ((this-axis (elt key axis)))
+              (when (and (<= low-bound this-axis)
+                         (< this-axis high-bound))
+                (setf (gethash (except-nth key axis) result)
+                      (+ (gethash (except-nth key axis) result empty-bin-value)
+                         val))))))
 	;; handle the unbounded case
 	(let ((axis index-spec))
 	  (iter
-	   (for (key val) in-hashtable value-map)
-	   (setf (gethash (except-nth key axis) result)
-		 (+ (gethash (except-nth key axis) result empty-bin-value)
-		    val)))))
+            (for (key val) in-hashtable value-map)
+            (setf (gethash (except-nth key axis) result)
+                  (+ (gethash (except-nth key axis) result empty-bin-value)
+                     val)))))
     result))

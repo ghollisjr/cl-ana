@@ -34,7 +34,7 @@
 a closure which will be evaluated each time the table gets re-read
 from the beginning."
   (let ((lambda-form
-         `(function (lambda () ,table-creation-form))))
+         `(lambda () ,table-creation-form)))
     `(make-instance 'reusable-table
                     :creation-fn ,lambda-form
                     :raw-table (funcall ,lambda-form))))

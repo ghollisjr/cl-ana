@@ -42,17 +42,17 @@ cdr being the cdrs."
 	       (transpose-worker tails (cons heads result))
 	       result))))
     (nreverse (transpose-worker xs ()))))
-       
+
 ;; Can't go without the Cartesian Product
 (defun cartesian-product (&rest xs)
   (if xs
       (if (single xs)
 	  (mapcar #'list (car xs))
           (mapcan
-           #'(lambda (c)
-               (mapcar 
-                #'(lambda (x) (cons x c))
-                (car xs)))
+           (lambda (c)
+             (mapcar
+              (lambda (x) (cons x c))
+              (car xs)))
            (apply #'cartesian-product (cdr xs))))))
 
 ;; Selects every nth term from a list (including the first term):
@@ -116,9 +116,9 @@ are already unique and sorted least to greatest."
 	       ns
 	       (let ((ns-copy (copy-list ns)))
 		 (reverse
-		  (reduce #'(lambda (x y)
-			      (adjoin y x
-				      :test test))
+		  (reduce (lambda (x y)
+                            (adjoin y x
+                                    :test test))
 			  (sort ns-copy #'<)
 			  :initial-value ()))))))
       (except-at-worker xs uniquely-sorted-ns))))
@@ -144,12 +144,12 @@ ambiguity in the result."
 	  (incf (cdr cons))
 	  (setf result (acons x 1 result))))
     (mapcar
-     #'(lambda (x)
-	 (let ((count (cdr x)))
-	   (if (and (not singleton-pairs)
-		    (= 1 count))
-	       (car x)
-	       x)))
+     (lambda (x)
+       (let ((count (cdr x)))
+         (if (and (not singleton-pairs)
+                  (= 1 count))
+             (car x)
+             x)))
      (nreverse result))))
 
 (defun list-less-than (list1 list2)
@@ -194,8 +194,8 @@ interpreted as finding the starting index of the ith list in the
 concatenation of n lists."
   (nreverse
    (rest
-    (reduce #'(lambda (x y)
-		(cons (+ y (car x)) x))
+    (reduce (lambda (x y)
+              (cons (+ y (car x)) x))
 	    sizes
 	    :initial-value (list 0)))))
 
@@ -324,8 +324,8 @@ value that fn returned."
   "Executes body via looping over plist, binding each field symbol to
 field-symbol and each field value to field-value.  Returns nil."
   (with-gensyms (lst)
-  `(do ((,lst ,plist (rest (rest ,lst))))
-       ((null ,lst))
-     (let ((,field-symbol (first ,lst))
-           (,field-value (second ,lst)))
-       ,@body))))
+    `(do ((,lst ,plist (rest (rest ,lst))))
+         ((null ,lst))
+       (let ((,field-symbol (first ,lst))
+             (,field-value (second ,lst)))
+         ,@body))))

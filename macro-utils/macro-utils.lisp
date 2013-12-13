@@ -10,7 +10,7 @@
 ;; as otherwise it will refer a different binding (which sometimes is
 ;; exactly what you want)."
 
-;;   (let ((bindings (mapcar #'(lambda (v) `(,v (gensym))) vars)))
+;;   (let ((bindings (mapcar (lambda (v) `(,v (gensym))) vars)))
 ;;     `(let ,bindings
 ;;        ,@body)))
 
@@ -51,3 +51,7 @@ values."
     `(let ((,varname ,arg))
        (format t "~a: ~a~%" ',arg ,varname)
        ,varname)))
+
+;;;; From let-over-lambda:
+(defun symb (&rest args)
+  (values (intern (apply #'mkstr args))))

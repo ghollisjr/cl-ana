@@ -4,6 +4,7 @@
   :description "Basic macro utilities like with-gensyms"
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:alexandria)
+  :depends-on (#:string-utils
+               #:alexandria)
   :components ((:file "package")
 	       (:file "macro-utils")))

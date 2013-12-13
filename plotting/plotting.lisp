@@ -46,8 +46,8 @@
 (defun gnuplot-settings ()
   ;; Image style settings:
   (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
-  ;; Boxes style settings:
-  ;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
+;; Boxes style settings:
+;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
 (gnuplot-settings)
 
@@ -95,7 +95,7 @@
     well as the plots having a collective title.  This sets the shown
     title.")
    (default-dimensions
-     :initform (cons 800 600)
+       :initform (cons 800 600)
      :accessor page-default-dimensions
      :allocation :class
      :documentation "Default page size.")
@@ -178,7 +178,7 @@ in the page."
   (gnuplot-cmd *gnuplot-session* (generate-cmd page)))
 
 (defmethod initialize-instance :after
-  ((p page) &key)
+    ((p page) &key)
   (incf (slot-value p 'next-id)))
 
 (defmethod initialize-instance ((p page)
@@ -288,18 +288,18 @@ in the page."
   (flet ((maybe-make-str (label var)
            (when var
              (list
-               (format nil "set ~a '~a'~%" label var)))))
-  (with-slots (x-title x2-title y-title y2-title)
-      p
-    (append
-     (list "unset xlabel"
-	   "unset x2label"
-	   "unset ylabel"
-	   "unset y2label")
-     (maybe-make-str "xlabel" x-title)
-     (maybe-make-str "x2label" x2-title)
-     (maybe-make-str "ylabel" y-title)
-     (maybe-make-str "y2label" y2-title)))))
+              (format nil "set ~a '~a'~%" label var)))))
+    (with-slots (x-title x2-title y-title y2-title)
+        p
+      (append
+       (list "unset xlabel"
+             "unset x2label"
+             "unset ylabel"
+             "unset y2label")
+       (maybe-make-str "xlabel" x-title)
+       (maybe-make-str "x2label" x2-title)
+       (maybe-make-str "ylabel" y-title)
+       (maybe-make-str "y2label" y2-title)))))
 
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range y-range)
@@ -452,11 +452,11 @@ in the page."
       (when (subtypep (type-of first-dependent) 'err-num)
         (setf data
               (mapcar
-               #'(lambda (x)
-                   (let ((e (cdr x)))
-                     (cons (cons (car x)
-                                 (list (err-num-value e)))
-                           (err-num-error e))))
+               (lambda (x)
+                 (let ((e (cdr x)))
+                   (cons (cons (car x)
+                               (list (err-num-value e)))
+                         (err-num-error e))))
                data))
         (setf style "yerrorbars")))))
 
@@ -467,13 +467,13 @@ in the page."
       (let ((extractor
              (if data
                  (if (listp (car (first data)))
-                     #'(lambda (cons)
-                         (format s "~{~a ~}" (car cons))
-                         (format s "~a~%" (cdr cons)))
-                     #'(lambda (cons)
-                         (format s "~a ~a~%"
-                                 (car cons)
-                                 (cdr cons))))
+                     (lambda (cons)
+                       (format s "~{~a ~}" (car cons))
+                       (format s "~a~%" (cdr cons)))
+                     (lambda (cons)
+                       (format s "~a ~a~%"
+                               (car cons)
+                               (cdr cons))))
                  (error "Empty data in data-line"))))
         (loop
            for d in data
@@ -561,8 +561,8 @@ in the page."
 			:x-range x-range
 			:y-range y-range
                         :lines (mapcar
-                                #'(lambda (object-spec)
-                                    (apply #'make-line object-spec))
+                                (lambda (object-spec)
+                                  (apply #'make-line object-spec))
                                 object-specs))))))
     (draw page)
     page))
@@ -733,7 +733,7 @@ up to two double-float arguments."
                                 "boxerrorbars"
                                 "boxes")
                             :color color))))
-      (2 
+      (2
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))
            (error "Must be 2-d independent variable")

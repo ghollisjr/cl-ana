@@ -119,7 +119,7 @@ dataset-path"
 	     (table-close hdf-table)
 	     result))))
     (let* ((file-nrows (mapcar
-                        #'(lambda (filename)
+                        (lambda (filename)
                             (get-nrows filename dataset-path))
                         filename-list))
 	   (offsets (make-offsets file-nrows))

@@ -24,10 +24,10 @@
     :documentation "Default value for a bin which has had no events
     added")
    (default-increment
-    :accessor hist-default-increment
-    :initarg :default-increment
-    :initform 1
-    :documentation "Default amount by which bins are incremented;
+       :accessor hist-default-increment
+     :initarg :default-increment
+     :initform 1
+     :documentation "Default amount by which bins are incremented;
     i.e. unless overridden by a weight factor.")))
 
 (defgeneric hist-integrate (histogram &rest axes)
@@ -90,14 +90,14 @@ center, we have to do some footwork here."
   (let* ((hist-bin-values (hist-bin-values hist))
 	 (alist-maker
 	  (if (single (cdr (first hist-bin-values)))
-	      #'(lambda (x)
-		  (let ((car (car x))
-			(cdr (first (cdr x))))
-		    (cons cdr car)))
-	      #'(lambda (x)
-		  (let ((car (car x))
-			(cdr (cdr x)))
-		    (cons cdr car))))))
+	      (lambda (x)
+                (let ((car (car x))
+                      (cdr (first (cdr x))))
+                  (cons cdr car)))
+	      (lambda (x)
+                (let ((car (car x))
+                      (cdr (cdr x)))
+                  (cons cdr car))))))
     (mapcar alist-maker
 	    (hist-bin-values hist))))
 
@@ -105,8 +105,8 @@ center, we have to do some footwork here."
   "Converts axes from a list of either index or name into a list of
 indices by looking up the name when necessary."
   (mapcar
-   #'(lambda (s)
-       (if (stringp s)
-	   (position s dim-names :test #'equal)
-	   s))
+   (lambda (s)
+     (if (stringp s)
+         (position s dim-names :test #'equal)
+         s))
    axes))

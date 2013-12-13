@@ -13,7 +13,7 @@
 	       (rank (third typespec))
 	       (dim-list (fourth typespec)))
 	   (with-foreign-object (dims 'hsize-t rank)
-           ;;(let ((dims (foreign-alloc 'hsize-t :count rank)))
+             ;;(let ((dims (foreign-alloc 'hsize-t :count rank)))
 	     (loop
                 for d in dim-list
                 for i from 0
@@ -30,7 +30,7 @@
 		(slot-symbols (mapcar (compose #'intern #'lispify)
 				      names))
 		(cstruct (typespec->cffi-type typespec))
-		(offsets (mapcar #'(lambda (x) (foreign-slot-offset cstruct x))
+		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
 		(compound-tid (h5tcreate +H5T-COMPOUND+ (foreign-type-size cstruct))))
 	   (loop
@@ -68,10 +68,10 @@
        (let* ((nmembers (h5tget-nmembers hdf-type))
 	      (names
 	       (loop for i from 0 to (1- nmembers)
-		    collecting (h5tget-member-name hdf-type i)))
+                  collecting (h5tget-member-name hdf-type i)))
 	      (member-typespecs
 	       (loop for i from 0 to (1- nmembers)
-		    collecting (hdf-type->typespec
-				(h5tget-member-type hdf-type i))))
+                  collecting (hdf-type->typespec
+                              (h5tget-member-type hdf-type i))))
 	      (names-specs (zip names member-typespecs)))
 	 (cons :compound names-specs))))))

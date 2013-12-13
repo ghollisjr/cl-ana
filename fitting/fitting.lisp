@@ -40,9 +40,9 @@
        collect (grid:aref grid i))))
 
 (defun fit (data-source fn init-params &key
-				  (max-iterations 25)
-				  (prec 1.0d-6)
-				  (derivative-delta 1d-11))
+                                         (max-iterations 25)
+                                         (prec 1.0d-6)
+                                         (derivative-delta 1d-11))
   "Fits a function fn against data from data-source using the initial
 parameters init-params.  Use err-num data type in the dependent
 variable's value if you want to do a weighted least squares fit.
@@ -80,43 +80,43 @@ The return values of fit are:
     (let ((residual-fn
 	   (if (subtypep (type-of (first ylist))
 			 'err-num)
-	       #'(lambda (param-list x y)
-		   (/ (- (funcall fn param-list x)
-			 (err-num-value y))
-		      (err-num-error y)))
-	       #'(lambda (param-list x y)
-		   (- (funcall fn param-list x)
-		      y)))))
+	       (lambda (param-list x y)
+                 (/ (- (funcall fn param-list x)
+                       (err-num-value y))
+                    (err-num-error y)))
+	       (lambda (param-list x y)
+                 (- (funcall fn param-list x)
+                    y)))))
       (labels ((residual (param-grid result-grid)
 		 (let ((param-list (grid-to-list param-grid)))
-		       (loop
-			  for i from 0 below n-data
-			  for x in xlist
-			  for y in ylist
-			  do (setf (grid:aref result-grid i)
-				   (funcall residual-fn param-list x y)))))
+                   (loop
+                      for i from 0 below n-data
+                      for x in xlist
+                      for y in ylist
+                      do (setf (grid:aref result-grid i)
+                               (funcall residual-fn param-list x y)))))
 	       (make-residual-jacobian (fn n-data n-params)
-		 #'(lambda (param-grid jacobian)
-		     (let ((param-list (grid-to-list param-grid)))
-		       (loop
-			  for i from 0 below n-data
-			  for x in xlist
-			  for y in ylist
-			  do
-			    (loop
-			       for j from 0 below n-params
-			       do
-				 (let* ((changed-param-list
-					 (loop
-					    for k from 0
-					    for p in param-list
-					    collect (if (= k j)
-							(+ p derivative-delta)
-							p))))
-				   (setf (grid:aref jacobian i j)
-					 (/ (- (funcall fn changed-param-list x y)
-					       (funcall fn param-list x y))
-					    derivative-delta)))))))))
+		 (lambda (param-grid jacobian)
+                   (let ((param-list (grid-to-list param-grid)))
+                     (loop
+                        for i from 0 below n-data
+                        for x in xlist
+                        for y in ylist
+                        do
+                          (loop
+                             for j from 0 below n-params
+                             do
+                               (let* ((changed-param-list
+                                       (loop
+                                          for k from 0
+                                          for p in param-list
+                                          collect (if (= k j)
+                                                      (+ p derivative-delta)
+                                                      p))))
+                                 (setf (grid:aref jacobian i j)
+                                       (/ (- (funcall fn changed-param-list x y)
+                                             (funcall fn param-list x y))
+                                          derivative-delta)))))))))
 	(let* ((residual-jacobian
 		(make-residual-jacobian residual-fn
 					n-data
@@ -127,9 +127,9 @@ The return values of fit are:
 		 (list n-data n-params)
 		 (list #'residual
 		       residual-jacobian
-		       #'(lambda (x f jacobian)
-			   (funcall #'residual x f)
-			   (funcall residual-jacobian x jacobian)))
+		       (lambda (x f jacobian)
+                         (funcall #'residual x f)
+                         (funcall residual-jacobian x jacobian)))
 		 init-param-grid
 		 nil)))
 	  (macrolet ((fitx (i) `(grid:aref (gsll:solution fit) ,i))
@@ -140,7 +140,7 @@ The return values of fit are:
 		 (and (plusp iter)
 		      ;;(gsll:fit-test-delta fit prec prec))
 		      (gsll:fit-test-delta fit 0d0 prec))
-	       do 
+	       do
 		 (gsll:iterate fit)
 	       finally
 		 (progn

@@ -99,11 +99,11 @@
 (defun cffi-native-type (hdf-native-type)
   (cdr (find hdf-native-type *hdf-cffi-type-map*
 	     :key #'car
-	     :test #'(lambda (t1 t2)
-		       (let ((cmp (h5tequal t1 t2)))
-			 (if (zerop cmp)
-			     nil
-			     t))))))
+	     :test (lambda (t1 t2)
+                     (let ((cmp (h5tequal t1 t2)))
+                       (if (zerop cmp)
+                           nil
+                           t))))))
 
 (defun hdf-native-type (cffi-native-type)
   (car (rassoc cffi-native-type *hdf-cffi-type-map*)))

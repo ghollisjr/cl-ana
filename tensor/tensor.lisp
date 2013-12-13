@@ -32,8 +32,8 @@ sequences given by the optional type argument."
   (if (single dimension-list)
       (make-sequence type (first dimension-list) :initial-element initial-element)
       (map type
-	   #'(lambda (&rest xs)
-	       (make-tensor (rest dimension-list) :type type :initial-element initial-element))
+	   (lambda (&rest xs)
+             (make-tensor (rest dimension-list) :type type :initial-element initial-element))
 	   (make-sequence type (first dimension-list)))))
 
 (defun tensor-ref (tensor &rest subscripts)
@@ -140,38 +140,38 @@ the first index of B."
 	 (starting-indices (make-offsets (mapcar #'1- tensor-ranks)))
 	 (contracted-dims (mapcar #'second tensor-index-lists))
 	 (ref-fns ; a ref-fn is a function taking the final index list
-		  ; and another index, returning the value of the
-		  ; tensor for that ref-fn along the contracted
-		  ; dimension at the second index using the
-		  ; appropriate indices from the final index list
+                                        ; and another index, returning the value of the
+                                        ; tensor for that ref-fn along the contracted
+                                        ; dimension at the second index using the
+                                        ; appropriate indices from the final index list
 	  (mapcar
-	   #'(lambda (tensor starting-index tensor-rank dim)
-	       (let ((ending-index (add starting-index (1- tensor-rank))))
-		 #'(lambda (final-index-list contracting-index)
-		     (let* ((applicable-indices (subseq final-index-list
-							starting-index
-							ending-index))
-			    (left-indices (subseq applicable-indices 0 dim))
-			    (right-indices
-			     (when (< dim (- tensor-rank 1))
-			       (subseq applicable-indices dim))))
-		       (apply #'tensor-ref tensor
-			      (append left-indices
-				      (list contracting-index)
-				      right-indices))))))
+	   (lambda (tensor starting-index tensor-rank dim)
+             (let ((ending-index (add starting-index (1- tensor-rank))))
+               (lambda (final-index-list contracting-index)
+                 (let* ((applicable-indices (subseq final-index-list
+                                                    starting-index
+                                                    ending-index))
+                        (left-indices (subseq applicable-indices 0 dim))
+                        (right-indices
+                         (when (< dim (- tensor-rank 1))
+                           (subseq applicable-indices dim))))
+                   (apply #'tensor-ref tensor
+                          (append left-indices
+                                  (list contracting-index)
+                                  right-indices))))))
 	   tensors starting-indices tensor-ranks contracted-dims))
 	 (contracted-dimension-length
 	  (reduce #'min
-		  (mapcar #'(lambda (tensor dim)
-			      (elt (tensor-dimensions tensor) dim))
+		  (mapcar (lambda (tensor dim)
+                            (elt (tensor-dimensions tensor) dim))
 			  tensors contracted-dims)))
 	 (dimension-lists
 	  (mapcar
-	   #'(lambda (tensor tensor-rank dim)
-	       (let ((dimensions (tensor-dimensions tensor)))
-		 (append (subseq dimensions 0 dim)
-			 (when (< dim (1- tensor-rank))
-			   (subseq dimensions (1+ dim))))))
+	   (lambda (tensor tensor-rank dim)
+             (let ((dimensions (tensor-dimensions tensor)))
+               (append (subseq dimensions 0 dim)
+                       (when (< dim (1- tensor-rank))
+                         (subseq dimensions (1+ dim))))))
 	   tensors tensor-ranks contracted-dims))
 	 (result-dimension-list (apply #'append dimension-lists))
 	 (final-indices (apply #'cartesian-product
@@ -183,24 +183,33 @@ the first index of B."
     (if final-indices
 	(loop
 	   for final-index in final-indices
-	   do (setf (apply #'tensor-ref result final-index)
-		    (apply #'+
-			   (loop
-			      for contracted-index below contracted-dimension-length
-			      collect 
-				(apply #'*
-				       (mapcar #'(lambda (ref-fn)
-						   (funcall ref-fn final-index contracted-index))
-					       ref-fns))))))
+	   do
+             (setf (apply #'tensor-ref result final-index)
+                   (apply #'+
+                          (loop
+                             for contracted-index
+                             below contracted-dimension-length
+                             collect
+                               (apply
+                                #'*
+                                (mapcar (lambda (ref-fn)
+                                          (funcall ref-fn
+                                                   final-index
+                                                   contracted-index))
+                                        ref-fns))))))
 	(setf result
 	      (apply #'+
 		     (loop
-			for contracted-index below contracted-dimension-length
-			collect 
+			for contracted-index
+                        below contracted-dimension-length
+			collect
 			  (apply #'*
-				 (mapcar #'(lambda (ref-fn)
-					     (funcall ref-fn nil contracted-index))
-					 ref-fns))))))
+				 (mapcar
+                                  (lambda (ref-fn)
+                                    (funcall ref-fn
+                                             nil
+                                             contracted-index))
+                                  ref-fns))))))
     result))
 
 ;;; Generic math functions:
@@ -219,7 +228,7 @@ the first index of B."
 
 (defmacro defbinaries (method-names)
   `(progn ,@(loop for m in method-names
-		 collect `(defbinary ,m))))
+               collect `(defbinary ,m))))
 
 (defmacro defunaries (method-names)
   `(progn ,@(loop for m in method-names
@@ -272,20 +281,26 @@ the first index of B."
 (defmethod div (x (y sequence))
   (tensor-map (curry #'div x) y))
 
-(defmethod protected-unary-div ((xs sequence) &key (protected-value 0))
-  (tensor-map #'(lambda (x) (protected-unary-div x :protected-value protected-value))
+(defmethod protected-unary-div ((xs sequence)
+                                &key (protected-value 0))
+  (tensor-map (lambda (x)
+                (protected-unary-div x :protected-value protected-value))
 	      xs))
 
-(defmethod protected-div ((xs sequence) (ys sequence) &key (protected-value 0))
-  (tensor-map #'(lambda (x y) (protected-div x y :protected-value protected-value))
+(defmethod protected-div ((xs sequence) (ys sequence)
+                          &key (protected-value 0))
+  (tensor-map (lambda (x y)
+                (protected-div x y :protected-value protected-value))
 	      xs ys))
 
 (defmethod protected-div ((xs sequence) y &key (protected-value 0))
-  (tensor-map #'(lambda (x) (protected-div x y :protected-value protected-value))
+  (tensor-map (lambda (x)
+                (protected-div x y :protected-value protected-value))
 	      xs))
 
 (defmethod protected-div (x (ys sequence) &key (protected-value 0))
-  (tensor-map #'(lambda (y) (protected-div x y :protected-value protected-value))
+  (tensor-map (lambda (y)
+                (protected-div x y :protected-value protected-value))
 	      ys))
 
 (defmethod expt ((x sequence) y)

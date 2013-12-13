@@ -105,7 +105,7 @@ column-symbol and the variable storing the field data."
 		 :initial-value nil)))
       (when (symbolp tree)
 	(when (marked-symbol-p tree mark)
-	      (list tree)))))
+          (list tree)))))
 
 (defun unmark-symbol (s mark)
   "returns unmarked version of symbol if non-empty string results from
@@ -136,16 +136,16 @@ as the first element of the list.
 
 The code body will be run for each row in the table."
   (let* ((selected-column-names
-	  (mapcar #'(lambda (x)
-		      (if (listp x)
-			  (second x)
-			  x))
+	  (mapcar (lambda (x)
+                    (if (listp x)
+                        (second x)
+                        x))
 		  column-selections))
 	 (bound-column-symbols
-	  (mapcar #'(lambda (x)
-		      (if (listp x)
-			  (first x)
-			  (intern (lispify x))))
+	  (mapcar (lambda (x)
+                    (if (listp x)
+                        (first x)
+                        (intern (lispify x))))
 		  column-selections))
 	 (selected-column-symbols
 	  (mapcar (compose #'intern #'lispify)
@@ -177,7 +177,7 @@ yourself."
   (let* ((marked-column-symbols (collect-marked-symbols body mark))
 	 (unmarked-column-symbols
 	  (mapcar
-	   #'(lambda (x) (unmark-symbol x mark))
+	   (lambda (x) (unmark-symbol x mark))
 	   marked-column-symbols))
 	 (marked-symbol-bindings
 	  (loop

@@ -60,7 +60,7 @@ structure allows for errors in errors to arbitrary depth."
 (defun err-num-+ (&rest err-nums)
   (make-err-num (reduce #'+ (mapcar #'err-num-value err-nums))
 		(sum-in-quadrature
-		       (mapcar #'err-num-error err-nums))))
+                 (mapcar #'err-num-error err-nums))))
 
 (defmethod add ((x err-num) (y err-num))
   (make-err-num (apply #'add (mapcar #'err-num-value (list x y)))
@@ -165,9 +165,9 @@ structure allows for errors in errors to arbitrary depth."
 (defmethod sqrt ((err-num err-num))
   (let ((result-value (sqrt (err-num-value err-num))))
     (make-err-num result-value
-		(/ (err-num-error err-num)
-		   2
-		   result-value))))
+                  (/ (err-num-error err-num)
+                     2
+                     result-value))))
 
 (defmethod expt ((x err-num)
 		 (y err-num))
@@ -262,5 +262,5 @@ structure allows for errors in errors to arbitrary depth."
 (defun sum-in-quadrature (xs)
   (sqrt
    (apply #'+
-	  (mapcar #'(lambda (x) (expt x 2))
+	  (mapcar (lambda (x) (expt x 2))
 		  xs))))
