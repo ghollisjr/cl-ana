@@ -74,6 +74,31 @@ element is taken to be the field symbol."
                   (list ,field-name ,val)))))
     `(append ,@when-statements)))
 
+;; Reader macro for when-keywords:
+;; Use #k(fn arg1 ... &when-keys key1 ...) as a shorthand form for
+;; (apply #'fn arg 1 ... (when-keywords key1 ...))
+;;(eval-when (:compile-toplevel :load-toplevel :execute)
+(defun when-keywords-transformer-reader-macro (stream subchar arg)
+  (let ((expr (read stream t)))
+    (multiple-value-bind (normal-terms when-keys)
+        (loop
+           for x in expr
+           for lst on expr
+           until (and (symbolp x) (equal (keywordify x) :&when-keys))
+           collecting x into normal-terms
+           finally (return (values normal-terms (rest lst))))
+      (let ((fn (first normal-terms))
+            (normal-args (rest normal-terms)))
+        (append `(apply (function ,fn))
+                normal-args
+                (when when-keys
+                  `((when-keywords ,@when-keys))))))))
+
+
+(set-dispatch-macro-character
+ #\# #\k #'when-keywords-transformer-reader-macro)
+;;)
+
 ;;;; From let-over-lambda:
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))

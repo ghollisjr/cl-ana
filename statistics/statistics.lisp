@@ -1,8 +1,26 @@
 (in-package :statistics)
 
 (defun mean (data)
-  (/ (sum data)
-     (length data)))
+  "Returns mean (and count) of data"
+  (loop
+     for x in data
+     summing x into sum
+     counting t into num
+     finally (return (values (/ sum num) num))))
+
+(defun variance (data)
+  (multiple-value-bind (mean count)
+      (mean data)
+    (/ (sum (mapcar (lambda (x) (expt (- x mean) 2))
+                    data))
+       (- count 1))))
+
+(defun standard-deviation (data)
+  (sqrt (variance data)))
+
+(defun skewness (data))
+
+(defun kirtosis (data))
 
 (defun mean-accumulator (&rest sample)
   "Returns two values:
@@ -31,9 +49,9 @@ immediate updated mean."
             initial-mean)))
 
 (defun moving-average (data subset-length)
-  "Returns a list of the moving averages on the data with subsets of
-length subset-length.  subset-length is not checked to be in bounds,
-so be careful."
+  "Returns a list of the moving averages on the data (must be a list)
+with subsets of length subset-length.  subset-length is not checked to
+be in bounds, so be careful."
   (multiple-value-bind (acc init-mean)
       (apply #'mean-accumulator (subseq data 0 subset-length))
     (cons init-mean

@@ -1,10 +1,11 @@
 (defpackage #:statistics
   (:use :cl)
-  (:shadow :mean)
+  (:shadow :mean
+           :standard-deviation)
   (:export :mean
            :mean-accumulator
            :standard-deviation
-           :skew
+           :skewness
            :kirtosis
            :moving-average))
 

@@ -528,6 +528,12 @@ in the page."
             (funcall strategy legend line)))))
 
 ;;; Convenience functions:
+;; Note that these functions make use of the useful #k reader macro
+;; which allows for the placement of &when-keys in the form which
+;; means that all arguments that follow will be given to when-keywords
+;; and the form properly formatted to make use of this; this is so
+;; that redundant keyword arguments don't have to know about default
+;; values.
 
 (defun quick-multidraw (object-specs &key
                                        type
@@ -546,18 +552,16 @@ in the page."
   An object-spec is a list being the object to plot consed onto a
   plist specifying the keyword arguments to give to make-line."
   (let ((page
-         (apply
-          #'make-instance
-          'page
-          (when-keywords
+         #k(make-instance
+            'page
+            &when-keys
             (:title page-title)
             (:shown-title shown-page-title)
             type
             (:plots (list
-                     (apply
-                      #'make-instance
-                      'plot2d
-                      (when-keywords
+                     #k(make-instance
+                        'plot2d
+                        &when-keys
                         (:title plot-title)
                         x-title
                         x2-title
@@ -568,7 +572,7 @@ in the page."
                         (:lines (mapcar
                                  (lambda (object-spec)
                                    (apply #'make-line object-spec))
-                                 object-specs))))))))))
+                                 object-specs))))))))
     (draw page)
     page))
 
@@ -597,21 +601,20 @@ in the page."
 		     x-range
 		     y-range
                      color)
-    (let* ((line (apply #'make-line
-                        object
-                        (when-keywords color)))
+    (let* ((line #k(make-line
+                    object
+                    &when-keys
+                    color))
            (page
-            (apply
-             #'make-instance
-             'page
-             (when-keywords
+            #k(make-instance
+               'page
+               &when-keys
                type
                (:title page-title)
                (:shown-title shown-page-title)
-               (:plots (list (apply
-                              #'make-instance
-                              'plot2d
-                              (when-keywords
+               (:plots (list #k(make-instance
+                                'plot2d
+                                &when-keys
                                 (:title plot-title)
                                 x-title
                                 y-title
@@ -619,7 +622,7 @@ in the page."
                                 y2-title
                                 x-range
                                 y-range
-                                (:lines (list line))))))))))
+                                (:lines (list line))))))))
       (draw page)
       page)))
 
