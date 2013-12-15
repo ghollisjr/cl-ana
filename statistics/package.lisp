@@ -1,5 +1,6 @@
 (defpackage #:statistics
-  (:use :cl)
+  (:use :cl
+        :list-utils)
   (:shadow :mean
            :standard-deviation)
   (:export :mean
@@ -7,6 +8,8 @@
            :standard-deviation
            :skewness
            :kirtosis
-           :moving-average))
+           :moving-average
+           :quantiles
+           :percentiles))
 
 (gmath:use-gmath :statistics)

@@ -22,6 +22,31 @@
 
 (defun kirtosis (data))
 
+(defun quantiles (data)
+  "Returns an alist mapping each datum to its quantile."
+  (let ((denom (+ 1 (length data)))
+        (compressed
+         (compress data :test #'equal :singleton-pairs t))
+        (acc 0d0))
+    (loop
+       for (x . c) in compressed
+       do (incf acc c)
+       collecting (cons x (/ acc denom)) into result
+       finally (return result))))
+
+(defun percentiles (data)
+  "Returns an alist mapping each datum to its percentile."
+  (let ((denom (length data))
+        (compressed
+         (compress (sort (copy-list data) #'<)
+                   :test #'equal :singleton-pairs t))
+        (acc 0d0))
+    (loop
+       for (x . c) in compressed
+       do (incf acc c)
+       collecting (cons x (/ acc denom)) into result
+       finally (return result))))
+
 (defun mean-accumulator (&rest sample)
   "Returns two values:
 
