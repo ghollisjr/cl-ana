@@ -37,4 +37,5 @@ so be careful."
   (multiple-value-bind (acc init-mean)
       (apply #'mean-accumulator (subseq data 0 subset-length))
     (cons init-mean
-          (mapcar acc (subseq data subset-length)))))
+          (mapcar acc
+                  (subseq data subset-length)))))
