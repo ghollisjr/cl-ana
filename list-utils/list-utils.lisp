@@ -128,7 +128,11 @@ are already unique and sorted least to greatest."
 ;; not useful for processing intensive stuff, but for the time being
 ;; it works for some of my other utilities.
 
-(defun compress (list &key key (test #'eql) singleton-pairs)
+(defun compress (list &key
+                        (key #'identity)
+                        (test 'eql)
+                        sort-by
+                        singleton-pairs)
   "Compress list such that duplicate elements are combined into a
 single pair entry which has as the car the element value and as the
 cdr the count.
@@ -137,20 +141,33 @@ The singleton-pairs option controls whether single elements are still
 placed inside a pair.  This is useful when the elements of the list
 you wish to compress are cons cells, as this would otherwise lead to
 ambiguity in the result."
-  (let* ((result ())
-	 cons)
+  (let* ((result-table (make-hash-table :test test)))
     (dolist (x list)
-      (if (setf cons (assoc x result :key key :test test))
-	  (incf (cdr cons))
-	  (setf result (acons x 1 result))))
-    (mapcar
-     (lambda (x)
-       (let ((count (cdr x)))
-         (if (and (not singleton-pairs)
-                  (= 1 count))
-             (car x)
-             x)))
-     (nreverse result))))
+      (if (gethash x result-table)
+          (incf (gethash x result-table))
+          (setf (gethash x result-table) 1)))
+    (let* ((map-fn (if singleton-pairs
+                       (lambda (x c)
+                         (cons x c))
+                       (lambda (x c)
+                         (if (= 1 x)
+                             x
+                             (cons x c)))))
+           (raw-alist
+            (loop
+               for k being the hash-keys of result-table
+               for v being the hash-values of result-table
+               collect (funcall map-fn k v))))
+      (if sort-by
+          (sort raw-alist sort-by
+                :key (if singleton-pairs
+                         (lambda (x)
+                           (funcall key (car x)))
+                         (lambda (x)
+                           (if (consp x)
+                               (funcall key (car x))
+                               (funcall key x)))))
+          raw-alist))))
 
 (defun list-less-than (list1 list2)
   (let ((x1 (car list1))

@@ -10,6 +10,7 @@
            :kirtosis
            :moving-average
            :quantiles
-           :percentiles))
+           :percentiles
+           :probability-plot))
 
 (gmath:use-gmath :statistics)

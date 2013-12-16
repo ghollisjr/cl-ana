@@ -26,13 +26,24 @@
   "Returns an alist mapping each datum to its quantile."
   (let ((denom (+ 1 (length data)))
         (compressed
-         (compress data :test #'equal :singleton-pairs t))
+         (compress data
+                   :test #'equal
+                   :singleton-pairs t
+                   :sort-by #'<))
         (acc 0d0))
     (loop
        for (x . c) in compressed
        do (incf acc c)
        collecting (cons x (/ acc denom)) into result
        finally (return result))))
+
+(defun probability-plot (data cdf-inv)
+  "Returns data suitable for probability scatter plot given data and
+inverse of cummulative density function."
+  (mapcar (lambda (x)
+            (cons (funcall cdf-inv (cdr x))
+                  (car x)))
+          (quantiles data)))
 
 (defun percentiles (data)
   "Returns an alist mapping each datum to its percentile."
