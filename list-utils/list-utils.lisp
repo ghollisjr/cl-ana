@@ -272,7 +272,7 @@ argument is a list and the other not, so it's a work in progress."
         (compare x y)
         (> (length x) (length y)))))
 
-;; filter is already in CL as remove-if-not
+;; filter is (IMO) not so necessary (as Paul Graham uses the term)
 
 (defun group (source n)
   "Takes a list and returns a list of lists of the elements in the
