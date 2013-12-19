@@ -5,7 +5,7 @@
 (declaim (optimize (speed 3)
                    (safety 0)
                    (compilation-speed 0)
-                   (debug 0)))
+                   (debug 3)))
 
 (defclass typed-table (table)
   ((column-specs
@@ -85,7 +85,6 @@ represent foreign arrays."
                    (row-pointer typed-table-row-pointer)
                    (row-cstruct typed-table-row-cstruct))
       table
-    ;;(print row-cstruct)
     (funcall (gethash column-symbol c->lisp-converter-map)
              (foreign-slot-pointer row-pointer
                                    row-cstruct
