@@ -22,6 +22,21 @@
                    (compilation-speed 0)
                    (debug 0)))
 
+;;; Reader macro: #t(fn tensor1 tensor2 ...) applies tensor-map to the
+;;; arguments.  Can use #' or (function) on fn or not, both cases are
+;;; handled.
+(defun tensor-map-transformer-reader-macro (stream subchar arg)
+  (let* ((expr (read stream t))
+         (raw-fn (first expr))
+         (fn (if (symbolp raw-fn)
+                 `(function ,raw-fn)
+                 raw-fn))
+         (args (rest expr)))
+    `(tensor-map ,fn ,@args)))
+
+(set-dispatch-macro-character
+ #\# #\t #'tensor-map-transformer-reader-macro)
+
 (defun sequencep (x)
   (subtypep (type-of x) 'sequence))
 

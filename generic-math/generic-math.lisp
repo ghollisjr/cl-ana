@@ -25,13 +25,7 @@
 (defun use-gmath (package)
   "shadowing-imports all the exported symbols from gmath into the
   current package"
-  (let ((gmath-package (find-package :generic-math))
-	(dest-package (find-package package)))
-    (do-external-symbols (s gmath-package)
-      (let ((gmath-symbol (find-symbol (string s) gmath-package)))
-	(unintern gmath-symbol dest-package)
-	(shadowing-import gmath-symbol
-			  dest-package)))))
+  (shadowing-use-package :generic-math package))
 
 ;; To allow use of incf (since we're touching +)
 (defmacro incf (place &optional (delta 1))

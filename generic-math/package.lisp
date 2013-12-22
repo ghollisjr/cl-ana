@@ -3,6 +3,7 @@
 (defpackage #:generic-math
   (:nicknames :gmath)
   (:use :cl
+        :package-utils
 	:list-utils)
   (:shadow :incf
 	   :decf
