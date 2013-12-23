@@ -2,6 +2,8 @@
   (:use :cl
         :binary-tree
         :csv-table
+        :math-functions
+        :tensor
         :error-propogation
         :file-utils
         :fitting
@@ -18,7 +20,6 @@
         :lorentz
         :macro-utils
         :map
-        :math-functions
         :memoization
         :ntuple-table
         :plotting
@@ -28,6 +29,7 @@
         :symbol-utils
         :symbol-utils
         :table
-        :tensor
         :typed-table
         :typespec))
+
+(gmath:use-gmath :cl-ana)

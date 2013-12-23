@@ -49,7 +49,10 @@ values."
 (defmacro print-eval (arg)
   (with-gensyms (varname)
     `(let ((,varname ,arg))
-       (format t "~a: ~a~%" ',arg ,varname)
+       (prin1 ',arg)
+       (format t ": ")
+       (prin1 ,varname)
+       (format t "~%")
        ,varname)))
 
 ;; Very useful macro for combining keyword arguments only when

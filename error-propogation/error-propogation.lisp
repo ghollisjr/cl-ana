@@ -67,7 +67,7 @@ structure allows for errors in errors to arbitrary depth."
 		(sum-in-quadrature
 		 (mapcar #'err-num-error (list x y)))))
 
-(defmethod-commutative add ((x err-num) y)
+(defmethod-commutative add ((x err-num) (y number))
   (add x (make-err-num y 0)))
 
 (defun err-num-- (&rest err-nums)
@@ -81,10 +81,10 @@ structure allows for errors in errors to arbitrary depth."
 		(sum-in-quadrature
 		 (mapcar #'err-num-error (list x y)))))
 
-(defmethod sub ((x err-num) y)
+(defmethod sub ((x err-num) (y number))
   (sub x (make-err-num y 0)))
 
-(defmethod sub (x (y err-num))
+(defmethod sub ((x number) (y err-num))
   (sub (make-err-num x 0) y))
 
 (defmethod unary-sub ((x err-num))
@@ -113,7 +113,7 @@ structure allows for errors in errors to arbitrary depth."
 			(sum-in-quadrature
 			 relative-errors)))))
 
-(defmethod-commutative mult ((x err-num) y)
+(defmethod-commutative mult ((x err-num) (y number))
   (mult x (make-err-num y 0)))
 
 (defun err-num-/ (&rest err-nums)
@@ -137,10 +137,10 @@ structure allows for errors in errors to arbitrary depth."
 		     (sum-in-quadrature
 		      relative-errors)))))
 
-(defmethod div ((x err-num) y)
+(defmethod div ((x err-num) (y number))
   (div x (make-err-num y 0)))
 
-(defmethod div (x (y err-num))
+(defmethod div ((x number) (y err-num))
   (div (make-err-num x 0) y))
 
 (defmethod unary-div ((x err-num))
@@ -148,7 +148,7 @@ structure allows for errors in errors to arbitrary depth."
     (make-err-num result-value
 		  (mult result-value (err-num-error x)))))
 
-(defmethod protected-div (x (y err-num)
+(defmethod protected-div ((x number) (y err-num)
 			  &key
 			    (protected-value 0))
   (if (zerop (err-num-value y))
@@ -191,10 +191,10 @@ structure allows for errors in errors to arbitrary depth."
 		  (sum-in-quadrature
 		   (list result-error1 result-error2)))))
 
-(defmethod expt (x (y err-num))
+(defmethod expt ((x number) (y err-num))
   (expt (make-err-num x 0) y))
 
-(defmethod expt ((x err-num) y)
+(defmethod expt ((x err-num) (y number))
   (expt x (make-err-num y 0)))
 
 (defmethod exp ((err-num err-num))

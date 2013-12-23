@@ -21,7 +21,9 @@
 	   :sinh
 	   :cosh
 	   :tanh)
-  (:export :use-gmath
+  (:export :*gmath-generic-map*
+           :use-gmath
+           :defmath
 	   :defmethod-commutative
 	   :+
 	   :sum

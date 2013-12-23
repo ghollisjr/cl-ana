@@ -37,6 +37,63 @@
 (set-dispatch-macro-character
  #\# #\t #'tensor-map-transformer-reader-macro)
 
+(defun define-tensor-methods ()
+  (loop
+     for f being the hash-keys in *gmath-generic-map*
+     for a being the hash-values in *gmath-generic-map*
+     do (define-tensor-method (intern (string f)) a)))
+
+(defun define-tensor-method (fname args)
+  (multiple-value-bind (tensor-args key-args)
+      (let ((key-pos (position "&KEY" args
+                               :test #'equal
+                               :key #'string)))
+        (if key-pos
+            (values (subseq args 0 key-pos)
+                    (subseq args (1+ key-pos)))
+            (values args nil)))
+    (let* ((key-fields (mapcar #'keywordify key-args))
+           (key-applied-args
+            (loop
+               for a in key-args
+               for k in key-fields
+               append (list k a)))
+           (tensor-specialized-args
+            (mapcar (lambda (x)
+                      `(,x sequence))
+                    tensor-args))
+           (arg-specs
+            (remove-if-not
+             (lambda (x) (some #'listp x))
+             (apply #'cartesian-product
+                    (mapcar #'list
+                            tensor-args
+                            tensor-specialized-args)))))
+      (loop
+         for a in arg-specs
+         do
+           (multiple-value-bind (unspecialized specialized)
+               (loop for i in a
+                  if (symbolp i)
+                  collect i into unspecialized
+                  else collect (first i) into specialized
+                  finally (return (values unspecialized
+                                          specialized)))
+             (eval
+              `(defmethod ,fname
+                 (,@a
+                  ,@(when key-args
+                          (cons '&key key-args)))
+                 (tensor-map
+                  (lambda (,@specialized)
+                    (apply (function ,fname) ,@tensor-args
+                           (list ,@key-applied-args)))
+                  ,@specialized))))))))
+
+;; Define tensor methods; note that this should be done after all
+;; generic math functions have been defined with defmath.
+(define-tensor-methods)
+
 (defun sequencep (x)
   (subtypep (type-of x) 'sequence))
 
@@ -229,97 +286,97 @@ the first index of B."
 
 ;;; Generic math functions:
 
-(defmacro defmethod-tensorwise (method-name &rest tensor-args)
-  "Macro to ease the pain of defining simple tensor-wise methods."
-  (let ((specialized-args (mapcar (rcurry #'cons '(sequence)) tensor-args)))
-    `(defmethod ,method-name (,@specialized-args)
-       (tensor-map #',method-name ,@tensor-args))))
+;; (defmacro defmethod-tensorwise (method-name &rest tensor-args)
+;;   "Macro to ease the pain of defining simple tensor-wise methods."
+;;   (let ((specialized-args (mapcar (rcurry #'cons '(sequence)) tensor-args)))
+;;     `(defmethod ,method-name (,@specialized-args)
+;;        (tensor-map #',method-name ,@tensor-args))))
 
-(defmacro defunary (method-name)
-  `(defmethod-tensorwise ,method-name x))
+;; (defmacro defunary (method-name)
+;;   `(defmethod-tensorwise ,method-name x))
 
-(defmacro defbinary (method-name)
-  `(defmethod-tensorwise ,method-name x y))
+;; (defmacro defbinary (method-name)
+;;   `(defmethod-tensorwise ,method-name x y))
 
-(defmacro defbinaries (method-names)
-  `(progn ,@(loop for m in method-names
-               collect `(defbinary ,m))))
+;; (defmacro defbinaries (method-names)
+;;   `(progn ,@(loop for m in method-names
+;;                collect `(defbinary ,m))))
 
-(defmacro defunaries (method-names)
-  `(progn ,@(loop for m in method-names
-	       collect `(defunary ,m))))
+;; (defmacro defunaries (method-names)
+;;   `(progn ,@(loop for m in method-names
+;; 	       collect `(defunary ,m))))
 
-;;; Binary methods on sequences
-(defbinaries
-    (add
-     sub
-     mult
-     div
-     expt))
+;; ;;; Binary methods on sequences
+;; (defbinaries
+;;     (add
+;;      sub
+;;      mult
+;;      div
+;;      expt))
 
-;;; Unary methods on sequences
-(defunaries
-    (unary-sub
-     unary-div
-     sqrt
-     exp
-     log
-     sin
-     cos
-     tan
-     sec
-     csc
-     cot
-     sinh
-     cosh
-     tanh
-     sech
-     csch
-     coth))
+;; ;;; Unary methods on sequences
+;; (defunaries
+;;     (unary-sub
+;;      unary-div
+;;      sqrt
+;;      exp
+;;      log
+;;      sin
+;;      cos
+;;      tan
+;;      sec
+;;      csc
+;;      cot
+;;      sinh
+;;      cosh
+;;      tanh
+;;      sech
+;;      csch
+;;      coth))
 
-;;; Special methods
-(defmethod-commutative add ((x sequence) y)
-  (tensor-map (rcurry #'add y) x))
+;; ;;; Special methods
+;; (defmethod-commutative add ((x sequence) y)
+;;   (tensor-map (rcurry #'add y) x))
 
-(defmethod-commutative mult ((x sequence) y)
-  (tensor-map (rcurry #'mult y) x))
+;; (defmethod-commutative mult ((x sequence) y)
+;;   (tensor-map (rcurry #'mult y) x))
 
-(defmethod sub ((x sequence) y)
-  (tensor-map (rcurry #'sub y) x))
+;; (defmethod sub ((x sequence) y)
+;;   (tensor-map (rcurry #'sub y) x))
 
-(defmethod sub (x (y sequence))
-  (tensor-map (curry #'sub x) y))
+;; (defmethod sub (x (y sequence))
+;;   (tensor-map (curry #'sub x) y))
 
-(defmethod div ((x sequence) y)
-  (tensor-map (rcurry #'div y) x))
+;; (defmethod div ((x sequence) y)
+;;   (tensor-map (rcurry #'div y) x))
 
-(defmethod div (x (y sequence))
-  (tensor-map (curry #'div x) y))
+;; (defmethod div (x (y sequence))
+;;   (tensor-map (curry #'div x) y))
 
-(defmethod protected-unary-div ((xs sequence)
-                                &key (protected-value 0))
-  (tensor-map (lambda (x)
-                (protected-unary-div x :protected-value protected-value))
-	      xs))
+;; (defmethod protected-unary-div ((xs sequence)
+;;                                 &key (protected-value 0))
+;;   (tensor-map (lambda (x)
+;;                 (protected-unary-div x :protected-value protected-value))
+;; 	      xs))
 
-(defmethod protected-div ((xs sequence) (ys sequence)
-                          &key (protected-value 0))
-  (tensor-map (lambda (x y)
-                (protected-div x y :protected-value protected-value))
-	      xs ys))
+;; (defmethod protected-div ((xs sequence) (ys sequence)
+;;                           &key (protected-value 0))
+;;   (tensor-map (lambda (x y)
+;;                 (protected-div x y :protected-value protected-value))
+;; 	      xs ys))
 
-(defmethod protected-div ((xs sequence) y &key (protected-value 0))
-  (tensor-map (lambda (x)
-                (protected-div x y :protected-value protected-value))
-	      xs))
+;; (defmethod protected-div ((xs sequence) y &key (protected-value 0))
+;;   (tensor-map (lambda (x)
+;;                 (protected-div x y :protected-value protected-value))
+;; 	      xs))
 
-(defmethod protected-div (x (ys sequence) &key (protected-value 0))
-  (tensor-map (lambda (y)
-                (protected-div x y :protected-value protected-value))
-	      ys))
+;; (defmethod protected-div (x (ys sequence) &key (protected-value 0))
+;;   (tensor-map (lambda (y)
+;;                 (protected-div x y :protected-value protected-value))
+;; 	      ys))
 
-(defmethod expt ((x sequence) y)
-  (tensor-map (rcurry #'expt y) x))
+;; (defmethod expt ((x sequence) y)
+;;   (tensor-map (rcurry #'expt y) x))
 
-(defmethod expt (x (y sequence))
-  (tensor-map (curry #'expt x) y))
+;; (defmethod expt (x (y sequence))
+;;   (tensor-map (curry #'expt x) y))

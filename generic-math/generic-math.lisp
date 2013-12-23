@@ -27,15 +27,20 @@
   current package"
   (shadowing-use-package :generic-math package))
 
-;; To allow use of incf (since we're touching +)
-(defmacro incf (place &optional (delta 1))
-  `(setf ,place
-	 (add ,place ,delta)))
+(defvar *gmath-generic-map* (make-hash-table :test 'equal)
+  "Hash table mapping generic function symbols to the argument
+  specification for the function.")
 
-;; To allow use of decf (since we're touching -)
-(defmacro decf (place &optional (delta 1))
-  `(setf ,place
-	 (sub ,place ,delta)))
+;; Macro for defining new gmath generics
+(defmacro defmath (fname (&rest args) &body body)
+  "Defines a generic function for use in generic-math.  Necessary to
+allow for programmatically generated methods of certain mathematical
+types.  Can use body just like with defgeneric to specify methods
+etc."
+  `(progn
+     (setf (gethash (string ',fname) *gmath-generic-map*)
+           ',args)
+     (defgeneric ,fname ,args ,@body)))
 
 ;; for all those cases where you want a commutative operator
 (defmacro defmethod-commutative (method-name (left-arg right-arg) &body body)
@@ -52,6 +57,16 @@
   `(defun ,fname (&rest xs)
      (reduce #',reduce-fname xs)))
 
+;; To allow use of incf (since we're touching +)
+(defmacro incf (place &optional (delta 1))
+  `(setf ,place
+	 (add ,place ,delta)))
+
+;; To allow use of decf (since we're touching -)
+(defmacro decf (place &optional (delta 1))
+  `(setf ,place
+	 (sub ,place ,delta)))
+
 (reduce-defun + add)
 
 (defun sum (xs)
@@ -59,7 +74,7 @@
 across them)."
   (reduce #'+ xs))
 
-(defgeneric add (x y)
+(defmath add (x y)
   (:documentation "Binary addition function"))
 
 (defun - (&rest xs)
@@ -67,15 +82,15 @@ across them)."
       (unary-sub (first xs))
       (reduce #'sub xs)))
 
-(defgeneric sub (x y)
+(defmath sub (x y)
   (:documentation "Binary subtraction function"))
 
-(defgeneric unary-sub (x)
+(defmath unary-sub (x)
   (:documentation "Unary subtraction function."))
 
 (reduce-defun * mult)
 
-(defgeneric mult (x y)
+(defmath mult (x y)
   (:documentation "Binary multiplication function"))
 
 (defun / (&rest xs)
@@ -88,14 +103,14 @@ across them)."
       (protected-unary-div (first xs))
       (reduce #'protected-div xs)))
 
-(defgeneric div (x y)
+(defmath div (x y)
   (:documentation "Binary division function"))
 
-(defgeneric unary-div (x)
+(defmath unary-div (x)
   (:documentation "Unary division function.  Also known as
   multiplicative inversion."))
 
-(defgeneric protected-div (x y &key protected-value)
+(defmath protected-div (x y &key protected-value)
   (:documentation "Binary division protected from division by zero;
   returns protected-value whenever y is zero")
   (:method (x y &key (protected-value 0))
@@ -103,7 +118,7 @@ across them)."
 	protected-value
 	(div x y))))
 
-(defgeneric protected-unary-div (x &key protected-value)
+(defmath protected-unary-div (x &key protected-value)
   (:documentation "Protected unary division function.  Returns
   protected-value whenever x is zero.")
   (:method (x &key (protected-value 0))
@@ -111,62 +126,62 @@ across them)."
 	protected-value
 	(unary-div x))))
 
-(defgeneric sqrt (x)
+(defmath sqrt (x)
   (:documentation "Square root function"))
 
-(defgeneric expt (x y)
+(defmath expt (x y)
   (:documentation "Raises x to the y power"))
 
-(defgeneric exp (x)
+(defmath exp (x)
   (:documentation "e^x"))
 
-(defgeneric log (x)
+(defmath log (x)
   (:documentation "Natural logarithm function"))
 
-(defgeneric sin (x)
+(defmath sin (x)
   (:documentation "Sine, in radians"))
 
-(defgeneric cos (x)
+(defmath cos (x)
   (:documentation "Cosine, in radians"))
 
-(defgeneric tan (x)
+(defmath tan (x)
   (:documentation "Tangent, in radians"))
 
-(defgeneric sec (x)
+(defmath sec (x)
   (:documentation "Secant, in radians")
   (:method (x)
     (unary-div (cos x))))
 
-(defgeneric csc (x)
+(defmath csc (x)
   (:documentation "Cosecant, in radians")
   (:method (x)
     (unary-div (sin x))))
 
-(defgeneric cot (x)
+(defmath cot (x)
   (:documentation "Cotangent, in radians")
   (:method (x)
     (unary-div (tan x))))
 
-(defgeneric sinh (x)
+(defmath sinh (x)
   (:documentation "Hyperbolic sine function"))
 
-(defgeneric cosh (x)
+(defmath cosh (x)
   (:documentation "Hyperbolic cosine function"))
 
-(defgeneric tanh (x)
+(defmath tanh (x)
   (:documentation "Hyperbolic tangent function"))
 
-(defgeneric sech (x)
+(defmath sech (x)
   (:documentation "Hyperbolic secant function")
   (:method (x)
     (unary-div (cosh x))))
 
-(defgeneric csch (x)
+(defmath csch (x)
   (:documentation "Hyperbolic cosecant function")
   (:method (x)
     (unary-div (sinh x))))
 
-(defgeneric coth (x)
+(defmath coth (x)
   (:documentation "Hyperbolic cotangent function")
   (:method (x)
     (unary-div (tanh x))))

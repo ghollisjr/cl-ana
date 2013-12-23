@@ -5,7 +5,10 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:generic-math
+               #:symbol-utils
 	       #:list-utils
-	       #:alexandria)
+	       #:alexandria
+               ;;debug
+               #:macro-utils)
   :components ((:file "package")
 	       (:file "tensor")))

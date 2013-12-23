@@ -3,7 +3,10 @@
 (defpackage #:tensor
   (:use #:cl
 	#:list-utils
-	#:alexandria)
+        #:symbol-utils
+        #:alexandria
+        ;;debug
+        #:macro-utils)
   (:export :make-tensor
 	   :tensor-ref
            :tensor-flat-ref ; for flattened-index reference

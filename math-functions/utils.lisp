@@ -1,6 +1,6 @@
 (in-package :math-functions)
 
-(defgeneric ->double-float (x)
+(defmath ->double-float (x)
   (:documentation "Converts numerical object into a double-float form;
   does not need to be an actual double-float result, but where
   appropriate constituents are converted into double-float
