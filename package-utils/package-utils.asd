@@ -3,6 +3,6 @@
   :author "Gary Hollis"
   :license ""
   :description "Provides various utilities for using packages"
-  :depends-on ()
+  :depends-on (#:alexandria)
   :components ((:file "package")
                (:file "package-utils")))

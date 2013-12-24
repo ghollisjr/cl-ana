@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:typed-table
+(defpackage #:typed-table 
   (:use #:cl
 	#:list-utils
 	#:string-utils

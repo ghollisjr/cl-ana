@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:plotting
+(defpackage #:plotting 
   (:use :cl
         :error-propogation
         :gnuplot-i-cffi

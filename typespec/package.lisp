@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:typespec
+(defpackage #:typespec 
   (:use :cl
 	:list-utils
 	:string-utils

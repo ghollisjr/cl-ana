@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:reusable-table
+(defpackage #:reusable-table 
   (:use :cl
 	:table)
   (:export :wrap-for-reuse))

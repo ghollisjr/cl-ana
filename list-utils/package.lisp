@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage :list-utils
+(defpackage #:list-utils 
   (:use :cl
 	:functional-utils
         :alexandria)

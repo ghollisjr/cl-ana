@@ -4,8 +4,13 @@
   :description "Convenient system which loads all components for
   analysis I've been working on so far."
   :license ""
-  :depends-on (#:generic-math
+  :depends-on (#:package-utils
+               #:generic-math
+               #:math-functions
+               ;; Make sure to place tensor after defining all gmath
+               ;; generic functions
                #:tensor
+               #:error-propogation
                #:table
                #:hdf-table
                #:ntuple-table
@@ -14,10 +19,8 @@
                #:linear-algebra
                #:lorentz
                #:histogram
-               #:error-propogation
                #:fitting
                #:file-utils
-               #:math-functions
                #:statistics
                #:plotting)
   :components ((:file "package")))

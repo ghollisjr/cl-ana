@@ -1,4 +1,4 @@
-(defpackage #:statistics
+(defpackage #:statistics 
   (:use :cl
         :list-utils)
   (:shadow :mean

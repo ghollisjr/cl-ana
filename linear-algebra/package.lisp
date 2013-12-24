@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:linear-algebra
+(defpackage #:linear-algebra 
   (:use #:cl
 	#:tensor
 	#:list-utils)

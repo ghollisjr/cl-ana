@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:binary-tree
+(defpackage #:binary-tree 
   (:use #:cl
 	#:list-utils)
   (:export :make-balanced-tree

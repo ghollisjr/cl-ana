@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:generic-math
+(defpackage #:generic-math 
   (:nicknames :gmath)
   (:use :cl
         :package-utils

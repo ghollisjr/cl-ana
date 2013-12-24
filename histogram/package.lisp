@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage :histogram
+(defpackage :histogram 
   (:use #:cl
 	#:tensor
 	#:list-utils

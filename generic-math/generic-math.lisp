@@ -38,7 +38,7 @@ allow for programmatically generated methods of certain mathematical
 types.  Can use body just like with defgeneric to specify methods
 etc."
   `(progn
-     (setf (gethash (string ',fname) *gmath-generic-map*)
+     (setf (gethash ',fname *gmath-generic-map*)
            ',args)
      (defgeneric ,fname ,args ,@body)))
 

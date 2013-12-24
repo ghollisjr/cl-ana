@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:ntuple-table
+(defpackage #:ntuple-table 
   (:use :cl
 	:cffi
 	:table

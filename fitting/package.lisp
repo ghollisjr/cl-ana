@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:fitting
+(defpackage #:fitting 
   (:use :cl
 	:err-prop
 	:map

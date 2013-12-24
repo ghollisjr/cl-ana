@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:error-propogation
+(defpackage #:error-propogation 
   (:nicknames #:err-prop)
   (:use :cl)
   (:export :*err-num-pretty-print* ; for print style

@@ -41,7 +41,7 @@
   (loop
      for f being the hash-keys in *gmath-generic-map*
      for a being the hash-values in *gmath-generic-map*
-     do (define-tensor-method (intern (string f)) a)))
+     do (define-tensor-method f a)))
 
 (defun define-tensor-method (fname args)
   (multiple-value-bind (tensor-args key-args)
@@ -79,6 +79,7 @@
                   else collect (first i) into specialized
                   finally (return (values unspecialized
                                           specialized)))
+             ;; this seems to be a necessary use of eval
              (eval
               `(defmethod ,fname
                  (,@a
