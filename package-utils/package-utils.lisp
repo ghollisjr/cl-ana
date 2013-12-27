@@ -13,6 +13,14 @@
 	(shadowing-import sym
 			  to-pac)))))
 
+;;;; Package Groups
+;;; A package group is simply a collection of packages.  The concept
+;;; is useful for maintaining a high degree of modularity: Instead of
+;;; creating a single common package for a set of functionality, each
+;;; individual piece of the software can have its own package and then
+;;; the combined exported symbols can easily be imported into another
+;;; package via a package group.
+
 (defvar *package-groups*
   (make-hash-table :test 'equal))
 

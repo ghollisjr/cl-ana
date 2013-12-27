@@ -98,7 +98,9 @@
 (defun sequencep (x)
   (subtypep (type-of x) 'sequence))
 
-(defun make-tensor (dimension-list &key (type 'vector) (initial-element 0d0))
+(defun make-tensor (dimension-list &key
+                                     (type 'vector)
+                                     (initial-element 0d0))
   "Creates a tensor with each dimension in dimension-list denoting the
 length of the sequence at that dimension with the type of the
 sequences given by the optional type argument."

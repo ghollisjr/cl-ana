@@ -124,7 +124,8 @@ removing the mark, nil otherwise."
   "Macro for iterating over a table.
 
 rowvar is a symbol which will be bound to the row number inside the
-loop body.
+loop body.  You can optionally use a list (rowtype rowvar) which will
+allow for the rowvar to have a type declared for it.
 
 table is the table which will be looped upon.
 
@@ -155,13 +156,20 @@ The code body will be run for each row in the table."
 	     for s in bound-column-symbols
 	     for c in selected-column-symbols
 	     collecting `(,s (table-get-field ,table ',c)))))
-    (with-gensyms (read-status)
-      `(do ((,read-status (table-load-next-row ,table) (table-load-next-row ,table))
-	    (,rowvar 0 (1+ ,rowvar)))
-	   ((not ,read-status))
-         (declare (integer ,rowvar))
-	 (let* ,selected-symbol-bindings
-	   ,@body)))))
+    (multiple-value-bind (rowt rowv)
+        (if (listp rowvar)
+            (values (first rowvar)
+                    (second rowvar))
+            (values 'integer
+                    rowvar))
+      (with-gensyms (read-status)
+        `(do ((,read-status (table-load-next-row ,table)
+                            (table-load-next-row ,table))
+              (,rowv 0 (1+ ,rowv)))
+             ((not ,read-status))
+           (declare (,rowt ,rowv))
+           (let* ,selected-symbol-bindings
+             ,@body))))))
 
 
 ;; Marked symbol version: I'm using the marked symbol approach in the
