@@ -7,7 +7,8 @@
   anyways."
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:list-utils)
+  :depends-on (#:package-utils
+               #:list-utils)
   :components ((:file "package")
 	       (:file "generic-math")
 	       (:file "number")))

@@ -26,7 +26,7 @@
     :initarg :error
     :initform 0)))
 
-(defvar *err-num-pretty-print* t
+(defvar *err-num-pretty-print* nil
   "Tells print-object whether to use the +- version of printing or the
   direct reader macro version #e(...)")
 

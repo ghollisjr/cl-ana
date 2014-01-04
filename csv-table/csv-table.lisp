@@ -50,6 +50,17 @@
 
 ;;; Reading methods:
 
+(defun smart-read-from-string (s)
+  (flet ((string-contains (s char)
+           (loop
+              for c across s
+              when (equal c char)
+              do (return t)
+              finally (return nil))))
+    (if (string-contains s #\Space)
+        s
+        (read-from-string s))))
+
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)
 		   (column-symbols csv-table-column-symbols)
@@ -58,7 +69,7 @@
       table
     (let* ((line (read-line file nil nil))
 	   (csv-data (when line
-		       (mapcar #'read-from-string
+		       (mapcar #'smart-read-from-string
 			       (first (read-csv line :separator delimeter))))))
       (when line
 	(iter (for s in column-symbols)

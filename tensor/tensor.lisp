@@ -165,13 +165,22 @@ sequences given by the optional type argument."
 		 (nreverse result))))
     (tensor-dimensions-worker tensor)))
 
+;; (defun tensor-map (fn &rest xs)
+;;   "Like map, but works on an arbitrary-depth of nested sequences"
+;;   (if (some #'null xs)
+;;       (error "empty list given to tensor-map")
+;;       (if (not (sequencep (first xs)))
+;; 	  (apply fn xs)
+;; 	  (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
+
+;; The version which is safe for use with any scalars as any argument:
 (defun tensor-map (fn &rest xs)
   "Like map, but works on an arbitrary-depth of nested sequences"
-  (if (some #'null xs)
-      (error "empty list given to tensor-map")
+  (if (null xs)
+      (funcall fn)
       (if (not (sequencep (first xs)))
-	  (apply fn xs)
-	  (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
+	  (apply #'tensor-map (curry fn (first xs)) (rest xs))
+           (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
 
 (defun tensor-+ (&rest xs)
   "Convenient nickname for mapping + over tensors."
