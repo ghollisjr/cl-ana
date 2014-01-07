@@ -10,6 +10,7 @@
 	   :euclidean-dot
 	   :euclidean-norm
 	   :euclidean-norm2
-	   :matrix-transpose))
+	   :matrix-transpose
+           :matrix-mult))
 
 (gmath:use-gmath :linear-algebra)

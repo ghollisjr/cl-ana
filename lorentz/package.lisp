@@ -10,6 +10,7 @@
 	   :make-double-float-vector
 	   :lorentz-boost
            :lorentz-vector-spatial
+           :minkowski-dot
 	   :minkowski-norm
 	   :minkowski-norm2)) ; minkowski-norm^2
 

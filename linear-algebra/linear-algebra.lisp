@@ -45,8 +45,8 @@
 (defun matrix-mult (x y &optional (type 'vector))
   (tensor-contract type (list x 1) (list y 0)))
 
-(defun euclidean-dot (x y &optional (type 'vector))
-  (tensor-contract type (list x 0) (list y 0)))
+(defun euclidean-dot (x y)
+  (tensor-contract 'vector (list x 0) (list y 0)))
 
 (defun euclidean-norm2 (x)
   (euclidean-dot x x))
