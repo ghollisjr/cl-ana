@@ -2,11 +2,7 @@
 
 (defun mean (data)
   "Returns mean (and count) of data"
-  (loop
-     for x in data
-     summing x into sum
-     counting t into num
-     finally (return (values (/ sum num) num))))
+  (/ (sum data) (length data)))
 
 (defun variance (data)
   (multiple-value-bind (mean count)
