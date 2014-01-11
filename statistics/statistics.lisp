@@ -2,7 +2,9 @@
 
 (defun mean (data)
   "Returns mean (and count) of data"
-  (/ (sum data) (length data)))
+  (let ((count (length data)))
+    (values (/ (sum data) count)
+            count)))
 
 (defun variance (data)
   (multiple-value-bind (mean count)
