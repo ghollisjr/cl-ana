@@ -11,6 +11,8 @@
 	   :euclidean-norm
 	   :euclidean-norm2
 	   :matrix-transpose
-           :matrix-mult))
+           :matrix-mult
+           :phi
+           :theta))
 
 (gmath:use-gmath :linear-algebra)

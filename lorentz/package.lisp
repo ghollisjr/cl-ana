@@ -12,6 +12,8 @@
            :lorentz-vector-spatial
            :minkowski-dot
 	   :minkowski-norm
-	   :minkowski-norm2)) ; minkowski-norm^2
+	   :minkowski-norm2 ; minkowski-norm^2
+           :lorentz-phi
+           :lorentz-theta))
 
 (gmath:use-gmath :lorentz)

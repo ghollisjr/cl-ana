@@ -20,6 +20,9 @@
 ;;;; arguments.  As long as the most basic operations are ultimately
 ;;;; scalar, this should work.
 
+;;;; TODO:
+;;;; * Implement the inverse trig functions
+
 (in-package :generic-math)
 
 (defun use-gmath (package)

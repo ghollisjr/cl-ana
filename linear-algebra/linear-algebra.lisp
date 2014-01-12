@@ -53,3 +53,13 @@
 
 (defun euclidean-norm (x)
   (sqrt (euclidean-norm2 x)))
+
+;; 3-d vector functions:
+
+(defun phi (vector)
+  (atan (elt vector 1)
+        (elt vector 0)))
+
+(defun theta (vector)
+  (acos (/ (elt vector 2)
+           (euclidean-norm vector))))

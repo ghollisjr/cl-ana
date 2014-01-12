@@ -111,3 +111,11 @@ GeV/c for momentum, etc.)"
   (let ((momentum-vector (lorentz-vector-spatial four-momentum))
 	(energy (tensor-ref four-momentum 0)))
     (div momentum-vector energy)))
+
+;; Angles for lorentz spatial components:
+
+(defun lorentz-phi (lorentz-vector)
+  (phi (lorentz-vector-spatial lorentz-vector)))
+
+(defun lorentz-theta (lorentz-vector)
+  (theta (lorentz-vector-spatial lorentz-vector)))
