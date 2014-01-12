@@ -66,6 +66,7 @@
         :symbol-utils
         :symbol-utils
         :table
+        :table-viewing
         :typed-table
         :typespec))
 

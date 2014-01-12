@@ -6,8 +6,10 @@
   table (preferably a reusable table)"
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:table
-               #:reusable-table
+  :depends-on (#:alexandria
+               #:string-utils
+               #:table
+               #:histogram
                #:plotting
                #:generic-math)
   :components ((:file "package")

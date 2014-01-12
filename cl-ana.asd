@@ -22,5 +22,6 @@
                #:fitting
                #:file-utils
                #:statistics
-               #:plotting)
+               #:plotting
+               #:table-viewing)
   :components ((:file "package")))

@@ -1,15 +1,12 @@
 ;;;; package.lisp
 
-(defpackage #:table 
+(defpackage #:table-viewing
   (:use #:cl
-	#:list-utils
-	#:macro-utils
-	#:string-utils
-	#:functional-utils
 	#:alexandria
+        #:string-utils
         #:table
-        #:reusable-table
+        #:histogram
         #:plotting)
-  (:export ))
+  (:export :table-view))
 
 (gmath:use-gmath :table-viewing)

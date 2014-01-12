@@ -22,7 +22,7 @@
 (declaim (optimize (speed 3)
                    (safety 0)
                    (compilation-speed 0)
-                   (debug 0)))
+                   (debug 3)))
 
 (defclass table ()
   ((column-names
@@ -147,11 +147,10 @@ The code body will be run for each row in the table."
                     (second rowvar))
             (values 'integer
                     rowvar))
-      (with-gensyms (state)
-        `(table-reduce ,table
-                       (list ,@selected-column-names)
-                       (let ((,rowv -1))
-                         (declare (,rowt ,rowv))
-                         (lambda (,state ,@bound-column-symbols)
-                           (incf ,rowv)
-                           ,@body)))))))
+      `(table-reduce ,table
+                     (list ,@selected-column-names)
+                     (lambda (,rowv ,@bound-column-symbols)
+                       (declare (,rowt ,rowv))
+                       ,@body
+                       (1+ ,rowv))
+                     :initial-value 0))))
