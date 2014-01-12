@@ -84,38 +84,6 @@ column-symbol and the variable storing the field data."
 (defmethod table-close (table)
   (call-next-method))
 
-;; Marked symbol
-(defun marked-symbol-p (s mark)
-  "tests whether symbol is marked or not"
-  (let ((symbol-string (string s))
-	(mark-string (string mark)))
-    (if (equal (subseq symbol-string 0 (length mark-string))
-	       mark-string)
-	t
-	nil)))
-
-(defun collect-marked-symbols (tree mark)
-  "Collects the set of all marked symbols within a tree (list)"
-  (if (listp tree)
-      (let ((marked-sets
-	     (apply #'append
-		    (mapcar (rcurry #'collect-marked-symbols mark) tree))))
-	(nreverse
-	 (reduce (flip #'adjoin) marked-sets
-		 :initial-value nil)))
-      (when (symbolp tree)
-	(when (marked-symbol-p tree mark)
-          (list tree)))))
-
-(defun unmark-symbol (s mark)
-  "returns unmarked version of symbol if non-empty string results from
-removing the mark, nil otherwise."
-  (let ((unmarked-string (subseq (string s)
-				 (length (string mark)))))
-    (if (not (equal unmarked-string ""))
-	(intern unmarked-string)
-	nil)))
-
 ;; Specified column version: This version requires the user to specify
 ;; which columns are to be loaded.  The advantage is that the user
 ;; doesn't have to rely on markings attached to the symbols.
@@ -171,30 +139,28 @@ The code body will be run for each row in the table."
            (let* ,selected-symbol-bindings
              ,@body))))))
 
+(defun table-reduce (table fields fn &key
+                                       initial-value)
+  "table-reduce mimics reduce but with the modification that fn should
+take one more argument than the number of fields specified with the
+first argument used to store the state as fn is called across the
+table.
 
-;; Marked symbol version: I'm using the marked symbol approach in the
-;; body of do-table, so to reference a column in the table, just
-;; prefix the lispified column name with a slash.
-(defmacro do-table-marked ((rowvar table &optional (mark "/")) &body body)
-  "Macro for iterating over a table.  The mark is to be prefixed in
-front of each of the column symbols; these marked symbols will be
-bound to the values they have in the table during the loop.  You can
-choose the mark so as not to clash with any pre-existing variables.
-The rowvar, however, is not marked as you get to choose this
-yourself."
-  (let* ((marked-column-symbols (collect-marked-symbols body mark))
-	 (unmarked-column-symbols
-	  (mapcar
-	   (lambda (x) (unmark-symbol x mark))
-	   marked-column-symbols))
-	 (marked-symbol-bindings
-	  (loop
-	     for m in marked-column-symbols
-	     for u in unmarked-column-symbols
-	     collecting `(,m (table-get-field ,table ',u)))))
-    (with-gensyms (read-status)
-      `(do ((,read-status (table-load-next-row ,table) (table-load-next-row ,table))
-	    (,rowvar 0 (1+ ,rowvar)))
-	   ((not ,read-status))
-	 (let* ,marked-symbol-bindings
-	   ,@body)))))
+table-reduce can be used as a functional/non-macro solution to looping
+over the table.
+
+fields is a list of field names/symbols.  They will be passed in the
+order specified to fn.
+
+fn is function taking the computation state as the first argument and
+then each selected field as an argument in the order given in fields;
+can use the state argument to collect a list of values for example."
+  (flet ((get-fields ()
+           (loop for f in fields
+              collect (table-get-field table
+                                       (intern (lispify (string f)))))))
+    (do ((read-status (table-load-next-row table)
+                      (table-load-next-row table))
+         (field-vals (get-fields) (get-fields))
+         (state initial-value (apply fn state field-vals)))
+        ((not read-status) state))))

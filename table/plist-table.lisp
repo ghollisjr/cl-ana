@@ -26,7 +26,8 @@
 (defun open-plist-table (plists)
   (make-instance 'plist-table
 		 :plists (concatenate 'vector plists)
-		 :column-names (every-nth (first plists) 2)))
+		 :column-names (mapcar (compose #'lispify #'string)
+                                       (every-nth (first plists) 2))))
 
 (defmethod table-load-next-row ((table plist-table))
   (with-accessors ((plists plist-table-plists)
@@ -41,3 +42,6 @@
 		   (plists plist-table-plists))
       table
     (getf (elt plists current-table-index) column-symbol)))
+
+(defmethod table-close ((table plist-table))
+  nil)

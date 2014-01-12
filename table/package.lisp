@@ -18,7 +18,7 @@
 	   :table-commit-row
 	   :table-close
 	   :do-table
-	   :do-table-marked
+           :table-reduce
 	   ;; table-chain:
 	   :open-table-chain
 	   :reset-table-chain
