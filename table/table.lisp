@@ -84,9 +84,34 @@ column-symbol and the variable storing the field data."
 (defmethod table-close (table)
   (call-next-method))
 
-;; Specified column version: This version requires the user to specify
-;; which columns are to be loaded.  The advantage is that the user
-;; doesn't have to rely on markings attached to the symbols.
+;;;; Table processing functions/macros
+
+(defun table-reduce (table fields fn &key
+                                       initial-value)
+  "table-reduce mimics reduce but with the modification that fn should
+take one more argument than the number of fields specified with the
+first argument used to store the state as fn is called across the
+table.
+
+table-reduce can be used as a functional/non-macro solution to looping
+over the table.
+
+fields is a list of field names/symbols.  They will be passed in the
+order specified to fn.
+
+fn is function taking the computation state as the first argument and
+then each selected field as an argument in the order given in fields;
+can use the state argument to collect a list of values for example."
+  (flet ((get-fields ()
+           (loop for f in fields
+              collect (table-get-field table
+                                       (intern (lispify (string f)))))))
+    (do ((read-status (table-load-next-row table)
+                      (table-load-next-row table))
+         (field-vals (get-fields) (get-fields))
+         (state initial-value (apply fn state field-vals)))
+        ((not read-status) state))))
+
 (defmacro do-table ((rowvar table) (&rest column-selections)
 		    &body body)
   "Macro for iterating over a table.
@@ -115,52 +140,18 @@ The code body will be run for each row in the table."
                     (if (listp x)
                         (first x)
                         (intern (lispify x))))
-		  column-selections))
-	 (selected-column-symbols
-	  (mapcar (compose #'intern #'lispify)
-		  selected-column-names))
-	 (selected-symbol-bindings
-	  (loop
-	     for s in bound-column-symbols
-	     for c in selected-column-symbols
-	     collecting `(,s (table-get-field ,table ',c)))))
+		  column-selections)))
     (multiple-value-bind (rowt rowv)
         (if (listp rowvar)
             (values (first rowvar)
                     (second rowvar))
             (values 'integer
                     rowvar))
-      (with-gensyms (read-status)
-        `(do ((,read-status (table-load-next-row ,table)
-                            (table-load-next-row ,table))
-              (,rowv 0 (1+ ,rowv)))
-             ((not ,read-status))
-           (declare (,rowt ,rowv))
-           (let* ,selected-symbol-bindings
-             ,@body))))))
-
-(defun table-reduce (table fields fn &key
-                                       initial-value)
-  "table-reduce mimics reduce but with the modification that fn should
-take one more argument than the number of fields specified with the
-first argument used to store the state as fn is called across the
-table.
-
-table-reduce can be used as a functional/non-macro solution to looping
-over the table.
-
-fields is a list of field names/symbols.  They will be passed in the
-order specified to fn.
-
-fn is function taking the computation state as the first argument and
-then each selected field as an argument in the order given in fields;
-can use the state argument to collect a list of values for example."
-  (flet ((get-fields ()
-           (loop for f in fields
-              collect (table-get-field table
-                                       (intern (lispify (string f)))))))
-    (do ((read-status (table-load-next-row table)
-                      (table-load-next-row table))
-         (field-vals (get-fields) (get-fields))
-         (state initial-value (apply fn state field-vals)))
-        ((not read-status) state))))
+      (with-gensyms (state)
+        `(table-reduce ,table
+                       (list ,@selected-column-names)
+                       (let ((,rowv -1))
+                         (declare (,rowt ,rowv))
+                         (lambda (,state ,@bound-column-symbols)
+                           (incf ,rowv)
+                           ,@body)))))))
