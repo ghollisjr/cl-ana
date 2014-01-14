@@ -60,7 +60,8 @@ values."
 (defmacro when-keywords (&body keyword-arg-specs)
   "Creates a plist containing the keyword arguments only when the
 values are non-nil; if a keyword-arg-spec is a list, then the first
-element is taken to be the field symbol."
+element is taken to be the field symbol and the second element the
+expression to be passed as the value."
   (let* ((specs
           (loop
              for kas in keyword-arg-specs

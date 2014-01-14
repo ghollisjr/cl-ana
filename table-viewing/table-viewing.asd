@@ -8,6 +8,7 @@
   :license ""
   :depends-on (#:alexandria
                #:string-utils
+               #:macro-utils
                #:table
                #:histogram
                #:plotting
