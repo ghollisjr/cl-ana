@@ -30,6 +30,10 @@
      :documentation "Default amount by which bins are incremented;
     i.e. unless overridden by a weight factor.")))
 
+(defgeneric hist-total-integral (histogram)
+  (:documentation "Returns the number of entries in the histogram,
+  i.e. the full integral of the histogram"))
+
 (defgeneric hist-integrate (histogram &rest axes)
   (:documentation "Integrates the histogram along the dimensions/axes
   specified.  Axes can be specified using index or the dimension name

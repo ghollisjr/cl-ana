@@ -95,6 +95,10 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
     (setf (contiguous-hist-bin-values result) bin-values)
     result))
 
+(defmethod hist-total-integral ((hist contiguous-histogram))
+  (let ((bin-values (hist-bin-values hist)))
+    (sum (mapcar #'car bin-values))))
+
 (defmethod hist-integrate ((histogram contiguous-histogram) &rest axes)
   (with-accessors ((ndims hist-ndims)
 		   (dim-names hist-dim-names)
@@ -103,74 +107,76 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 		   (bin-values contiguous-hist-bin-values)
 		   (bin-specs rectangular-hist-bin-specs))
       histogram
-    (flet ((index-key (x)
-	     (if (listp x)
-		 (first x)
-		 x)))
-      (let* ((axis-name-or-indices (mapcar (lambda (x)
-                                             (if (listp x)
-                                                 (first x)
-                                                 x))
-					   axes))
-	     (dim-indices (get-dim-indices dim-names axis-name-or-indices))
-	     (point-bounds
-	      (mapcar (lambda (x)
-                        (when (listp x)
-                          (rest x)))
-		      axes))
-	     (index-bounds
-	      (mapcar (lambda (point-bound bin-spec)
-                        (when point-bound
-                          (let ((low-index
-                                 (get-axis-bin-index (first point-bound)
-                                                     bin-spec))
-                                (high-index
-                                 (get-axis-bin-index (second point-bound)
-                                                     bin-spec)))
-                            (list (if (equal low-index :underflow)
-                                      0
-                                      low-index)
-                                  (if (equal high-index :overflow)
-                                      (1- (first bin-spec))
-                                      high-index)))))
-		      point-bounds
-		      bin-specs))
-	     (index-specs (mapcar (lambda (x y)
-                                    (if y
-                                        (cons x y)
-                                        x))
-				  dim-indices
-				  index-bounds))
-	     (index-specs-copy (copy-list index-specs))
-	     (sorted-index-specs (sort index-specs-copy #'>
-				       :key #'index-key))
-	     (unique-sorted-index-specs
-	      (reduce
-	       (lambda (x y) (adjoin y x
-                                     :test #'equal
-                                     :key #'index-key))
-	       sorted-index-specs
-	       :initial-value ()))
-	     (unique-sorted-indices
-	      (mapcar (lambda (x)
-                        (if (listp x)
-                            (first x)
-                            x))
-		      unique-sorted-index-specs))
-	     (new-ndims (- ndims (length unique-sorted-indices)))
-	     (new-dim-names (except-at dim-names (reverse unique-sorted-indices)
-				       :uniquely-sorted t))
-	     (new-bin-specs (except-at bin-specs (reverse unique-sorted-indices)
-				       :uniquely-sorted t)))
-	(make-instance 'contiguous-histogram
-		       :ndims new-ndims
-		       :dim-names new-dim-names
-		       :empty-bin-value empty-bin-value
-		       :default-increment default-increment
-		       :bin-values (contiguous-hist-integrate-contents
-				    bin-values
-				    index-specs)
-		       :bin-specs new-bin-specs)))))
+    (if (length-equal axes ndims)
+        (hist-total-integral histogram)
+        (flet ((index-key (x)
+                 (if (listp x)
+                     (first x)
+                     x)))
+          (let* ((axis-name-or-indices (mapcar (lambda (x)
+                                                 (if (listp x)
+                                                     (first x)
+                                                     x))
+                                               axes))
+                 (dim-indices (get-dim-indices dim-names axis-name-or-indices))
+                 (point-bounds
+                  (mapcar (lambda (x)
+                            (when (listp x)
+                              (rest x)))
+                          axes))
+                 (index-bounds
+                  (mapcar (lambda (point-bound bin-spec)
+                            (when point-bound
+                              (let ((low-index
+                                     (get-axis-bin-index (first point-bound)
+                                                         bin-spec))
+                                    (high-index
+                                     (get-axis-bin-index (second point-bound)
+                                                         bin-spec)))
+                                (list (if (equal low-index :underflow)
+                                          0
+                                          low-index)
+                                      (if (equal high-index :overflow)
+                                          (1- (first bin-spec))
+                                          high-index)))))
+                          point-bounds
+                          bin-specs))
+                 (index-specs (mapcar (lambda (x y)
+                                        (if y
+                                            (cons x y)
+                                            x))
+                                      dim-indices
+                                      index-bounds))
+                 (index-specs-copy (copy-list index-specs))
+                 (sorted-index-specs (sort index-specs-copy #'>
+                                           :key #'index-key))
+                 (unique-sorted-index-specs
+                  (reduce
+                   (lambda (x y) (adjoin y x
+                                         :test #'equal
+                                         :key #'index-key))
+                   sorted-index-specs
+                   :initial-value ()))
+                 (unique-sorted-indices
+                  (mapcar (lambda (x)
+                            (if (listp x)
+                                (first x)
+                                x))
+                          unique-sorted-index-specs))
+                 (new-ndims (- ndims (length unique-sorted-indices)))
+                 (new-dim-names (except-at dim-names (reverse unique-sorted-indices)
+                                           :uniquely-sorted t))
+                 (new-bin-specs (except-at bin-specs (reverse unique-sorted-indices)
+                                           :uniquely-sorted t)))
+            (make-instance 'contiguous-histogram
+                           :ndims new-ndims
+                           :dim-names new-dim-names
+                           :empty-bin-value empty-bin-value
+                           :default-increment default-increment
+                           :bin-values (contiguous-hist-integrate-contents
+                                        bin-values
+                                        index-specs)
+                           :bin-specs new-bin-specs))))))
 
 ;; note that hist-insert is a stateful function, since this is the
 ;; only efficient way to implement it

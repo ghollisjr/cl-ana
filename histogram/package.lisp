@@ -22,6 +22,7 @@
 	   :hist-dim-names
 	   :hist-empty-bin-value
 	   :hist-default-increment
+           :hist-total-integral
 	   :hist-integrate
 	   :hist-project
 	   :hist-insert
