@@ -103,6 +103,18 @@ expression to be passed as the value."
  #\# #\k #'when-keywords-transformer-reader-macro)
 ;;)
 
-;;;; From let-over-lambda:
+;;;; From let-over-lambda: (this should probably be somewhere else)
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
+
+;;;; This is actually fully implemented by both loop and the iterate
+;;;; library
+;;;; Useful for simple while loops:
+;; (defmacro while (boolean &body body)
+;;   "Executes boolean at the start of each iteration; if boolean is
+;; non-nil then body is executed, else while exits.  At the moment the
+;; return value is not specified.n"
+;;   (with-gensyms (test)
+;;     `(do ((,test ,boolean ,boolean))
+;;          ((not ,test))
+;;        ,@body)))
