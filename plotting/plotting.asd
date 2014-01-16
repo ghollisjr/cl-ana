@@ -13,6 +13,7 @@
                #:list-utils
                #:macro-utils
                #:histogram
-               #:tensor)
+               #:tensor
+               #:alexandria)
   :components ((:file "package")
 	       (:file "plotting")))

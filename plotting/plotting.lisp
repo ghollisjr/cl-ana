@@ -729,7 +729,14 @@ up to two double-float arguments."
                                          fill-density
                                          color)
   (let* ((ndims (hist-ndims hist))
-         (bin-data (map->alist hist))
+         (bin-data
+          (mapcar (lambda (datum-cons)
+                    (let ((bin-center (car datum-cons))
+                          (bin-value (cdr datum-cons)))
+                      (cons (mapcar (rcurry #'float 0d0)
+                                    bin-center)
+                            (float bin-value 0d0))))
+                  (map->alist hist)))
          (first-independent (car (first bin-data))))
     (case ndims
       (1

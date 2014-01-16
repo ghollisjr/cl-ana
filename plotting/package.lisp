@@ -9,7 +9,8 @@
         :list-utils
         :macro-utils
         :histogram
-        :tensor)
+        :tensor
+        :alexandria)
   (:export :*gnuplot-session*
            :restart-gnuplot-session
            :titled
