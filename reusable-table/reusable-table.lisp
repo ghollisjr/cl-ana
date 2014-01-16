@@ -64,8 +64,10 @@ from the beginning."
 ;;; Cleanup:
 
 (defmethod table-close ((table reusable-table))
+  "Closes the physical table; note that this is unsafe unless you know
+the table needs closing."
   (with-slots (raw-table needs-reloading)
       table
     (when (not needs-reloading)
-      (setf needs-reloading t)
-      (table-close raw-table))))
+      (setf needs-reloading t))
+    (table-close raw-table)))
