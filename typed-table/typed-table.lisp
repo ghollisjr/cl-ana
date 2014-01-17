@@ -7,6 +7,13 @@
                    (compilation-speed 0)
                    (debug 3)))
 
+(defun gethash-keywordify (key hash-table)
+  (gethash (keywordify (string key)) hash-table))
+
+(defun (setf gethash-keywordify) (value key hash-table)
+  (setf (gethash (keywordify (string key)) hash-table)
+        value))
+
 (defclass typed-table (table)
   ((column-specs
     :initarg :column-specs

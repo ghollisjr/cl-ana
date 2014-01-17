@@ -9,6 +9,7 @@
   :depends-on (#:macro-utils
 	       #:list-utils
 	       #:string-utils
+               #:symbol-utils
 	       #:functional-utils
 	       #:alexandria)
   :components ((:file "package")

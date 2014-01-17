@@ -5,6 +5,7 @@
 	:cffi
 	:list-utils
 	:string-utils
+        :symbol-utils
 	:memoization
 	:hdf-cffi
 	:typespec

@@ -27,7 +27,7 @@
 		(names (mapcar #'car names-specs))
 		(specs (mapcar #'cdr names-specs))
 		(hdf-types (mapcar #'typespec->hdf-type specs))
-		(slot-symbols (mapcar (compose #'intern #'lispify)
+		(slot-symbols (mapcar (compose #'keywordify #'intern #'lispify)
 				      names))
 		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))

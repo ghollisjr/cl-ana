@@ -49,7 +49,7 @@
 			   (third cstruct)
                            1)))
            ;;(reduce #'* (fourth cstruct))))) ; array type
-	   (list (intern (lispify name))
+	   (list (keywordify (intern (lispify name)))
 		 type
 		 :count count))))
     (if (listp typespec)
@@ -163,14 +163,25 @@ to the C-object is returned."
        (destructuring-bind (element-type
                             array-size)
            (rest (typespec->cffi-type typespec))
-         (let ((field-setter (typespec->lisp-to-c element-type)))
-           (lambda (tensor c-pointer)
-             (dotimes (i array-size)
-               (funcall field-setter
-                        (tensor-flat-ref tensor i)
-                        (mem-aptr c-pointer
-                                  element-type
-                                  i)))))))
+         (if (equal element-type :char)
+             ;; handle strings:
+             (let ((field-setter (typespec->lisp-to-c element-type)))
+               (lambda (tensor c-pointer)
+                 (dotimes (i array-size)
+                   (funcall field-setter
+                            (char-code (tensor-flat-ref tensor i))
+                            (mem-aptr c-pointer
+                                      element-type
+                                      i)))))
+             ;; other arrays:
+             (let ((field-setter (typespec->lisp-to-c element-type)))
+               (lambda (tensor c-pointer)
+                 (dotimes (i array-size)
+                   (funcall field-setter
+                            (tensor-flat-ref tensor i)
+                            (mem-aptr c-pointer
+                                      element-type
+                                      i))))))))
       ;; Primitive types:
       (t
        (lambda (primitive c-pointer)
@@ -215,18 +226,37 @@ lisp object containing the converted values."
              (typespec->cffi-type element-type))
             (element-getter
              (typespec->c-to-lisp element-type)))
-       (lambda (c-pointer)
-         (let ((result-tensor
-                (make-tensor dim-list)))
-           (loop
-              for i below num-elements
-              do (setf (tensor-flat-ref result-tensor i)
-                       (funcall element-getter
-                                (mem-aptr c-pointer
-                                          element-cffi-type
-                                          i))))
-           result-tensor))))
+       (if (equal element-cffi-type :char)
+           ;; handle char arrays
+           (lambda (c-pointer)
+             (let ((result-string (make-string num-elements)))
+               (loop
+                  for i below num-elements
+                  do (setf (elt result-string i)
+                           (funcall element-getter
+                                    (mem-aptr c-pointer
+                                              element-cffi-type
+                                              i))))
+               result-string))
+           ;; other arrays
+           (lambda (c-pointer)
+             (let ((result-tensor
+                    (make-tensor dim-list)))
+               (loop
+                  for i below num-elements
+                  do (setf (tensor-flat-ref result-tensor i)
+                           (funcall element-getter
+                                    (mem-aptr c-pointer
+                                              element-cffi-type
+                                              i))))
+               result-tensor)))))
     ;; primitive
     (t
-     (lambda (c-pointer)
-       (mem-aref c-pointer typespec)))))
+     ;; characters need special treatment
+     (cond
+       ((equal typespec :char)
+        (lambda (c-pointer)
+          (int-char (mem-aref c-pointer typespec))))
+       (t
+        (lambda (c-pointer)
+          (mem-aref c-pointer typespec)))))))

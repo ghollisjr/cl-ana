@@ -23,5 +23,8 @@
                #:file-utils
                #:statistics
                #:plotting
-               #:table-viewing)
+               #:table-viewing
+               #:int-char
+               #:clos-utils
+               #:serialization)
   :components ((:file "package")))

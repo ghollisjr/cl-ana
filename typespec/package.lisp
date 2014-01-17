@@ -2,8 +2,10 @@
 
 (defpackage #:typespec 
   (:use :cl
+        :int-char
 	:list-utils
 	:string-utils
+        :symbol-utils
         :tensor
 	:memoization
         :alexandria

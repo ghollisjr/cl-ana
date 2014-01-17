@@ -69,3 +69,16 @@ given the bin-spec for a single axis/dimension."
 
 (defun get-bin-center (bin-specs bin-index)
   (mapcar #'get-bin-center-worker bin-specs bin-index))
+
+(defun bin-spec-plists (histogram)
+  "Returns the plists denoting the name, nbins, low, and high for each
+dimension in the histogram."
+  (loop
+     for bin-spec in (rectangular-hist-bin-specs histogram)
+     for dim-name in (hist-dim-names histogram)
+     collecting (destructuring-bind (nbins low high)
+                    bin-spec
+                  (list :name dim-name
+                        :nbins nbins
+                        :low low
+                        :high high))))

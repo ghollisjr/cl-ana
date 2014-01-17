@@ -16,4 +16,5 @@
 	       (:file "histogram")
 	       (:file "rectangular-histogram")
 	       (:file "contiguous-histogram")
-	       (:file "sparse-histogram")))
+	       (:file "sparse-histogram")
+               (:file "conversion")))

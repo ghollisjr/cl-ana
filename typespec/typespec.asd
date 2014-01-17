@@ -6,8 +6,10 @@
   generic type specification, the typespec."
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:list-utils
+  :depends-on (#:int-char
+               #:list-utils
 	       #:string-utils
+               #:symbol-utils
                #:tensor
 	       #:memoization
                #:alexandria

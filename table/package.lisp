@@ -5,6 +5,7 @@
 	#:list-utils
 	#:macro-utils
 	#:string-utils
+        #:symbol-utils
 	#:functional-utils
 	#:alexandria)
   (:export :table

@@ -42,7 +42,7 @@
 (defun table-column-symbols (table)
   (let* ((column-names (table-column-names table))
 	 (lispified-names (mapcar #'lispify column-names)))
-    (mapcar #'intern lispified-names)))
+    (mapcar (compose #'keywordify #'intern) lispified-names)))
 
 (defgeneric table-load-next-row (table)
   (:documentation "Loads the next row into the current row buffer.
@@ -72,8 +72,8 @@ column-symbol and the variable storing the field data."
           for fs in field-specs
           collecting
             (if (listp fs)
-                `(table-set-field ,table ',(first fs) ,(second fs))
-                `(table-set-field ,table ',fs ,fs)))
+                `(table-set-field ,table ,(keywordify (first fs)) ,(second fs))
+                `(table-set-field ,table ,(keywordify fs) ,fs)))
      (table-commit-row ,table)))
 
 ;; Closing tables, sometimes necessary but always call just in case
@@ -102,16 +102,23 @@ order specified to fn.
 fn is function taking the computation state as the first argument and
 then each selected field as an argument in the order given in fields;
 can use the state argument to collect a list of values for example."
-  (flet ((get-fields ()
-           (loop for f in fields
-              collect (table-get-field table
-                                       (intern (lispify (string f)))))))
-    (do ((read-status (table-load-next-row table)
-                      (table-load-next-row table))
-         (field-vals (get-fields) (get-fields))
-         (state initial-value (apply fn state field-vals)))
-        ((not read-status) state))))
-
+  (let ((field-symbols
+         (mapcar (compose #'keywordify
+                          #'intern
+                          #'lispify
+                          #'string)
+                 fields)))
+    (flet ((get-fields ()
+             (loop for f in field-symbols
+                collect (table-get-field table
+                                         (keywordify
+                                          (intern (lispify (string f))))))))
+      (do ((read-status (table-load-next-row table)
+                        (table-load-next-row table))
+           (field-vals (get-fields) (get-fields))
+           (state initial-value (apply fn state field-vals)))
+          ((not read-status) state)))))
+  
 (defmacro do-table ((rowvar table) (&rest column-selections)
 		    &body body)
   "Macro for iterating over a table.

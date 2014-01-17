@@ -16,8 +16,11 @@
 	   :sparse-histogram
 	   :make-contiguous-hist
 	   :make-sparse-hist
+           :sparse->contiguous
+           :contiguous->sparse
 	   :map-contiguous-hist
            :rectangular-hist-bin-specs
+           :bin-spec-plists
 	   :hist-ndims
 	   :hist-dim-names
 	   :hist-empty-bin-value
