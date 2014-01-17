@@ -110,9 +110,7 @@ can use the state argument to collect a list of values for example."
                  fields)))
     (flet ((get-fields ()
              (loop for f in field-symbols
-                collect (table-get-field table
-                                         (keywordify
-                                          (intern (lispify (string f))))))))
+                collect (table-get-field table f))))
       (do ((read-status (table-load-next-row table)
                         (table-load-next-row table))
            (field-vals (get-fields) (get-fields))
