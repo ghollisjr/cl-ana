@@ -30,6 +30,21 @@
 ;;; convert-from-foreign.  The function flatten-array-typespec is
 ;;; provided for this purpose.
 ;;;
+;;; (Note that strings are difficult: C treats character arrays as
+;;; strings, and it is farirly seemless to convert between them;
+;;; additionally small integers are routinely encoded as characters.
+;;; However: Lisp's CFFI treats them differently, and so I have
+;;; implemented the following conventions:
+;;;
+;;; *** Character arrays are converted to Lisp as vectors of integers.
+;;; You can apply char-vector->string to convert this raw character
+;;; array into a string.
+;;;
+;;; *** String typespecs should be that of a character array; this is
+;;; necessary since most binary storage requires a fixed size for the
+;;; data type.  The same treatment above is necessary when the string
+;;; is being read back into Lisp.)
+;;;
 ;;; Example 1: A structure with integer x and float y:
 ;;; (:compound ("x" . :int) ("y" . :float))
 ;;;
@@ -226,37 +241,27 @@ lisp object containing the converted values."
              (typespec->cffi-type element-type))
             (element-getter
              (typespec->c-to-lisp element-type)))
-       (if (equal element-cffi-type :char)
-           ;; handle char arrays
-           (lambda (c-pointer)
-             (let ((result-string (make-string num-elements)))
-               (loop
-                  for i below num-elements
-                  do (setf (elt result-string i)
-                           (funcall element-getter
-                                    (mem-aptr c-pointer
-                                              element-cffi-type
-                                              i))))
-               result-string))
-           ;; other arrays
-           (lambda (c-pointer)
-             (let ((result-tensor
-                    (make-tensor dim-list)))
-               (loop
-                  for i below num-elements
-                  do (setf (tensor-flat-ref result-tensor i)
-                           (funcall element-getter
-                                    (mem-aptr c-pointer
-                                              element-cffi-type
-                                              i))))
-               result-tensor)))))
+       (lambda (c-pointer)
+         (let ((result-tensor
+                (make-tensor dim-list)))
+           (loop
+              for i below num-elements
+              do (setf (tensor-flat-ref result-tensor i)
+                       (funcall element-getter
+                                (mem-aptr c-pointer
+                                          element-cffi-type
+                                          i))))
+           result-tensor))))
     ;; primitive
     (t
-     ;; characters need special treatment
-     (cond
-       ((equal typespec :char)
-        (lambda (c-pointer)
-          (int-char (mem-aref c-pointer typespec))))
-       (t
-        (lambda (c-pointer)
-          (mem-aref c-pointer typespec)))))))
+     (lambda (c-pointer)
+       (mem-aref c-pointer typespec)))))
+
+(defun char-vector->string (char-vector)
+  (let ((result (make-string (length char-vector))))
+    (loop
+       for i from 0
+       for c across char-vector
+       do (setf (elt result i)
+                (int-char c)))
+    result))

@@ -25,4 +25,6 @@
            ;; automatic flattening of typespecs so that nested array
            ;; types can be used as well as directly specifying the
            ;; rank of a multi-array:
-	   :typespec-flatten-arrays))
+	   :typespec-flatten-arrays
+           ;; Function for handling strings stored as character arrays:
+           :char-vector->string))

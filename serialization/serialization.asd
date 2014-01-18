@@ -5,7 +5,8 @@
   with HDF5)."
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:histogram
+  :depends-on (#:typespec
+               #:histogram
                #:hdf-utils
                #:hdf-table)
   :components ((:file "package")

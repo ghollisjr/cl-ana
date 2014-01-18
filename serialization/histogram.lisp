@@ -118,7 +118,7 @@ names or none of them do."
               (table-reduce bin-spec-table
                             bin-spec-table-column-names
                             (lambda (state name low high nbins)
-                              (push (list :name name
+                              (push (list :name (char-vector->string name)
                                           :low low
                                           :high high
                                           :nbins nbins)
