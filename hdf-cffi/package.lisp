@@ -98,4 +98,8 @@
    :h5tget-member-type
    :h5tget-member-name
    :h5tget-member-offset
-   :h5tequal))
+   :h5tequal
+   ;; Group functions:
+   h5gcreate2
+   h5gcreate1
+   h5gclose))

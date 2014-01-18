@@ -212,3 +212,7 @@ handle inside of the macro body."
 		  (:error (error "file does not exist"))
 		  (nil (let ((,hdf-file nil))
 			 ,@body))))))))))
+
+(defun hdf-mkgroup (file group-name)
+  "Creates a group with name group-name in hdf-file file"
+  (h5gclose (h5gcreate1 file group-name 0)))

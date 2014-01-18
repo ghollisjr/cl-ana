@@ -6,6 +6,7 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:histogram
+               #:hdf-utils
                #:hdf-table)
   :components ((:file "package")
                (:file "histogram")))

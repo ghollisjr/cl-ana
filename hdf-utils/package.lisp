@@ -11,4 +11,5 @@
            :with-dataset-type     ; opens dataset datatype
            :with-open-hdf-file    ; opens/creates a file for reading/writing
 	   :open-hdf-file
-	   :close-hdf-file))
+	   :close-hdf-file
+           :hdf-mkgroup))

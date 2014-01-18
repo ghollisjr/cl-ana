@@ -17,6 +17,7 @@ and the other with the error bars as the bin values.
 
 Note that this function assumes that either all the dimensions have
 names or none of them do."
+  (hdf-mkgroup file hdf-path)
   (flet ((subpath (path)
            (concatenate 'string
                         hdf-path
@@ -75,7 +76,7 @@ names or none of them do."
       (table-close data-table)
       ;; write bin-spec table
       ;; fix plists
-                 (loop
+      (loop
          for plist in bin-spec-plists
          for i from 0
          do (when (not (getf plist :name))

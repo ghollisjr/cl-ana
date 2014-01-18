@@ -265,3 +265,20 @@
 (defcfun "H5Tequal" htri-t
   (dtype-id1 hid-t)
   (dtype-id2 hid-t))
+
+;;; Group functions:
+
+(defcfun "H5Gcreate2" hid-t
+  (file hid-t)
+  (name :string)
+  (lcpl-id hid-t)
+  (gcpl-id hid-t)
+  (gapl-id hid-t))
+
+(defcfun "H5Gcreate1" hid-t
+  (file hid-t)
+  (name :string)
+  (size size-t))
+
+(defcfun "H5Gclose" herr-t
+  (group-id hid-t))
