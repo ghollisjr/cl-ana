@@ -4,6 +4,9 @@
 
 (defparameter *histogram-bin-spec-path* "bin-specs")
 
+(defun ->double-float (x)
+  (float x 0d0))
+
 ;; This is actually broken in principle since I need to also store the
 ;; names-specs in the file as well; my best guess is to use the
 ;; hdf-path as the group and then place the histogram contents as
@@ -24,16 +27,15 @@ names or none of them do."
                         "/"
                         path)))
     (let* ((data-names-specs
-            (loop
-               for i from 0
-               for n in (hist-dim-names histogram)
-               collect (cons (if n
-                                 n
-                                 (with-output-to-string (s)
-                                   (format s "x~a" i)))
-                             (if (zerop i)
-                                 :int
-                                 :double))))
+            (cons (cons "count" :int)
+                  (loop
+                     for i from 0
+                     for n in (hist-dim-names histogram)
+                     collect (cons (if n
+                                       n
+                                       (with-output-to-string (s)
+                                         (format s "x~a" i)))
+                                   :double))))
            (data (hist-bin-values histogram))
            (data-table-path
             (subpath *histogram-data-path*))
@@ -55,7 +57,6 @@ names or none of them do."
             (loop
                for plist in bin-spec-plists
                maximizing (length (getf plist :name))))
-           
            (bin-spec-names-specs
             (list (cons "name" (list :array :char 1 (list max-string-length)))
                   (cons "nbins" :int)
@@ -69,9 +70,13 @@ names or none of them do."
          for datum in data
          do (progn
               (loop
+                 for i from 0
                  for field in datum
                  for sym in data-column-symbols
-                 do (table-set-field data-table sym field))
+                 do (table-set-field data-table sym
+                                     (if (zerop i)
+                                         field
+                                         (->double-float field))))
               (table-commit-row data-table)))
       (table-close data-table)
       ;; write bin-spec table
@@ -89,16 +94,47 @@ names or none of them do."
               (table-push-fields bin-spec-table
                 (name (getf plist :name))
                 (nbins (getf plist :nbins))
-                (low (getf plist :low))
-                (high (getf plist :high)))))
+                (low (->double-float (getf plist :low)))
+                (high (->double-float (getf plist :high))))))
       (table-close bin-spec-table))))
 
-;; (defun read-histogram (file hdf-path)
-;;   "Reads a histogram from an hdf-table with file and path.
+(defun read-histogram (file hdf-path)
+  "Reads a histogram from an hdf-table with file and path.
 
-;; Note that this function assumes that either all the dimensions have
-;; names or none of them do."
-;;   (let* ((data-table (open-hdf-table file hdf-path))
-;;          (data-table-column-names
-;;           (table-column-names data-table))
-;;          (names-specs nil))))
+Note that this function assumes that either all the dimensions have
+names or none of them do."
+  (flet ((subpath (path)
+           (concatenate 'string
+                        hdf-path
+                        "/"
+                        path)))
+    (let* ((bin-spec-table
+            (open-hdf-table file
+                            (subpath *histogram-bin-spec-path*)))
+           (bin-spec-table-column-names
+            (list "name" "low" "high" "nbins"))
+           (bin-spec-plists
+            (let ((result ()))
+              (table-reduce bin-spec-table
+                            bin-spec-table-column-names
+                            (lambda (state name low high nbins)
+                              (push (list :name name
+                                          :low low
+                                          :high high
+                                          :nbins nbins)
+                                    result)))
+              (nreverse result)))
+           (histogram (make-contiguous-hist bin-spec-plists))
+           (data-table
+            (open-hdf-table file
+                            (subpath *histogram-data-path*)))
+           (data-table-column-names
+            (table-column-names data-table))
+           (names-specs nil))
+      (table-reduce data-table
+                    data-table-column-names
+                    (lambda (state count &rest xs)
+                      (hist-insert histogram xs count)))
+      (table-close bin-spec-table)
+      (table-close data-table)
+      histogram)))
