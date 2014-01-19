@@ -126,9 +126,9 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                                 x))
                           unique-sorted-index-specs))
                  (new-ndims (- ndims (length unique-sorted-indices)))
-                 (new-dim-names (except-at dim-names (reverse unique-sorted-indices)
+                 (new-dim-names (except-at dim-names unique-sorted-indices
                                            :uniquely-sorted t))
-                 (new-bin-specs (except-at bin-specs (reverse unique-sorted-indices)
+                 (new-bin-specs (except-at bin-specs unique-sorted-indices
                                            :uniquely-sorted t)))
             (make-instance 'sparse-histogram
                            :ndims new-ndims
@@ -138,6 +138,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                            :value-map (sparse-hist-integrate-contents
                                        value-map
                                        index-specs
+                                       ;;unique-sorted-index-specs
                                        empty-bin-value)
                            :bin-specs new-bin-specs))))))
 

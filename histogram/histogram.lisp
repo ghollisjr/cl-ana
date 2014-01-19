@@ -57,7 +57,7 @@ the lower bound over which to integrate, and the upper bound."))
 	     (integrate-axes
 	      (set-difference (range 0 (1- ndims))
 			      selected-axis-indices)))
-	(hist-integrate histogram integrate-axes)))))
+	(apply #'hist-integrate histogram integrate-axes)))))
 
 (defgeneric hist-insert (histogram datum &optional weight)
   (:documentation "Inserts a value specified by the datum (a list of
