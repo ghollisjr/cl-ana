@@ -6,6 +6,7 @@
   written/read with standard stream objects portably."
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:symbol-utils)
+  :depends-on (#:list-utils
+               #:symbol-utils)
   :components ((:file "package")
                (:file "clos-utils")))

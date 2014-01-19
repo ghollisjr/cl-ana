@@ -29,7 +29,7 @@ viewing.  By default it always returns t."
                   (lambda (&rest xs)
                     (when (apply filter (rest xs))
                       (hist-insert hist
-                                   (apply processor (rest xs))))))
+                                   (mklist (apply processor (rest xs)))))))
     (values hist
             (quick-draw hist))))
 

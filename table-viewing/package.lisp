@@ -3,6 +3,7 @@
 (defpackage #:table-viewing
   (:use #:cl
 	#:alexandria
+        #:list-utils
         #:string-utils
         #:macro-utils
         #:table

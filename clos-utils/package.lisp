@@ -1,5 +1,6 @@
 (defpackage #:clos-utils
   (:use :cl
+        :list-utils
         :symbol-utils)
   (:export :slot-names
            :slot-keyword-names
