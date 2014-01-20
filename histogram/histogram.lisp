@@ -135,8 +135,10 @@ center, we have to do some footwork here."
 
 fn should take as its first argument the bin value and the rest the
 bin center values for each dimension of the histogram as keyword
-parameters, and should return the new bin value for that bin; for a
-bin to not be re-filled in the resulting histogram, return nil.
+parameters.  The keyword arguments should be the lispified dimension
+names of the histogram.  fn should return the new bin value for that
+bin; for a bin to not be re-filled in the resulting histogram, return
+nil.
 
 Note that a particularly useful strategy is to use &allow-other-keys
 so that you do not have to worry about all the dimensions in the
@@ -178,7 +180,8 @@ histogram."
 
 fn should take as its first argument the bin count and the rest of the
 arguments being the bin centers for each dimension of the histogram as
-keyword arguments."
+keyword arguments.  The keyword arguments should be the lispified
+dimension names of the histogram."
   (hist-map (lambda (count &rest xs)
               (when (apply fn count xs)
                 count))
