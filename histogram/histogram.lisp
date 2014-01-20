@@ -170,6 +170,9 @@ histogram."
              (hist-bin-values hist))
             :initial-value result)))
 
+;; I'm keeping the first argument as the bin count since I don't want
+;; to clobber any dimensions of the histogram which might wish to be
+;; called count or anything else I would happen to choose.
 (defun hist-filter (fn hist)
   "Re-fills entries in the histogram only when fn returns non-nil.
 
