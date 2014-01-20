@@ -4,6 +4,8 @@
   (:use #:cl
         #:clos-utils
 	#:tensor
+        #:symbol-utils
+        #:string-utils
 	#:list-utils
 	#:macro-utils
 	#:iter

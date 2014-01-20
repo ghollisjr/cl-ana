@@ -133,37 +133,49 @@ center, we have to do some footwork here."
 (defun hist-map (fn hist)
   "hist-map maps the function fn over the histogram hist bin-by-bin.
 
-fn should take as its first argument the bin value and the rest as the
-bin center values for each dimension of the histogram, and should
-return the new bin value for that bin; for a bin to not be re-filled
-in the resulting histogram, return nil."
-  (let ((result
-         (funcall (type-constructor hist)
-                  (bin-spec-plists hist)
-                  :empty-bin-value
-                  (hist-empty-bin-value hist)
-                  :default-increment
-                  (hist-default-increment hist))))
+fn should take as its first argument the bin value and the rest the
+bin center values for each dimension of the histogram as keyword
+parameters, and should return the new bin value for that bin; for a
+bin to not be re-filled in the resulting histogram, return nil.
+
+Note that a particularly useful strategy is to use &allow-other-keys
+so that you do not have to worry about all the dimensions in the
+histogram."
+  (let* ((result
+          (funcall (type-constructor hist)
+                   (bin-spec-plists hist)
+                   :empty-bin-value
+                   (hist-empty-bin-value hist)
+                   :default-increment
+                   (hist-default-increment hist)))
+         (dim-names (hist-dim-names hist))
+         (dim-keywords
+          (mapcar (compose #'keywordify #'lispify)
+                  dim-names)))
     (reduce (lambda (h x)
               (when x
                 (hist-insert h
                              (car x)
                              (cdr x)))
               h)
-            (mapcar (lambda (x)
-                      (let ((result
-                             (apply fn x)))
-                        (when result
-                          (cons (rest x)
-                                result))))
-                    (hist-bin-values hist))
+            (mapcar
+             (lambda (x)
+               (let* ((key-args (mapcan #'list dim-keywords (rest x)))
+                      (count (first x))
+                      (result
+                       (apply fn count key-args)))
+                 (when result
+                   (cons (rest x)
+                         result))))
+             (hist-bin-values hist))
             :initial-value result)))
 
 (defun hist-filter (fn hist)
   "Re-fills entries in the histogram only when fn returns non-nil.
 
 fn should take as its first argument the bin count and the rest of the
-arguments being the bin centers for each dimension of the histogram."
+arguments being the bin centers for each dimension of the histogram as
+keyword arguments."
   (hist-map (lambda (count &rest xs)
               (when (apply fn count xs)
                 count))

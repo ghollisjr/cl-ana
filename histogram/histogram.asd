@@ -5,6 +5,8 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:clos-utils
+               #:symbol-utils
+               #:list-utils
                #:list-utils
 	       #:macro-utils
 	       #:iterate
