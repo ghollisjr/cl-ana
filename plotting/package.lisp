@@ -12,7 +12,7 @@
         :tensor
         :alexandria)
   (:export :*gnuplot-session*
-           :restart-gnuplot-session
+           :restart-gnuplot-sessions
            :titled
            :title
            :page

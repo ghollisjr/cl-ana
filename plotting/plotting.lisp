@@ -40,21 +40,35 @@
 
 (in-package :plotting)
 
-(defvar *gnuplot-session* (gnuplot-init))
+;;;; I'm using a new strategy with gnuplot sessions: Each page gets
+;;;; its own session; this way all windows stay interactive.  If the
+;;;; memory footprint gets too big I'll have to do something about it,
+;;;; but a suggestion to a similar concern was to use multiple
+;;;; sessions so I'll see what happens.
+
+(defvar *gnuplot-sessions* nil)
 
 ;; run any initialization functions:
-(defun gnuplot-settings ()
+(defun gnuplot-settings (session)
   ;; Image style settings:
-  (gnuplot-cmd *gnuplot-session* "set palette rgb 33,13,10"))
+  (gnuplot-cmd session "set palette rgb 33,13,10"))
 ;; Boxes style settings:
 ;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
-(gnuplot-settings)
+(defun spawn-gnuplot-session ()
+  (let ((session (gnuplot-init)))
+    (gnuplot-settings session)
+    (push session *gnuplot-sessions*)
+    session))
 
-(defun restart-gnuplot-session ()
-  (gnuplot-close *gnuplot-session*)
-  (setf *gnuplot-session* (gnuplot-init))
-  (gnuplot-settings))
+(spawn-gnuplot-session)
+
+(defun restart-gnuplot-sessions ()
+  (loop
+     for s in *gnuplot-sessions*
+     do (gnuplot-close s))
+  (setf *gnuplot-sessions* nil)
+  (spawn-gnuplot-session))
 
 (defgeneric generate-cmd (object)
   (:documentation "Generates a command string (with new-line at end)
@@ -78,6 +92,7 @@
     :documentation "The next available id for a page."
     :reader page-next-id
     :allocation :class)
+   ;; I'll keep using the id
    (id
     ;;:initarg :id
     :initform -1
@@ -85,6 +100,11 @@
     :documentation "The numerical id of the page; necessary for
     gnuplot to know to create a distinct page rather than reuse the
     last one used.")
+   (session
+    :initarg :gnuplot-session
+    :initform nil
+    :accessor page-gnuplot-session
+    :documentation "The gnuplot session in use by the page.")
    ;;; actually set-able slots:
    (shown-title
     :initform nil
@@ -175,11 +195,16 @@
 (defun draw (page)
   "Draws the contents of a page using the multiplot layout specified
 in the page."
-  (gnuplot-cmd *gnuplot-session* (generate-cmd page)))
+  (with-accessors ((session page-gnuplot-session))
+      page
+    (gnuplot-cmd session (generate-cmd page))))
 
 (defmethod initialize-instance :after
     ((p page) &key)
-  (incf (slot-value p 'next-id)))
+  (with-slots (session)
+      p
+    (incf (slot-value p 'next-id))
+    (setf session (spawn-gnuplot-session))))
 
 (defmethod initialize-instance ((p page)
                                 &key id
