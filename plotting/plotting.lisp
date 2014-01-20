@@ -48,6 +48,12 @@
 
 (defvar *gnuplot-sessions* nil)
 
+(defparameter *gnuplot-single-session* nil
+  "Set this parameter to t if you want only one session of gnuplot to
+  be used for subsequent plots.  Useful if you wish to generate large
+  numbers of plots as gnuplot sessions have a not-so-small memory
+  footprint.")
+
 ;; run any initialization functions:
 (defun gnuplot-settings (session)
   ;; Image style settings:
@@ -56,10 +62,15 @@
 ;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
 (defun spawn-gnuplot-session ()
-  (let ((session (gnuplot-init)))
-    (gnuplot-settings session)
-    (push session *gnuplot-sessions*)
-    session))
+  (if *gnuplot-single-session*
+      (progn
+        (when (null *gnuplot-sessions*)
+          (push (gnuplot-init) *gnuplot-sessions*))
+        (first *gnuplot-sessions*))
+      (let ((session (gnuplot-init)))
+        (gnuplot-settings session)
+        (push session *gnuplot-sessions*)
+        session)))
 
 (spawn-gnuplot-session)
 
