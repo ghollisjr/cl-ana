@@ -723,12 +723,13 @@ up to two double-float arguments."
 ;; histogram plotting:
 
 ;; still need to allow for error bars
-(defmethod make-line ((hist histogram) &key
+(defmethod make-line ((histogram histogram) &key
                                          (title "histogram")
                                          fill-style
                                          fill-density
                                          color)
-  (let* ((ndims (hist-ndims hist))
+  (let* ((hist (sparse->contiguous histogram))
+         (ndims (hist-ndims hist))
          (bin-data
           (mapcar (lambda (datum-cons)
                     (let ((bin-center (car datum-cons))

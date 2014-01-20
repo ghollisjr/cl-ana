@@ -346,3 +346,9 @@ field-symbol and each field value to field-value.  Returns nil."
        (let ((,field-symbol (first ,lst))
              (,field-value (second ,lst)))
          ,@body))))
+
+(defun permute (list permutation)
+  "Re-arranges the elements in list according to the permutation."
+  (mapcar (lambda (p)
+            (elt list p))
+          permutation))

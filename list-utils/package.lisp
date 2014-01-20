@@ -31,4 +31,5 @@
            :find2
            :before
            :after
-           :duplicate))
+           :duplicate
+           :permute))

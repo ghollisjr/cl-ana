@@ -9,4 +9,5 @@
            :clist-field-symbols
            :clist-field-values
            :object->clist
-           :clist->object))
+           :clist->object
+           :type-constructor))

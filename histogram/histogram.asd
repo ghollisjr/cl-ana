@@ -4,7 +4,8 @@
   :serial t
   :author "Gary Hollis"
   :license ""
-  :depends-on (#:list-utils
+  :depends-on (#:clos-utils
+               #:list-utils
 	       #:macro-utils
 	       #:iterate
 	       #:generic-math

@@ -62,85 +62,87 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
         0)))
 
 (defmethod hist-integrate ((histogram sparse-histogram) &rest axes)
-  (with-accessors ((ndims hist-ndims)
-		   (dim-names hist-dim-names)
-		   (empty-bin-value hist-empty-bin-value)
-		   (default-increment hist-default-increment)
-		   (value-map sparse-hist-value-map)
-		   (bin-specs rectangular-hist-bin-specs))
-      histogram
-    (if (length-equal axes ndims)
-        (hist-total-integral histogram)
-        (flet ((index-key (x)
-                 (if (listp x)
-                     (first x)
-                     x)))
-          (let* ((axis-name-or-indices (mapcar (lambda (x)
-                                                 (if (listp x)
-                                                     (first x)
-                                                     x))
-                                               axes))
-                 (dim-indices (get-dim-indices dim-names axis-name-or-indices))
-                 (point-bounds
-                  (mapcar (lambda (x)
-                            (when (listp x)
-                              (rest x)))
-                          axes))
-                 (index-bounds
-                  (mapcar (lambda (point-bound bin-spec)
-                            (when point-bound
-                              (let ((low-index
-                                     (get-axis-bin-index (first point-bound)
-                                                         bin-spec))
-                                    (high-index
-                                     (get-axis-bin-index (second point-bound)
-                                                         bin-spec)))
-                                (list (if (equal low-index :underflow)
-                                          0
-                                          low-index)
-                                      (if (equal high-index :overflow)
-                                          (1- (first bin-spec))
-                                          high-index)))))
-                          point-bounds
-                          bin-specs))
-                 (index-specs (mapcar (lambda (x y)
-                                        (if y
-                                            (cons x y)
-                                            x))
-                                      dim-indices
-                                      index-bounds))
-                 (index-specs-copy (copy-list index-specs))
-                 (sorted-index-specs (sort index-specs-copy #'>
-                                           :key #'index-key))
-                 (unique-sorted-index-specs
-                  (reduce
-                   (lambda (x y) (adjoin y x
-                                         :test #'equal
-                                         :key #'index-key))
-                   sorted-index-specs
-                   :initial-value ()))
-                 (unique-sorted-indices
-                  (mapcar (lambda (x)
-                            (if (listp x)
-                                (first x)
-                                x))
-                          unique-sorted-index-specs))
-                 (new-ndims (- ndims (length unique-sorted-indices)))
-                 (new-dim-names (except-at dim-names unique-sorted-indices
-                                           :uniquely-sorted t))
-                 (new-bin-specs (except-at bin-specs unique-sorted-indices
-                                           :uniquely-sorted t)))
-            (make-instance 'sparse-histogram
-                           :ndims new-ndims
-                           :dim-names new-dim-names
-                           :empty-bin-value empty-bin-value
-                           :default-increment default-increment
-                           :value-map (sparse-hist-integrate-contents
-                                       value-map
-                                       index-specs
-                                       ;;unique-sorted-index-specs
-                                       empty-bin-value)
-                           :bin-specs new-bin-specs))))))
+  (if axes
+      (with-accessors ((ndims hist-ndims)
+                       (dim-names hist-dim-names)
+                       (empty-bin-value hist-empty-bin-value)
+                       (default-increment hist-default-increment)
+                       (value-map sparse-hist-value-map)
+                       (bin-specs rectangular-hist-bin-specs))
+          histogram
+        (if (length-equal axes ndims)
+            (hist-total-integral histogram)
+            (flet ((index-key (x)
+                     (if (listp x)
+                         (first x)
+                         x)))
+              (let* ((axis-name-or-indices (mapcar (lambda (x)
+                                                     (if (listp x)
+                                                         (first x)
+                                                         x))
+                                                   axes))
+                     (dim-indices (get-dim-indices dim-names axis-name-or-indices))
+                     (point-bounds
+                      (mapcar (lambda (x)
+                                (when (listp x)
+                                  (rest x)))
+                              axes))
+                     (index-bounds
+                      (mapcar (lambda (point-bound bin-spec)
+                                (when point-bound
+                                  (let ((low-index
+                                         (get-axis-bin-index (first point-bound)
+                                                             bin-spec))
+                                        (high-index
+                                         (get-axis-bin-index (second point-bound)
+                                                             bin-spec)))
+                                    (list (if (equal low-index :underflow)
+                                              0
+                                              low-index)
+                                          (if (equal high-index :overflow)
+                                              (1- (first bin-spec))
+                                              high-index)))))
+                              point-bounds
+                              bin-specs))
+                     (index-specs (mapcar (lambda (x y)
+                                            (if y
+                                                (cons x y)
+                                                x))
+                                          dim-indices
+                                          index-bounds))
+                     (index-specs-copy (copy-list index-specs))
+                     (sorted-index-specs (sort index-specs-copy #'>
+                                               :key #'index-key))
+                     (unique-sorted-index-specs
+                      (reduce
+                       (lambda (x y) (adjoin y x
+                                             :test #'equal
+                                             :key #'index-key))
+                       sorted-index-specs
+                       :initial-value ()))
+                     (unique-sorted-indices
+                      (mapcar (lambda (x)
+                                (if (listp x)
+                                    (first x)
+                                    x))
+                              unique-sorted-index-specs))
+                     (new-ndims (- ndims (length unique-sorted-indices)))
+                     (new-dim-names (except-at dim-names unique-sorted-indices
+                                               :uniquely-sorted t))
+                     (new-bin-specs (except-at bin-specs unique-sorted-indices
+                                               :uniquely-sorted t)))
+                (make-instance 'sparse-histogram
+                               :ndims new-ndims
+                               :dim-names new-dim-names
+                               :empty-bin-value empty-bin-value
+                               :default-increment default-increment
+                               :value-map (sparse-hist-integrate-contents
+                                           value-map
+                                           index-specs
+                                           ;;unique-sorted-index-specs
+                                           empty-bin-value)
+                               :bin-specs new-bin-specs)))))
+      histogram))
 
 (defmethod hist-insert ((hist sparse-histogram) point &optional weight)
   (with-accessors ((value-map sparse-hist-value-map)
@@ -243,3 +245,24 @@ and third elements respectively."
                   (+ (gethash (except-nth key axis) result empty-bin-value)
                      val)))))
     result))
+
+(defmethod hist-reorder-dimensions ((histogram sparse-histogram) dim-indices)
+  (if (equal dim-indices (range 0 (length dim-indices)))
+      histogram
+      (let ((result
+             (make-sparse-hist (permute (bin-spec-plists histogram)
+                                        dim-indices)
+                               :empty-bin-value
+                               (hist-empty-bin-value histogram)
+                               :default-increment
+                               (hist-default-increment histogram))))
+        (loop
+           for bin-value in (hist-bin-values histogram)
+           do (hist-insert result
+                           (permute (rest bin-value)
+                                    dim-indices)
+                           (first bin-value)))
+        result)))
+
+(defmethod type-constructor ((hist sparse-histogram))
+  #'make-sparse-hist)

@@ -57,3 +57,10 @@ represents."
          (mapcan #'list
                  (clist-field-symbols clist)
                  (clist-field-values clist))))
+
+(defgeneric type-constructor (object)
+  (:documentation "Returns the function responsible for constructing
+  objects of the same type as the object.  Default value is nil unless
+  a method is defined for an object/type.")
+  (:method (obj)
+    nil))

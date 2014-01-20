@@ -2,6 +2,7 @@
 
 (defpackage :histogram 
   (:use #:cl
+        #:clos-utils
 	#:tensor
 	#:list-utils
 	#:macro-utils
@@ -33,7 +34,10 @@
 	   :hist-index-ref ; setf-able
 	   :hist-point-ref ; setf-able
 	   ;; :subhist ; subhist is just integration over a subset of the axis
-	   :hist-bin-values))
+	   :hist-bin-values
+           ;; Functional access:
+           :hist-map
+           :hist-filter))
 
 (gmath:use-gmath :histogram)
 

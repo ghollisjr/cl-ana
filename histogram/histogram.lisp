@@ -56,8 +56,32 @@ the lower bound over which to integrate, and the upper bound."))
 	      (get-dim-indices dim-names axes))
 	     (integrate-axes
 	      (set-difference (range 0 (1- ndims))
-			      selected-axis-indices)))
-	(apply #'hist-integrate histogram integrate-axes)))))
+			      selected-axis-indices))
+             (disordered-hist
+              (apply #'hist-integrate histogram integrate-axes))
+             (new-selected-axis-indices
+              (condense-indices selected-axis-indices)))
+        (hist-reorder-dimensions
+         disordered-hist
+         new-selected-axis-indices)))))
+
+(defgeneric hist-reorder-dimensions (histogram dim-indices)
+  (:documentation "Re-arranges the data in the histogram so that the
+  dimensions are permuted according to dim-indices."))
+
+(defun condense-indices (indices)
+  (let* ((sorted (sort (copy-list indices) #'<))
+         (map
+          (let ((result (make-hash-table :test 'equal)))
+            (loop
+               for i from 0
+               for s in sorted
+               do (setf (gethash s result)
+                        i))
+            result)))
+    (mapcar (lambda (x)
+              (gethash x map))
+            indices)))
 
 (defgeneric hist-insert (histogram datum &optional weight)
   (:documentation "Inserts a value specified by the datum (a list of
@@ -104,6 +128,46 @@ center, we have to do some footwork here."
                   (cons cdr car))))))
     (mapcar alist-maker
 	    (hist-bin-values hist))))
+
+;; Functional access to histograms:
+(defun hist-map (fn hist)
+  "hist-map maps the function fn over the histogram hist bin-by-bin.
+
+fn should take as its first argument the bin value and the rest as the
+bin center values for each dimension of the histogram, and should
+return the new bin value for that bin; for a bin to not be re-filled
+in the resulting histogram, return nil."
+  (let ((result
+         (funcall (type-constructor hist)
+                  (bin-spec-plists hist)
+                  :empty-bin-value
+                  (hist-empty-bin-value hist)
+                  :default-increment
+                  (hist-default-increment hist))))
+    (reduce (lambda (h x)
+              (when x
+                (hist-insert h
+                             (car x)
+                             (cdr x)))
+              h)
+            (mapcar (lambda (x)
+                      (let ((result
+                             (apply fn x)))
+                        (when result
+                          (cons (rest x)
+                                result))))
+                    (hist-bin-values hist))
+            :initial-value result)))
+
+(defun hist-filter (fn hist)
+  "Re-fills entries in the histogram only when fn returns non-nil.
+
+fn should take as its first argument the bin count and the rest of the
+arguments being the bin centers for each dimension of the histogram."
+  (hist-map (lambda (count &rest xs)
+              (when (apply fn count xs)
+                count))
+            hist))
 
 (defun get-dim-indices (dim-names axes)
   "Converts axes from a list of either index or name into a list of
