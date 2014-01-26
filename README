@@ -1,7 +1,47 @@
 cl-ana is a free (GPL) library of Common Lisp code for doing data
 analysis; specifically it has to at least support what I'm doing right
-now: analyzing particle accelerator event data.  The main principles
-of the project are:
+now: analyzing particle accelerator event data.
+
+Whenever possible, features are implemented via generic functions so
+that users can extend cl-ana to whatever they want to do.
+
+So far the functionality this library provides includes:
+
+* Tabulated data: Supports data tables read-from and written-to HDF5,
+  ntuples, comma separated value (CSV) files, and plists for
+  all-in-memory operation.  Adding a new table type is as easy as
+  extending the table class and defining 4 functions for the table
+  type.
+
+* Histograms: Supports contiguous and sparse histograms of arbitrary
+  dimensions.  Provides functional access to histograms via mapping
+  (which allows reducing) and filtering.
+
+* Nonlinear least squares fitting: Allows plain-old lisp functions to
+  be fitted to data using the GNU Scientific Library (GSL); infers the
+  number of fit parameters the function takes from the initial
+  parameter guess.  Can fit against alists of data & histograms and is
+  easily extended to allow fitting against other types by defining a
+  single function for the new type.
+
+* Plotting: Uses gnuplot to plot histograms, data samples, plain-old
+  lisp functions, and strings interpreted as formulae.
+
+* Generic math: Common Lisp doesn't provide user-extendable math
+  functions; cl-ana provides its own versions of the basic math
+  functions CL gives you but with the ability to extend them for
+  whatever types you want.  Also provides use-gmath which easily adds
+  generic-math's symbols to a package even if you already use the
+  common-lisp package.  Already provided are extensions to the generic
+  math functions for error propogation, quantities (values with
+  units), and treating CL sequences as tensors with all the usual math
+  functions being applied element-by-element in a MATLAB/GNU Octave
+  fashion.
+
+Also included are various utilities which have use in a variety of
+places.
+
+The main principles of the project are:
 
 1. Conceptual clarity and documentation.  These are often neglected in
    software development, to the point where reading code can cause one
