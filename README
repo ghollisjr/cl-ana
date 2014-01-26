@@ -69,21 +69,28 @@ Unix utility).  A table is composed of a number of rows.  Each row is
 composed of a number of fields.  Each row must have the same number
 and kinds of fields; i.e. tables are rectangular.
 
-Tables provide at a minimum sequential reading from/writing into, but
-in general a table when opened for reading is only available for
-reading, and the same goes for tables opened for writing.
+Tables are required to provide at a minimum sequential reading
+from/writing into, but a table when opened for reading is only
+required to available for reading, and the same goes for tables opened
+for writing, though some table types may specifically provide two-way
+access.
 
 (I intend to provide higher level table management functionality that
 abstracts away this limitation by automatically managing the physical
 table objects behind the scenes.)
 
 For writing, one can modify the fields of a row and then commit the
-row into the table.
+row into the table.  As a convience, this can be done as a one-step
+process using the table-push-fields macro which uses a let-like syntax
+to denote the values of the table fields.
 
-For reading, one can use the dotable macro which creates a loop body
-inside which the field values for each row are already known; all you
-have to do is reference a (marked) field variable name and it will be
-read into memory each iteration of the loop.
+For reading, one can use either the table-reduce function or the
+do-table macro.  do-table creates a loop body inside which the field
+values for each row are already known; all you have to do is reference
+a (marked) field variable name and it will be read into memory each
+iteration of the loop.  table-reduce is used to implement do-table and
+is useful for when one wants to programmatically select fields from
+the table for instance.
 
 So far I've implemented the following table types:
 
@@ -92,7 +99,10 @@ hdf-table: Provides access to HDF5 datasets.  The access is limited to
 type.  Allows random read access.  Related is the read-only
 hdf-table-chain object which chains together a list of files
 containing the same type of HDF5 dataset as a single table, managing
-files and reading data into memory as needed.
+files and reading data into memory as needed.  Using an
+hdf-table-chain as opposed to the more general table-chain described
+below has the advantage of knowing how many rows are in the total
+table chain before one traverses them.
 
 csv-table: Provides access to CSV (Comma Separated Values) files.
 Convenient for interfacing with spreadsheet data.  Can be read or
@@ -112,29 +122,50 @@ table-chain: Chains together tables of any type for reading, provided
 they have the same row structure.  Could be handy for implementing the
 higher-level table management functionality.
 
+reusable-table: Wraps a lower-level table for reading in such a way
+that it can be repeatedly read in its entirety without need to re-open
+the table.  The disadvantage is that it is a little clumsy to access
+the internal table object directly; the advantage is that one can
+easily complete multiple passes over the table.
+
 --------------------------------------------------
 4. Histograms
 
 Histograms are currently provided in two types: Contiguous and Sparse.
 
 Contiguous histograms store histogram bin values in-memory in a
-recursive array of arrays of arrays ....  This is inefficient in
-memory when there are many empty bins, but is efficient in computing
-time for arithmetic operations, integration, etc.
+recursive array of arrays of arrays ..., what I implement in the
+tensor sublibrary.  This is inefficient in memory when there are many
+empty bins, but is efficient in computing time for arithmetic
+operations, integration, etc.
 
 Sparse histograms are implemented using hash tables so that empty bin
 values are not stored.  This is efficient in memory when the data is
 sparse but inefficient for arithmetic operations--so much so that at
 the moment I neglect to implement these functions.
 
-In order to remedy the limitations with these different types of
-histograms, I've thought of implementing a histogram computation type
-which builds up a computation to do using multiple histograms as input
-(of either type) where the resulting histogram will be integrated down
-to a manageable number of dimensions at the end of the computation.
-This will be done efficiently by commuting addition/subtraction with
-the integration as far as can be done.  I'm not sure how useful this
-will be however, and this is on the back burner for now.
+The operations common to both histogram types are:
+
+* Insertion: Inserting values into a histogram is done statefully for
+  the sole reason of efficiency.
+
+* Mapping: One can map a function over the bins of a histogram,
+  returning a new histogram.
+
+* Filtering: Filtering makes use of mapping to exclude bins from the
+  resulting histogram.  Useful for making cuts/selections on data
+  samples.
+
+* Integration over any number of dimensions for subranges or the
+  entire dimension.
+
+* Projection onto any selection of dimensions; this is just
+  integration over all the non-selected dimensions.
+
+* Conversion between the two types of histograms (contiguous <-->
+  sparse).  This is useful for when you want to project a high
+  dimensional sparse histogram onto only a few dimensions, making it
+  better to have a contiguous histogram.
 
 --------------------------------------------------
 5. Fitting
@@ -167,8 +198,7 @@ required.
 --------------------------------------------------
 6. Lorentz vectors/boosts
 
-I've implemented a simple lorentz vector and boosting library on top
-of lisp-matrix, which is available via quicklisp.
+I've implemented a simple lorentz vector and boosting library.
 
 It's integrated into the generic math framework as well, so some of
 the functions such as +, -, *, / will work.
@@ -182,22 +212,15 @@ matrix every time you want to boost a single vector.
 --------------------------------------------------
 7. Plotting
 
-Plotting is as of yet incomplete; it is possible to use what I have
-completed to plot things, but you have to know gnuplot's commands to
-do so.
+Plotting is largely complete, though there are still a few things
+which require direct gnuplot commands.
 
-My intentions are to mimick the structure of the gnuplot objects in
-lisp, and in so doing provide a plotting library in lisp.
-
-There are already a few dead/incomplete projects that attempted to do
-this; apparently those poor souls who tried got stuck in limbo or
-something.
-
-I don't forsee that happening to me, as I've done something similar
-already during my honors thesis where I would generate gnuplot
-commands and data to pipe into said commands in order to draw Venn
-diagrams.  I did that with shell scripting and a little C++, so with
-LISP at my disposal it should be much easier.
+The structure of the gnuplot objects are mostly mimicked as CLOS
+classes, and on top of these convenience functions and generic
+functions are defined and specialized allowing one to plot LISP
+functions, strings representing formulae, data in the form of alists,
+histograms (1-D and 2-D; 2-D histograms are plotted with color as the
+z-axis).
 
 --------------------------------------------------
 Appendix: Miscellaneous libraries
@@ -205,33 +228,31 @@ Appendix: Miscellaneous libraries
 In the process of creating the other functionality, I've had to create
 several small utilities & libraries.
 
-For example, there a number of x-utils libraries: list-utils,
-string-utils, functional-utils, macro-utils, and lisp-matrix-utils.
-These provide small functionality in the appropriate subdomains.
+For example, there a number of x-utils libraries like list-utils,
+string-utils, functional-utils, macro-utils, etc.  These provide small
+functionality in the appropriate subdomains.
 
-Of special note is the memoization library, which provides a new
-function definition operator defun-memoized which defines a memoized
-function.  These functions remember previous return values so that
-lengthy computations/tree-like recursive patterns can be efficiently
-computed.  It is implemented via hash tables.
+The memoization library provides a new function definition operator
+defun-memoized which defines a memoized function.  These functions
+remember previous return values so that lengthy computations/tree-like
+recursive patterns can be efficiently computed.  It is implemented via
+hash tables.
 
-Then there is the tensor library, which generalizes the idea of
-mapping to sequences of arbitrary structural depth, e.g. lists of
-lists, or arrays of lists of arrays of ....  It also provides several
-useful functions which can be defined on top of the tensor-map
-function, such as tensor-+, tensor--, and other arithmetic operations.
-I used this to implement some of the contiguous histogram functions.
-It could in principle be used to do matrix operations as well, or
-(obviously) tensor operations.
+The tensor library generalizes the idea of mapping to sequences of
+arbitrary structural depth, e.g. lists of lists, or arrays of lists of
+arrays of ....  It also provides several useful functions which can be
+defined on top of the tensor-map function, such as tensor-+, tensor--,
+and other arithmetic operations as well as tensor contraction, which
+turned out to be a fairly messy operation (you're welcome).
 
 The typespec library (and hdf-typespec) provides typed data
-descriptions that can be used with CFFI.  typespec provides a function
-to generate a CFFI cstruct from the typespec.  hdf-typespec provides
-the ability to convert between HDF5 data types and CFFI types via
-typespecs.  This allows the generation of cstruct types after reading
-the HDF5 data type from an HDF file.  I honestly don't know how I
-would have done this without using code-writing software in C++, or
-pretty much any other statically typed language for that matter.
+descriptions and conversions that can be used with CFFI.  Raw CFFI
+does a good job for basic tasks, but I found it difficult to copy
+arbitrarily deep structures automatically, so I implemented this
+functionality as part of typespec.  hdf-typespec provides the ability
+to convert between HDF5 data types and CFFI types via typespecs.  This
+allows the generation of cstruct types after reading the HDF5 data
+type from an HDF file.
 
 Lastly there are the foreign function interfaces I've written to
 either provide interfaces with foreign libraries or extend/repair the
