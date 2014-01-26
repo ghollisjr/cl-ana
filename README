@@ -172,6 +172,13 @@ iteration of the loop.  table-reduce is used to implement do-table and
 is useful for when one wants to programmatically select fields from
 the table for instance.
 
+(I am aware of the Data Table library
+(https://github.com/AccelerationNet/data-table) already available;
+however, using this along with HDF5 files seemed like a potentially
+messy endeavor.  So I decided to implement tables as a higher-level
+abstraction, of which the data-table type from the above library could
+be an instance.)
+
 So far I've implemented the following table types:
 
 hdf-table: Provides access to HDF5 datasets.  The access is limited to
