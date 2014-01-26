@@ -1,21 +1,85 @@
-This project contains multiple libraries which are grouped together
-either due to mutual dependencies or my unwillingness to maintain
-dozens of individual projects while I'm developing my physics analysis
-software.
+cl-ana is a free (GPL) library of Common Lisp code for doing data
+analysis; specifically it has to at least support what I'm doing right
+now: analyzing particle accelerator event data.  The main principles
+of the project are:
+
+1. Conceptual clarity and documentation.  These are often neglected in
+   software development, to the point where reading code can cause one
+   to drink.  Conceptual clarity refers to the way in which code is
+   written and the way in which algorithms are implemented: A slightly
+   slower but easier to understand implementation is favored above a
+   clusterfuck of bit shifts.  Documentation should always be provided
+   for any feature along with example usages--ESPECIALLY with example
+   usages, as these are sometimes more helpful than the actual
+   documentation.
+
+2. Modularity/Bottom-up design.  Whenever two components have a common
+   feature/function/dependency, this commonality should be placed in a
+   separate sublibrary.  To limit sublibrary number explosion, this
+   should be done in conjunction with point 1 preserving conceptual
+   clarity.  For example list utilities should be a sublibrary for
+   general purpose list functions.  Further: If a feature can be
+   provided by either a set of utility functions or a type heirarchy,
+   strong preference should be given to the utility functions
+   approach; i.e. one should have to argue long and hard before
+   stratifying things into classes.
+
+3. Lispyness.  Whenever possible, already established motifs from LISP
+   programming practices should be used.  This goes for naming
+   conventions, access macros, and the general desire to provide at
+   least functional access to things.
+
+Each sublibrary should go in its own directory and come with its own
+.asdf file so that one can choose any subset of functionality to use
+from the library.
 
 As you will see in reading the code, I've tried to keep everything
-well documented.  I hope that development of this code keeps to strict
-standards of documentation so that it will be easy to understand.
+well documented.  I place a high emphasis on documentation since I
+know how easy it is to fall out of practice.  The last thing I want is
+for the usual cargo-cult around old code to emerge.
 
-The basic development strategy I've attempted to use is bottom-up.
-Unless there is a proven/mathematical structure in place, I try to not
-limit possibilities for use; this leads in some cases to extra
-functions which may never get used.  I've tried to create useful
-layers of functionality so that at each step I can do bigger things
-with what I've just written.  I hope that this approach really will
-pay off as some (such as the Apostle Paul Graham) have claimed.
+I'd like to make a disclaimer that much of the code I've written has
+been part of my own personal development as a LISP programmer; this is
+my first non-trivial project with LISP, and coming from a C++
+background I've had to learn quite a few things along the way.  This
+means that there may be some dark corners of the code which need help
+from more experienced coders/myself at a later time.  In addition, I
+haven't used any general testing framework.  (To be honest I haven't
+needed one either as I've done the development in a highly bottom-up
+way, testing everything as I write it.)  In short this is a work in
+progress.
 
-So far the features I've implemented are:
+There is one major piece of this project that is still missing: a
+complete documentation/tutorial for using the tools provided.  This is
+the next thing on my plate, and I've only been postponing it while I
+learn how to use texinfo.
+
+The dependencies for this project are:
+
+* HDF5 (http://www.hdfgroup.org/HDF5/)
+* GSL (http://www.gnu.org/software/gsl/)
+* GSLL (http://common-lisp.net/projects/gsll/)
+* Alexandria (http://common-lisp.net/project/alexandria/)
+* iterate (http://common-lisp.net/project/iterate/)
+* cl-csv (https://github.com/AccelerationNet/cl-csv)
+* gnuplot (http://www.gnuplot.info/)
+* gnuplot_i (http://ndevilla.free.fr/gnuplot/).
+
+Most of the LISP dependencies can be installed via quicklisp
+(http://www.quicklisp.org/).
+
+gnuplot_i was written by N. Devillard <ndevilla@free.fr>, released to
+the public domain, and is a no-nonsense gnuplot session manager
+written in C.  There is no way to get information from the session
+into LISP from gnuplot_i, but it saved the time writing my own session
+manager.
+
+I use SBCL (http://www.sbcl.org/) almost exclusively; however, I also
+intentionally try to ensure that all the code only assumes what the CL
+standard provides.  Anytime implementation-specific functionality is
+needed I try to use third party libraries for this.
+
+So far some of the features implemented are:
 
 --------------------------------------------------
 1. Generic mathematics
@@ -33,7 +97,7 @@ among other benefits for histogramming, data fitting, linear algebra
 (no I did not re-implement this), etc.
 
 --------------------------------------------------
-2. Error propogation
+2. Error propogation & Quantities
 
 The error-propogation library provides err-num numerical objects which
 automatically perform error propogation during a computation.  This
@@ -53,13 +117,29 @@ is the error in the preceding value.  The generic math library is
 implemented in such a way that the propogation is done correctly at
 all levels of error (precluding bugs that is).
 
-As a similar physics-based numerical concept, I would like to at some
-point implement physical quantities (values with dimensions like
-length, mass, etc.) as well; I think Antik does this as well so it
-might be possible to simply interface with it; we'll see.  Evan
-mentioned something about Dr. Johnson's (I think?) work on efficient
-representation of quantities with errors, so I can try to investigate
-this.
+As a similar physics-based numerical concept, I have implemented
+physical quantities (values with dimensions like length, mass, etc.)
+as well. Quantities are represented by a CLOS class, with conversions
+from numbers, err-nums and keyword symbols (used to represent units)
+into quantities.  Libraries like Antik have already implemented
+quantities, but I chose to approach the problem from a different
+direction by defining generic functions specializing on keyword
+symbols, numerical values, and the quantity type in order to keep
+everything on the functional side as opposed to the reader macro side
+of things.
+
+Utilities are provided for easy definition of new units & constants;
+the base unit system is S.I.
+
+Quantities and error propogation play nice together; as an example:
+
+(* #e(5 1.3) :meter)
+
+would denote (5 +- 1.3) meters, and subsequent operations would have
+error propogation included in the calculation.
+
+I have thought to just define a function +- which would replace the
+#e() reader macro; this may happen in subsequent development.
 
 --------------------------------------------------
 3. Tables
@@ -221,6 +301,11 @@ functions are defined and specialized allowing one to plot LISP
 functions, strings representing formulae, data in the form of alists,
 histograms (1-D and 2-D; 2-D histograms are plotted with color as the
 z-axis).
+
+When using the full gnuplot object structure, the resulting code looks
+much like a markup language for making plots; this is very useful for
+quickly getting an idea of what is being plotted and can
+simultaneously make use of programmatically generated plot structure.
 
 --------------------------------------------------
 Appendix: Miscellaneous libraries

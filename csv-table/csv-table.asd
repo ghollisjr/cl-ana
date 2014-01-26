@@ -7,7 +7,6 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:list-utils
-	       #:antik
 	       #:cl-csv
 	       #:table
 	       #:iterate
