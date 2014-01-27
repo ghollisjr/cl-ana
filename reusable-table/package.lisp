@@ -24,4 +24,4 @@
   (:use :cl
 	:table)
   (:export :wrap-for-reuse
-           :reusable-table-raw-table))
+           :internal-table))

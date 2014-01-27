@@ -41,7 +41,7 @@
    (raw-table
     :initarg :raw-table
     :initform nil
-    :accessor reusable-table-raw-table
+    :accessor internal-table
     :documentation "The table which is being wrapped.")
    (needs-reloading
     :initform nil

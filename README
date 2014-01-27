@@ -98,6 +98,7 @@ The dependencies for this project are:
 
 * HDF5 (http://www.hdfgroup.org/HDF5/)
 * GSL (http://www.gnu.org/software/gsl/)
+* CFFI (http://common-lisp.net/project/cffi/)
 * GSLL (http://common-lisp.net/projects/gsll/)
 * Alexandria (http://common-lisp.net/project/alexandria/)
 * iterate (http://common-lisp.net/project/iterate/)
