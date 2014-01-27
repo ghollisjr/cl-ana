@@ -97,10 +97,9 @@ one either as I've done the development in a highly bottom-up way,
 testing everything as I write it.)  In short this is a work in
 progress.
 
-There is one major piece of this project that is still missing: a
-complete documentation/tutorial for using the tools provided.  This is
-the next thing on my plate, and I've only been postponing it while I
-learn how to use texinfo.
+The code tries to be self documented, but I'm working on a
+tutorial/user's guide on the github wiki page to explain how to use
+the software to best effect.
 
 The dependencies for this project are:
 
