@@ -29,5 +29,6 @@
            :clist-field-symbols
            :clist-field-values
            :object->clist
+           :object->plist
            :clist->object
            :type-constructor))

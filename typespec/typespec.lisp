@@ -124,11 +124,13 @@
     (rest typespec)))
 
 (defun typespec-compound-field-names (typespec)
+  "Returns the field names for the compound type."
   (when (typespec-compound-p typespec)
     (mapcar #'car
             (typespec-compound-field-alist typespec))))
 
 (defun typespec-compound-field-specs (typespec)
+  "Returns the typespecs for the fields in the compound type."
   (when (typespec-compound-p typespec)
     (mapcar #'cdr
             (typespec-compound-field-alist typespec))))
@@ -141,18 +143,22 @@
     (equal (first typespec) :array)))
 
 (defun typespec-array-element-type (typespec)
+  "Returns the element type for the array type."
   (when (typespec-array-p typespec)
     (second typespec)))
 
 (defun typespec-array-dim-list (typespec)
+  "Returns the list of dimension sizes for the array type."
   (when (typespec-array-p typespec)
     (rest (rest typespec))))
 
 (defun typespec-array-rank (typespec)
+  "Returns the number of dimensions (rank) of the array type."
   (when (typespec-array-p typespec)
     (length (typespec-array-dim-list typespec))))
 
 (defun typespec-array-size (typespec)
+  "Returns the total number of elements in the array type."
   (when (typespec-array-p typespec)
     (reduce #'*
             (typespec-array-dim-list typespec))))

@@ -70,6 +70,10 @@ represents."
                 (slot-keyword-names obj)
                 (slot-values obj))))
 
+(defun object->plist (obj)
+  "Returns a plist for the object obj."
+  (rest (object->clist obj)))
+
 (defun clist->object (clist)
   "Returns "
   (apply #'make-instance
