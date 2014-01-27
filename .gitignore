@@ -1,1 +1,2 @@
 .emacs_backups/
+*.fasl

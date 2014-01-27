@@ -71,15 +71,12 @@
 ;;; Reading methods:
 
 (defun smart-read-from-string (s)
-  (flet ((string-contains (s char)
-           (loop
-              for c across s
-              when (equal c char)
-              do (return t)
-              finally (return nil))))
-    (if (string-contains s #\Space)
-        s
-        (read-from-string s))))
+  (multiple-value-bind (read-value read-index)
+      (read-from-string s)
+    (if (equal (length s)
+               read-index)
+        read-value
+        s)))
 
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)
