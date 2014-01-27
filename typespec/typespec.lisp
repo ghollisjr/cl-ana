@@ -44,8 +44,8 @@
 ;;;
 ;;; :array would denote that the type is an array type.  The following
 ;;; elements in the typespec list are the typespec of the array
-;;; elements, the rank of the array, and a list containing the size of
-;;; the array along each dimension.  Note that multidimensional array
+;;; elements and then the size of the array along each dimension as
+;;; the rest of the typespec.  Note that multidimensional array
 ;;; typespecs need to be flattened if you intend to use
 ;;; convert-from-foreign.  The function flatten-array-typespec is
 ;;; provided for this purpose.
@@ -69,7 +69,7 @@
 ;;; (:compound ("x" . :int) ("y" . :float))
 ;;;
 ;;; Example 2: A 1-D array of 20 doubles:
-;;; (:array :double 1 (20))
+;;; (:array :double 20)
 
 ;; Creates cstruct types recursively as per the typespec
 (defun-memoized typespec->cffi-type (typespec)
@@ -78,10 +78,10 @@
 	 (let* ((name (car name-cstruct))
 		(cstruct (cdr name-cstruct))
 		(type (if (typespec-array-p cstruct)
-			  (second cstruct)
+			  (typespec-array-element-type cstruct)
 			  cstruct))
 		(count (if (typespec-array-p cstruct)
-			   (third cstruct)
+			   (typespec-array-size cstruct)
                            1)))
            ;;(reduce #'* (fourth cstruct))))) ; array type
 	   (list (keywordify (intern (lispify name)))
@@ -92,15 +92,14 @@
 	(case (first typespec)
 	  ;;(:array typespec) ; not much to do
 	  (:array
-	   (append (list (first typespec))
-		   (list (typespec->cffi-type (second typespec)))
-		   ;;(rest (rest typespec))))
-                   (list (reduce #'* (fourth typespec)))))
+           (list :array
+                 (typespec->cffi-type
+                  (typespec-array-element-type typespec))
+                 (typespec-array-size typespec)))
 	  (:compound
 	   ;; here's where the fun happens
-	   (let* ((names-specs (rest typespec))
-		  (names (mapcar #'car names-specs))
-		  (specs (mapcar #'cdr names-specs))
+	   (let* ((names (typespec-compound-field-names typespec))
+		  (specs (typespec-compound-field-specs typespec))
 		  (member-cstructs (mapcar #'typespec->cffi-type specs))
 		  (names-cstructs (zip names member-cstructs))
 		  (slotspecs (mapcar #'make-slot-spec names-cstructs)))
@@ -112,15 +111,51 @@
 	      `(defcstruct ,(gensym) ,@slotspecs)))))
         typespec))) ; since the symbol types are already known to cffi
 
+;;;; Compound utilities:
+
 (defun typespec-compound-p (typespec)
   "Tests a typespec for being a compound typespec."
   (when (consp typespec)
     (equal (first typespec) :compound)))
 
+(defun typespec-compound-field-alist (typespec)
+  "Returns the alist mapping field name to typespec."
+  (when (typespec-compound-p typespec)
+    (rest typespec)))
+
+(defun typespec-compound-field-names (typespec)
+  (when (typespec-compound-p typespec)
+    (mapcar #'car
+            (typespec-compound-field-alist typespec))))
+
+(defun typespec-compound-field-specs (typespec)
+  (when (typespec-compound-p typespec)
+    (mapcar #'cdr
+            (typespec-compound-field-alist typespec))))
+
+;;;; Array utilities:
+
 (defun typespec-array-p (typespec)
   "Tests a typespec for being an array typespec."
   (when (consp typespec)
     (equal (first typespec) :array)))
+
+(defun typespec-array-element-type (typespec)
+  (when (typespec-array-p typespec)
+    (second typespec)))
+
+(defun typespec-array-dim-list (typespec)
+  (when (typespec-array-p typespec)
+    (rest (rest typespec))))
+
+(defun typespec-array-rank (typespec)
+  (when (typespec-array-p typespec)
+    (length (typespec-array-dim-list typespec))))
+
+(defun typespec-array-size (typespec)
+  (when (typespec-array-p typespec)
+    (reduce #'*
+            (typespec-array-dim-list typespec))))
 
 ;; This is for automatically translating vectors into foreign arrays;
 ;; only works for 1-D at the moment but that is ok.  Note that I had
@@ -145,9 +180,10 @@ component type(s), then they are flattened as well."
     (if (listp typespec)
 	(cond
 	  ((typespec-array-p typespec)
-	   (list (first typespec)
-		 (typespec-flatten-arrays (second typespec))
-		 (apply #'* (first (last typespec)))))
+	   (list :array
+		 (typespec-flatten-arrays
+                  (typespec-array-element-type typespec))
+		 (typespec-array-size typespec)))
 	  ((typespec-compound-p typespec)
 	   (cons :compound
 		 (mapcar
@@ -176,7 +212,7 @@ to the C-object is returned."
       ((typespec-compound-p typespec)
        (let ((field-setters
               (loop
-                 for (_ . field-spec) in (rest typespec)
+                 for field-spec in (typespec-compound-field-specs typespec)
                  collect (typespec->lisp-to-c field-spec))))
          (lambda (plist c-pointer)
            (do* ((lst plist (rest (rest lst)))
@@ -231,7 +267,8 @@ lisp object containing the converted values."
     ((typespec-compound-p typespec)
      (multiple-value-bind (field-symbols field-getters)
          (loop
-            for (field-name . field-spec) in (rest typespec)
+            for (field-name . field-spec)
+            in (typespec-compound-field-alist typespec)
             collecting (intern (lispify field-name))
             into field-symbols
             collecting (typespec->c-to-lisp field-spec)
@@ -254,9 +291,9 @@ lisp object containing the converted values."
                 (return result))))))
     ;; array
     ((typespec-array-p typespec)
-     (let* ((element-type (second typespec))
-            (dim-list (fourth typespec))
-            (num-elements (reduce #'* dim-list))
+     (let* ((element-type (typespec-array-element-type typespec))
+            (dim-list (typespec-array-dim-list typespec))
+            (num-elements (typespec-array-size typespec))
             (element-cffi-type
              (typespec->cffi-type element-type))
             (element-getter

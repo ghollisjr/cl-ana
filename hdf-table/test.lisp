@@ -56,7 +56,7 @@
     '(:compound
       ("x" . :double)
       ("y" . :int)
-      ("xs" . (:array :double 1 (5)))
+      ("xs" . (:array :double 5))
       ("ys" . (:compound
 	       ("t" . :int)))))))
 
@@ -67,7 +67,7 @@
       ("x" . :double)
       ("y" . :int)
       ("xs" . (:compound
-	       ("fs" . (:array :double 1 (5)))))
+	       ("fs" . (:array :double 5))))
       ("ys" . (:compound
 	       ("t" . :int)))))))
 
@@ -177,7 +177,7 @@
             (create-hdf-table
              outfile "/array"
              (list (cons "x"
-                         (list :array :float 1 (list 4))))))
+                         (list :array :float 4)))))
            (x-type
             (typespec->cffi-type
              (first (typed-table-column-specs table)))))

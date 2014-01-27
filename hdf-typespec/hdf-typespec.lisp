@@ -29,25 +29,23 @@
       (case (first typespec)
 	;; array typespec: (:array type rank dim-list)
 	(:array
-	 (let ((type (typespec->hdf-type (second typespec)))
-	       (rank (third typespec))
-	       (dim-list (fourth typespec)))
+	 (let ((type (typespec->hdf-type
+                      (typespec-array-element-type typespec)))
+	       (rank (typespec-array-rank typespec))
+	       (dim-list (typespec-array-dim-list typespec)))
 	   (with-foreign-object (dims 'hsize-t rank)
-             ;;(let ((dims (foreign-alloc 'hsize-t :count rank)))
 	     (loop
                 for d in dim-list
                 for i from 0
-                ;;do (setf (mem-aref dims :uint i) d))
                 do (setf (mem-aref dims 'hsize-t i) d))
 	     (h5tarray-create2 type rank dims))))
-	;; compound typespec: (:compound ("name1" . type1) ...)
 	(:compound
-	 (let* ((names-specs (rest typespec))
-		(names (mapcar #'car names-specs))
-		(specs (mapcar #'cdr names-specs))
+	 (let* ((names (typespec-compound-field-names typespec))
+		(specs (typespec-compound-field-specs typespec))
 		(hdf-types (mapcar #'typespec->hdf-type specs))
-		(slot-symbols (mapcar (compose #'keywordify #'intern #'lispify)
-				      names))
+		(slot-symbols
+                 (mapcar (compose #'keywordify #'intern #'lispify)
+                         names))
 		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
@@ -80,9 +78,9 @@
 	     (dotimes (index array-rank)
 	       (push (mem-aref array-dims-pointer 'hsize-t index)
 		     array-dims))
-	     (list :array
-		   (cffi-native-type native-base-type)
-		   array-rank array-dims)))))
+	     (append (list :array)
+                     (list (cffi-native-type native-base-type))
+                     array-dims)))))
       (:H5T-COMPOUND
        (let* ((nmembers (h5tget-nmembers hdf-type))
 	      (names

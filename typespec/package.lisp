@@ -32,8 +32,17 @@
 	:cffi)
   (:export :typespec->cffi-type
            :typespec-foreign-alloc
+           ;; compound typespec utilities:
 	   :typespec-compound-p
+           :typespec-compound-field-alist
+           :typespec-compound-field-names
+           :typespec-compound-field-specs
+           ;; array typespec utilities:
 	   :typespec-array-p
+           :typespec-array-element-type
+           :typespec-array-dim-list
+           :typespec-array-rank
+           :typespec-array-size
            ;; A function for setting the values of a foreign object
            ;; recursively; currently this is not directly provided by
            ;; CFFI
