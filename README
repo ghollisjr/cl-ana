@@ -1,6 +1,10 @@
 cl-ana is a free (GPL) library of Common Lisp code for doing data
 analysis; specifically it has to at least support what I'm doing right
-now: analyzing particle accelerator event data.
+now: analyzing particle accelerator event data.  It aims to be a
+general purpose framework for analyzing small and large scale
+datasets, including binned data analysis and visualization.  Much
+effort has been made to ensure modularity so that individual
+components may be used/re-used for a new purpose.
 
 Example code for using some of the functionality is contained in
 various test.lisp files throughout the project; the full documentation
