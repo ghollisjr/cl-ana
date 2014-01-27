@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -100,54 +100,56 @@ direction can be :input or :output.
 if-exists can be :supersede :error nil
 
 if-does-not-exist can be :create :error nil"
-  (case direction
-    (:input
-     ;; I'm choosing the convention that when direction is :input, the
-     ;; only meaningful if-does-not-exist are :error and nil
+  (let ((filename
+         (namestring (->absolute-pathname filename))))
+    (case direction
+      (:input
+       ;; I'm choosing the convention that when direction is :input, the
+       ;; only meaningful if-does-not-exist are :error and nil
        ;; setup if-does-not-exist:
-     (when (not if-does-not-exist-supplied-p)
-       (setf if-does-not-exist :error))
-     (let ((file-exists-p (probe-file filename)))
-       (if file-exists-p
-	   (h5fopen filename +H5F-ACC-RDONLY+ read-access-parameters)
-	   (case if-does-not-exist
-	     (:error (error "File does not exist"))
-	     (nil nil)))))
-    (:output
-     ;; default for if-exists is :error
-     ;; can't ignore if-does-not-exist if I want to be consistent with
-     ;; with-open-file, but default is to go ahead and create the file
-     
+       (when (not if-does-not-exist-supplied-p)
+         (setf if-does-not-exist :error))
+       (let ((file-exists-p (probe-file filename)))
+         (if file-exists-p
+             (h5fopen filename +H5F-ACC-RDONLY+ read-access-parameters)
+             (case if-does-not-exist
+               (:error (error "File does not exist"))
+               (nil nil)))))
+      (:output
+       ;; default for if-exists is :error
+       ;; can't ignore if-does-not-exist if I want to be consistent with
+       ;; with-open-file, but default is to go ahead and create the file
+
        ;; setup if-exists & if-does-not-exist
-     (when (not if-exists-supplied-p)
+       (when (not if-exists-supplied-p)
 	 (setf if-exists :error))
        (when (not if-does-not-exist-supplied-p)
 	 (setf if-does-not-exist :create))
        (let ((file-exists-p (probe-file filename)))
 	 (if file-exists-p
 	     (case if-exists
-		(:error (error "File exists"))
-		(nil nil)
-		(:supersede
-		 (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
-		(:rename
-		 (progn
-		   ;; rename "file" to "file.bak"
-		   ;; then create new file
-		   (rename-file filename (concatenate 'string filename ".bak"))
-		   (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))))
+               (:error (error "File exists"))
+               (nil nil)
+               (:supersede
+                (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
+               (:rename
+                (progn
+                  ;; rename "file" to "file.bak"
+                  ;; then create new file
+                  (rename-file filename (concatenate 'string filename ".bak"))
+                  (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))))
 	     (case if-does-not-exist
 	       (:create
 		(apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
 	       (:error (error "file does not exist"))
-	       (nil nil)))))))
+	       (nil nil))))))))
 
 (defun close-hdf-file (hdf-file)
   "Just a wrapper around the h5fclose function"
   (h5fclose hdf-file))
 
 (defmacro with-open-hdf-file ((hdf-file
-			       file-string ;; must be a string due to cffi
+			       file-path-or-string
 			       &key
 			       direction
 			       (if-exists nil if-exists-supplied-p)
@@ -156,9 +158,8 @@ if-does-not-exist can be :create :error nil"
 			       (write-access-parameters (list +H5P-DEFAULT+ +H5P-DEFAULT+)))
 			      &body body)
 
-  "Macro providing lispy access to hdf (HDF5) files.  Use (almost)
-just like you would with-open-file, just give a file and a
-string (must be an actual string, not a pathname).
+  "Macro providing lispy access to hdf (HDF5) files.  Use just like
+you would with-open-file, just give a file and a path/string.
 
 The usual key arguments for access mode, etc. are honored and
 transformed into HDF5 terms.
@@ -170,68 +171,22 @@ handle inside of the macro body."
   ;; if-exists: :error :supersede nil :rename
   ;; if-does-not-exist: :error :create nil
 
-  ;; (body-with-close (append body `((h5fclose ,hdf-file))))
   (let* ((result (gensym))
 	 (body-with-close
 	  `(let ((,result
 		  (progn ,@body)))
 	     (h5fclose ,hdf-file)
 	     ,result)))
-    (case direction
-      (:input
-       ;; I'm choosing the convention that when direction is :input, the
-       ;; only meaningful if-does-not-exist are :error and nil
-       (let ((file-string-foreign (gensym)))
-	 ;; setup if-does-not-exist:
-	 (when (not if-does-not-exist-supplied-p)
-	   (setf if-does-not-exist :error))
-	 `(let ((file-exists-p (probe-file ,file-string)))
-	    (if file-exists-p
-		(let ((,hdf-file
-		       (with-foreign-string (,file-string-foreign ,file-string)
-			 (h5fopen ,file-string-foreign +H5F-ACC-RDONLY+ ,read-access-parameters))))
-		  ,body-with-close)
-		(case ,if-does-not-exist
-		  (:error (error "File does not exist"))
-		  (nil (let ((,hdf-file nil))
-			 ,@body)))))))
-      (:output
-       ;; default for if-exists is :error
-       ;; can't ignore if-does-not-exist if I want to be consistent with
-       ;; with-open-file, but default is to go ahead and create the file
-       
-       (let ((file-string-foreign (gensym)))
-	 ;; setup if-exists & if-does-not-exist
-	 (when (not if-exists-supplied-p)
-	   (setf if-exists :error))
-	 (when (not if-does-not-exist-supplied-p)
-	   (setf if-does-not-exist :create))
-	 `(let ((file-exists-p (probe-file ,file-string)))
-	    (if file-exists-p
-		(case ,if-exists
-		  (:error (error "File exists"))
-		  (nil (let ((,hdf-file nil))
-			 ,@body))
-		  (:supersede (let ((,hdf-file
-				     (with-foreign-string (,file-string-foreign ,file-string)
-				       (h5fcreate ,file-string-foreign +H5F-ACC-TRUNC+ ,@write-access-parameters))))
-				,body-with-close))
-		  (:rename (progn
-			     ;; rename "file" to "file.bak"
-			     ;; then create new file
-			     (rename-file ,file-string (concatenate 'string ,file-string ".bak"))
-			     (let ((,hdf-file
-				    (with-foreign-string (,file-string-foreign ,file-string)
-				      (h5fcreate ,file-string-foreign +H5F-ACC-TRUNC+ ,@write-access-parameters))))
-			       ,body-with-close))))
-		(case ,if-does-not-exist
-		  (:create (let ((,hdf-file
-				  (with-foreign-string (,file-string-foreign ,file-string)
-				    (h5fcreate ,file-string-foreign +H5F-ACC-TRUNC+ ,@write-access-parameters))))
-			     ,body-with-close))
-		  (:error (error "file does not exist"))
-		  (nil (let ((,hdf-file nil))
-			 ,@body))))))))))
+    `(let ((,hdf-file
+            (open-hdf-file ,file-path-or-string
+                           ,@(when-keywords
+                              direction
+                              if-exists
+                              if-does-not-exist
+                              read-access-parameters
+                              (:write-access-parameters
+                               (cons 'list write-access-parameters))))))
+       ,body-with-close)))
 
 (defun hdf-mkgroup (file group-name)
   "Creates a group with name group-name in hdf-file file"

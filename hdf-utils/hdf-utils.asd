@@ -27,6 +27,8 @@
   :author "Gary Hollis"
   :license ""
   :depends-on (#:cffi
+               #:pathname-utils
+               #:macro-utils
                #:hdf-cffi
                #:alexandria)
   :components ((:file "package")

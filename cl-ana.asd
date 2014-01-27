@@ -24,7 +24,8 @@
   :description "Convenient system which loads all components for
   analysis I've been working on so far."
   :license ""
-  :depends-on (#:package-utils
+  :depends-on (#:pathname-utils
+               #:package-utils
                #:generic-math
                #:math-functions
                ;; Make sure to place tensor after defining all gmath

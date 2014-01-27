@@ -24,7 +24,8 @@
 (in-package :cl-ana)
 
 (defvar *cl-ana-package-names*
-  (list :package-utils
+  (list :pathname-utils
+        :package-utils
         :generic-math
         :binary-tree
         :csv-table

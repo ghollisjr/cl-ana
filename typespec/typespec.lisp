@@ -275,7 +275,7 @@ lisp object containing the converted values."
          (loop
             for (field-name . field-spec)
             in (typespec-compound-field-alist typespec)
-            collecting (intern (lispify field-name))
+            collecting (keywordify (lispify field-name))
             into field-symbols
             collecting (typespec->c-to-lisp field-spec)
             into field-getters

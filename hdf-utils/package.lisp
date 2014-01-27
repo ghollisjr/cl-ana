@@ -24,7 +24,9 @@
   (:use #:cl
 	#:cffi
 	#:hdf-cffi
-        #:alexandria)
+        #:alexandria
+        #:macro-utils
+        #:pathname-utils)
   (:export :with-cleanup          ; general use for HDF5 objects
            :with-open-dataspace   ; opens a dataspace from a dataset
            :with-create-dataspace ; creates a new dataspace

@@ -18,25 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'typespec)
 
-(in-package :typespec)
-
-(defparameter *ts* '(:compound
-                     ("x" . (:array :double 3 3))
-                     ("y" . :string)))
-
-(defparameter *struct* 
-  '(:x ((1d0 2d0 3d0) (4d0 5d0 6d0) (7d0 8d0 9d0))
-    :y "hello"))
-
-(defparameter *x* (typespec-foreign-alloc *ts*))
-
-(defparameter *lisp->c-converter* (typespec->lisp-to-c *ts*))
-
-(funcall *lisp->c-converter* *struct* *x*)
-
-(defparameter *c->lisp-converter*
-  (typespec->c-to-lisp *ts*))
-
-(print (funcall *c->lisp-converter* *x*))
+(asdf:defsystem #:pathname-utils
+  :serial t
+  :author "Gary Hollis"
+  :license "GPL v3"
+  :description "Utilities for working with pathnames"
+  :depends-on ()
+  :components ((:file "package")
+               (:file "pathname-utils")))
