@@ -45,6 +45,8 @@
            :use-gmath
            :defmath
 	   :defmethod-commutative
+           :incf
+           :decf
 	   :+
 	   :sum
 	   :add
