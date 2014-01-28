@@ -35,7 +35,7 @@
         :file-utils
         :fitting
         :functional-utils
-        :gnuplot-i-cffi
+        :gnuplot-interface
         :gsl-cffi
         :hdf-cffi
         :hdf-table

@@ -111,16 +111,15 @@ The dependencies for this project are:
 * iterate (http://common-lisp.net/project/iterate/)
 * cl-csv (https://github.com/AccelerationNet/cl-csv)
 * gnuplot (http://www.gnuplot.info/)
-* gnuplot_i (http://ndevilla.free.fr/gnuplot/).
+* external-program (http://github.com/sellout/external-program/wiki/API)
 
-Most of the LISP dependencies can be installed via quicklisp
+All of the LISP dependencies can be installed via quicklisp
 (http://www.quicklisp.org/).
 
-gnuplot_i was written by N. Devillard <ndevilla@free.fr>, released to
-the public domain, and is a no-nonsense gnuplot session manager
-written in C.  There is no way to get information from the session
-into LISP from gnuplot_i, but it saved the time writing my own session
-manager.
+I copied the API for using gnuplot from gnuplot_i
+(http://ndevilla.free.fr/gnuplot/).  gnuplot_i was written by
+N. Devillard <ndevilla@free.fr>, released to the public domain, and is
+a no-nonsense gnuplot session manager written in C.
 
 I use SBCL (http://www.sbcl.org/) almost exclusively; however, I also
 intentionally try to ensure that all the code only assumes what the CL

@@ -22,12 +22,13 @@
 
 (asdf:defsystem #:plotting
   :serial t
-  :description "Table subclass specializing on hdf5 data"
+  :description "Extensible plotting library for Common Lisp using
+  gnuplot as the backend."
   :author "Gary Hollis"
   :license ""
   :depends-on (#:generic-math
                #:error-propogation
-               #:gnuplot-i-cffi
+               #:gnuplot-interface
                #:map
                #:string-utils
                #:list-utils

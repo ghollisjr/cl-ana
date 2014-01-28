@@ -23,7 +23,7 @@
 (defpackage #:plotting 
   (:use :cl
         :error-propogation
-        :gnuplot-i-cffi
+        :gnuplot-interface
 	:map
         :string-utils
         :list-utils

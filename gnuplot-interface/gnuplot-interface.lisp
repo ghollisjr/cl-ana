@@ -1,9 +1,3 @@
-(ql:quickload "external-program")
-
-(defpackage #:gnuplot-interface
-  (:use :cl
-        :external-program))
-
 (in-package :gnuplot-interface)
 
 (defun gnuplot-init ()
