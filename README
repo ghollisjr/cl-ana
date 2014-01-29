@@ -109,6 +109,7 @@ The dependencies for this project are:
 * GSLL (http://common-lisp.net/projects/gsll/)
 * Alexandria (http://common-lisp.net/project/alexandria/)
 * iterate (http://common-lisp.net/project/iterate/)
+* antik (http://www.common-lisp.net/project/antik/)
 * cl-csv (https://github.com/AccelerationNet/cl-csv)
 * gnuplot (http://www.gnuplot.info/)
 * external-program (http://github.com/sellout/external-program)
