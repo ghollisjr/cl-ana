@@ -6,6 +6,9 @@ datasets, including binned data analysis and visualization.  Much
 effort has been made to ensure modularity so that individual
 components may be used/re-used for a new purpose.
 
+cl-ana is available via quicklisp (http://www.quicklisp.org/beta/);
+for other dependencies see below.
+
 Example code for using some of the functionality is contained in
 various test.lisp files throughout the project; the full documentation
 is located on the wiki page: http://github.com/ghollisjr/cl-ana/wiki
