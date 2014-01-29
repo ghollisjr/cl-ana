@@ -111,7 +111,7 @@ The dependencies for this project are:
 * iterate (http://common-lisp.net/project/iterate/)
 * cl-csv (https://github.com/AccelerationNet/cl-csv)
 * gnuplot (http://www.gnuplot.info/)
-* external-program (http://github.com/sellout/external-program/wiki/API)
+* external-program (http://github.com/sellout/external-program)
 
 All of the LISP dependencies can be installed via quicklisp
 (http://www.quicklisp.org/).
