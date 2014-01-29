@@ -18,11 +18,11 @@ that users can extend cl-ana to whatever they want to do.
 
 So far the functionality this library provides includes:
 
-* Tabulated data: Supports data tables read-from and written-to HDF5,
-  ntuples, comma separated value (CSV) files, and plists for
-  all-in-memory operation.  Adding a new table type is as easy as
-  extending the table class and defining 4 functions for the table
-  type.
+* Tabulated data: Supports data tables read-from and written-to HDF5
+  files (buffered read-write), ntuples (like CERN's PAW uses), comma
+  separated value (CSV) files, and plists for all-in-memory operation.
+  Adding a new table type is as easy as extending the table class and
+  defining 4 functions for the table type.
 
 * Histograms: Supports contiguous and sparse histograms of arbitrary
   dimensions.  Provides functional access to histograms via mapping
