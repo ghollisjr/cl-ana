@@ -56,18 +56,18 @@
 
 (defgeneric hist-integrate (histogram &rest axes)
   (:documentation "Integrates the histogram along the dimensions/axes
-  specified.  Axes can be specified using index or the dimension name
-  (a string).
+  specified.  Axes are specified using the lispified dimension name
+  (a string); specifying by index is for internal use but can be done.
 
 Also in order to support partial domain integration, each axis in the
-axes list can also be a list of three values: the axis name or index,
-the lower bound over which to integrate, and the upper bound."))
+axes list can also be a list of three values: the axis name, the lower
+bound over which to integrate, and the upper bound."))
 
 (defgeneric hist-project (histogram &rest axes)
   (:documentation "Projects the histogram onto specified axes by
-  integrating over the other axes.  As with integrate, the axes can be
-  specified using index or name.  Comes with a default implementation
-  that should be good for most cases; specialize only if necessary.")
+  integrating over the other axes.  As with integrate, the axes are
+  specified using name.  Comes with a default implementation that
+  should be good for most cases; specialize only if necessary.")
   (:method (histogram &rest axes)
     (with-accessors ((dim-names hist-dim-names)
 		     (ndims hist-ndims))

@@ -41,6 +41,9 @@
 	   :plot2d
 	   :plot3d
 	   :line
+           :data-line
+           :analytic-line
+           :legend
            :generate-cmd
            ;; page functions
            :draw
