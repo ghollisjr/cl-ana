@@ -23,7 +23,9 @@
 (asdf:defsystem #:list-utils
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "Utilities for working with lists not already provided
+  by Alexandria."
+  :license "GPLv3"
   :depends-on (#:functional-utils
                #:alexandria)
   :components ((:file "package")

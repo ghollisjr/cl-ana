@@ -25,7 +25,7 @@
   :description "Library for easily viewing the contents of a
   table (preferably a reusable table)"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:alexandria
                #:string-utils
                #:macro-utils

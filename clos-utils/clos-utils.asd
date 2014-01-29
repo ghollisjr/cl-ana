@@ -25,7 +25,7 @@
   utilities for transforming them into clists which can be
   written/read with standard stream objects portably."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
                #:symbol-utils)
   :components ((:file "package")

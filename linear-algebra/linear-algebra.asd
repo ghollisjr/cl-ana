@@ -22,10 +22,10 @@
 
 (asdf:defsystem #:linear-algebra
   :serial t
-  :description "Linear algebra library (since lisp-matrix is too slow)
-  which is integrated into the generic math framework."
+  :description "(minimal) Linear algebra library which is integrated
+  into the generic math framework."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:generic-math
 	       #:tensor
 	       #:list-utils)

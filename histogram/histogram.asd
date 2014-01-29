@@ -23,7 +23,9 @@
 (asdf:defsystem #:histogram
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "Support for binned data analysis via contiguous and
+  sparse histograms; integrated into the generic-math framework."
+  :license "GPLv3"
   :depends-on (#:clos-utils
                #:symbol-utils
                #:list-utils

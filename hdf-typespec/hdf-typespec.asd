@@ -25,7 +25,7 @@
   :description "Utilities for creating/reading HDF5 types from/into
   typespecs."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
 	       #:string-utils
                #:symbol-utils

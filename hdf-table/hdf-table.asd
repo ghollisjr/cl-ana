@@ -22,9 +22,9 @@
 
 (asdf:defsystem #:hdf-table
   :serial t
-  :description "Table subclass specializing on hdf5 data"
+  :description "Table subclass specializing on HDF5 datasets"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
 	       #:hdf-cffi
 	       #:hdf-utils

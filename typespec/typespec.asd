@@ -22,10 +22,11 @@
 
 (asdf:defsystem #:typespec
   :serial t
-  :description "Simple library for creating CFFI cstructs from a
-  generic type specification, the typespec."
+  :description "typespec provides a mechanism for referring to foreign
+  or LISP datatypes as well as utilities for conversion between the
+  two."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:int-char
                #:list-utils
 	       #:string-utils

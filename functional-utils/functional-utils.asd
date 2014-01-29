@@ -23,7 +23,9 @@
 (asdf:defsystem #:functional-utils
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "Utilities for doing functional programming not already
+  provided by Alexandria."
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
 	       (:file "functional-utils")))

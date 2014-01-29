@@ -20,9 +20,9 @@
 ;;;; ghollisjr@gmail.com
 (asdf:defsystem #:file-utils
   :serial t
-  :description "Various file utilities"
+  :description "Various utilities for working with files"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
 	       (:file "file-utils")))

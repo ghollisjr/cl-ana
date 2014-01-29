@@ -22,9 +22,9 @@
 
 (asdf:defsystem #:string-utils
   :serial t
-  :description "String utilities not already provided"
+  :description "String utilities not already provided by Alexandria"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
 	       (:file "string-utils")))

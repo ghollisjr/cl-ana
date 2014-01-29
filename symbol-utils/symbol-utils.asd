@@ -20,9 +20,9 @@
 ;;;; ghollisjr@gmail.com
 (asdf:defsystem #:symbol-utils
   :serial t
-  :description "Symbol utilities not already provided"
+  :description "Basic utilities for working with symbols"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
 	       (:file "symbol-utils")))

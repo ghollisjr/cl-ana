@@ -23,7 +23,9 @@
 (asdf:defsystem #:error-propogation
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "Implements error propogation inside the generic-math
+  framework."
+  :license "GPLv3"
   :depends-on (#:generic-math)
   :components ((:file "package")
 	       (:file "error-propogation")))

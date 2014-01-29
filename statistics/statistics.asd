@@ -22,9 +22,10 @@
 
 (asdf:defsystem #:statistics
   :serial t
-  :description "Table subclass specializing on hdf5 data"
+  :description "Various statistical functions integrated into the
+  generic-math framework."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:generic-math
                #:list-utils)
   :components ((:file "package")

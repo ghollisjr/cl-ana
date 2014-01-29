@@ -23,9 +23,9 @@
 (asdf:defsystem #:lorentz
   :serial t
   :description "Implements lorentz vectors, lorentz transformations,
-  etc., built on top of the lisp-matrix library."
+  etc."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:generic-math
 	       #:linear-algebra
 	       #:tensor

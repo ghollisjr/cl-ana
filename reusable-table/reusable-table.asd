@@ -26,7 +26,7 @@
   table for reading after fully reading the contents (not guarranteed
   by the raw table types)."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:table
 	       #:alexandria)
   :components ((:file "package")

@@ -20,11 +20,10 @@
 ;;;; ghollisjr@gmail.com
 (asdf:defsystem #:int-char
   :serial t
-  :description "This is the result of either the lunacy of the
-  committee in charge of Common Lisp's libraries in which they removed
-  the int-char function or the laziness of SBCL's implementers in not
-  providing it.  For shame..."
+  :description "For some reason my SBCL doesn't support int-char
+  anymore, so here it is."
   :author "Gary Hollis"
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
                (:file "int-char")))

@@ -23,7 +23,11 @@
 (asdf:defsystem #:tensor
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "tensor provides utilities for treating nested
+  sequences as multidimensional arrays; integration into the generic
+  math framework yields MATLAB/GNU Octave-style functionality with
+  arrays, lists, etc."
+  :license "GPLv3"
   :depends-on (#:generic-math
                #:symbol-utils
 	       #:list-utils

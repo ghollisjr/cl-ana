@@ -25,7 +25,7 @@
   :description "Extensible plotting library for Common Lisp using
   gnuplot as the backend."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:generic-math
                #:error-propogation
                #:gnuplot-interface

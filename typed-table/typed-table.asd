@@ -22,9 +22,10 @@
 
 (asdf:defsystem #:typed-table
   :serial t
-  :description "Table types which have typed columns"
+  :description "Table types which have typed columns.  Provides
+  automatic conversion between foreign and LISP objects."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
                #:string-utils
                #:symbol-utils

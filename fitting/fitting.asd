@@ -22,10 +22,11 @@
 
 (asdf:defsystem #:fitting
   :serial t
-  :description "Library for linear & non-linear least squares fitting;
-  makes use of GSLL's fit functions."
+  :description "Library for non-linear least squares fitting (works
+  for linear functions as well though); makes use of GSLL's fit
+  functions."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:gsll
 	       #:generic-math
 	       #:error-propogation

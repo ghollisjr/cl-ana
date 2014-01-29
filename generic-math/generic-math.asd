@@ -22,11 +22,11 @@
 
 (asdf:defsystem #:generic-math
   :serial t
-  :description "Provides a few generic math functions.  Not sure why
-  Common Lisp doesn't do this from the start, but I'm doing it
-  anyways."
+  :description "Provides generic versions of (most ATM) the standard
+  Common Lisp math functions; this allows easy extension to new
+  mathematical objects."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:package-utils
                #:list-utils)
   :components ((:file "package")

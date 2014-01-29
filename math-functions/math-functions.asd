@@ -23,7 +23,7 @@
   :author "Gary Hollis"
   :description "Auxiliary math functions provided within the
   generic-math framework."
-  :license ""
+  :license "GPLv3"
   :depends-on (#:generic-math
                #:gsll)
   :components ((:file "package")

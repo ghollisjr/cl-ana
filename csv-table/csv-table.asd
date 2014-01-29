@@ -25,7 +25,7 @@
   :description "Table subclass specializing on CSV files; allows for
   whatever lisp types are understood by the reader."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
 	       #:cl-csv
 	       #:table

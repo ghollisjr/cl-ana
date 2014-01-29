@@ -21,8 +21,9 @@
 (asdf:defsystem #:package-utils
   :serial t
   :author "Gary Hollis"
-  :license ""
-  :description "Provides various utilities for using packages"
+  :license "GPLv3"
+  :description "Provides various utilities for using packages as well
+  as the abstraction of a package group"
   :depends-on (#:alexandria)
   :components ((:file "package")
                (:file "package-utils")))

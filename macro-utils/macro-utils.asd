@@ -21,9 +21,9 @@
 ;;;; macro-utils.lisp
 (asdf:defsystem #:macro-utils
   :serial t
-  :description "Basic macro utilities like with-gensyms"
+  :description "Basic macro utilities"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:string-utils
                #:symbol-utils
                #:alexandria)

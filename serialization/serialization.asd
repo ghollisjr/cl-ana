@@ -24,7 +24,7 @@
   various objects to HDF5 files as datasets (which is the only way
   with HDF5)."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:typespec
                #:histogram
                #:hdf-utils

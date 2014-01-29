@@ -23,7 +23,9 @@
 (asdf:defsystem #:binary-tree
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
+  :description "Simple binary-tree implementation, not meant for
+  high-performance code."
   :depends-on (#:list-utils)
   :components ((:file "package")
 	       (:file "binary-tree")))

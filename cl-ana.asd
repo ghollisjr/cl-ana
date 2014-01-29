@@ -23,7 +23,7 @@
   :author "Gary Hollis"
   :description "Convenient system which loads all components for
   analysis I've been working on so far."
-  :license ""
+  :license "GPLv3"
   :depends-on (#:pathname-utils
                #:package-utils
                #:generic-math

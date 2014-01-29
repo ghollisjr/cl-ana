@@ -22,9 +22,10 @@
 
 (asdf:defsystem #:memoization
   :serial t
-  :description "Provides memoized functions"
+  :description "Provides memoized functions (only compute for new
+  arguments, otherwise lookup in a hash table)"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:alexandria)
   :components ((:file "package")
 	       (:file "memoization")))

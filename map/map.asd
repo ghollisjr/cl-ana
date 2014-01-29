@@ -23,7 +23,10 @@
 (asdf:defsystem #:map
   :serial t
   :author "Gary Hollis"
-  :license ""
+  :description "Defines generic functions for working with/converting
+  things which behave like maps (in the mathematical sense), e.g. hash
+  tables, alists, etc."
+  :license "GPLv3"
   :depends-on ()
   :components ((:file "package")
 	       (:file "map")))

@@ -22,7 +22,7 @@
 (asdf:defsystem #:pathname-utils
   :serial t
   :author "Gary Hollis"
-  :license "GPL v3"
+  :license "GPLv3"
   :description "Utilities for working with pathnames"
   :depends-on ()
   :components ((:file "package")

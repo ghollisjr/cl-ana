@@ -22,10 +22,9 @@
 
 (asdf:defsystem #:hdf-utils
   :serial t
-  :description "Utilities for more easily using the HDF5 CFFI
-  functions"
+  :description "Utilities for a more lispy interface to HDF5"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:cffi
                #:pathname-utils
                #:macro-utils

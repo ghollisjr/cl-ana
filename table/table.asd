@@ -22,10 +22,10 @@
 
 (asdf:defsystem #:table
   :serial t
-  :description "Table class, an abstraction of a list of rows (which
-  are lists)"
+  :description "Table class; provides basic necessary interface for
+  working with sets of data."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:macro-utils
 	       #:list-utils
 	       #:string-utils

@@ -25,7 +25,7 @@
   :description "Functions for interfacing with GSL which don't seem to
   work/aren't currently provided through GSLL."
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:cffi)
   :components ((:file "package")
 	       (:file "gsl-cffi")))

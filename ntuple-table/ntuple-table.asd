@@ -23,9 +23,9 @@
 (asdf:defsystem #:ntuple-table
   :serial t
   :description "Table subclass specializing on ntuples as implemented
-  via GSLL"
+  via GSLL & used by CERN's PAW"
   :author "Gary Hollis"
-  :license ""
+  :license "GPLv3"
   :depends-on (#:list-utils
 	       #:cffi
 	       #:gsll
