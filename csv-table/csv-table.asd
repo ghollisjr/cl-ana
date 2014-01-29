@@ -27,6 +27,7 @@
   :author "Gary Hollis"
   :license "GPLv3"
   :depends-on (#:list-utils
+               #:antik
 	       #:cl-csv
 	       #:table
 	       #:iterate
