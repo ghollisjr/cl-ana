@@ -21,6 +21,5 @@
 ;;;; package.lisp
 
 (defpackage #:map 
-  (:use #:cl
-        #:package-utils)
+  (:use #:cl)
   (:export :map->alist))
