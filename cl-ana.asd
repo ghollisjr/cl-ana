@@ -21,8 +21,9 @@
 (defsystem #:cl-ana
   :serial t
   :author "Gary Hollis"
-  :description "Convenient system which loads all components for
-  analysis I've been working on so far."
+  :description "cl-ana is a free (GPL) data analysis library in Common
+  Lisp providing tabular & binned data analysis along with nonlinear
+  least squares fitting & visualization."
   :license "GPLv3"
   :depends-on (#:pathname-utils
                #:package-utils
