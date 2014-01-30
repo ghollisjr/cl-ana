@@ -132,38 +132,43 @@ sequences given by the optional type argument."
              (make-tensor (rest dimension-list) :type type :initial-element initial-element))
 	   (make-sequence type (first dimension-list)))))
 
+(defun function->tensor (dimension-list fn &key
+                                             (type 'vector))
+  (let* ((result (make-tensor dimension-list :type type))
+         (size (tensor-size result)))
+    (loop
+       for i below size
+       do (setf (tensor-flat-ref result i)
+                (apply fn
+                       (unflatten-index i dimension-list))))
+    result))
+
 (defun tensor-ref (tensor &rest subscripts)
   (if (sequencep tensor)
       (reduce #'elt subscripts :initial-value tensor)
       tensor))
 
+(defun unflatten-index (index dim-sizes)
+  (let ((sub index)
+        (result nil))
+    (do* ((rdim-sze (reverse dim-sizes) (rest rdim-sze))
+          (dim-size (first rdim-sze) (first rdim-sze)))
+         ((null rdim-sze) result)
+      (push (mod sub dim-size)
+            result)
+      (setf sub (floor sub dim-size)))))
+
 (defun tensor-flat-ref (tensor subscript)
   (if (sequencep tensor)
       (let* ((dim-list (tensor-dimensions tensor))
-             (subscripts
-              (let ((sub subscript)
-                    (result nil))
-                (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
-                      (dim-size (first rdim-lst) (first rdim-lst)))
-                     ((null rdim-lst) result)
-                  (push (mod sub dim-size)
-                        result)
-                  (setf sub (floor sub dim-size))))))
-        (reduce #'elt subscripts :initial-value tensor))
+             (subscripts (unflatten-index subscript dim-list)))
+        (apply #'tensor-ref tensor subscripts))
       tensor))
 
 (defun (setf tensor-flat-ref) (value tensor subscript)
   (when (sequencep tensor)
     (let* ((dim-list (tensor-dimensions tensor))
-           (subscripts
-            (let ((sub subscript)
-                  (result nil))
-              (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
-                    (dim-size (first rdim-lst) (first rdim-lst)))
-                   ((null rdim-lst) result)
-                (push (mod sub dim-size)
-                      result)
-                (setf sub (floor sub dim-size))))))
+           (subscripts (unflatten-index subscript dim-list)))
       (setf (apply #'tensor-ref tensor subscripts)
             value))))
 
@@ -202,7 +207,7 @@ sequences given by the optional type argument."
     (length x)))
 
 (defun map* (type fn &rest xs)
-  "map* behaves exactly like map except that non-sequences are treated
+  "map* behaves like map except that non-sequences are treated
 as arbitrarily deep sequences with uniform value (that of the
 object)."
   (let* ((min-length
@@ -228,8 +233,10 @@ object)."
   (let ((first-sequence
          (find-if #'sequencep xs)))
     (if first-sequence
-        ;; handle sequences
-        (apply #'map* (type-of first-sequence) (curry #'tensor-map fn) xs)
+        (apply #'map*
+               (type-of first-sequence)
+               (curry #'tensor-map fn)
+               xs)
         (apply fn xs))))
 
 (defun tensor-+ (&rest xs)
@@ -253,26 +260,27 @@ object)."
 ;;
 ;; At the moment I have not implemented single tensor contraction
 ;; (i.e. contraction of multiple indices from a single tensor).
-(defun tensor-contract (type &rest tensor-index-lists)
+(defun tensor-contract (tensor-index-pairs &key (type 'vector))
   "Contracts each tensor along the dimension specified by the
 specified index, resulting in a tensor of recursively rectangular
 sequences of type type.
 
-Each tensor-index-list is a list containing 1. The tensor to contract,
-2. The index denoting the dimension to contract along for this tensor.
+Each tensor-index-pair is a cons with the car being the tensor to
+contract and the cdr being the index denoting the dimension to
+contract along for this tensor.
 
 It is just the mathematical notion of tensor contraction.
 
 Example: multiplying matrices:
 
-A . B ==> (tensor-contract 'vector (list A 1) (list B 0))
+A . B ==> (tensor-contract (list (cons A 1) (cons B 0)))
 
 In words, contract tensors A and B along the second index of A and
 the first index of B."
-  (let* ((tensors (mapcar #'first tensor-index-lists))
+  (let* ((tensors (mapcar #'car tensor-index-pairs))
 	 (tensor-ranks (mapcar #'tensor-rank tensors))
 	 (starting-indices (make-offsets (mapcar #'1- tensor-ranks)))
-	 (contracted-dims (mapcar #'second tensor-index-lists))
+	 (contracted-dims (mapcar #'cdr tensor-index-pairs))
 	 (ref-fns ; a ref-fn is a function taking the final index list
                                         ; and another index, returning the value of the
                                         ; tensor for that ref-fn along the contracted

@@ -63,10 +63,10 @@
 	  result))))
 
 (defun matrix-mult (x y &optional (type 'vector))
-  (tensor-contract type (list x 1) (list y 0)))
+  (tensor-contract (list (cons x 1) (cons y 0)) :type type))
 
 (defun euclidean-dot (x y)
-  (tensor-contract 'vector (list x 0) (list y 0)))
+  (tensor-contract (list (cons x 0) (cons y 0))))
 
 (defun euclidean-norm2 (x)
   (euclidean-dot x x))

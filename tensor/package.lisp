@@ -28,6 +28,7 @@
         ;;debug
         #:macro-utils)
   (:export :make-tensor
+           :function->tensor
 	   :tensor-ref
            :tensor-flat-ref ; for flattened-index reference
 	   :tensor-map
