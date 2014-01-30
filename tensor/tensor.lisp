@@ -195,28 +195,15 @@ sequences given by the optional type argument."
 (defun tensor-size (tensor)
   (reduce #'* (tensor-dimensions tensor)))
 
-;; (defun tensor-map (fn &rest xs)
-;;   "Like map, but works on an arbitrary-depth of nested sequences"
-;;   (if (some #'null xs)
-;;       (error "empty list given to tensor-map")
-;;       (if (not (sequencep (first xs)))
-;; 	  (apply fn xs)
-;; 	  (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
-
-;; The version which is safe for use with any scalars as any argument:
-(defun tensor-map (fn &rest xs)
-  "Like map, but works on an arbitrary-depth of nested sequences"
-  (if (null xs)
-      (funcall fn)
-      (if (not (sequencep (first xs)))
-	  (apply #'tensor-map (curry fn (first xs)) (rest xs))
-          (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
-
 (defun sequence-length (x)
+  "Returns the length of a sequence for sequences, else returns nil."
   (when (sequencep x)
     (length x)))
 
 (defun map* (type fn &rest xs)
+  "map* behaves exactly like map except that non-sequences are treated
+as arbitrarily deep sequences with uniform value (that of the
+object)."
   (let* ((min-length
           (reduce #'min
                   (loop
@@ -236,27 +223,13 @@ sequences given by the optional type argument."
                                      xs))))
           result))))
 
-(defun tensor-map* (fn &rest xs)
+(defun tensor-map (fn &rest xs)
   (let ((first-sequence
          (find-if #'sequencep xs)))
     (if first-sequence
         ;; handle sequences
-        (apply #'map* (type-of first-sequence) (curry #'tensor-map* fn) xs)
+        (apply #'map* (type-of first-sequence) (curry #'tensor-map fn) xs)
         (apply fn xs))))
-
-;; (defun tensor-flat-map (fn &rest xs)
-;;   "Uses tensor-flat-ref and logic to deduce the correct structure of
-;; the result: The minimum length sequence in each dimension is the
-;; length for the resulting tensor along that dimension."
-;;   (multiple-value-bind (max-size max-rank)
-;;       (loop
-;;          for x in xs
-;;          maximizing (tensor-size x) into max-size
-;;          maximizing (tensor-rank x) into max-rank
-;;          finally (return (values max-size
-;;                                  max-rank)))
-;;     (let ((result (make-tensor ))))))
-
 
 (defun tensor-+ (&rest xs)
   "Convenient nickname for mapping + over tensors."
