@@ -37,7 +37,7 @@
 ;;;; take the square root of an array of numbers?  Just do (sqrt
 ;;;; array).
 
-(declaim (optimize (speed 2)
+(declaim (optimize (speed 3)
                    (safety 1)
                    (compilation-speed 0)
                    (debug 1)))
@@ -115,8 +115,9 @@
 ;; generic math functions have been defined with defmath.
 (define-tensor-methods)
 
+;; This version is much faster than using subtypep
 (defun sequencep (x)
-  (subtypep (type-of x) 'sequence))
+  (typep x 'sequence))
 
 (defun make-tensor (dimension-list &key
                                      (type 'vector)
