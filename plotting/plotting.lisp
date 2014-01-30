@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; plotting.lisp
 
 ;;;; This library provides access to gnuplot from CL via
 ;;;; gnuplot-i-cffi, which in turn uses gnuplot_i (see

@@ -49,6 +49,7 @@
            :decf
 	   :+
 	   :sum
+           :product
 	   :add
 	   :-
 	   :sub

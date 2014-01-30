@@ -28,4 +28,5 @@
                #:gsll)
   :components ((:file "package")
                (:file "utils")
-               (:file "distributions")))
+               (:file "distributions")
+               (:file "combinatorics")))

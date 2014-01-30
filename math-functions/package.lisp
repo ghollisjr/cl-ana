@@ -21,12 +21,20 @@
 (defpackage :math-functions 
   (:use :cl)
   (:shadow :erf)
-  (:export :erf
-           :sinc
-           :normal-pdf
-           :normal-cdf
-           :normal-cdf-inv
-           ;; utils:
-           :->double-float))
+  (:export
+   ;; distributions:
+   :erf
+   :sinc
+   :normal-pdf
+   :normal-cdf
+   :normal-cdf-inv
+   ;; combinatorics:
+   :factorial
+   :npermutations
+   :ncombinations
+   :binomial
+   :multinomial
+   ;; utils:
+   :->double-float))
 
 (gmath:use-gmath :math-functions)

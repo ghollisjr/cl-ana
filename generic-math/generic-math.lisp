@@ -93,9 +93,13 @@ etc."
 (reduce-defun + add)
 
 (defun sum (xs)
-  "Convience function for summing a list of values (it's reducing +
+  "Convenience function for summing a list of values (it's reducing +
 across them)."
   (reduce #'+ xs))
+
+(defun product (xs)
+  "Convenience function for multiplying a list of values"
+  (reduce #'* xs))
 
 (defmath add (x y)
   (:documentation "Binary addition function"))
