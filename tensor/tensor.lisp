@@ -187,7 +187,8 @@ sequences given by the optional type argument."
   "Returns a list of the sizes of the tensor for each dimension."
   (labels ((tensor-dimensions-worker (tensor &optional result)
 	     (if (sequencep tensor)
-		 (tensor-dimensions-worker (elt tensor 0) (cons (length tensor) result))
+		 (tensor-dimensions-worker (elt tensor 0)
+                                           (cons (length tensor) result))
 		 (nreverse result))))
     (tensor-dimensions-worker tensor)))
 
@@ -211,42 +212,37 @@ sequences given by the optional type argument."
 	  (apply #'tensor-map (curry fn (first xs)) (rest xs))
           (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
 
-;; (defun sequence-length (x)
-;;   (when (sequencep x)
-;;     (length x)))
+(defun sequence-length (x)
+  (when (sequencep x)
+    (length x)))
 
-;; (defun map* (type fn &rest xs)
-;;   (let* ((min-length
-;;           (reduce #'min
-;;                   (loop
-;;                      for x in xs
-;;                      appending (mklist
-;;                                 (sequence-length x)))))
-;;          (result (make-tensor (list min-length) :type type)))
-;;     (if (zerop min-length)
-;;         nil
-;;         (progn
-;;           (loop
-;;              for i below min-length
-;;              do (setf (tensor-ref result i)
-;;                       (apply fn
-;;                              (mapcar (lambda (x)
-;;                                        (tensor-ref x i))
-;;                                      xs))))
-;;           result))))
+(defun map* (type fn &rest xs)
+  (let* ((min-length
+          (reduce #'min
+                  (loop
+                     for x in xs
+                     appending (mklist
+                                (sequence-length x)))))
+         (result (make-tensor (list min-length) :type type)))
+    (if (zerop min-length)
+        nil
+        (progn
+          (loop
+             for i below min-length
+             do (setf (tensor-ref result i)
+                      (apply fn
+                             (mapcar (lambda (x)
+                                       (tensor-ref x i))
+                                     xs))))
+          result))))
 
-;; (defun tensor-map* (fn &rest xs)
-;;   (if (some #'sequencep xs)
-;;       ;; handle sequences
-;;       (labels ((make-sequence-fn (fn &rest xs)
-;;                  ))
-;;         (let ((fn-for-sequences
-;;                (apply #'make-sequence-fn fn xs))
-;;               (just-sequences
-;;                (remove-if-not #'sequencep xs)))
-;;           (apply fn-for-sequences
-;;                  just-sequences)))
-;;       (apply fn xs)))
+(defun tensor-map* (fn &rest xs)
+  (let ((first-sequence
+         (find-if #'sequencep xs)))
+    (if first-sequence
+        ;; handle sequences
+        (apply #'map* (type-of first-sequence) (curry #'tensor-map* fn) xs)
+        (apply fn xs))))
 
 ;; (defun tensor-flat-map (fn &rest xs)
 ;;   "Uses tensor-flat-ref and logic to deduce the correct structure of
