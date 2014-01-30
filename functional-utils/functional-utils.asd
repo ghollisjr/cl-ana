@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; functional-utils.lisp
 
 (asdf:defsystem #:functional-utils
   :serial t

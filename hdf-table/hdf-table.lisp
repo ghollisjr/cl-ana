@@ -28,10 +28,10 @@
 ;;; close them; mostly for memory usage so it might not even be
 ;;; necessary.
 
-(declaim (optimize (speed 3)
-                   (safety 0)
+(declaim (optimize (speed 2)
+                   (safety 1)
                    (compilation-speed 0)
-                   (debug 0)))
+                   (debug 1)))
 
 (defclass hdf-table (typed-table)
   ((row-buffer-size

@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -37,10 +37,10 @@
 ;;;; take the square root of an array of numbers?  Just do (sqrt
 ;;;; array).
 
-(declaim (optimize (speed 3)
-                   (safety 0)
+(declaim (optimize (speed 2)
+                   (safety 1)
                    (compilation-speed 0)
-                   (debug 0)))
+                   (debug 1)))
 
 ;;; Reader macro: #t(fn tensor1 tensor2 ...) applies tensor-map to the
 ;;; arguments.  Can use #' or (function) on fn or not, both cases are
@@ -102,9 +102,9 @@
              ;; this seems to be a necessary use of eval
              (eval
               `(defmethod ,fname
-                 (,@a
-                  ,@(when key-args
-                          (cons '&key key-args)))
+                   (,@a
+                    ,@(when key-args
+                            (cons '&key key-args)))
                  (tensor-map
                   (lambda (,@specialized)
                     (apply (function ,fname) ,@tensor-args
@@ -132,40 +132,46 @@ sequences given by the optional type argument."
 	   (make-sequence type (first dimension-list)))))
 
 (defun tensor-ref (tensor &rest subscripts)
-  (reduce #'elt subscripts :initial-value tensor))
+  (if (sequencep tensor)
+      (reduce #'elt subscripts :initial-value tensor)
+      tensor))
 
 (defun tensor-flat-ref (tensor subscript)
-  (let* ((dim-list (tensor-dimensions tensor))
-         (subscripts
-          (let ((sub subscript)
-                (result nil))
-            (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
-                  (dim-size (first rdim-lst) (first rdim-lst)))
-                 ((null rdim-lst) result)
-              (push (mod sub dim-size)
-                    result)
-              (setf sub (floor sub dim-size))))))
-    (reduce #'elt subscripts :initial-value tensor)))
+  (if (sequencep tensor)
+      (let* ((dim-list (tensor-dimensions tensor))
+             (subscripts
+              (let ((sub subscript)
+                    (result nil))
+                (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
+                      (dim-size (first rdim-lst) (first rdim-lst)))
+                     ((null rdim-lst) result)
+                  (push (mod sub dim-size)
+                        result)
+                  (setf sub (floor sub dim-size))))))
+        (reduce #'elt subscripts :initial-value tensor))
+      tensor))
 
 (defun (setf tensor-flat-ref) (value tensor subscript)
-  (let* ((dim-list (tensor-dimensions tensor))
-         (subscripts
-          (let ((sub subscript)
-                (result nil))
-            (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
-                  (dim-size (first rdim-lst) (first rdim-lst)))
-                 ((null rdim-lst) result)
-              (push (mod sub dim-size)
-                    result)
-              (setf sub (floor sub dim-size))))))
-    (setf (apply #'tensor-ref tensor subscripts)
-          value)))
+  (when (sequencep tensor)
+    (let* ((dim-list (tensor-dimensions tensor))
+           (subscripts
+            (let ((sub subscript)
+                  (result nil))
+              (do* ((rdim-lst (reverse dim-list) (rest rdim-lst))
+                    (dim-size (first rdim-lst) (first rdim-lst)))
+                   ((null rdim-lst) result)
+                (push (mod sub dim-size)
+                      result)
+                (setf sub (floor sub dim-size))))))
+      (setf (apply #'tensor-ref tensor subscripts)
+            value))))
 
 (defun (setf tensor-ref) (value tensor &rest subscripts)
-  (let* ((last-sequence
-	  (apply #'tensor-ref tensor (butlast subscripts)))
-	 (last-subscript (lastcar subscripts)))
-    (setf (elt last-sequence last-subscript) value)))
+  (when (sequencep tensor)
+    (let* ((last-sequence
+            (apply #'tensor-ref tensor (butlast subscripts)))
+           (last-subscript (lastcar subscripts)))
+      (setf (elt last-sequence last-subscript) value))))
 
 (defun tensor-rank (tensor)
   (labels ((tensor-rank-worker (tensor &optional (result 1))
@@ -185,6 +191,9 @@ sequences given by the optional type argument."
 		 (nreverse result))))
     (tensor-dimensions-worker tensor)))
 
+(defun tensor-size (tensor)
+  (reduce #'* (tensor-dimensions tensor)))
+
 ;; (defun tensor-map (fn &rest xs)
 ;;   "Like map, but works on an arbitrary-depth of nested sequences"
 ;;   (if (some #'null xs)
@@ -200,7 +209,58 @@ sequences given by the optional type argument."
       (funcall fn)
       (if (not (sequencep (first xs)))
 	  (apply #'tensor-map (curry fn (first xs)) (rest xs))
-           (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
+          (apply #'map (type-of (first xs)) (curry #'tensor-map fn) xs))))
+
+;; (defun sequence-length (x)
+;;   (when (sequencep x)
+;;     (length x)))
+
+;; (defun map* (type fn &rest xs)
+;;   (let* ((min-length
+;;           (reduce #'min
+;;                   (loop
+;;                      for x in xs
+;;                      appending (mklist
+;;                                 (sequence-length x)))))
+;;          (result (make-tensor (list min-length) :type type)))
+;;     (if (zerop min-length)
+;;         nil
+;;         (progn
+;;           (loop
+;;              for i below min-length
+;;              do (setf (tensor-ref result i)
+;;                       (apply fn
+;;                              (mapcar (lambda (x)
+;;                                        (tensor-ref x i))
+;;                                      xs))))
+;;           result))))
+
+;; (defun tensor-map* (fn &rest xs)
+;;   (if (some #'sequencep xs)
+;;       ;; handle sequences
+;;       (labels ((make-sequence-fn (fn &rest xs)
+;;                  ))
+;;         (let ((fn-for-sequences
+;;                (apply #'make-sequence-fn fn xs))
+;;               (just-sequences
+;;                (remove-if-not #'sequencep xs)))
+;;           (apply fn-for-sequences
+;;                  just-sequences)))
+;;       (apply fn xs)))
+
+;; (defun tensor-flat-map (fn &rest xs)
+;;   "Uses tensor-flat-ref and logic to deduce the correct structure of
+;; the result: The minimum length sequence in each dimension is the
+;; length for the resulting tensor along that dimension."
+;;   (multiple-value-bind (max-size max-rank)
+;;       (loop
+;;          for x in xs
+;;          maximizing (tensor-size x) into max-size
+;;          maximizing (tensor-rank x) into max-rank
+;;          finally (return (values max-size
+;;                                  max-rank)))
+;;     (let ((result (make-tensor ))))))
+
 
 (defun tensor-+ (&rest xs)
   "Convenient nickname for mapping + over tensors."

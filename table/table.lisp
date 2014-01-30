@@ -39,10 +39,10 @@
 
 (in-package :table)
 
-(declaim (optimize (speed 3)
-                   (safety 0)
+(declaim (optimize (speed 2)
+                   (safety 1)
                    (compilation-speed 0)
-                   (debug 3)))
+                   (debug 1)))
 
 (defclass table ()
   ((column-names

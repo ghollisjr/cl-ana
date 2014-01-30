@@ -18,22 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; tensor.asd
+;;;; functional-utils.lisp
 
-(asdf:defsystem #:tensor
+(asdf:defsystem #:currying
   :serial t
   :author "Gary Hollis"
-  :description "tensor provides utilities for treating nested
-  sequences as multidimensional arrays; integration into the generic
-  math framework yields MATLAB/GNU Octave-style functionality with
-  arrays, lists, etc."
+  :description "Utilities for currying."
   :license "GPLv3"
-  :depends-on (#:generic-math
-               #:symbol-utils
-	       #:list-utils
-               #:currying
-	       #:alexandria
-               ;;debug
-               #:macro-utils)
+  :depends-on (#:functional-utils
+               #:list-utils)
   :components ((:file "package")
-	       (:file "tensor")))
+	       (:file "currying")))

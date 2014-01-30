@@ -18,22 +18,9 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; tensor.asd
 
-(asdf:defsystem #:tensor
-  :serial t
-  :author "Gary Hollis"
-  :description "tensor provides utilities for treating nested
-  sequences as multidimensional arrays; integration into the generic
-  math framework yields MATLAB/GNU Octave-style functionality with
-  arrays, lists, etc."
-  :license "GPLv3"
-  :depends-on (#:generic-math
-               #:symbol-utils
-	       #:list-utils
-               #:currying
-	       #:alexandria
-               ;;debug
-               #:macro-utils)
-  :components ((:file "package")
-	       (:file "tensor")))
+(defpackage #:currying 
+  (:use :cl
+        :list-utils)
+  (:export :curry-nth
+           :curry-nth-parallel))
