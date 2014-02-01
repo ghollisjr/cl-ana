@@ -23,9 +23,11 @@
 (in-package :tensor)
 
 ;;;; A tensor is just a recursively structured sequence of sequences
-;;;; of ....  It's just the generalization of the idea of a flat
-;;;; sequence, and is useful for implementing things like contiguous
-;;;; histograms, matrices, actual tensors, etc.
+;;;; of ....  It's useful for implementing things like contiguous
+;;;; histograms, matrices, actual tensors, etc.  The utilities
+;;;; provided in this sublibrary make it convenient to use nested
+;;;; sequences as multidimensional arrays in CL since the ones
+;;;; provided are awkward/clumsy to use.
 ;;;;
 ;;;; To make use of the tensor functions, just define a list, or
 ;;;; vector of vectors, or even a list of vectors of lists of ..., you
