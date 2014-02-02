@@ -250,6 +250,11 @@ dataset-path"
               (table-load-next-row
                (hdf-table-chain-active-table table))))))))
 
+(defmethod typed-table-column-specs ((table hdf-table-chain))
+  (with-slots (active-table)
+      table
+    (typed-table-column-specs active-table)))
+
 ;;; Behind the scenes functions:
 
 (defun make-index-binary-tree (offsets)
