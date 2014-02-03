@@ -23,4 +23,8 @@
   (:use :cl)
   (:export :flip
 	   :to-pair-function
-	   :lfuncall))
+	   :lfuncall
+           :min-by
+           :minimize
+           :max-by
+           :maximize))

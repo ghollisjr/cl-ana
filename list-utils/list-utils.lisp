@@ -170,7 +170,7 @@ ambiguity in the result."
                        (lambda (x c)
                          (cons x c))
                        (lambda (x c)
-                         (if (= 1 x)
+                         (if (= 1 c)
                              x
                              (cons x c)))))
            (raw-alist

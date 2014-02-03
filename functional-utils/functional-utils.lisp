@@ -43,3 +43,28 @@
   "Applies a function which takes a single list argument to an
 arbitrary number of arguments."
   (funcall fn args))
+
+;; Didn't really know where to put these, but they are higher-order
+;; functions:
+
+(defun min-by (x y &key (key #'identity))
+  (if (< (funcall key x)
+         (funcall key y))
+      x
+      y))
+
+(defun minimize (xs &key (key #'identity))
+  (when xs
+    (reduce (lambda (x y) (min-by x y :key key))
+            xs)))
+
+(defun max-by (x y &key (key #'identity))
+  (if (> (funcall key x)
+         (funcall key y))
+      x
+      y))
+
+(defun maximize (xs &key (key #'identity))
+  (when xs
+    (reduce (lambda (x y) (max-by x y :key key))
+            xs)))
