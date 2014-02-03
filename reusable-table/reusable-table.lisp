@@ -91,3 +91,7 @@ the table needs closing."
     (when (not needs-reloading)
       (setf needs-reloading t))
     (table-close raw-table)))
+
+;; table-nrows method:
+(defmethod table-nrows ((table reusable-table))
+  (table-nrows (internal-table table)))

@@ -81,6 +81,10 @@
     :accessor hdf-table-nrows
     :documentation "number of rows in hdf-table")))
 
+;; table-nrows method:
+(defmethod table-nrows ((table hdf-table))
+  (hdf-table-nrows table))
+
 ;; define high-level table access from files here
 (defun open-hdf-table (hdf-file dataset-name &key buffer-size)
   (labels ((get-dataset-length (dataset)

@@ -104,6 +104,13 @@ column-symbol and the variable storing the field data."
 (defmethod table-close (table)
   (call-next-method))
 
+;; Some tables can tell you about their size:
+(defgeneric table-nrows (table)
+  (:documentation "When available, returns the number of rows stored
+  in the table, otherwise returns nil.")
+  (:method (table)
+    nil))
+
 ;;;; Table processing functions/macros
 
 (defun table-reduce (table fields fn &key

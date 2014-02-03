@@ -320,10 +320,18 @@ lisp object containing the converted values."
      (lambda (c-pointer)
        (mem-aref c-pointer typespec)))))
 
-(defun char-vector->string (char-vector)
-  (let ((result (make-string (length char-vector))))
+(defun char-vector->string (char-vector &optional length)
+  "Returns a string version of a vector of integers interpreted as the
+numerical codes for characters.  If argument length is given, the
+result contains only the first length characters, or if length is
+longer than the char-vector, the char-vector interpreted into a string
+as if length were not given."
+  (let* ((length (if length
+                     (min length (length char-vector))
+                     (length char-vector)))
+         (result (make-string length)))
     (loop
-       for i from 0
+       for i from 0 below length
        for c across char-vector
        do (setf (elt result i)
                 (int-char c)))

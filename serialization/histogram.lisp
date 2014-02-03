@@ -78,7 +78,8 @@ names or none of them do."
                for plist in bin-spec-plists
                maximizing (length (getf plist :name))))
            (bin-spec-names-specs
-            (list (cons "name" (list :array :char 1 (list max-string-length)))
+            (list (cons "name" (list :array :char max-string-length))
+                  (cons "name-length" :int)
                   (cons "nbins" :int)
                   (cons "low" :double)
                   (cons "high" :double)))
@@ -113,16 +114,17 @@ names or none of them do."
          do (progn
               (table-push-fields bin-spec-table
                 (name (getf plist :name))
+                (name-length (length (getf plist :name)))
                 (nbins (getf plist :nbins))
                 (low (->double-float (getf plist :low)))
                 (high (->double-float (getf plist :high))))))
       (table-close bin-spec-table))))
 
-(defun read-histogram (file hdf-path)
+(defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
 
-Note that this function assumes that either all the dimensions have
-names or none of them do."
+type can be either :contiguous or :sparse for contiguous-histogram and
+sparse-histogram respectively."
   (flet ((subpath (path)
            (concatenate 'string
                         hdf-path
@@ -132,19 +134,26 @@ names or none of them do."
             (open-hdf-table file
                             (subpath *histogram-bin-spec-path*)))
            (bin-spec-table-column-names
-            (list "name" "low" "high" "nbins"))
+            (list "name" "name-length" "low" "high" "nbins"))
            (bin-spec-plists
             (let ((result ()))
               (table-reduce bin-spec-table
                             bin-spec-table-column-names
-                            (lambda (state name low high nbins)
-                              (push (list :name (char-vector->string name)
+                            (lambda (state name name-length low high nbins)
+                              (push (list :name (char-vector->string name name-length)
                                           :low low
                                           :high high
                                           :nbins nbins)
                                     result)))
               (nreverse result)))
-           (histogram (make-contiguous-hist bin-spec-plists))
+           (histogram
+            (cond
+              ((equal type :contiguous)
+               (make-contiguous-hist bin-spec-plists))
+              ((equal type :sparse)
+               (make-sparse-hist bin-spec-plists))
+              (t (error "Must specify :contiguous or :sparse for
+              type."))))
            (data-table
             (open-hdf-table file
                             (subpath *histogram-data-path*)))

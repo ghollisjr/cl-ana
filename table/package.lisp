@@ -38,6 +38,7 @@
            :table-push-fields
 	   :table-commit-row
 	   :table-close
+           :table-nrows
 	   :do-table
            :table-reduce
 	   ;; table-chain:

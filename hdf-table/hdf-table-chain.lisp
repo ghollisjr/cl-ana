@@ -94,6 +94,10 @@
     :accessor hdf-table-chain-nrows
     :documentation "number of rows in hdf-table")))
 
+;; table-nrows method:
+(defmethod table-nrows ((table hdf-table-chain))
+  (hdf-table-chain-nrows table))
+
 ;; initialization:
 
 ;; For each path, read the dataset and get the number of entries in
