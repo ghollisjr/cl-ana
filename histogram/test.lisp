@@ -48,7 +48,7 @@
 				      :nbins 3
 				      :low 0
 				      :high 2))
-			  :default-increment #e(1 1)))
+			  :default-increment (+- 1 1)))
 
   ;;(fill-random)
 
@@ -70,12 +70,12 @@
 				      :nbins 3
 				      :low 0
 				      :high 2))
-			  :default-increment #e(1 1)))
+                      :default-increment (+- 1 1)))
   
   (defparameter *ndata* 1000000)
-
+  
   ;;(fill-random)
-
+  
   (defparameter *data*
     (mapcar #'list *x-data* *y-data*))
   

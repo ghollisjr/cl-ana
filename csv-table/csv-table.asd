@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; csv-table.asd
 
 (asdf:defsystem #:csv-table
   :serial t

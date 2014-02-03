@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; binary-tree.asd
 
 (asdf:defsystem #:binary-tree
   :serial t

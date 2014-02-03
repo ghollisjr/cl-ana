@@ -27,10 +27,6 @@
 (defun ->double-float (x)
   (float x 0d0))
 
-;; This is actually broken in principle since I need to also store the
-;; names-specs in the file as well; my best guess is to use the
-;; hdf-path as the group and then place the histogram contents as
-;; members/files under the group.
 (defun write-histogram (histogram file hdf-path)
   "Writes histogram to file assuming it contains double-float data as
 bin centers and integers/fixnums as bin count values; this may be

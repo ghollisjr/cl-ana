@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; error-propogation.asd
 
 (asdf:defsystem #:error-propogation
   :serial t

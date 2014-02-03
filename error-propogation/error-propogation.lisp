@@ -18,23 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; error-propogation.lisp
-
-;;; Until I have an object-oriented math library written which
-;;; replaces the unfortunate common lisp non-generic number system &
-;;; functions, I won't be able to do interesting things like have
-;;; err-nums as values inside of err-nums (only really makes sense
-;;; when the error is an err-num, i.e. uncertainty of uncertainty).
 
 (in-package :err-prop)
-
-;;; Reader macro: #e(value error) yields an err-num with value and error
-(defun err-num-transformer-reader-macro (stream subchar arg)
-  (let* ((expr (read stream t)))
-    `(make-err-num ,@expr)))
-
-(set-dispatch-macro-character
- #\# #\e #'err-num-transformer-reader-macro)
 
 (defclass err-num ()
   ((val
@@ -46,10 +31,6 @@
     :initarg :error
     :initform 0)))
 
-(defvar *err-num-pretty-print* nil
-  "Tells print-object whether to use the +- version of printing or the
-  direct reader macro version #e(...)")
-
 (defmethod print-object ((e err-num) stream)
   (labels ((rec (e result)
 	     (if (subtypep (type-of e)
@@ -58,14 +39,10 @@
 		     e
 		   (rec err (cons val result)))
 		 (nreverse (cons e result)))))
-    (if *err-num-pretty-print*
-	(with-accessors ((val err-num-value)
-			 (err err-num-error))
-	    e
-	  (format stream "~a +- ~a" val err))
-	(format stream "#e~a" (rec e nil)))))
+    (format stream "~a" (cons "+-" (rec e nil)))))
 
-(defun make-err-num (&rest val-errs)
+;; The constructor for err-nums:
+(defun +- (&rest val-errs)
   "Constructs a numerical value along with errors.  Note that the
 structure allows for errors in errors to arbitrary depth."
   (when val-errs
@@ -74,51 +51,51 @@ structure allows for errors in errors to arbitrary depth."
       (if errs
 	  (make-instance 'err-num
 			 :value val
-			 :error (apply #'make-err-num errs))
+			 :error (apply #'+- errs))
 	  val))))
 
 (defun err-num-+ (&rest err-nums)
-  (make-err-num (reduce #'+ (mapcar #'err-num-value err-nums))
+  (+- (reduce #'+ (mapcar #'err-num-value err-nums))
 		(sum-in-quadrature
                  (mapcar #'err-num-error err-nums))))
 
 (defmethod add ((x err-num) (y err-num))
-  (make-err-num (apply #'add (mapcar #'err-num-value (list x y)))
+  (+- (apply #'add (mapcar #'err-num-value (list x y)))
 		(sum-in-quadrature
 		 (mapcar #'err-num-error (list x y)))))
 
 (defmethod-commutative add ((x err-num) (y number))
-  (add x (make-err-num y 0)))
+  (add x (+- y 0)))
 
 (defun err-num-- (&rest err-nums)
-  (make-err-num (apply #'- (mapcar #'err-num-value err-nums))
+  (+- (apply #'- (mapcar #'err-num-value err-nums))
 		(sum-in-quadrature
 		 (mapcar #'err-num-error err-nums))))
 
 (defmethod sub ((x err-num) (y err-num))
-  (make-err-num (apply #'sub
+  (+- (apply #'sub
 		       (mapcar #'err-num-value (list x y)))
 		(sum-in-quadrature
 		 (mapcar #'err-num-error (list x y)))))
 
 (defmethod sub ((x err-num) (y number))
-  (sub x (make-err-num y 0)))
+  (sub x (+- y 0)))
 
 (defmethod sub ((x number) (y err-num))
-  (sub (make-err-num x 0) y))
+  (sub (+- x 0) y))
 
 (defmethod unary-sub ((x err-num))
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       x
-    (make-err-num (unary-sub val) err)))
+    (+- (unary-sub val) err)))
 
 (defun err-num-* (&rest err-nums)
   (let* ((values (mapcar #'err-num-value err-nums))
 	 (errors (mapcar #'err-num-error err-nums))
 	 (relative-errors (mapcar #'div errors values))
 	 (result-value (apply #'mult values)))
-    (make-err-num result-value
+    (+- result-value
 		  (* result-value
 		     (sum-in-quadrature
 		      relative-errors)))))
@@ -128,20 +105,20 @@ structure allows for errors in errors to arbitrary depth."
 	 (errors (mapcar #'err-num-error (list x y)))
 	 (relative-errors (mapcar #'div errors values))
 	 (result-value (apply #'mult values)))
-    (make-err-num result-value
+    (+- result-value
 		  (mult result-value
 			(sum-in-quadrature
 			 relative-errors)))))
 
 (defmethod-commutative mult ((x err-num) (y number))
-  (mult x (make-err-num y 0)))
+  (mult x (+- y 0)))
 
 (defun err-num-/ (&rest err-nums)
   (let* ((values (mapcar #'err-num-value err-nums))
 	 (errors (mapcar #'err-num-error err-nums))
 	 (relative-errors (mapcar #'/ errors values))
 	 (result-value (reduce #'/ values)))
-    (make-err-num result-value
+    (+- result-value
 		  (* result-value
 		     (sum-in-quadrature
 		      relative-errors)))))
@@ -152,20 +129,20 @@ structure allows for errors in errors to arbitrary depth."
 	 (errors (mapcar #'err-num-error arglist))
 	 (relative-errors (mapcar #'div errors values))
 	 (result-value (apply #'div values)))
-    (make-err-num result-value
+    (+- result-value
 		  (* result-value
 		     (sum-in-quadrature
 		      relative-errors)))))
 
 (defmethod div ((x err-num) (y number))
-  (div x (make-err-num y 0)))
+  (div x (+- y 0)))
 
 (defmethod div ((x number) (y err-num))
-  (div (make-err-num x 0) y))
+  (div (+- x 0) y))
 
 (defmethod unary-div ((x err-num))
   (let ((result-value (unary-div (err-num-value x))))
-    (make-err-num result-value
+    (+- result-value
 		  (mult result-value (err-num-error x)))))
 
 (defmethod protected-div ((x number) (y err-num)
@@ -184,7 +161,7 @@ structure allows for errors in errors to arbitrary depth."
 
 (defmethod sqrt ((err-num err-num))
   (let ((result-value (sqrt (err-num-value err-num))))
-    (make-err-num result-value
+    (+- result-value
                   (/ (err-num-error err-num)
                      2
                      result-value))))
@@ -207,20 +184,20 @@ structure allows for errors in errors to arbitrary depth."
 	      (* error2
 		 result-value
 		 (log value1)))))
-    (make-err-num result-value
+    (+- result-value
 		  (sum-in-quadrature
 		   (list result-error1 result-error2)))))
 
 (defmethod expt ((x number) (y err-num))
-  (expt (make-err-num x 0) y))
+  (expt (+- x 0) y))
 
 (defmethod expt ((x err-num) (y number))
-  (expt x (make-err-num y 0)))
+  (expt x (+- y 0)))
 
 (defmethod exp ((err-num err-num))
   (let ((result-value
 	 (exp (err-num-value err-num))))
-    (make-err-num result-value
+    (+- result-value
 		  (* result-value
 		     (err-num-error err-num)))))
 
@@ -228,14 +205,14 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (log val)
+    (+- (log val)
 		  (/ err val))))
 
 (defmethod sin ((err-num err-num))
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (sin val)
+    (+- (sin val)
 		  (* err
 		     (abs (cos val))))))
 
@@ -243,7 +220,7 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (cos val)
+    (+- (cos val)
 		  (* err
 		     (abs (sin val))))))
 
@@ -251,7 +228,7 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (tan val)
+    (+- (tan val)
 		  (/ err
 		     (expt (cos val) 2)))))
 
@@ -259,7 +236,7 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (sinh val)
+    (+- (sinh val)
 		  (* err
 		     (cosh val)))))
 
@@ -267,7 +244,7 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (cosh val)
+    (+- (cosh val)
 		  (* err
 		     (abs (sinh val))))))
 
@@ -275,7 +252,7 @@ structure allows for errors in errors to arbitrary depth."
   (with-accessors ((val err-num-value)
 		   (err err-num-error))
       err-num
-    (make-err-num (tanh val)
+    (+- (tanh val)
 		  (/ err
 		     (expt (cosh val) 2)))))
 

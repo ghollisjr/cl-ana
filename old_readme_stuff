@@ -23,9 +23,9 @@ automatically perform error propogation during a computation.  This
 was done via specializing on the generic math functions as provided by
 the generic math library.
 
-It also provides the reader macro #e() which allows one to write
+The representation for err-num values is:
 
-#e(x y ...)
+(+- x y ...)
 
 to mean
 
@@ -52,13 +52,10 @@ the base unit system is S.I.
 
 Quantities and error propogation play nice together; as an example:
 
-(* #e(5 1.3) :meter)
+(* (+- 5 1.3) :meter)
 
 would denote (5 +- 1.3) meters, and subsequent operations would have
 error propogation included in the calculation.
-
-I have thought to just define a function +- which would replace the
-#e() reader macro; this may happen in subsequent development.
 
 --------------------------------------------------
 3. Tables
