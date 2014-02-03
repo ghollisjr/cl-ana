@@ -23,9 +23,9 @@
 (in-package :typespec)
 
 (declaim (optimize (speed 3)
-                   (safety 0)
+                   (safety 1)
                    (compilation-speed 0)
-                   (debug 0)))
+                   (debug 1)))
 
 ;;; Typespec: A typespec (as I'm referring to it) is either
 ;;;
