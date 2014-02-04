@@ -318,6 +318,14 @@ in the page."
     :accessor plot2d-y-range
     :documentation "Sets the range for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (cb-range
+    :initarg :cb-range
+    :initform nil
+    :accessor plot2d-cb-range
+    :documentation "Sets the range for the colorbox (if applicable)
+    for the plot; a cons where the car is the lower bound and the cdr
+    is the upper bound.  A property of the plot since it is the z-axis
+    for 2-d representations of 3-d objects.")
    (x-title
     :initform nil
     :initarg :x-title
@@ -357,9 +365,14 @@ in the page."
        (maybe-make-str "y2label" y2-title)))))
 
 (defmethod plot-cmd ((p plot2d))
-  (with-slots (x-range y-range)
+  (with-slots (x-range y-range cb-range)
       p
     (with-output-to-string (s)
+      (if cb-range
+          (format s "set cbrange [~a:~a]~%"
+                  (car cb-range)
+                  (cdr cb-range))
+          (format s "set cbrange [*:*]~%"))
       (format s "plot ")
       (if x-range
           (format s "[~a:~a] "
@@ -597,6 +610,7 @@ in the page."
                                        plot-title
 				       x-range
 				       y-range
+                                       cb-range
                                        x-title
                                        y-title
                                        x2-title
@@ -624,6 +638,7 @@ in the page."
                         y2-title
                         x-range
                         y-range
+                        cb-range
                         (:lines (mapcar
                                  (lambda (object-spec)
                                    (apply #'make-line object-spec))
@@ -655,6 +670,7 @@ in the page."
                      y2-title
 		     x-range
 		     y-range
+                     cb-range
                      color)
     (let* ((line #k(make-line
                     object
@@ -677,6 +693,7 @@ in the page."
                                 y2-title
                                 x-range
                                 y-range
+                                cb-range
                                 (:lines (list line))))))))
       (draw page)
       page)))
