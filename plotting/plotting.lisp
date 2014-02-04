@@ -76,7 +76,9 @@
 ;; run any initialization functions:
 (defun gnuplot-settings (session)
   ;; Image style settings:
-  (gnuplot-cmd session "set palette rgb 33,13,10"))
+  ;;(gnuplot-cmd session "set palette rgb 33,13,10")
+  (gnuplot-cmd session "set palette defined (0 \"white\", 0.0001 \"dark-violet\", 3 \"blue\", 8 \"light-green\", 13 \"orange\", 15 \"red\")")
+  session)
 ;; Boxes style settings:
 ;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
@@ -84,9 +86,11 @@
   (if *gnuplot-single-session*
       (progn
         (when (null *gnuplot-sessions*)
-          (push (gnuplot-init) *gnuplot-sessions*))
+          (push (gnuplot-settings (gnuplot-init))
+                *gnuplot-sessions*))
         (first *gnuplot-sessions*))
-      (let ((session (gnuplot-init)))
+      (let ((session (gnuplot-settings
+                      (gnuplot-init))))
         (gnuplot-settings session)
         (push session *gnuplot-sessions*)
         session)))

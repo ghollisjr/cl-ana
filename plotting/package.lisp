@@ -31,7 +31,7 @@
         :histogram
         :tensor
         :alexandria)
-  (:export :*gnuplot-session*
+  (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
            :restart-gnuplot-sessions
            :titled
