@@ -69,6 +69,14 @@
   Returns nil if the next row does not exist/there is a read
   failure (which can be the same thing), non-nil otherwise."))
 
+(defgeneric table-activate-columns (table column-names)
+  (:documentation "Function for optimization based on which fields are
+  to be read from the table; default method is to do nothing which
+  works when these optimizations do nothing for a particular table
+  type.")
+  (:method (table column-names)
+    nil))
+
 (defgeneric table-get-field (table column-symbol)
   (:documentation "Gets the field datum from the current row for
   column denoted by the column-symbol"))
@@ -129,6 +137,7 @@ order specified to fn.
 fn is function taking the computation state as the first argument and
 then each selected field as an argument in the order given in fields;
 can use the state argument to collect a list of values for example."
+  (table-activate-columns table fields)
   (let ((field-symbols
          (mapcar (compose #'keywordify
                           #'intern

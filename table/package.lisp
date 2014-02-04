@@ -33,6 +33,7 @@
 	   :table-access-mode
 	   :table-column-symbols
 	   :table-load-next-row
+           :table-activate-columns
 	   :table-get-field
 	   :table-set-field
            :table-push-fields
