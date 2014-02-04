@@ -47,7 +47,9 @@
 
 ;;;; Reading:
 
-(defun open-modular-hdf-table (file hdf-path)
+(defun open-modular-hdf-table (file hdf-path
+                               &key
+                                 (buffer-size 1000 buffer-size-supplied-p))
   (let* ((names-table (open-hdf-table file (get-names-group hdf-path)))
          (column-names
           (let ((result ()))
@@ -69,7 +71,10 @@
          do
            (progn
              (setf (gethash sym field-table-map)
-                   (open-hdf-table file (get-field-group hdf-path name)))
+                   (apply #'open-hdf-table
+                          file (get-field-group hdf-path name)
+                          (when buffer-size-supplied-p
+                            (list :buffer-size buffer-size))))
              (push (typed-table-column-specs
                     (gethash sym field-table-map))
                    column-specs)))
@@ -92,7 +97,8 @@
 
 ;;;; Writing:
 
-(defun create-modular-hdf-table (file hdf-path names-specs)
+(defun create-modular-hdf-table (file hdf-path names-specs
+                                 &key (buffer-size 1000 buffer-size-supplied-p))
   (hdf-mkgroup file hdf-path)
   (hdf-mkgroup file (concatenate 'string
                                  hdf-path
@@ -126,7 +132,11 @@
        for spec in column-specs
        for group in column-groups
        do (setf (gethash (keywordify (lispify name)) field-table-map)
-                (create-hdf-table file group (list (cons name spec)))))
+                (apply #'create-hdf-table
+                       file group
+                       (list (cons name spec))
+                       (when buffer-size-supplied-p
+                         (list :buffer-size buffer-size)))))
     (make-instance 'modular-hdf-table
                    :column-names column-names
                    :column-specs column-specs
