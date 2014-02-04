@@ -237,19 +237,23 @@ to the C-object is returned."
                                             fs))))))
       ;; Array types:
       ((typespec-array-p typespec)
-       (destructuring-bind (element-type
-                            array-size)
-           (rest (typespec->cffi-type typespec))
+       (let ((element-type (typespec-array-element-type
+                            typespec))
+             (array-size (typespec-array-size typespec)))
          (if (equal element-type :char)
              ;; handle strings:
              (let ((field-setter (typespec->lisp-to-c element-type)))
                (lambda (tensor c-pointer)
-                 (dotimes (i array-size)
-                   (funcall field-setter
-                            (char-code (tensor-flat-ref tensor i))
-                            (mem-aptr c-pointer
-                                      element-type
-                                      i)))))
+                 (let ((element-converter
+                        (if (typep tensor 'string)
+                            #'char-code
+                            #'identity)))
+                   (dotimes (i array-size)
+                     (funcall field-setter
+                              (funcall element-converter (tensor-flat-ref tensor i))
+                              (mem-aptr c-pointer
+                                        element-type
+                                        i))))))
              ;; other arrays:
              (let ((field-setter (typespec->lisp-to-c element-type)))
                (lambda (tensor c-pointer)

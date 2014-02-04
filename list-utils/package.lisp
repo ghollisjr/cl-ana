@@ -37,6 +37,8 @@
 	   :list-greater-than
 	   :aref-by-list
 	   :make-offsets
+           ;;; plists
+           :plist-select-fields
            ;; Useful looping macro over plists:
            :do-plist
            ;; Paul Graham's stuff (and some of my improvements)

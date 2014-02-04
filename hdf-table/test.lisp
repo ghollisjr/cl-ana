@@ -71,7 +71,7 @@
       ("ys" . (:compound
 	       ("t" . :int)))))))
 
-(defvar *table*)
+(defvar *table* nil)
 
 (defvar *hdf-typespec*)
 
@@ -119,10 +119,24 @@
       (table-close table))))
 
 (defun hdf-read-test ()
+  (when *table*
+    (table-close *table*))
   (setf *table* (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test"))
-  (do-table (row-index *table*)
-      ("x" "y")
-    (format t "x: ~a, y: ~a~%" x y)))
+  (let ((sum 0))
+    (do-table (row-index *table*)
+        ("x" "y")
+      (incf sum x)
+      (incf sum y))))
+
+(defun hdf-smart-read-test ()
+  (when *table*
+    (table-close *table*))
+  (setf *table* (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test"))
+  (let ((sum 0))
+    (smart-do-table (row-index *table*)
+        ()
+      (incf sum x)
+      (incf sum y))))
 
 (defun hdf-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"

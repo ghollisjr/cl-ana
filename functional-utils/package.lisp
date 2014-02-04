@@ -25,6 +25,6 @@
 	   :to-pair-function
 	   :lfuncall
            :min-by
-           :minimize
+           :minimum
            :max-by
-           :maximize))
+           :maximum))

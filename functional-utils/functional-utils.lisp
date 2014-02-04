@@ -53,7 +53,7 @@ arbitrary number of arguments."
       x
       y))
 
-(defun minimize (xs &key (key #'identity))
+(defun minimum (xs &key (key #'identity))
   (when xs
     (reduce (lambda (x y) (min-by x y :key key))
             xs)))
@@ -64,7 +64,7 @@ arbitrary number of arguments."
       x
       y))
 
-(defun maximize (xs &key (key #'identity))
+(defun maximum (xs &key (key #'identity))
   (when xs
     (reduce (lambda (x y) (max-by x y :key key))
             xs)))

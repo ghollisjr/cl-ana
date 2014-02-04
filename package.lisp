@@ -42,6 +42,7 @@
         :gsl-cffi
         :hdf-cffi
         :hdf-table
+        :modular-hdf-table
         :hdf-typespec
         :hdf-utils
         :histogram
@@ -59,6 +60,7 @@
         :symbol-utils
         :symbol-utils
         :table
+        :table-utils
         :table-viewing
         :typed-table
         :typespec

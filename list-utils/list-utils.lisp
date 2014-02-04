@@ -356,6 +356,15 @@ value that fn returned."
 
 ;; split-if is provided by split-sequence:split-sequence-if
 
+;;;; plist stuff
+
+(defun plist-select-fields (plist &rest fields)
+  "Returns a list of the fields from plist in the order specified; the
+  element will be nil if the field is not present."
+  (mapcar (lambda (x)
+            (getf plist x))
+          fields))
+
 ;; Operator for looping over a plist:
 (defmacro do-plist ((field-symbol field-value plist) &body body)
   "Executes body via looping over plist, binding each field symbol to

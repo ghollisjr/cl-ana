@@ -34,7 +34,9 @@
                #:tensor
                #:error-propogation
                #:table
+               #:table-utils
                #:hdf-table
+               #:modular-hdf-table
                #:ntuple-table
                #:csv-table
                #:reusable-table

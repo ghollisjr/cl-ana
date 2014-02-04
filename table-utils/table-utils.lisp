@@ -18,32 +18,16 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:table 
-  (:use #:cl
-	#:list-utils
-	#:macro-utils
-	#:string-utils
-        #:symbol-utils
-	#:functional-utils
-	#:alexandria)
-  (:export :table
-	   :table-column-names
-	   :table-access-mode
-	   :table-column-symbols
-	   :table-load-next-row
-	   :table-get-field
-	   :table-set-field
-           :table-push-fields
-	   :table-commit-row
-	   :table-close
-           :table-nrows
-	   :do-table
-           :smart-do-table
-           :table-reduce
-	   ;; table-chain:
-	   :open-table-chain
-	   :reset-table-chain
-	   ;; plist-table:
-	   :open-plist-table))
+(in-package :table-utils)
+
+(defun table-fields->list (table &rest field-names)
+  (table-reduce table field-names
+                (lambda (state &rest fields)
+                  (push (loop
+                           for fn in field-names
+                           for f in fields
+                           appending (list (keywordify (lispify fn))
+                                           f))
+                        state))
+                :initial-value ()))

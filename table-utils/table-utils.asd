@@ -18,32 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:table 
-  (:use #:cl
-	#:list-utils
-	#:macro-utils
-	#:string-utils
-        #:symbol-utils
-	#:functional-utils
-	#:alexandria)
-  (:export :table
-	   :table-column-names
-	   :table-access-mode
-	   :table-column-symbols
-	   :table-load-next-row
-	   :table-get-field
-	   :table-set-field
-           :table-push-fields
-	   :table-commit-row
-	   :table-close
-           :table-nrows
-	   :do-table
-           :smart-do-table
-           :table-reduce
-	   ;; table-chain:
-	   :open-table-chain
-	   :reset-table-chain
-	   ;; plist-table:
-	   :open-plist-table))
+(asdf:defsystem #:table-utils
+  :serial t
+  :license "GPLv3"
+  :author "Gary Hollis"
+  :description "Utilities for working with tables"
+  :depends-on (#:string-utils
+               #:symbol-utils
+               #:table)
+  :components ((:file "package")
+               (:file "table-utils")))

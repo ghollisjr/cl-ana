@@ -143,9 +143,9 @@ can use the state argument to collect a list of values for example."
            (field-vals (get-fields) (get-fields))
            (state initial-value (apply fn state field-vals)))
           ((not read-status) state)))))
-  
-(defmacro do-table ((rowvar table) (&rest column-selections)
-		    &body body)
+
+(defmacro do-table ((rowvar table) column-selections
+                    &body body)
   "Macro for iterating over a table.
 
 rowvar is a symbol which will be bound to the row number inside the
@@ -154,35 +154,70 @@ allow for the rowvar to have a type declared for it.
 
 table is the table which will be looped upon.
 
-column-selections are a list of 1. column names to access during the
-loop, by default the value will be bound to the lispified column name
-as a symbol, 2. A list containing a symbol as the first element and
-the column name as the second which will be bound to the symbol given
-as the first element of the list.
+To select specific columns from the table for reading, specify all the
+desired column/field names in column-selections; if column-selections
+is nil then all fields will be read.  Note that it is still more
+efficient to specify all desired columns; for two column data this
+results in about a 16% running time difference.  Also you must specify
+either none or all of the desired columns to work with during the loop
+body.
 
-The code body will be run for each row in the table."
+Each column-selection is a list of 1. column names to access during
+the loop, by default the value will be bound to the lispified column
+name as a symbol, 2. A list containing a symbol as the first element
+and the column name as the second which will be bound to the symbol
+given as the first element of the list.
+
+The code body will be run for each row in the table.  If columns are
+explicitly selected, then you can use declare statements at the
+beginning of the loop body; otherwise this is not supported."
   (let* ((selected-column-names
-	  (mapcar (lambda (x)
+          (mapcar (lambda (x)
                     (if (listp x)
                         (second x)
                         x))
-		  column-selections))
-	 (bound-column-symbols
-	  (mapcar (lambda (x)
+                  column-selections))
+         (bound-column-symbols
+          (mapcar (lambda (x)
                     (if (listp x)
                         (first x)
                         (intern (lispify x))))
-		  column-selections)))
+                  column-selections)))
     (multiple-value-bind (rowt rowv)
         (if (listp rowvar)
             (values (first rowvar)
                     (second rowvar))
             (values 'integer
                     rowvar))
-      `(table-reduce ,table
-                     (list ,@selected-column-names)
-                     (lambda (,rowv ,@bound-column-symbols)
-                       (declare (,rowt ,rowv))
-                       ,@body
-                       (1+ ,rowv))
-                     :initial-value 0))))
+      (if column-selections
+          `(table-reduce ,table
+                         (list ,@selected-column-names)
+                         (lambda (,rowv ,@bound-column-symbols)
+                           (declare (,rowt ,rowv))
+                           ,@body
+                           (1+ ,rowv))
+                         :initial-value 0)
+          (with-gensyms (column-symbols
+                         column-names
+                         bound-symbols
+                         bound
+                         xs
+                         x)
+            `(let* ((,column-names
+                     (table-column-names ,table))
+                    (,column-symbols
+                     (table-column-symbols ,table))
+                    (,bound-symbols
+                     (mapcar (compose #'intern #'string)
+                             ,column-symbols)))
+               (table-reduce ,table
+                             ,column-names
+                             (lambda (,rowv &rest ,xs)
+                               (declare (,rowt ,rowv))
+                               (loop
+                                  for ,bound in ,bound-symbols
+                                  for ,x in ,xs
+                                  do (set ,bound ,x))
+                               ,@body
+                               (1+ ,rowv))
+                             :initial-value 0)))))))
