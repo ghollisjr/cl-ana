@@ -129,11 +129,6 @@
 (defparameter *table* nil)
 
 (defmethod table-get-field ((modular-table modular-hdf-table) field-symbol)
-  ;; debug
-  ;; (when (not *table*)
-  ;;   (setf *table*
-  ;;         (gethash :x (modular-hdf-table-field-table-map modular-table))))
-  ;; (table-get-field *table* :x))
   (table-get-field
    (the hdf-table
         (gethash (the symbol field-symbol)
