@@ -58,12 +58,12 @@
     (let ((table
            (create-modular-hdf-table file "/test"
                                      (list (cons "x" :int)
-                                           (cons "y" :double))
+                                           (cons "y" :int))
                                      :buffer-size 10000)))
-      (dotimes (i 1000000)
+      (dotimes (i 100000)
         (table-push-fields table
           (x i)
-          (y (->double-float (sqrt i)))))
+          (y i)))
       (table-close table)))
   
   (time (with-open-hdf-file (file "/home/ghollisjr/modular.h5"
@@ -72,35 +72,34 @@
                  (open-modular-hdf-table file "/test"))
                 (sum 0))
             (do-table (row-index table)
-                ("y")
-              (incf sum y))
+                ("x")
+              (incf sum x))
             (table-close table)
             (print sum)))))
 
 (defun hdf-table-test ()
-  (with-open-hdf-file (file "/home/ghollisjr/normal.h5"
+  (with-open-hdf-file (file "/home/ghollisjr/hdf.h5"
                             :direction :output
                             :if-exists :supersede
                             :if-does-not-exist :create)
     (let ((table
            (create-hdf-table file "/test"
                              (list (cons "x" :int)
-                                   (cons "y" :double))
+                                   (cons "y" :int))
                              :buffer-size 10000)))
-      (dotimes (i 1000000)
+      (dotimes (i 100000)
         (table-push-fields table
           (x i)
-          (y (->double-float (sqrt i)))))
+          (y i)))
       (table-close table)))
   
-  (time (with-open-hdf-file (file "/home/ghollisjr/normal.h5"
+  (time (with-open-hdf-file (file "/home/ghollisjr/hdf.h5"
                                   :direction :input)
           (let ((table
                  (open-hdf-table file "/test"))
                 (sum 0))
             (do-table (row-index table)
-                ("y")
-              (incf sum y)
-              )
+                ("x")
+              (incf sum x))
             (table-close table)
             (print sum)))))

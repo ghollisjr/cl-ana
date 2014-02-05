@@ -21,9 +21,14 @@
 
 (in-package :modular-hdf-table)
 
+(declaim (optimize (speed 3)
+                   (safety 0)
+                   (compilation-speed 0)
+                   (debug 0)))
+
 (defclass modular-hdf-table (table)
   ((field-table-map
-    :initform (make-hash-table :test 'eql)
+    :initform (make-hash-table :test 'eq)
     :initarg :field-table-map
     :accessor modular-hdf-table-field-table-map
     :documentation "Hash table mapping fields to tables")
@@ -78,7 +83,7 @@
                   column-names)))
     (table-close names-table)
     (let ((field-table-map
-           (make-hash-table :test 'eql))
+           (make-hash-table :test 'eq :size (length column-symbols)))
           (column-specs ()))
       (loop
          for sym in column-symbols
@@ -101,11 +106,16 @@
                                             column-names)))))
 
 (defmethod table-load-next-row ((modular-table modular-hdf-table))
-  (every #'identity
-         (loop
-            for tab in (modular-hdf-table-active-tables modular-table)
-            collecting
-              (table-load-next-row tab))))
+  (do* ((lst (modular-hdf-table-active-tables modular-table) (rest lst))
+        (tab (first lst) (first lst))
+        (load-val (table-load-next-row tab) (table-load-next-row tab)))
+       ((or (not load-val)
+            (null (cdr lst)))
+        (cond
+          ((not load-val)
+           nil)
+          ((null (cdr lst))
+           t)))))
 
 (defmethod table-activate-columns ((modular-table modular-hdf-table) column-names)
   (setf (modular-hdf-table-active-fields modular-table)
@@ -116,10 +126,19 @@
                         (modular-hdf-table-field-table-map modular-table))
                 (modular-hdf-table-active-fields modular-table))))
 
+(defparameter *table* nil)
+
 (defmethod table-get-field ((modular-table modular-hdf-table) field-symbol)
+  ;; debug
+  ;; (when (not *table*)
+  ;;   (setf *table*
+  ;;         (gethash :x (modular-hdf-table-field-table-map modular-table))))
+  ;; (table-get-field *table* :x))
   (table-get-field
-   (gethash field-symbol (modular-hdf-table-field-table-map modular-table))
-   field-symbol))
+   (the hdf-table
+        (gethash (the symbol field-symbol)
+                 (modular-hdf-table-field-table-map modular-table)))
+   (the symbol field-symbol)))
 
 ;;;; Writing:
 
@@ -135,7 +154,7 @@
                          (lambda (name)
                            (get-field-group hdf-path name))
                          column-names))
-         (field-table-map (make-hash-table :test 'eql))
+         (field-table-map (make-hash-table :test 'eq :size (length column-names)))
          (names-table
           (create-hdf-table
            file (get-names-group hdf-path)
