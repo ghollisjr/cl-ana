@@ -106,16 +106,18 @@
                                             column-names)))))
 
 (defmethod table-load-next-row ((modular-table modular-hdf-table))
-  (do* ((lst (modular-hdf-table-active-tables modular-table) (rest lst))
-        (tab (first lst) (first lst))
-        (load-val (table-load-next-row tab) (table-load-next-row tab)))
-       ((or (not load-val)
-            (null (cdr lst)))
-        (cond
-          ((not load-val)
-           nil)
-          ((null (cdr lst))
-           t)))))
+  (with-slots (active-tables)
+      modular-table
+    (do* ((lst active-tables (rest lst))
+          (tab (first lst) (first lst))
+          (load-val (table-load-next-row tab) (table-load-next-row tab)))
+         ((or (not load-val)
+              (null (cdr lst)))
+          (cond
+            ((not load-val)
+             nil)
+            ((null (cdr lst))
+             t))))))
 
 (defmethod table-activate-columns ((modular-table modular-hdf-table) column-names)
   (setf (modular-hdf-table-active-fields modular-table)
@@ -125,8 +127,6 @@
         (mapcar (rcurry #'gethash
                         (modular-hdf-table-field-table-map modular-table))
                 (modular-hdf-table-active-fields modular-table))))
-
-(defparameter *table* nil)
 
 (defmethod table-get-field ((modular-table modular-hdf-table) field-symbol)
   (table-get-field

@@ -131,6 +131,7 @@ if-does-not-exist can be :create :error nil"
                (:error (error "File exists"))
                (nil nil)
                (:supersede
+                (delete-file filename)
                 (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
                (:rename
                 (progn
