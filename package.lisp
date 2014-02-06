@@ -42,7 +42,6 @@
         :gsl-cffi
         :hdf-cffi
         :hdf-table
-        :modular-hdf-table
         :hdf-typespec
         :hdf-utils
         :histogram
