@@ -27,6 +27,7 @@
   by Alexandria."
   :license "GPLv3"
   :depends-on (#:functional-utils
+               #:string-utils
                #:alexandria)
   :components ((:file "package")
 	       (:file "list-utils")))

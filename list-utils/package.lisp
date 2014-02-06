@@ -22,6 +22,7 @@
 
 (defpackage #:list-utils 
   (:use :cl
+        :string-utils
 	:functional-utils
         :alexandria)
   (:export :range
@@ -39,7 +40,10 @@
 	   :make-offsets
            ;;; plists
            :plist-select-fields
-           ;; Useful looping macro over plists:
+           :plist->alist
+           :alist->plist
+           ;; Useful looping macros over plists:
+           :do-plists
            :do-plist
            ;; Paul Graham's stuff (and some of my improvements)
            :length-equal

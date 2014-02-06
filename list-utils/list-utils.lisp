@@ -354,9 +354,31 @@ value that fn returned."
   (member object (cdr (member object list :test test))
           :test test))
 
+(defun permute (list permutation)
+  "Re-arranges the elements in list according to the permutation."
+  (mapcar (lambda (p)
+            (elt list p))
+          permutation))
+
 ;; split-if is provided by split-sequence:split-sequence-if
 
 ;;;; plist stuff
+
+(defun plist->alist (plist)
+  "Forms an alist from a plist"
+  (do ((lst plist (rest (rest lst)))
+       (result nil (cons (cons (first lst)
+                               (second lst))
+                         result)))
+      ((null lst) (nreverse result))))
+
+(defun alist->plist (alist)
+  "Forms a plist from an alist"
+  (let ((result ()))
+    (dolist (x alist)
+      (push (car x) result)
+      (push (cdr x) result))
+    (nreverse result)))
 
 (defun plist-select-fields (plist &rest fields)
   "Returns a list of the fields from plist in the order specified; the
@@ -376,8 +398,13 @@ field-symbol and each field value to field-value.  Returns nil."
              (,field-value (second ,lst)))
          ,@body))))
 
-(defun permute (list permutation)
-  "Re-arranges the elements in list according to the permutation."
-  (mapcar (lambda (p)
-            (elt list p))
-          permutation))
+;; Operator for looping over a list of plists, binding variables
+;; according to the field names of each plist
+(defmacro do-plists (plists &body body)
+  "Loops over a plist, binding each field in the plist to a variable
+of the same name as the field symbol but in the current package."
+  (with-gensyms (lst fs fv)
+    `(dolist (,lst ,plists)
+       (do-plist (,fs ,fv ,lst)
+         (set (intern (lispify ,fs)) ,fv))
+       ,@body)))

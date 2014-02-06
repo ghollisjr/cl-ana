@@ -20,5 +20,7 @@
 ;;;; ghollisjr@gmail.com
 (defpackage #:file-utils 
   (:use :cl)
-  (:export :read-fields-from-file
+  (:export :read-lines-from-file
+           :read-lines-from-pathname
+           :read-fields-from-file
            :read-fields-from-pathname))

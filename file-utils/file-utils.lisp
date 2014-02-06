@@ -20,6 +20,18 @@
 ;;;; ghollisjr@gmail.com
 (in-package :file-utils)
 
+(defun read-lines-from-file (file)
+  (loop
+     for line = (read-line file nil 'eof)
+     until (equal line 'eof)
+     collecting line))
+
+(defun read-lines-from-pathname (pathname)
+  (with-open-file (file pathname
+                        :direction :input
+                        :if-does-not-exist :error)
+    (read-lines-from-file file)))
+
 (defun read-fields-from-file (file)
   (loop
      for line = (read-line file nil 'eof)
