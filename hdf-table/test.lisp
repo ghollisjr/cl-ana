@@ -38,8 +38,8 @@
 
 ;; (setf *table*
 ;;       (make-instance 'hdf-table
-;;                      :column-names (list "x" "y" "z")
-;;                      :column-specs
+;;                      :field-names (list "x" "y" "z")
+;;                      :field-specs
 ;;                      (list :int
 ;;                            :float
 ;;                            (list :compound
@@ -128,16 +128,6 @@
       (incf sum x)
       (incf sum y))))
 
-(defun hdf-smart-read-test ()
-  (when *table*
-    (table-close *table*))
-  (setf *table* (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test"))
-  (let ((sum 0))
-    (smart-do-table (row-index *table*)
-        ()
-      (incf sum x)
-      (incf sum y))))
-
 (defun hdf-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"
 			       :direction :output
@@ -194,7 +184,7 @@
                          (list :array :float 4)))))
            (x-type
             (typespec->cffi-type
-             (first (typed-table-column-specs table)))))
+             (first (table-field-specs table)))))
       (loop
          for i below 30
          do (progn

@@ -37,34 +37,34 @@
     :initarg :row
     :initform nil
     :accessor csv-table-row
-    :documentation "hash table mapping column-symbols to values")
-   (column-symbols
-    :initarg :column-symbols
+    :documentation "hash table mapping field-symbols to values")
+   (field-symbols
+    :initarg :field-symbols
     :initform ()
-    :accessor csv-table-column-symbols
-    :documentation "Storing the lispified column symbols for
+    :accessor csv-table-field-symbols
+    :documentation "Storing the lispified field symbols for
     efficiency.")))
 
 (defun open-csv-table (filename &key
                                   (delimeter #\,)
-                                  column-names)
+                                  field-names)
   "Open a CSV file to be read as a table.  Assumes that the first row
-  consists of the column names and are separated by the delimeter
-  unless column-names keyword argument is given."
+  consists of the field names and are separated by the delimeter
+  unless field-names keyword argument is given."
   (let* ((file (open filename :direction :input))
 	 (row (make-hash-table :test #'equal))
 	 (table
           (make-instance 'csv-table
-                         :column-names
-                         (if column-names
-                             column-names
+                         :field-names
+                         (if field-names
+                             field-names
                              (first (read-csv (read-line file)
                                               :separator delimeter)))
                          :file file
                          :delimeter delimeter
                          :row row)))
-    (setf (csv-table-column-symbols table)
-	  (table-column-symbols table))
+    (setf (csv-table-field-symbols table)
+	  (table-field-symbols table))
     table))
 
 ;;; Reading methods:
@@ -79,7 +79,7 @@
 
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)
-		   (column-symbols csv-table-column-symbols)
+		   (field-symbols csv-table-field-symbols)
 		   (delimeter csv-table-delimeter)
 		   (row csv-table-row))
       table
@@ -88,19 +88,19 @@
 		       (mapcar #'smart-read-from-string
 			       (first (read-csv line :separator delimeter))))))
       (when line
-	(iter (for s in column-symbols)
+	(iter (for s in field-symbols)
 	      (for v in csv-data)
 	      (setf (gethash s row) v))
 	t))))
 
-(defmethod table-get-field ((table csv-table) column-symbol)
+(defmethod table-get-field ((table csv-table) field-symbol)
   (with-accessors ((row csv-table-row))
       table
-    (gethash column-symbol row)))
+    (gethash field-symbol row)))
 
 ;;; Writing functions:
 
-(defun make-csv-table (filename column-names &optional (delimeter #\,))
+(defun make-csv-table (filename field-names &optional (delimeter #\,))
   "Creates a CSV file to be written to as a table."
   (let* ((file (open filename
 		     :direction :output
@@ -108,29 +108,29 @@
 		     :if-does-not-exist :create))
 	 (row (make-hash-table :test #'equal))
 	 (table (make-instance 'csv-table
-			       :column-names column-names
+			       :field-names field-names
 			       :file file
 			       :delimeter delimeter
 			       :row row)))
-    (setf (csv-table-column-symbols table)
-	  (table-column-symbols table))
+    (setf (csv-table-field-symbols table)
+	  (table-field-symbols table))
     (iter (for i upfrom 0)
-	  (for n in column-names)
+	  (for n in field-names)
 	  (when (not (= i 0))
 	    (format file "~a" delimeter))
 	  (format file "~a" n))
     (format file "~%")
     table))
 
-(defmethod table-set-field ((table csv-table) column-symbol value)
+(defmethod table-set-field ((table csv-table) field-symbol value)
   (with-accessors ((row csv-table-row))
       table
-    (setf (gethash column-symbol row) value)))
+    (setf (gethash field-symbol row) value)))
 
 (defmethod table-commit-row ((table csv-table))
   (with-accessors ((file csv-table-file)
 		   (row csv-table-row)
-		   (column-symbols csv-table-column-symbols)
+		   (field-symbols csv-table-field-symbols)
 		   (delimeter csv-table-delimeter))
       table
     (iter (for i upfrom 0)

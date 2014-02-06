@@ -35,11 +35,12 @@
         value))
 
 (defclass typed-table (table)
-  ((column-specs
-    :initarg :column-specs
+  ((field-specs
+    :initarg :field-specs
     :initform ()
-    :accessor typed-table-column-specs
-    :documentation "list of typespecs, one per column")
+    ;; renamed for intuitive-ness:
+    :accessor table-field-specs
+    :documentation "list of typespecs, one per field")
    (row-cstruct
     :initarg :row-cstruct
     :initform nil
@@ -55,17 +56,17 @@
     :initarg :lisp->c-converter-map
     :initform nil
     :accessor typed-table-lisp->c-converter-map
-    :documentation "Hash table which maps the column symbols to the
-    lisp->c converter function for corresponding column.")
+    :documentation "Hash table which maps the field symbols to the
+    lisp->c converter function for corresponding field.")
    (c->lisp-converter-map
     :initarg :c->lisp-converter-map
     :initform nil
     :accessor typed-table-c->lisp-converter-map
-    :documentation "Hash table which maps the column symbols to the
-    c->lisp converter function for corresponding column.")))
+    :documentation "Hash table which maps the field symbols to the
+    c->lisp converter function for corresponding field.")))
 
 (defmethod initialize-instance :after ((table typed-table) &key)
-  (with-accessors ((column-specs typed-table-column-specs)
+  (with-accessors ((field-specs table-field-specs)
                    (lisp->c-converter-map
                     typed-table-lisp->c-converter-map)
                    (c->lisp-converter-map
@@ -74,8 +75,8 @@
     (setf lisp->c-converter-map (make-hash-table :test 'equal))
     (setf c->lisp-converter-map (make-hash-table :test 'equal))
     (loop
-       for s in (table-column-symbols table)
-       for cs in column-specs
+       for s in (table-field-symbols table)
+       for cs in field-specs
        do
          (progn
            (setf (gethash s lisp->c-converter-map)
@@ -88,9 +89,9 @@
 ;;; row-pointer value to the current row (as well as allocating &
 ;;; freeing space as appropriate).
 
-(defmethod table-set-field ((table typed-table) column-symbol value)
+(defmethod table-set-field ((table typed-table) field-symbol value)
   "Method on table-set-field that automatically converts the value
-into the appropriate CFFI type for the field given by column-symbol.
+into the appropriate CFFI type for the field given by field-symbol.
 Note that this function is still pedantic about which particular
 numerical type you are giving it, e.g. float vs. integer.  Use plists
 to represent a structure (works for nested as well), and vectors to
@@ -99,38 +100,38 @@ represent foreign arrays."
                row-pointer
                row-cstruct)
       table
-    (funcall (gethash column-symbol lisp->c-converter-map)
+    (funcall (gethash field-symbol lisp->c-converter-map)
              value
              (foreign-slot-pointer row-pointer
                                    row-cstruct
-                                   column-symbol))))
+                                   field-symbol))))
 
-(defmethod table-get-field ((table typed-table) column-symbol)
+(defmethod table-get-field ((table typed-table) field-symbol)
   "Automatically converts field pointer to lisp value."
   (with-accessors ((c->lisp-converter-map
                     typed-table-c->lisp-converter-map)
                    (row-pointer typed-table-row-pointer)
                    (row-cstruct typed-table-row-cstruct))
       table
-    (funcall (gethash column-symbol c->lisp-converter-map)
+    (funcall (gethash field-symbol c->lisp-converter-map)
              (foreign-slot-pointer row-pointer
                                    row-cstruct
-                                   column-symbol))))
+                                   field-symbol))))
 
-(defun typespec->column-names (compound-typespec)
-  "Returns column names from the compound type designation."
+(defun typespec->field-names (compound-typespec)
+  "Returns field names from the compound type designation."
   (if (typespec-compound-p compound-typespec)
       (mapcar #'car (rest compound-typespec))
-      (error "Non compound type given to typespec->column-names")))
+      (error "Non compound type given to typespec->field-names")))
 
-(defun typespec->column-specs (compound-typespec)
-  "Returns column typespecs from the compound type designation."
+(defun typespec->field-specs (compound-typespec)
+  "Returns field typespecs from the compound type designation."
   (if (typespec-compound-p compound-typespec)
       (mapcar #'cdr (rest compound-typespec))
-      (error "Non compound type given to typespec->column-specs")))
+      (error "Non compound type given to typespec->field-specs")))
 
 (defun typed-table->typespec (table)
   "Creates a typespec from the table"
   (append (list :compound)
-	  (zip (table-column-names table)
-		   (typed-table-column-specs table))))
+	  (zip (table-field-names table)
+		   (table-field-specs table))))

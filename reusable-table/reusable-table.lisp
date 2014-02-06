@@ -71,15 +71,15 @@ from the beginning."
         (setf needs-reloading t))
       status)))
 
-(defmethod table-get-field ((table reusable-table) column-symbol)
+(defmethod table-get-field ((table reusable-table) field-symbol)
   (with-slots (raw-table)
       table
-    (table-get-field raw-table column-symbol)))
+    (table-get-field raw-table field-symbol)))
 
-(defmethod table-column-names ((table reusable-table))
+(defmethod table-field-names ((table reusable-table))
   (with-slots (raw-table)
       table
-    (table-column-names raw-table)))
+    (table-field-names raw-table)))
 
 ;;; Cleanup:
 

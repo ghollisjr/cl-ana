@@ -33,29 +33,29 @@
 
 (defun create-ntuple-table (filename names-specs)
   "Creates an ntuple-table with file located at the path corresponding
-to filename and names-specs being an alist mapping the column names to
+to filename and names-specs being an alist mapping the field names to
 their typespecs."
   (let* ((typespec (cons :compound names-specs))
 	 (cstruct (typespec->cffi-type typespec))
-	 (column-names (mapcar #'car names-specs))
-	 (column-specs (mapcar #'cdr names-specs))
+	 (field-names (mapcar #'car names-specs))
+	 (field-specs (mapcar #'cdr names-specs))
 	 (row-pointer (typespec-foreign-alloc typespec)))
     (let ((ntuple (gsll:create-ntuple filename row-pointer cstruct)))
       (make-instance 'ntuple-table
-		     :column-names column-names
-		     :column-specs column-specs
+		     :field-names field-names
+		     :field-specs field-specs
 		     :ntuple ntuple
 		     :row-cstruct cstruct
 		     :row-pointer row-pointer))))
 
-;; (defmethod table-set-field ((table ntuple-table) column-symbol value)
+;; (defmethod table-set-field ((table ntuple-table) field-symbol value)
 ;;   (with-accessors ((row typed-table-row-pointer)
 ;; 		   (cstruct ntuple-table-cstruct))
 ;;       table
 ;;     (setf
 ;;      (foreign-slot-value row
 ;; 			 cstruct
-;; 			 column-symbol)
+;; 			 field-symbol)
 ;;      value)))
 
 (defmethod table-commit-row ((table ntuple-table))
@@ -68,17 +68,17 @@ their typespecs."
 
 (defun open-ntuple-table (filename names-specs)
   "Opens a pre-existing ntuple data file.  Must already know the
-typespecs of each of the column types (and names); this is a
+typespecs of each of the field types (and names); this is a
 limitation of the ntuple file format itself."
   (let* ((typespec (cons :compound names-specs))
 	 (cstruct (typespec->cffi-type typespec))
-	 (column-names (mapcar #'car names-specs))
-	 (column-specs (mapcar #'cdr names-specs))
+	 (field-names (mapcar #'car names-specs))
+	 (field-specs (mapcar #'cdr names-specs))
 	 (row (typespec-foreign-alloc typespec)))
     (let ((ntuple (gsll:open-ntuple filename row cstruct)))
       (make-instance 'ntuple-table
-		     :column-names column-names
-		     :column-specs column-specs
+		     :field-names field-names
+		     :field-specs field-specs
 		     :ntuple ntuple
 		     :row-cstruct cstruct
 		     :row-pointer row))))
@@ -89,13 +89,13 @@ limitation of the ntuple file format itself."
     (let ((read-status (gsl-cffi:gsl-ntuple-read ntuple)))
       (not (equal read-status gsl-cffi:+GSL-EOF+)))))
 
-;; (defmethod table-get-field ((table ntuple-table) column-symbol)
+;; (defmethod table-get-field ((table ntuple-table) field-symbol)
 ;;   (with-accessors ((row typed-table-row-pointer)
 ;; 		   (cstruct ntuple-table-cstruct))
 ;;       table
 ;;     (foreign-slot-value row
 ;; 			cstruct
-;; 			column-symbol)))
+;; 			field-symbol)))
 
 ;;; Cleanup:
 

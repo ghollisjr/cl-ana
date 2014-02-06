@@ -29,11 +29,11 @@
 	#:functional-utils
 	#:alexandria)
   (:export :table
-	   :table-column-names
+	   :table-field-names
 	   :table-access-mode
-	   :table-column-symbols
+	   :table-field-symbols
 	   :table-load-next-row
-           :table-activate-columns
+           :table-activate-fields
 	   :table-get-field
 	   :table-set-field
            :table-push-fields

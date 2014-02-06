@@ -30,11 +30,11 @@
 	#:typespec
 	#:alexandria)
   (:export :typed-table
-	   :typed-table-column-specs
+	   :table-field-specs
            :typed-table-row-cstruct
            :typed-table-row-pointer
            :typed-table-lisp->c-converter-map
            :typed-table-c->lisp-converter-map
-	   :typespec->column-names
-	   :typespec->column-specs
+	   :typespec->field-names
+	   :typespec->field-specs
 	   :typed-table->typespec))

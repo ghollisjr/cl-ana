@@ -118,8 +118,8 @@
 	      ;;   	     buffer-size)
               (typespec-foreign-alloc typespec buffer-size)))
 	(make-instance 'hdf-table
-		       :column-names (typespec->column-names typespec)
-		       :column-specs (typespec->column-specs typespec)
+		       :field-names (typespec->field-names typespec)
+		       :field-specs (typespec->field-specs typespec)
 		       :row-buffer row-buffer
                        :row-pointer
                        (mem-aptr row-buffer
@@ -136,7 +136,7 @@
     (hdf-file dataset-path names-specs &key (buffer-size 1000))
   "Creates a hdf-table for writing in hdf-file with dataset-path as
   the path to the dataset in the hdf-file and the alist names-specs
-  which maps the column names to their typespecs (this is just
+  which maps the field names to their typespecs (this is just
   applying rest to the typespec for the table).  Buffer size will be
   used as both the chunksize for the hdf dataset and as the size of
   the buffer for writing into the file."
@@ -172,8 +172,8 @@
                    (mem-aptr row-buffer
                              cstruct
                              0)
-                   :column-names (mapcar #'car names-specs)
-                   :column-specs
+                   :field-names (mapcar #'car names-specs)
+                   :field-specs
                    (mapcar #'cdr names-specs)
 		   :row-buffer row-buffer
 		   :buffer-size buffer-size
@@ -231,7 +231,7 @@ the dataset."
     (h5dclose dataset)
     (foreign-free row-buffer)))
 
-;; (defmethod table-set-field ((table hdf-table) column-symbol value)
+;; (defmethod table-set-field ((table hdf-table) field-symbol value)
 ;;   (with-accessors ((row-buffer hdf-table-row-buffer)
 ;; 		   (cstruct typed-table-row-cstruct)
 ;; 		   (row-buffer-index hdf-table-row-buffer-index))
@@ -241,7 +241,7 @@ the dataset."
 ;; 				   cstruct
 ;; 				   row-buffer-index)
 ;; 			 cstruct
-;; 			 column-symbol)
+;; 			 field-symbol)
 ;;      value)))
 
 ;; (defmethod table-load-next-row :after ((table hdf-table))

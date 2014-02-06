@@ -57,7 +57,7 @@ names or none of them do."
             (subpath *histogram-data-path*))
            (data-table (create-hdf-table
                         file data-table-path data-names-specs))
-           (data-column-symbols (table-column-symbols data-table))
+           (data-field-symbols (table-field-symbols data-table))
            (bin-spec-plists
             (let ((result (bin-spec-plists histogram)))
               (loop
@@ -89,7 +89,7 @@ names or none of them do."
               (loop
                  for i from 0
                  for field in datum
-                 for sym in data-column-symbols
+                 for sym in data-field-symbols
                  do (table-set-field data-table sym
                                      (if (zerop i)
                                          field
@@ -129,12 +129,12 @@ sparse-histogram respectively."
     (let* ((bin-spec-table
             (open-hdf-table file
                             (subpath *histogram-bin-spec-path*)))
-           (bin-spec-table-column-names
+           (bin-spec-table-field-names
             (list "name" "name-length" "low" "high" "nbins"))
            (bin-spec-plists
             (let ((result ()))
               (table-reduce bin-spec-table
-                            bin-spec-table-column-names
+                            bin-spec-table-field-names
                             (lambda (state name name-length low high nbins)
                               (push (list :name (char-vector->string name name-length)
                                           :low low
@@ -153,11 +153,11 @@ sparse-histogram respectively."
            (data-table
             (open-hdf-table file
                             (subpath *histogram-data-path*)))
-           (data-table-column-names
-            (table-column-names data-table))
+           (data-table-field-names
+            (table-field-names data-table))
            (names-specs nil))
       (table-reduce data-table
-                    data-table-column-names
+                    data-table-field-names
                     (lambda (state count &rest xs)
                       (hist-insert histogram xs count)))
       (table-close bin-spec-table)

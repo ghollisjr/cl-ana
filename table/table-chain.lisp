@@ -56,8 +56,8 @@ returning a table."
 	 (make-instance 'table-chain
 			:creation-functions (concatenate 'vector creation-functions))))
     (load-next-table table)
-    (setf (table-column-names table)
-	  (table-column-names (table-chain-current-table table)))
+    (setf (table-field-names table)
+	  (table-field-names (table-chain-current-table table)))
     table))
 
 (defun reset-table-chain (table-chain)
@@ -87,7 +87,7 @@ returning a table."
 	  (load-next-table table)
 	  (table-load-next-row table)))))
 
-(defmethod table-get-field ((table table-chain) column-symbol)
+(defmethod table-get-field ((table table-chain) field-symbol)
   (with-accessors ((current-table table-chain-current-table))
       table
-    (table-get-field current-table column-symbol)))
+    (table-get-field current-table field-symbol)))

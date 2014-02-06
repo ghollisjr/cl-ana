@@ -124,22 +124,22 @@ dataset-path"
              (h5sclose dataspace)
              (h5dclose dataset)
              result)))
-       (get-column-names (filename dataset-path)
+       (get-field-names (filename dataset-path)
 	 (with-open-hdf-file (hdf-file
 			      filename
 			      :direction :input)
 	   (let* ((hdf-table
                    (open-hdf-table hdf-file dataset-path))
-		  (result (table-column-names hdf-table)))
+		  (result (table-field-names hdf-table)))
 	     (table-close hdf-table)
 	     result)))
-       (get-column-specs (filename dataset-path)
+       (get-field-specs (filename dataset-path)
 	 (with-open-hdf-file (hdf-file
 			      filename
 			      :direction :input)
 	   (let* ((hdf-table
                    (open-hdf-table hdf-file dataset-path))
-		  (result (typed-table-column-specs hdf-table)))
+		  (result (table-field-specs hdf-table)))
 	     (table-close hdf-table)
 	     result))))
     (let* ((file-nrows (mapcar
@@ -151,10 +151,10 @@ dataset-path"
 	    (make-index-binary-tree offsets))
            (table
             (make-instance 'hdf-table-chain
-                           :column-names (get-column-names
+                           :field-names (get-field-names
                                           (first filename-list)
                                           dataset-path)
-                           ;; :column-specs (get-column-specs
+                           ;; :field-specs (get-field-specs
                            ;;                (first filename-list)
                            ;;                dataset-path)
                            :dataset-path dataset-path
@@ -204,10 +204,10 @@ dataset-path"
 ;; should be done before the call to table-get-field on the
 ;; active table.
 
-(defmethod table-get-field ((table hdf-table-chain) column-symbol)
+(defmethod table-get-field ((table hdf-table-chain) field-symbol)
   (with-accessors ((active-table hdf-table-chain-active-table))
       table
-    (table-get-field active-table column-symbol)))
+    (table-get-field active-table field-symbol)))
 
 (defmethod table-load-next-row ((table hdf-table-chain))
   (with-accessors ((row-number hdf-table-chain-read-row-index)
@@ -254,10 +254,10 @@ dataset-path"
               (table-load-next-row
                (hdf-table-chain-active-table table))))))))
 
-(defmethod typed-table-column-specs ((table hdf-table-chain))
+(defmethod table-field-specs ((table hdf-table-chain))
   (with-slots (active-table)
       table
-    (typed-table-column-specs active-table)))
+    (table-field-specs active-table)))
 
 ;;; Behind the scenes functions:
 

@@ -46,7 +46,7 @@
 (defun open-plist-table (plists)
   (make-instance 'plist-table
 		 :plists (concatenate 'vector plists)
-		 :column-names (mapcar (compose #'lispify #'string)
+		 :field-names (mapcar (compose #'lispify #'string)
                                        (every-nth (first plists) 2))))
 
 (defmethod table-load-next-row ((table plist-table))
@@ -57,11 +57,11 @@
 	(incf current-table-index)
 	nil)))
 
-(defmethod table-get-field ((table plist-table) column-symbol)
+(defmethod table-get-field ((table plist-table) field-symbol)
   (with-accessors ((current-table-index plist-table-current-table-index)
 		   (plists plist-table-plists))
       table
-    (getf (elt plists current-table-index) column-symbol)))
+    (getf (elt plists current-table-index) field-symbol)))
 
 (defmethod table-close ((table plist-table))
   nil)
