@@ -199,3 +199,17 @@
         (incf sum x0))
       (table-close table)
       (print sum))))
+
+(defun individual-test2 ()
+  (with-open-hdf-file (file "/home/ghollisjr/modular.h5"
+                            :direction :input)
+    (let ((x0-table (open-hdf-table file "/test/tables/x0"))
+          (x1-table (open-hdf-table file "/test/tables/x1"))
+          (sum 0))
+      (dotimes (i (table-nrows x0-table))
+        (table-load-next-row x0-table)
+        (table-load-next-row x1-table)
+        (incf sum (table-get-field x0-table :x0)))
+      (table-close x0-table)
+      (table-close x1-table)
+      (print sum))))
