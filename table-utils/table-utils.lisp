@@ -21,7 +21,9 @@
 
 (in-package :table-utils)
 
-(defun table-fields->list (table &rest field-names)
+(defun table->plists (table &rest field-names)
+  "Returns a list of plists containing the field values you specify.
+Only do this for tables that will reasonably fit into memory."
   (table-reduce table field-names
                 (lambda (state &rest fields)
                   (push (loop

@@ -22,6 +22,7 @@
 
 (defpackage #:plotting 
   (:use :cl
+        :math-functions
         :error-propogation
         :gnuplot-interface
 	:map
@@ -29,8 +30,7 @@
         :list-utils
         :macro-utils
         :histogram
-        :tensor
-        :alexandria)
+        :tensor)
   (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
            :restart-gnuplot-sessions
@@ -83,6 +83,8 @@
            ;; ease of use
            :quick-multidraw
            :quick-draw
-           :make-line))
+           :make-line
+           ;; utilities
+           :sample-function))
 
 (gmath:use-gmath :plotting)

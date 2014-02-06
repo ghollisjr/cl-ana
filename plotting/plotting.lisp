@@ -737,11 +737,46 @@ in the page."
                  :line-width line-width
                  :color color))
 
+(defun sample-function (fn lower-bounds upper-bounds nsamples)
+  "Samples a function which takes a single argument according to
+lower-bounds, upper-bounds and nsamples.  Each boundary must be either
+a numerical value or a list of numerical values interpreted as
+vectors; therefore they all must be of the same type (i.e. list or
+atom).
+
+Returns an alist mapping each independent value to the value of fn at
+that point."
+  (let* ((atomic (atom lower-bounds))
+         (lower-bounds-list
+          (mapcar #'->double-float
+                  (mklist lower-bounds)))
+         (upper-bounds-list
+          (mapcar #'->double-float
+                  (mklist upper-bounds)))
+         (samples-list
+          (mapcar #'->double-float
+                  (mklist nsamples)))
+         ;; taking advantage of the tensor functions:
+         (deltas (/ (- upper-bounds-list lower-bounds-list)
+                    (- samples-list 1)))
+         (raw-domain
+          (apply #'cartesian-product
+                 (mapcar #'range
+                         lower-bounds-list
+                         upper-bounds-list
+                         deltas)))
+         (domain (if atomic
+                     (first (transpose raw-domain))
+                     raw-domain)))
+    (zip domain
+         (mapcar fn domain))))
+
 ;; functions:
 (defmethod make-line ((fn function) &key
-                                      (lower-bounds -3d0)
-                                      (upper-bounds 3d0)
-                                      (samples 100)
+                                      (sampling
+                                       (list :low -3d0
+                                             :high 3d0
+                                             :nsamples 100))
                                       (title "function")
                                       (style "lines")
                                       point-type
@@ -756,45 +791,40 @@ Conventions are:
 
 fn must evaluate to a float (single or double).
 
-All bounds/samples arguments must be of the same type, and must be
-either atoms or lists.
+All sampling arguments must be of the same type, and must be either
+atoms or lists.
 
-If the bounds/samples arguments are atoms, then fn is assumed to take
-a single double-float argument.
+If the sampling arguments are atoms, then fn is assumed to take a
+single double-float argument.
 
-If the bounds/samples are lists, then fn is assumed to take a list of
-up to two double-float arguments."
-  (flet ((->double (x)
-           (float x 0d0)))
-    (let* ((lower-bounds-list
-            (mapcar #'->double
-                    (mklist lower-bounds)))
-           (upper-bounds-list
-            (mapcar #'->double
-                    (mklist upper-bounds)))
-           (samples-list
-            (mapcar #'->double
-                    (mklist samples)))
-           ;; taking advantage of the tensor functions:
-           (deltas (/ (- upper-bounds-list lower-bounds-list)
-                      (- samples-list 1)))
-           (raw-domain
-            (apply #'cartesian-product
-                   (mapcar #'range
-                           lower-bounds-list
-                           upper-bounds-list
-                           deltas)))
-           (domain (if (single deltas)
-                       (first (transpose raw-domain))
-                       raw-domain)))
-      (make-line (zip domain (mapcar fn domain))
-                 :title title
-                 :style style
-                 :point-type point-type
-                 :point-size point-size
-                 :line-type line-type
-                 :line-width line-width
-                 :color color))))
+If the sampling arguments are lists, then fn is assumed to take a list
+of up to two double-float arguments."
+  (let ((lower-bounds
+         (let ((low (getf sampling :low)))
+           (if low
+               low
+               -3d0)))
+        (upper-bounds
+         (let ((high (getf sampling :high)))
+           (if high
+               high
+               3d0)))
+        (nsamples
+         (let ((nsamples (getf sampling :nsamples)))
+           (if nsamples
+               nsamples
+               100))))
+    (make-line (sample-function fn
+                                lower-bounds
+                                upper-bounds
+                                nsamples)
+               :title title
+               :style style
+               :point-type point-type
+               :point-size point-size
+               :line-type line-type
+               :line-width line-width
+               :color color)))
 
 ;; histogram plotting:
 
@@ -811,7 +841,7 @@ up to two double-float arguments."
                     (let ((bin-center (car datum-cons))
                           (bin-value (cdr datum-cons)))
                       (cons (if (listp bin-center)
-                                (mapcar (rcurry #'float 0d0)
+                                (mapcar (alexandria:rcurry #'float 0d0)
                                         bin-center)
                                 (float bin-center 0d0))
                             (float bin-value 0d0))))

@@ -27,6 +27,7 @@
   :author "Gary Hollis"
   :license "GPLv3"
   :depends-on (#:generic-math
+               #:math-functions
                #:error-propogation
                #:gnuplot-interface
                #:map

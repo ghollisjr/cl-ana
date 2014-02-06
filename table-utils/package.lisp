@@ -24,4 +24,4 @@
         :symbol-utils
         :string-utils
         :table)
-  (:export :table-fields->list))
+  (:export :table->plists))

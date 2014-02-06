@@ -21,6 +21,7 @@
 (defpackage :math-functions 
   (:use :cl)
   (:shadow :erf)
+  (:shadow :factorial)
   (:export
    ;; distributions:
    :erf
