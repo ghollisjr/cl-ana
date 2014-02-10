@@ -22,6 +22,7 @@
 
 (defpackage #:macro-utils 
   (:use #:cl
+        #:list-utils
         #:string-utils
         #:symbol-utils
 	#:alexandria)
@@ -29,4 +30,7 @@
 	   :cond-setf
 	   :print-eval
            :when-keywords
-           :symb))
+           :symb
+           :dbind
+           :mvbind
+           :mvsetq))

@@ -43,19 +43,57 @@
   "Resets the memoization hash table for memo-fn"
   (clrhash (gethash memo-fn *memoized-map*)))
 
+(defmacro memoize (fn &key (test 'equal))
+  "Macro for memoizing any function; test argument allows you to
+specify how arguments will be looked up."
+  (with-gensyms (memoized
+                 lookup-value
+                 lookup-stored-p
+                 return-value
+                 args
+                 table
+                 xs)
+    `(let* ((,table
+             (make-hash-table :test ',test))
+            (,memoized
+             (lambda (&rest ,xs)
+               (let ((,args ,xs)) ; for accidental capture
+                 (multiple-value-bind
+                       (,lookup-value ,lookup-stored-p)
+                     (gethash ,args ,table)
+                   (if ,lookup-stored-p
+                       ,lookup-value
+                       (let ((,return-value
+                              (apply ,fn ,args)))
+                         (setf (gethash ,args ,table)
+                               ,return-value)
+                         ,return-value)))))))
+       (setf (gethash ,memoized *memoized-map*)
+             ,table)
+       ,memoized)))
+
+(defun unmemoize (fn)
+  "Removes fn from the memoization lookup table; this prevents access
+to the lookup map from outside the function but allows the function to
+be garbage collected if necessary."
+  (remhash fn *memoized-map*))
+
 (defmacro defun-memoized (function-name arg-list &body body)
-  "Macro for defining a memoized function"
-  (with-gensyms (memo-hash-table result memoed-values)
-    `(let ((,memo-hash-table
-            (make-hash-table :test 'equal)))
-       (defun ,function-name ,arg-list
-	 (let ((,memoed-values
-                (multiple-value-list (gethash (list ,@arg-list)
-                                              ,memo-hash-table))))
-	   (if (second ,memoed-values)
-	       (first ,memoed-values)
-	       (let ((,result (progn ,@body)))
-		 (setf (gethash (list ,@arg-list) ,memo-hash-table) ,result)
-		 ,result))))
-       (setf (gethash #',function-name *memoized-map*)
-             ,memo-hash-table))))
+  "Macro for defining a memoized function.  Note that currently there
+is a small inconvenience in that lambda-lists are not automatically
+added to the documentation used by things like SLIME."
+  (with-gensyms (raw-function memoized defuned xs)
+    `(let* ((,raw-function
+             (lambda (&rest ,xs)
+               (destructuring-bind (,@arg-list)
+                   ,xs
+                 ,@body)))
+            (,memoized
+             (memoize ,raw-function))
+            (,defuned
+             (defun ,function-name (&rest ,xs)
+               (apply ,memoized ,xs))))
+       (setf (gethash (symbol-function ,defuned) *memoized-map*)
+             (gethash ,memoized *memoized-map*))
+       ,memoized
+       ,defuned)))

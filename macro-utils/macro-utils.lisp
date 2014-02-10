@@ -34,6 +34,28 @@
 ;;     `(let ,bindings
 ;;        ,@body)))
 
+;; A little help from On Lisp
+(defmacro abbrev (short long)
+  "Defines abbreviated operator with name short expanding to a call to
+long."
+  `(defmacro ,short (&rest args)
+     `(,',long ,@args)))
+
+(defmacro abbrevs (&rest names)
+  "Defines multiple abbreviations simultaneously.  Arguments are interpreted as:
+
+(abbrevs short1 long1
+         short2 long2
+         ...)"
+  `(progn
+     ,@(mapcar #'(lambda (pair)
+                   `(abbrev ,@pair))
+               (group names 2))))
+
+(abbrevs dbind destructuring-bind
+         mvbind multiple-value-bind
+         mvsetq multiple-value-setq)
+
 (defmacro inrange (xlo op1 x op2 xhi &key (prec 0))
   `(and (if ,xlo
 	    (,op1 (- ,xlo ,prec) ,x)

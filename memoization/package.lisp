@@ -23,6 +23,8 @@
 (defpackage #:memoization 
   (:use #:cl
         #:alexandria)
-  (:export :defun-memoized
+  (:export :memoize
+           :unmemoize
+           :defun-memoized
            :get-memo-map
            :reset-memo-map))
