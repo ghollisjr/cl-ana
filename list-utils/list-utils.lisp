@@ -109,6 +109,31 @@ cdr being the cdrs."
 		(append (reverse x) result)))))
     (nreverse (except-nth-helper x n ()))))
 
+(defun at-indices (lst indices)
+  "Returns the values from lst located at positions given by indices"
+  (loop
+     for i in indices
+     collecting (elt lst i)))
+
+;; (defun at-indices (lst indices)
+;;   "Returns the values from lst located at positions given by indices"
+;;   (labels ((rec (xs inds &optional result (i 0))
+;;              (cond
+;;                ((or (null xs)
+;;                     (null inds))
+;;                 (nreverse result))
+;;                ((equal (first inds) i)
+;;                 (rec (rest xs)
+;;                      (rest inds)
+;;                      (cons (first xs) result)
+;;                      (1+ i)))
+;;                (t
+;;                 (rec (rest xs)
+;;                      inds
+;;                      result
+;;                      (1+ i))))))
+;;     (rec lst indices)))
+
 (defun except-at (xs ns &key (test #'eql) uniquely-sorted)
   "Yields the list of xs except for the elements at the positions in
 ns.  Set uniquely-sorted to t if you want except-at to assume the ns

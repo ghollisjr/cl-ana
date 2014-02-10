@@ -32,6 +32,7 @@
 	   :cartesian-product
 	   :every-nth
 	   :except-nth
+           :at-indices
 	   :except-at
 	   :compress
 	   :list-less-than
