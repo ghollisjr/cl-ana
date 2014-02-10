@@ -29,6 +29,7 @@
                #:package-utils
                #:generic-math
                #:math-functions
+               #:calculus
                ;; Make sure to place tensor after defining all gmath
                ;; generic functions
                #:tensor

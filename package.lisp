@@ -30,6 +30,7 @@
         :binary-tree
         :csv-table
         :math-functions
+        :calculus
         :tensor
         :error-propogation
         :file-utils
