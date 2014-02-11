@@ -30,7 +30,9 @@
   (:export :make-tensor
            :function->tensor
 	   :tensor-ref
+           :tref
            :tensor-flat-ref ; for flattened-index reference
+           :tfref
 	   :tensor-map
 	   :tensor-+
 	   :tensor--

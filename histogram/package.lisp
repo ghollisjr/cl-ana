@@ -38,7 +38,9 @@
 	   :contiguous-histogram
 	   :sparse-histogram
 	   :make-contiguous-hist
+           :make-chist
 	   :make-sparse-hist
+           :make-shist
            :sparse->contiguous
            :contiguous->sparse
 	   :map-contiguous-hist
@@ -59,7 +61,15 @@
 	   :hist-bin-values
            ;; Functional access:
            :hist-map
-           :hist-filter))
+           :hist-filter
+           ;; Abbreviations:
+           :htint
+           :hint
+           :hproj
+           :hiref
+           :hpref
+           :hbv
+           :hdn))
 
 (gmath:use-gmath :histogram)
 

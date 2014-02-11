@@ -115,6 +115,13 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
     (setf (contiguous-hist-bin-values result) bin-values)
     result))
 
+(defun make-chist (dim-spec-plists &key empty-bin-value default-increment)
+  "Abbreviation for make-contiguous-hist"
+  #k(make-contiguous-hist dim-spec-plists
+                          &when-keys
+                          empty-bin-value
+                          default-increment))
+
 (defmethod hist-total-integral ((hist contiguous-histogram))
   (let ((bin-values (hist-bin-values hist)))
     (sum (mapcar #'car bin-values))))

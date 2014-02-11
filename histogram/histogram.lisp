@@ -108,11 +108,11 @@ bound over which to integrate, and the upper bound."))
   values) into the histogram; i.e. increments the bin value by
   weight (which defaults to 1 or whatever you set)."))
 
-(defgeneric hist-index-ref (histogram point)
+(defgeneric hist-index-ref (histogram indices)
   (:documentation "Like aref for an array, but for histograms using
   the index list."))
 
-(defgeneric (setf hist-index-ref) (value histogram point)
+(defgeneric (setf hist-index-ref) (value histogram indices)
   (:documentation "hist-index-ref is setf-able"))
 
 (defgeneric hist-point-ref (histogram point)
@@ -225,3 +225,41 @@ data as either atom for 1-D or lists for any dimensionality."
   (loop
      for datum in data-list
      do (hist-insert histogram (mklist datum))))
+
+;;;; Abbreviations:
+
+(defun htint (histogram)
+  "Abbreviation for hist-total-integral"
+  (hist-total-integral histogram))
+
+(defun hint (histogram &rest axes)
+  "Abbreviation for hist-integrate"
+  (apply #'hist-integrate histogram axes))
+
+(defun hproj (histogram &rest axes)
+  "Abbreviation for hist-project"
+  (apply #'hist-project histogram axes))
+
+(defun hiref (histogram indices)
+  "Abbreviation for hist-index-ref"
+  (hist-index-ref histogram indices))
+
+(defun (setf hiref) (value histogram indices)
+  (setf (hist-index-ref histogram indices)
+        value))
+
+(defun hpref (histogram point)
+  "Abbreviation for hist-point-ref"
+  (hist-point-ref histogram point))
+
+(defun (setf hpref) (value histogram point)
+  (setf (hist-point-ref histogram point)
+        value))
+
+(defun hbv (histogram)
+  "Abbreviation for hist-bin-values"
+  (hist-bin-values histogram))
+
+(defun hdn (histogram)
+  "Abbreviation for hist-dim-names"
+  (hist-dim-names histogram))

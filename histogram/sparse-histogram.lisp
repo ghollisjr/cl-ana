@@ -72,6 +72,13 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 				 'equal))
 	   default-args)))
 
+(defun make-shist (dim-spec-plists &key empty-bin-value default-increment)
+  "Abbreviation for make-sparse-hist"
+  #k(make-sparse-hist dim-spec-plists
+                          &when-keys
+                          empty-bin-value
+                          default-increment))
+
 ;; For now I'll use this; since I'm not taking into account empty bins
 ;; during the other calculations I guess I'm not going to do it here
 ;; either--emphasis on for now.

@@ -146,9 +146,14 @@ sequences given by the optional type argument."
     result))
 
 (defun tensor-ref (tensor &rest subscripts)
+  "References tensor via subscripts"
   (if (sequencep tensor)
       (reduce #'elt subscripts :initial-value tensor)
       tensor))
+
+(defun tref (tensor &rest subscripts)
+  "Abbreviation for tensor-ref; setfable."
+  (apply #'tensor-ref tensor subscripts))
 
 (defun unflatten-index (index dim-sizes)
   (let ((sub index)
@@ -161,11 +166,18 @@ sequences given by the optional type argument."
       (setf sub (floor sub dim-size)))))
 
 (defun tensor-flat-ref (tensor subscript)
+  "References tensor by single subscript; done in such a way to mimick
+the way multidimensional arrays are stored in memory by e.g. C.
+Assumes rectangular tensor."
   (if (sequencep tensor)
       (let* ((dim-list (tensor-dimensions tensor))
              (subscripts (unflatten-index subscript dim-list)))
         (apply #'tensor-ref tensor subscripts))
       tensor))
+
+(defun tfref (tensor subscript)
+  "Abbreviation for tensor-flat-ref; setfable."
+  (tensor-flat-ref tensor subscript))
 
 (defun (setf tensor-flat-ref) (value tensor subscript)
   (when (sequencep tensor)
@@ -174,12 +186,19 @@ sequences given by the optional type argument."
       (setf (apply #'tensor-ref tensor subscripts)
             value))))
 
+(defun (setf tfref) (value tensor subscript)
+  (setf (tensor-flat-ref tensor subscript) value))
+
 (defun (setf tensor-ref) (value tensor &rest subscripts)
   (when (sequencep tensor)
     (let* ((last-sequence
             (apply #'tensor-ref tensor (butlast subscripts)))
            (last-subscript (lastcar subscripts)))
       (setf (elt last-sequence last-subscript) value))))
+
+(defun (setf tref) (value tensor &rest subscripts)
+  (setf (apply #'tensor-ref tensor subscripts)
+        value))
 
 (defun tensor-rank (tensor)
   (labels ((tensor-rank-worker (tensor &optional (result 1))
@@ -232,6 +251,8 @@ object)."
           result))))
 
 (defun tensor-map (fn &rest xs)
+  "Maps fn across xs for arbitrarily deep sequences.  Treats
+non-sequences as sequences of arbitrary depth."
   (let ((first-sequence
          (find-if #'sequencep xs)))
     (if first-sequence
@@ -240,6 +261,10 @@ object)."
                (curry #'tensor-map fn)
                xs)
         (apply fn xs))))
+
+(defun tmap (fn &rest xs)
+  "Abbreviation for tensor-map"
+  (apply #'tensor-map fn xs))
 
 (defun tensor-+ (&rest xs)
   "Convenient nickname for mapping + over tensors."
