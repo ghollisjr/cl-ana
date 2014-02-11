@@ -45,7 +45,7 @@
            :contiguous->sparse
 	   :map-contiguous-hist
            :rectangular-hist-bin-specs
-           :bin-spec-plists
+           :hist-dim-specs
 	   :hist-ndims
 	   :hist-dim-names
 	   :hist-empty-bin-value
@@ -63,13 +63,15 @@
            :hist-map
            :hist-filter
            ;; Abbreviations:
-           :htint
-           :hint
-           :hproj
-           :hiref
-           :hpref
-           :hbv
-           :hdn))
+           :hins ;; hist-insert
+           :htint ;; hist-total-integral
+           :hint ;; hist-integrate
+           :hproj ;; hist-project
+           :hiref ;; hist-index-ref
+           :hpref ;; hist-point-ref
+           :hbv ;; hist-bin-values
+           :hdn ;; hist-dim-names
+           :hds)) ;; hist-dim-specs
 
 (gmath:use-gmath :histogram)
 

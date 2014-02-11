@@ -104,9 +104,10 @@ bound over which to integrate, and the upper bound."))
             indices)))
 
 (defgeneric hist-insert (histogram datum &optional weight)
-  (:documentation "Inserts a value specified by the datum (a list of
-  values) into the histogram; i.e. increments the bin value by
-  weight (which defaults to 1 or whatever you set)."))
+  (:documentation "Inserts a value specified by the datum (An atom for
+  1-D or a list of values for more dimensions) into the histogram;
+  i.e. increments the bin value by weight (which defaults to 1 or
+  whatever you set)."))
 
 (defgeneric hist-index-ref (histogram indices)
   (:documentation "Like aref for an array, but for histograms using
@@ -165,7 +166,7 @@ so that you do not have to worry about all the dimensions in the
 histogram."
   (let* ((result
           (funcall (type-constructor hist)
-                   (bin-spec-plists hist)
+                   (hist-dim-specs hist)
                    :empty-bin-value
                    (hist-empty-bin-value hist)
                    :default-increment
@@ -227,6 +228,13 @@ data as either atom for 1-D or lists for any dimensionality."
      do (hist-insert histogram (mklist datum))))
 
 ;;;; Abbreviations:
+
+(defun hins (histogram datum &optional weight)
+  "Abbreviation for hist-insert"
+  (apply #'hist-insert
+         histogram
+         datum
+         (when weight (list weight))))
 
 (defun htint (histogram)
   "Abbreviation for hist-total-integral"

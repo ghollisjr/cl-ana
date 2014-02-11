@@ -171,11 +171,12 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                                :bin-specs new-bin-specs)))))
       histogram))
 
-(defmethod hist-insert ((hist sparse-histogram) point &optional weight)
+(defmethod hist-insert ((hist sparse-histogram) datum &optional weight)
   (with-accessors ((value-map sparse-hist-value-map)
 		   (empty-bin-value hist-empty-bin-value))
       hist
-    (let ((weight-factor (if weight
+    (let ((point (mklist datum))
+          (weight-factor (if weight
 			     weight
 			     (hist-default-increment hist))))
       (cond-setf (hist-point-ref hist point)
@@ -277,7 +278,7 @@ and third elements respectively."
   (if (equal dim-indices (range 0 (length dim-indices)))
       histogram
       (let ((result
-             (make-sparse-hist (permute (bin-spec-plists histogram)
+             (make-sparse-hist (permute (hist-dim-specs histogram)
                                         dim-indices)
                                :empty-bin-value
                                (hist-empty-bin-value histogram)

@@ -90,7 +90,7 @@ given the bin-spec for a single axis/dimension."
 (defun get-bin-center (bin-specs bin-index)
   (mapcar #'get-bin-center-worker bin-specs bin-index))
 
-(defun bin-spec-plists (histogram)
+(defun hist-dim-specs (histogram)
   "Returns the plists denoting the name, nbins, low, and high for each
 dimension in the histogram."
   (loop
@@ -102,3 +102,9 @@ dimension in the histogram."
                         :nbins nbins
                         :low low
                         :high high))))
+
+;; abbrevations:
+
+(defun hds (histogram)
+  "Abbreviation for hist-dim-specs"
+  (hist-dim-specs histogram))

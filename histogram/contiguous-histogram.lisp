@@ -209,8 +209,9 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 
 ;; note that hist-insert is a stateful function, since this is the
 ;; only efficient way to implement it
-(defmethod hist-insert ((hist contiguous-histogram) data-list &optional weight)
-  (let ((weight-factor (if weight
+(defmethod hist-insert ((hist contiguous-histogram) datum &optional weight)
+  (let ((data-list (mklist datum))
+        (weight-factor (if weight
 			   weight
 			   (hist-default-increment hist))))
     (cond-setf (hist-point-ref hist data-list)
@@ -378,7 +379,7 @@ nil if the point is not inside the histogram domain."
   (if (equal dim-indices (range 0 (length dim-indices)))
       histogram
       (let ((result
-             (make-contiguous-hist (permute (bin-spec-plists histogram)
+             (make-contiguous-hist (permute (hist-dim-specs histogram)
                                             dim-indices)
                                    :empty-bin-value
                                    (hist-empty-bin-value histogram)
