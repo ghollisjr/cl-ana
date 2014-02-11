@@ -58,8 +58,8 @@ names or none of them do."
            (data-table (create-hdf-table
                         file data-table-path data-names-specs))
            (data-field-symbols (table-field-symbols data-table))
-           (bin-spec-plists
-            (let ((result (bin-spec-plists histogram)))
+           (hist-dim-specs
+            (let ((result (hist-dim-specs histogram)))
               (loop
                  for plist in result
                  for i from 0
@@ -71,7 +71,7 @@ names or none of them do."
            (bin-spec-table-path (subpath *histogram-bin-spec-path*))
            (max-string-length
             (loop
-               for plist in bin-spec-plists
+               for plist in hist-dim-specs
                maximizing (length (getf plist :name))))
            (bin-spec-names-specs
             (list (cons "name" (list :array :char max-string-length))
@@ -99,14 +99,14 @@ names or none of them do."
       ;; write bin-spec table
       ;; fix plists
       (loop
-         for plist in bin-spec-plists
+         for plist in hist-dim-specs
          for i from 0
          do (when (not (getf plist :name))
               (setf (getf plist :name)
                     (with-output-to-string (s)
                       (format s "x~a" i)))))
       (loop
-         for plist in bin-spec-plists
+         for plist in hist-dim-specs
          do (progn
               (table-push-fields bin-spec-table
                 (name (getf plist :name))
@@ -131,7 +131,7 @@ sparse-histogram respectively."
                             (subpath *histogram-bin-spec-path*)))
            (bin-spec-table-field-names
             (list "name" "name-length" "low" "high" "nbins"))
-           (bin-spec-plists
+           (hist-dim-specs
             (let ((result ()))
               (table-reduce bin-spec-table
                             bin-spec-table-field-names
@@ -145,9 +145,9 @@ sparse-histogram respectively."
            (histogram
             (cond
               ((equal type :contiguous)
-               (make-contiguous-hist bin-spec-plists))
+               (make-contiguous-hist hist-dim-specs))
               ((equal type :sparse)
-               (make-sparse-hist bin-spec-plists))
+               (make-sparse-hist hist-dim-specs))
               (t (error "Must specify :contiguous or :sparse for
               type."))))
            (data-table
