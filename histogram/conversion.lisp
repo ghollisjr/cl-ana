@@ -25,7 +25,7 @@
 is dangerous in cases where sparse histograms are actually necessary."
   (if (typep histogram 'sparse-histogram)
       (let* ((dim-spec-plists
-              (bin-spec-plists
+              (hist-dim-specs
                histogram))
              (bin-values
               (hist-bin-values histogram))
@@ -42,7 +42,7 @@ is dangerous in cases where sparse histograms are actually necessary."
 is dangerous in cases where sparse histograms are actually necessary."
   (if (typep histogram 'contiguous-histogram)
       (let* ((dim-spec-plists
-              (bin-spec-plists
+              (hist-dim-specs
                histogram))
              (bin-values
               (hist-bin-values histogram))
