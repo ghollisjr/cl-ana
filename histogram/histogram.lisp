@@ -274,9 +274,50 @@ data as either atom for 1-D or lists for any dimensionality."
                             (,fname ,count)))
          ,result))))
 
+(defun empty-set (&optional (test 'equal))
+  (make-hash-table :test test))
+
+(defun set-insert (set object)
+  (multiple-value-bind (val p)
+      (gethash object set)
+    (when (not p)
+      (setf (gethash object set)
+            t))
+    set))
+
+(defun set->list (set)
+  (loop for x being the hash-keys in set
+     collecting x))
+
 (defmacro defhistmath-binary (fname)
-  (with-gensyms (a b count centers a-bin-values b-bin-values result)
-    (let ((lbody
+  (with-gensyms (a
+                 b
+                 res
+                 count
+                 all-centers
+                 centers
+                 a-bin-values
+                 b-bin-values
+                 result)
+    (let ((lrbody
+           `(let ((,all-centers
+                   (histogram::set->list
+                    (let ((,res (histogram::empty-set)))
+                      (reduce #'histogram::set-insert
+                              (mapcar #'cdr (hbv ,a))
+                              :initial-value ,res)
+                      (reduce #'histogram::set-insert
+                              (mapcar #'cdr (hbv ,b))
+                              :initial-value ,res))))
+                  (,result (empty-copy ,a)))
+              (loop
+                 for ,centers in ,all-centers
+                 do (hist-insert ,result
+                                 ,centers
+                                 (,fname (hist-point-ref ,a ,centers)
+                                         (hist-point-ref ,b ,centers))))
+              ,result))
+          (lbody
            `(let ((,a-bin-values
                    (hist-bin-values ,a))
                   (,result (empty-copy ,a)))
@@ -298,7 +339,7 @@ data as either atom for 1-D or lists for any dimensionality."
               ,result)))
       `(progn
          (defmethod ,fname ((,a histogram) (,b histogram))
-           ,lbody)
+           ,lrbody)
          (defmethod ,fname ((,a histogram) ,b)
            ,lbody)
          (defmethod ,fname (,a (,b histogram))
@@ -316,6 +357,28 @@ data as either atom for 1-D or lists for any dimensionality."
           (eval `(defhistmath-binary ,fname))))))
 
 (defhistmaths)
+
+(defmethod protected-div ((a histogram) (b histogram)
+                          &key (protected-value 0))
+  (let ((all-centers
+         (histogram::set->list
+          (let ((res (histogram::empty-set)))
+            (reduce #'histogram::set-insert
+                    (mapcar #'cdr (hbv a))
+                    :initial-value res)
+            (reduce #'histogram::set-insert
+                    (mapcar #'cdr (hbv b))
+                    :initial-value res))))
+        (result (empty-copy a)))
+    (loop
+       for centers in all-centers
+       do (hist-insert result
+                       centers
+                       (protected-div (hist-point-ref a centers)
+                                      (hist-point-ref b centers)
+                                      :protected-value
+                                      protected-value)))
+    result))
 
 ;;;; Internal use:
 
