@@ -26,4 +26,6 @@
 	:iterate)
   (:export :csv-table
 	   :make-csv-table
-	   :open-csv-table))
+	   :open-csv-table
+           ;; function for converting easily from raw strings:
+           :smart-read-from-string))

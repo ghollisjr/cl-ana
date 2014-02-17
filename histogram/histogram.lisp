@@ -89,26 +89,14 @@ bound over which to integrate, and the upper bound."))
   (:documentation "Re-arranges the data in the histogram so that the
   dimensions are permuted according to dim-indices."))
 
-(defun condense-indices (indices)
-  (let* ((sorted (sort (copy-list indices) #'<))
-         (map
-          (let ((result (make-hash-table :test 'equal)))
-            (loop
-               for i from 0
-               for s in sorted
-               do (setf (gethash s result)
-                        i))
-            result)))
-    (mapcar (lambda (x)
-              (gethash x map))
-            indices)))
-
 (defgeneric hist-insert (histogram datum &optional weight)
   (:documentation "Inserts a value specified by the datum (An atom for
   1-D or a list of values for more dimensions) into the histogram;
   i.e. increments the bin value by weight (which defaults to 1 or
   whatever you set)."))
 
+;;;; Not sure if index-ref functions are appropriate for all types of
+;;;; histograms
 (defgeneric hist-index-ref (histogram indices)
   (:documentation "Like aref for an array, but for histograms using
   the index list."))
@@ -118,15 +106,13 @@ bound over which to integrate, and the upper bound."))
 
 (defgeneric hist-point-ref (histogram point)
   (:documentation "Like hist-index-ref but looks up the cell in which
-  point would lie."))
+  point would lie.")
+  ;; default method for non-histograms:
+  (:method (x point)
+    x))
 
 (defgeneric (setf hist-point-ref) (value histogram point)
   (:documentation "hist-point-ref is setf-able"))
-
-(defgeneric subhist (histogram &rest dim-subranges)
-  (:documentation "Selects the histogram only along subranges
-  specified via dim-subranges.  dim-subranges should be a list of axis
-  index/name, lower bound, and upper bound in that order."))
 
 (defgeneric hist-bin-values (histogram)
   (:documentation "Returns a list of bin values consed to the bin
@@ -149,6 +135,12 @@ center, we have to do some footwork here."
                   (cons cdr car))))))
     (mapcar alist-maker
 	    (hist-bin-values hist))))
+
+(defgeneric hist-slice (hist &rest dims)
+  (:documentation "Slices up the histogram along each dimension in
+  dims.  Returns a hash table mapping the bin center list for each
+  dimension in dims to a histogram of the same kind as hist which has
+  only the leftover dimensions."))
 
 ;; Functional access to histograms:
 (defun hist-map (fn hist)
@@ -208,16 +200,6 @@ dimension names of the histogram."
                 count))
             hist))
 
-(defun get-dim-indices (dim-names axes)
-  "Converts axes from a list of either index or name into a list of
-indices by looking up the name when necessary."
-  (mapcar
-   (lambda (s)
-     (if (stringp s)
-         (position s dim-names :test #'equal)
-         s))
-   axes))
-
 ;;;; Ease of use functions:
 
 (defun hist-insert-list (histogram data-list)
@@ -248,6 +230,10 @@ data as either atom for 1-D or lists for any dimensionality."
   "Abbreviation for hist-project"
   (apply #'hist-project histogram axes))
 
+(defun hslice (histogram &rest axes)
+  "Abbreviation for hist-slice"
+  (apply #'hist-slice histogram axes))
+
 (defun hiref (histogram indices)
   "Abbreviation for hist-index-ref"
   (hist-index-ref histogram indices))
@@ -271,3 +257,92 @@ data as either atom for 1-D or lists for any dimensionality."
 (defun hdn (histogram)
   "Abbreviation for hist-dim-names"
   (hist-dim-names histogram))
+
+;;;; Generic math: (still need to handle functions with keyword
+;;;; arguments)
+
+(defmacro defhistmath-unary (fname)
+  (with-gensyms (a count centers a-bin-values result)
+    `(defmethod ,fname ((,a histogram))
+       (let ((,a-bin-values
+              (hist-bin-values ,a))
+             (,result (empty-copy ,a)))
+         (loop
+            for (,count . ,centers) in ,a-bin-values
+            do (hist-insert ,result
+                            ,centers
+                            (,fname ,count)))
+         ,result))))
+
+(defmacro defhistmath-binary (fname)
+  (with-gensyms (a b count centers a-bin-values b-bin-values result)
+    (let ((lbody
+           `(let ((,a-bin-values
+                   (hist-bin-values ,a))
+                  (,result (empty-copy ,a)))
+              (loop
+                 for (,count . ,centers) in ,a-bin-values
+                 do (hist-insert ,result
+                                 ,centers
+                                 (,fname ,count (hist-point-ref ,b ,centers))))
+              ,result))
+          (rbody
+           `(let ((,b-bin-values
+                   (hist-bin-values ,b))
+                  (,result (empty-copy ,b)))
+              (loop
+                 for (,count . ,centers) in ,b-bin-values
+                 do (hist-insert ,result
+                                 ,centers
+                                 (,fname (hist-point-ref ,a ,centers) ,count)))
+              ,result)))
+      `(progn
+         (defmethod ,fname ((,a histogram) (,b histogram))
+           ,lbody)
+         (defmethod ,fname ((,a histogram) ,b)
+           ,lbody)
+         (defmethod ,fname (,a (,b histogram))
+           ,rbody)))))
+
+(defun defhistmaths ()
+  (loop
+     for fname being the hash-keys in *gmath-generic-map*
+     for arglist being the hash-values in *gmath-generic-map*
+     do
+       (case (length arglist)
+         (1
+          (eval `(defhistmath-unary ,fname)))
+         (2
+          (eval `(defhistmath-binary ,fname))))))
+
+(defhistmaths)
+
+;;;; Internal use:
+
+(defgeneric empty-copy (hist)
+  (:documentation "Returns a duplicate of hist but with no filled
+  bins."))
+
+(defun condense-indices (indices)
+  (let* ((sorted (sort (copy-list indices) #'<))
+         (map
+          (let ((result (make-hash-table :test 'equal)))
+            (loop
+               for i from 0
+               for s in sorted
+               do (setf (gethash s result)
+                        i))
+            result)))
+    (mapcar (lambda (x)
+              (gethash x map))
+            indices)))
+
+(defun get-dim-indices (dim-names axes)
+  "Converts axes from a list of either index or name into a list of
+indices by looking up the name when necessary."
+  (mapcar
+   (lambda (s)
+     (if (stringp s)
+         (position s dim-names :test #'equal)
+         s))
+   axes))

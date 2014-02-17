@@ -37,10 +37,13 @@
            :rectangular-histogram
 	   :contiguous-histogram
 	   :sparse-histogram
+           :categorical-histogram
 	   :make-contiguous-hist
            :make-chist
 	   :make-sparse-hist
            :make-shist
+           :make-categorical-hist
+           :make-cathist
            :sparse->contiguous
            :contiguous->sparse
 	   :map-contiguous-hist
@@ -53,11 +56,11 @@
            :hist-total-integral
 	   :hist-integrate
 	   :hist-project
+           :hist-slice
 	   :hist-insert
            :hist-insert-list
 	   :hist-index-ref ; setf-able
 	   :hist-point-ref ; setf-able
-	   ;; :subhist ; subhist is just integration over a subset of the axis
 	   :hist-bin-values
            ;; Functional access:
            :hist-map
@@ -67,6 +70,7 @@
            :htint ;; hist-total-integral
            :hint ;; hist-integrate
            :hproj ;; hist-project
+           :hslice ;; hist-slice
            :hiref ;; hist-index-ref
            :hpref ;; hist-point-ref
            :hbv ;; hist-bin-values
@@ -74,19 +78,3 @@
            :hds)) ;; hist-dim-specs
 
 (gmath:use-gmath :histogram)
-
-;;; My idea for the structure is to have the histogram interface
-;;; defined in this package.  Then I will specialize on it with the
-;;; fixed-width-bin histogram.  On this I will build the contiguous
-;;; and sparse histograms.  I'm not sure how I want to handle error
-;;; bars.  Error bars seem to be value oriented and not specific to
-;;; histograms or anything else really.  This makes me think I should
-;;; define a numeric type which includes an error bar, and then I can
-;;; use this as the data type for the histogram bin counts.  This
-;;; error-value type can potentially be used with the fitting routines
-;;; as well, as you could potentially define all the arithmetic
-;;; operators so that they properly propogate errors as well as
-;;; compute the result.  I know that if you do this for the bin count
-;;; in a histogram with sqrt(n) as the error for bin value n, then
-;;; each time you add a new member it is properly handled (yields
-;;; sqrt(n+1) error).

@@ -122,6 +122,14 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                           empty-bin-value
                           default-increment))
 
+(defmethod empty-copy ((h contiguous-histogram))
+  (with-slots (empty-bin-value
+               default-increment)
+      h
+    (make-chist (hist-dim-specs h)
+                :empty-bin-value empty-bin-value
+                :default-increment default-increment)))
+
 (defmethod hist-total-integral ((hist contiguous-histogram))
   (let ((bin-values (hist-bin-values hist)))
     (sum (mapcar #'car bin-values))))

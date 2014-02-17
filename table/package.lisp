@@ -41,7 +41,6 @@
 	   :table-close
            :table-nrows
 	   :do-table
-           :smart-do-table
            :table-reduce
 	   ;; table-chain:
 	   :open-table-chain

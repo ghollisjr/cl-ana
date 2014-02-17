@@ -22,17 +22,31 @@
 
 (in-package :macro-utils)
 
-;; (defmacro with-gensyms (vars &body body)
+;; with-gensyms provided by Alexandria
 
-;;   "Masks the variables listed in vars with (gensym) symbol names.
-;; When writing a body expression using with-gensyms, be sure to place
-;; the comma in front of variables referring to the (gensym) variables,
-;; as otherwise it will refer a different binding (which sometimes is
-;; exactly what you want)."
+;; Macro for evaluating multiple functions on a single object,
+;; creating bindings for the return values:
+(defmacro function-value-bind (function-symbols object &body body)
+  "Evaluates each function in the list of function symbols on object
+in the order as they occur in function-symbols.  Binds each return
+value to the corresponding function-symbol and executes body inside of
+this lexical scope."
+  (with-gensyms (obj)
+    `(let* ((,obj ,object)
+            ,@(loop
+                 for fs in function-symbols
+                 collect `(,fs (,fs ,obj))))
+       ,@body)))
 
-;;   (let ((bindings (mapcar (lambda (v) `(,v (gensym))) vars)))
-;;     `(let ,bindings
-;;        ,@body)))
+(defmacro map-bind (fn symbols &body body)
+  "Binds each symbol in symbols to the value of (funcall fn symbol) and
+  executes body inside of this lexical scope."
+  (with-gensyms (func)
+    `(let* ((,func ,fn)
+            ,@(loop
+                 for sym in symbols
+                 collecting `(,sym (funcall ,func ,sym))))
+       ,@body)))
 
 ;; A little help from On Lisp
 (defmacro abbrev (short long)
@@ -54,7 +68,9 @@ long."
 
 (abbrevs dbind destructuring-bind
          mvbind multiple-value-bind
-         mvsetq multiple-value-setq)
+         mvsetq multiple-value-setq
+         fvbind function-value-bind
+         mbind map-bind)
 
 (defmacro inrange (xlo op1 x op2 xhi &key (prec 0))
   `(and (if ,xlo
@@ -148,6 +164,15 @@ expression to be passed as the value."
 ;;;; From let-over-lambda: (this should probably be somewhere else)
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
+
+;;;; Anaphoric macros from On Lisp:
+(defmacro alambda (parms &body body)
+  `(labels ((self ,parms ,@body))
+     #'self))
+
+(defmacro aif (test then &optional else)
+  `(let ((it ,test))
+     (if it ,then ,else)))
 
 ;;;; This is actually fully implemented by both loop and the iterate
 ;;;; library

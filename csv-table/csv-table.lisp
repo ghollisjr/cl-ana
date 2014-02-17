@@ -43,9 +43,17 @@
     :initform ()
     :accessor csv-table-field-symbols
     :documentation "Storing the lispified field symbols for
-    efficiency.")))
+    efficiency.")
+   (read-from-string
+    :initarg :read-from-string
+    :initform nil
+    :accessor csv-table-read-from-string
+    :documentation "If nil, values will be read from the CSV as
+    strings and not interpreted; if non-nil, table-load-next-row will
+    attempt to read a LISP value from each field.")))
 
 (defun open-csv-table (filename &key
+                                  (read-from-string nil)
                                   (delimeter #\,)
                                   field-names)
   "Open a CSV file to be read as a table.  Assumes that the first row
@@ -62,7 +70,8 @@
                                               :separator delimeter)))
                          :file file
                          :delimeter delimeter
-                         :row row)))
+                         :row row
+                         :read-from-string read-from-string)))
     (setf (csv-table-field-symbols table)
 	  (table-field-symbols table))
     table))
@@ -81,11 +90,15 @@
   (with-accessors ((file csv-table-file)
 		   (field-symbols csv-table-field-symbols)
 		   (delimeter csv-table-delimeter)
-		   (row csv-table-row))
+		   (row csv-table-row)
+                   (read-from-string csv-table-read-from-string))
       table
-    (let* ((line (read-line file nil nil))
+    (let* ((reader (if read-from-string
+                       #'smart-read-from-string
+                       #'identity))
+           (line (read-line file nil nil))
 	   (csv-data (when line
-		       (mapcar #'smart-read-from-string
+		       (mapcar reader
 			       (first (read-csv line :separator delimeter))))))
       (when line
 	(iter (for s in field-symbols)

@@ -79,6 +79,14 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                           empty-bin-value
                           default-increment))
 
+(defmethod empty-copy ((h sparse-histogram))
+  (with-slots (empty-bin-value
+               default-increment)
+      h
+    (make-shist (hist-dim-specs h)
+                :empty-bin-value empty-bin-value
+                :default-increment default-increment)))
+
 ;; For now I'll use this; since I'm not taking into account empty bins
 ;; during the other calculations I guess I'm not going to do it here
 ;; either--emphasis on for now.

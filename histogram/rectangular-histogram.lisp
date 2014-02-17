@@ -41,6 +41,43 @@
     edge.  Should be computed from a bin specification plist and then
     stored in said order as a list (not a plist).")))
 
+(defmethod hist-slice ((hist rectangular-histogram) &rest dims)
+  (let* ((empty-bin-value
+          (hist-empty-bin-value hist))
+         (default-increment
+          (hist-default-increment hist))
+         (type-constructor
+          (type-constructor hist))
+         (all-dim-specs
+          (hist-dim-specs hist))
+         (all-dims
+          (hdn hist))
+         (slice-indices (get-dim-indices all-dims dims))
+         (remaining-dim-specs
+          (except-at all-dim-specs slice-indices))
+         (remaining-indices
+          (except-at (range 0 (1- (hist-ndims hist)))
+                     slice-indices))
+         (bin-values (hbv hist))
+         (result (make-hash-table :test 'equal)))
+    (loop
+       for (count . centers) in bin-values
+       do (let* ((slice-centers
+                  (at-indices centers slice-indices))
+                 (other-centers
+                  (at-indices centers remaining-indices))
+                 (h (gethash slice-centers result)))
+            (when (not h)
+              (setf h (funcall
+                       type-constructor
+                       remaining-dim-specs
+                       :empty-bin-value empty-bin-value
+                       :default-increment default-increment))
+              (setf (gethash slice-centers result)
+                    h))
+            (hins h other-centers count)))
+    result))
+
 (defun get-bin-index (data-list bin-specs)
   "Computes the bin-index-list from the data-list (a data point).
 Does so for all axes, returns nil if overflow/underflow occurs.

@@ -21,15 +21,37 @@
 
 (in-package :table-utils)
 
-(defun table->plists (table &rest field-names)
+(defun table->plists (table &key
+                              field-names
+                              (reverse-p t))
   "Returns a list of plists containing the field values you specify.
-Only do this for tables that will reasonably fit into memory."
-  (table-reduce table field-names
-                (lambda (state &rest fields)
-                  (push (loop
-                           for fn in field-names
-                           for f in fields
-                           appending (list (keywordify (lispify fn))
-                                           f))
-                        state))
-                :initial-value ()))
+Only do this for tables that will reasonably fit into memory.  If no
+field-names are specified, then all fields will be present in the
+result.
+
+Note that the resulting plists will occur in the reverse order as they
+occur in the table for efficiency."
+  (when (not field-names)
+    (setf field-names
+          (table-field-names table)))
+  (let ((result
+         (table-reduce table field-names
+                       (lambda (state &rest fields)
+                         (push (loop
+                                  for fn in field-names
+                                  for f in fields
+                                  appending (list (keywordify (lispify fn))
+                                                  f))
+                               state))
+                       :initial-value ())))
+    (if reverse-p
+        (nreverse result)
+        result)))
+
+(defun table-row->plist (table field-names)
+  "Reads the current row from table and generates a plist containing
+the field values of each field-name in the row."
+  (loop
+     for fn in field-names
+     appending (list (keywordify (lispify fn))
+                     (table-get-field table fn))))

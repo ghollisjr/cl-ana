@@ -42,4 +42,5 @@
 	       (:file "rectangular-histogram")
 	       (:file "contiguous-histogram")
 	       (:file "sparse-histogram")
+               (:file "categorical-histogram")
                (:file "conversion")))

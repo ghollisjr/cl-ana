@@ -24,4 +24,5 @@
         :symbol-utils
         :string-utils
         :table)
-  (:export :table->plists))
+  (:export :table->plists
+           :table-row->plist))

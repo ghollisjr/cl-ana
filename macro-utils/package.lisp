@@ -30,7 +30,14 @@
 	   :cond-setf
 	   :print-eval
            :when-keywords
+           :abbrev
+           :abbrevs
+           :funcall-bind
+           :map-bind
            :symb
            :dbind
            :mvbind
-           :mvsetq))
+           :mvsetq
+           :fvbind
+           :it ; for anaphoric macros
+           :aif))
