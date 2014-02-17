@@ -27,6 +27,7 @@
   :license "GPLv3"
   :depends-on (#:typespec
                #:histogram
+               #:macro-utils
                #:hdf-utils
                #:hdf-table)
   :components ((:file "package")

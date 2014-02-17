@@ -149,11 +149,11 @@ can use the state argument to collect a list of values for example."
                 collect (table-get-field table f))))
       ;; initial row read:
       (if (table-load-next-row table)
-          (do ((field-vals (get-fields) (get-fields))
-               (state initial-value (apply fn state field-vals))
-               (read-status (table-load-next-row table)
-                            (table-load-next-row table)))
-              ((not read-status) state))
+          (do* ((field-vals nil (get-fields))
+                (state initial-value (apply fn state field-vals))
+                (read-status t
+                             (table-load-next-row table)))
+               ((not read-status) state))
           initial-value))))
 
 (defmacro do-table ((rowvar table) field-selections

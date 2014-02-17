@@ -190,5 +190,11 @@ handle inside of the macro body."
        ,body-with-close)))
 
 (defun hdf-mkgroup (file group-name)
-  "Creates a group with name group-name in hdf-file file"
-  (h5gclose (h5gcreate1 file group-name 0)))
+  "Creates a group with name group-name in hdf-file file; returns path
+to group with final '/' included."
+  (let ((group-name
+         (if (not (equal (last-elt group-name) #\/))
+             group-name
+             (subseq group-name 0 (1- (length group-name))))))
+    (h5gclose (h5gcreate1 file group-name 0))
+    (string-append group-name "/")))

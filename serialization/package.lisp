@@ -22,6 +22,7 @@
   (:use :cl
         :histogram
         :hdf-utils
+        :macro-utils
         :typespec
         :table
         :hdf-table)

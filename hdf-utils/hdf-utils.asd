@@ -27,6 +27,7 @@
   :license "GPLv3"
   :depends-on (#:cffi
                #:pathname-utils
+               #:string-utils
                #:macro-utils
                #:hdf-cffi
                #:alexandria)
