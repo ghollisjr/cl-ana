@@ -24,9 +24,9 @@ So far the functionality this library provides includes:
   Adding a new table type is as easy as extending the table class and
   defining 4 functions for the table type.
 
-* Histograms: Supports contiguous and sparse histograms of arbitrary
-  dimensions.  Provides functional access to histograms via mapping
-  (which allows reducing) and filtering.
+* Histograms: Supports categorical, contiguous, and sparse histograms
+  of arbitrary dimensions.  Provides functional access to histograms
+  via mapping (which allows reducing) and filtering.
 
 * Nonlinear least squares fitting: Allows plain-old lisp functions to
   be fitted to data using the GNU Scientific Library (GSL); infers the
