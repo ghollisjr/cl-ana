@@ -705,11 +705,13 @@ in the page."
 ;; analytic functions:
 (defmethod make-line ((s string) &key
                                    (title "" title-given-p)
+                                   (style "lines")
                                    line-type
                                    line-width
                                    color)
   (apply #'make-instance 'analytic-line
          :fn-string s
+         :style style
          :color color
          :line-type line-type
          :line-width line-width
@@ -829,11 +831,13 @@ of up to two double-float arguments."
 ;; histogram plotting:
 
 ;; still need to allow for error bars
-(defmethod make-line ((histogram histogram) &key
-                                         (title "histogram")
-                                         fill-style
-                                         fill-density
-                                         color)
+(defmethod make-line ((histogram histogram)
+                      &key
+                        (title "histogram")
+                        (style nil style-supplied-p)
+                        fill-style
+                        fill-density
+                        color)
   (let* ((hist (sparse->contiguous histogram))
          (ndims (hist-ndims hist))
          (bin-data
@@ -858,10 +862,12 @@ of up to two double-float arguments."
                             :fill-style fill-style
                             :fill-density fill-density
                             :style
-                            (if (subtypep (type-of first-dependent)
-                                          'err-num)
-                                "boxerrorbars"
-                                "boxes")
+                            (if style-supplied-p
+                                style
+                                (if (subtypep (type-of first-dependent)
+                                              'err-num)
+                                    "boxerrorbars"
+                                    "boxes"))
                             :color color))))
       (2
        (if (or (not (consp first-independent))
@@ -870,6 +876,8 @@ of up to two double-float arguments."
            (make-instance 'data-line
                           :title title
                           :data bin-data
-                          :style "image"
+                          :style (if style-supplied-p
+                                     style
+                                     "image")
                           :color color)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
