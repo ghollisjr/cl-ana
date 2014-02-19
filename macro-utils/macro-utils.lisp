@@ -161,6 +161,21 @@ expression to be passed as the value."
  #\# #\k #'when-keywords-transformer-reader-macro)
 ;;)
 
+;; Sometimes this is useful:
+(defmacro defun-with-setf (fname (&rest lambda-list) &body body)
+  "Defines function along with setfable version when body is a single
+expression; throws error otherwise.  This is limited to cases where
+the expression is already understandable to setf."
+  (if (length-equal body 1)
+      (alexandria:with-gensyms (value)
+        `(progn
+           (defun ,fname ,lambda-list
+             ,@body)
+           (defun (setf ,fname) (,value ,@lambda-list)
+             (setf ,@body
+                   ,value))))
+      (error "Cannot define-with-setf for more than one body expression")))
+
 ;;;; From let-over-lambda: (this should probably be somewhere else)
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))

@@ -30,6 +30,7 @@
 	   :cond-setf
 	   :print-eval
            :when-keywords
+           :defun-with-setf
            :abbrev
            :abbrevs
            :funcall-bind
