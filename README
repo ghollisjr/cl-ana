@@ -127,5 +127,5 @@ a no-nonsense gnuplot session manager written in C.
 
 I use SBCL (http://www.sbcl.org/) almost exclusively; however, I also
 intentionally try to ensure that all the code only assumes what the CL
-standard provides.  Anytime implementation-specific functionality is
+standard provides.  Any time implementation-specific functionality is
 needed I try to use third party libraries for this.
