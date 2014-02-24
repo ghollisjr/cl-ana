@@ -22,4 +22,5 @@
 
 (defpackage #:map 
   (:use #:cl)
-  (:export :map->alist))
+  (:export :map->alist
+           :map->hash-table))

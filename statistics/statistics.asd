@@ -27,6 +27,8 @@
   :author "Gary Hollis"
   :license "GPLv3"
   :depends-on (#:generic-math
-               #:list-utils)
+               #:macro-utils
+               #:list-utils
+               #:histogram)
   :components ((:file "package")
 	       (:file "statistics")))

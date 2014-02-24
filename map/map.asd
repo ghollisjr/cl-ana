@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; map.asd
 
 (asdf:defsystem #:map
   :serial t
@@ -27,6 +26,6 @@
   things which behave like maps (in the mathematical sense), e.g. hash
   tables, alists, etc."
   :license "GPLv3"
-  :depends-on ()
+  :depends-on (#:hash-table-utils)
   :components ((:file "package")
 	       (:file "map")))

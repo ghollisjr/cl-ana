@@ -34,6 +34,8 @@
 	   :minkowski-norm
 	   :minkowski-norm2 ; minkowski-norm^2
            :lorentz-phi
-           :lorentz-theta))
+           :lorentz-theta
+           :gamma
+           :gamma-from-beta2))
 
 (gmath:use-gmath :lorentz)

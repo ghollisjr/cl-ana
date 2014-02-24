@@ -111,8 +111,10 @@ have exactly 4 elements each."
 
 (defun gamma-from-beta2 (beta2)
   "Computes gamma from beta^2, for efficiency purposes"
-  (/ (sqrt (- 1
-	      beta2))))
+  ;; protection against infinities:
+  (when (not (= beta2 1))
+    (/ (sqrt (- 1
+                beta2)))))
 
 (defun lorentz-vector-spatial (vector)
   "Returns spatial part of the lorentz-vector"

@@ -51,6 +51,7 @@
         :lorentz
         :macro-utils
         :map
+        :hash-table-utils
         :memoization
         :ntuple-table
         :plotting

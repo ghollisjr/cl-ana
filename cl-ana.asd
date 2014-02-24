@@ -50,5 +50,7 @@
                #:table-viewing
                #:int-char
                #:clos-utils
-               #:serialization)
+               #:serialization
+               #:hash-table-utils
+               #:map)
   :components ((:file "package")))

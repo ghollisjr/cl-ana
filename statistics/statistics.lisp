@@ -20,17 +20,48 @@
 ;;;; ghollisjr@gmail.com
 (in-package :statistics)
 
-(defun mean (data)
-  "Returns mean (and count) of data"
-  (let ((count (length data)))
-    (values (/ (sum data) count)
-            count)))
+(defgeneric mean (data)
+  (:documentation "Returns mean (and count) of data")
+  (:method (data)
+    (let ((count (length data)))
+      (values (/ (sum data) count)
+              count)))
+  (:method ((hist histogram))
+    (let ((count (htint hist)))
+      (values
+       (/ (sum
+           (mapcar (lambda (x)
+                     (dbind (c x)
+                            x
+                            (* c x)))
+                   (hbv hist)))
+          count)
+       count))))
 
-(defun variance (data)
+(defgeneric variance (data)
+  (:documentation "Returns variance of data")
+  (:method (data)
+    (multiple-value-bind (mean count)
+        (mean data)
+      (/ (sum (mapcar (lambda (x) (expt (- x mean) 2))
+                      data))
+         (- count 1))))
+  (:method ((hist histogram))
+    (multiple-value-bind (mean count)
+        (mean hist)
+      (/ (sum (mapcar (lambda (x)
+                        (dbind (c x) x
+                               (* c (expt (- x mean) 2))))
+                      (hbv hist)))
+         (- count 1)))))
+
+(defmethod variance ((hist histogram))
   (multiple-value-bind (mean count)
-      (mean data)
-    (/ (sum (mapcar (lambda (x) (expt (- x mean) 2))
-                    data))
+      (mean hist)
+    (/ (sum (mapcar (lambda (x)
+                      (dbind (c x) x
+                             (* c (expt (- x mean) 2))))
+                    (hbv hist)))
        (- count 1))))
 
 (defun standard-deviation (data)

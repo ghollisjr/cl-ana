@@ -40,5 +40,9 @@
            :mvbind
            :mvsetq
            :fvbind
-           :it ; for anaphoric macros
-           :aif))
+           ;; anaphoric macros:
+           :it
+           :self
+           :alambda
+           :aif
+           :awhen))

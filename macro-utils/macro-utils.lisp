@@ -189,6 +189,11 @@ the expression is already understandable to setf."
   `(let ((it ,test))
      (if it ,then ,else)))
 
+(defmacro awhen (test &body body)
+  `(let ((it ,test))
+     (when it
+       ,@body)))
+
 ;;;; This is actually fully implemented by both loop and the iterate
 ;;;; library
 ;;;; Useful for simple while loops:

@@ -42,3 +42,7 @@
        for k being the hash-keys of obj
        for v being the hash-values of obj
        collect (cons k v))))
+
+(defun map->hash-table (object &optional test)
+  (alist->hash-table
+   (map->alist object)))

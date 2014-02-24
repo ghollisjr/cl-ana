@@ -18,21 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:statistics 
-  (:use :cl
-        :macro-utils
-        :list-utils
-        :histogram)
-  (:shadow :mean
-           :standard-deviation)
-  (:export :mean
-           :mean-accumulator
-           :standard-deviation
-           :skewness
-           :kirtosis
-           :moving-average
-           :quantiles
-           :percentiles
-           :probability-plot))
 
-(gmath:use-gmath :statistics)
+(defpackage #:hash-table-utils
+  (:use :cl)
+  (:export :hmap
+           :alist->hash-table))
