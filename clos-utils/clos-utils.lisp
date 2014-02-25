@@ -64,18 +64,33 @@ represents."
   (every-nth clist 2 2))
 
 (defun object->clist (obj)
-  "Returns a clist for the object obj."
-  (cons (class-name (class-of obj))
-        (mapcan #'list
-                (slot-keyword-names obj)
-                (slot-values obj))))
+  "Returns a clist for the object obj.  Supports structures/CLOS
+classes, arbitrary cons structures, nested sequences of any structure;
+all other objects are returned as-is."
+  (cond
+    ((slot-names obj)
+     (cons (class-name (class-of obj))
+           (mapcan #'list
+                   (slot-keyword-names obj)
+                   (mapcar #'object->clist (slot-values obj)))))
+    ((null obj)
+     nil)
+    ((stringp obj)
+     obj)
+    ((consp obj)
+     (cons (object->clist (car obj))
+           (object->clist (cdr obj))))
+    ((sequencep obj)
+     (tensor-map #'object->clist obj))
+    (t obj)))
 
 (defun object->plist (obj)
   "Returns a plist for the object obj."
   (rest (object->clist obj)))
 
 (defun clist->object (clist)
-  "Returns "
+  "Currently only works for one-level-deep clists; needs to be fixed
+to allow arbitrary depth."
   (apply #'make-instance
          (clist-type clist)
          (mapcan #'list

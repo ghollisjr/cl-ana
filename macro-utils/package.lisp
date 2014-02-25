@@ -22,6 +22,7 @@
 
 (defpackage #:macro-utils 
   (:use #:cl
+        #:split-sequence
         #:list-utils
         #:string-utils
         #:symbol-utils
@@ -45,4 +46,8 @@
            :self
            :alambda
            :aif
-           :awhen))
+           :awhen
+           ;; macro for timing processes (returning time)
+           :time-proc
+           ;; handling lambda lists:
+           :lambda-list-call-form))

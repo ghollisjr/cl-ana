@@ -194,6 +194,34 @@ the expression is already understandable to setf."
      (when it
        ,@body)))
 
+;; A more convenient version of the time function:
+
+(defmacro time-proc (&body body)
+  "Times the execution of body and returns multiple values: 1. Real
+time in seconds, 2. Run time in seconds, and the rest being the return
+values of body."
+  (with-gensyms (ups
+                 real-start-time
+                 real-end-time
+                 run-start-time
+                 run-end-time
+                 values)
+    `(let ((,ups internal-time-units-per-second)
+           (,real-start-time
+            (get-internal-real-time))
+           (,run-start-time (get-internal-run-time))
+           (,values
+            (multiple-value-list
+             (progn ,@body)))
+           (,run-end-time (get-internal-run-time))
+           (,real-end-time (get-internal-real-time)))
+       (apply #'values
+              (/ (float (- ,real-end-time ,real-start-time) 0d0)
+                 (float ,ups 0d0))
+              (/ (float (- ,run-end-time ,run-start-time) 0d0)
+                 (float ,ups 0d0))
+              ,values))))
+
 ;;;; This is actually fully implemented by both loop and the iterate
 ;;;; library
 ;;;; Useful for simple while loops:
@@ -205,3 +233,59 @@ the expression is already understandable to setf."
 ;;     `(do ((,test ,boolean ,boolean))
 ;;          ((not ,test))
 ;;        ,@body)))
+
+;;;; lambda-list functions:
+
+(defun ll-type (lambda-list)
+  "Returns the type of lambda-list for a function which lambda-list
+corresponds to."
+  (cond
+    ((member '&key lambda-list)
+     :key)
+    ((member '&rest lambda-list)
+     :rest)
+    ((member '&optional lambda-list)
+     :optional)
+    (t t)))
+
+(defun args->keyword-args (args)
+  (mapcan (lambda (x)
+            (macrolet ((key (x)
+                         `(keywordify (lispify ,x))))
+              (if (listp x)
+                  (destructuring-bind (arg arg-def)
+                      x
+                    (list (key arg)
+                          arg))
+                  (list (key x)
+                        x))))
+          args))
+
+(defun lambda-list-call-form (fname lambda-list)
+  "Returns the appropriate lambda-list call form for a function named
+fname and a lambda-list given by lambda-list.  Macros are more
+difficult since lambda lists can have nested structure, so I'm only
+considering function lambda lists for now.  This still works for
+macros which have this limited sort of lambda list however.
+
+One issue that is not currently resolved is supplying arguments which
+have a -supplied-p argument.  Functions can be handled, but not in the
+same way as macros (since apply does not work).
+
+Also: &rest is handled only for functions becuause, again, there is no
+practical way to use this method for macros."
+  (case (ll-type lambda-list)
+    (:key
+     (destructuring-bind (xs key-xs)
+         (split-sequence '&key lambda-list)
+       `(,fname ,@xs ,@(args->keyword-args key-xs))))
+    (:optional
+     (destructuring-bind (xs optional-xs)
+         (split-sequence '&optional lambda-list)
+       `(,fname ,@xs ,@(mapcar (compose #'car #'mklist) optional-xs))))
+    (:rest
+     (destructuring-bind (xs rest-xs)
+         (split-sequence '&rest lambda-list)
+       `(apply #',fname ,@xs ,(car rest-xs))))
+    (t
+     `(,fname ,@lambda-list))))

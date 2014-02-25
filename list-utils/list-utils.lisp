@@ -53,6 +53,20 @@ cdr being the cdrs."
 	     (cons (nreverse ls) (nreverse rs)))))
     (unzip-helper xs () ())))
 
+;; Useful for creating mappings from data to values:
+(defun mapzip (fn &rest lists)
+  "Returns an alist mapping the list of corresponding elements from
+each input list to the value of fn for those values; it's just zipping
+together the arguments with the value of fn.  If only one list is
+given, the elements are mapped directly (i.e. not in a list)"
+  (apply #'mapcar
+         (if (single lists)
+             (lambda (x)
+               (cons x (funcall fn x)))
+             (lambda (&rest xs)
+               (cons xs (apply fn xs))))
+         lists))
+
 (defun transpose (xs)
   (labels
       ((transpose-worker (xs result)

@@ -28,6 +28,7 @@
   (:export :range
 	   :zip
 	   :unzip
+           :mapzip
 	   :transpose
 	   :cartesian-product
 	   :every-nth

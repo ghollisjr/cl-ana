@@ -27,6 +27,7 @@
   :author "Gary Hollis"
   :license "GPLv3"
   :depends-on (#:list-utils
-               #:symbol-utils)
+               #:symbol-utils
+               #:tensor)
   :components ((:file "package")
                (:file "clos-utils")))

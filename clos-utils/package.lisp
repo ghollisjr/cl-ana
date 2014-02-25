@@ -20,6 +20,7 @@
 ;;;; ghollisjr@gmail.com
 (defpackage #:clos-utils
   (:use :cl
+        :tensor
         :list-utils
         :symbol-utils)
   (:export :slot-names

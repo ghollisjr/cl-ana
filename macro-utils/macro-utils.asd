@@ -24,7 +24,8 @@
   :description "Basic macro utilities"
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on (#:list-utils
+  :depends-on (#:split-sequence
+               #:list-utils
                #:string-utils
                #:symbol-utils
                #:alexandria)
