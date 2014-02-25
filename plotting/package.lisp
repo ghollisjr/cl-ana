@@ -49,6 +49,9 @@
            :draw
            :page-next-id
            :page-id
+           :page-gnuplot-session
+           :page-shown-title
+           :page-default-dimensions
            :page-dimensions
            :page-scale
            :page-plots
