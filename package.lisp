@@ -33,6 +33,7 @@
         :calculus
         :tensor
         :error-propogation
+        :quantity
         :file-utils
         :fitting
         :functional-utils

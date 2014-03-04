@@ -34,6 +34,7 @@
                ;; generic functions
                #:tensor
                #:error-propogation
+               #:quantity
                #:table
                #:table-utils
                #:hdf-table

@@ -1,0 +1,227 @@
+;;;; cl-ana is a Common Lisp data analysis library.
+;;;; Copyright 2013, 2014 Gary Hollis
+;;;; 
+;;;; This file is part of cl-ana.
+;;;; 
+;;;; cl-ana is free software: you can redistribute it and/or modify it
+;;;; under the terms of the GNU General Public License as published by
+;;;; the Free Software Foundation, either version 3 of the License, or
+;;;; (at your option) any later version.
+;;;; 
+;;;; cl-ana is distributed in the hope that it will be useful, but
+;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;;; General Public License for more details.
+;;;; 
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
+;;;;
+;;;; You may contact Gary Hollis (me!) via email at
+;;;; ghollisjr@gmail.com
+(in-package :quantity)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass quantity ()
+    ((scale
+      :initform 0
+      :initarg :scale
+      :accessor quantity-scale
+      :documentation "The numerical coefficient expressing the number of
+    units the quantity represents.")
+     (unit
+      :initform 1
+      :initarg :unit
+      :accessor quantity-unit
+      :documentation "The unit the quantity is measured via."))))
+
+(defmethod initialize-instance :after ((q quantity) &key)
+  (with-accessors ((unit quantity-unit))
+      q
+    unit
+    (setf unit (unit-standard-order unit))))
+
+(defmethod print-object ((q quantity) stream)
+  (format stream "#q~S" ; ~S tries to print READable formatting.
+          (cons (quantity-scale q)
+                (mklist (quantity-unit q)))))
+
+(defun quantity-transformer-reader-macro (stream subchar arg)
+  (let* ((expr (read stream t)))
+    `(make-instance 'quantity
+                    :scale ,(first expr)
+                    :unit
+                    ,(cons 'list
+                           (loop
+                              for e in (rest expr)
+                              collecting
+                                (if (listp e)
+                                    (cons 'list
+                                          e)
+                                    e))))))
+
+(set-dispatch-macro-character
+ #\# #\q #'quantity-transformer-reader-macro)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defgeneric quantity (obj)
+    (:documentation "Forms a quantity from more basic types, such as
+  symbols and numbers.")
+    ;; For default behavior:
+    (:method (x)
+      x))
+  
+  ;; defquantity defines a method on the quantity generic function
+  
+  ;;(eval-when (:compile-toplevel :load-toplevel)
+  (defquantity quantity
+      q q)
+  
+  (defquantity number
+      n (make-instance 'quantity :scale n))
+  
+  ;; For base units
+  (defquantity symbol
+      s (make-instance 'quantity :scale 1 :unit s))
+  
+  ;; For err-nums:
+  (defquantity err-num
+      e (make-instance 'quantity :scale e :unit 1)))
+
+(defmacro define-unit (unit-symbol quantity)
+  "Defines a derived unit."
+  (with-gensyms (x)
+    `(defmethod quantity ((,x (eql ,unit-symbol)))
+       ,quantity)))
+
+;;; Generic math functions for quantities:
+
+(defgeneric quantity-if-necessary (q)
+  (:documentation "Returns a quantity only if necessary."))
+
+(defmethod quantity-if-necessary ((q quantity))
+  (with-slots (scale unit)
+      q
+    (if (or (null unit)
+            (equal unit 1)
+            (and (listp unit)
+                 (or (and (length-equal unit 2)
+                          (numberp (second unit))
+                          (zerop (second unit)))
+                     (and (length-equal unit 1)
+                          (listp (first unit))
+                          (numberp (second (first unit)))
+                          (zerop (second (first unit)))))))
+        scale
+        q)))
+
+(defmethod quantity-if-necessary (x)
+  x)
+
+;;;; Methods on quantities are always done via the
+;;;; define-quantity-method macro which defines all appropriate
+;;;; methods for quantities and symbols as quantities.
+;;;;
+;;;; Method bodies are for quantity-only arguments; other combinations
+;;;; are generated automatically making use of the quantity generic
+;;;; function.
+;;;;
+;;;; At the moment, I do not have a centralized way to add a type to
+;;;; the automatic quantity method generation, but the procedure for doing so is to simply
+
+;; Note that addition & subtraction assume you know what you're doing,
+;; no dimension checking.
+
+(define-quantity-method add (ql qr)
+  (make-instance 'quantity
+                 :scale (add (quantity-scale ql)
+                             (quantity-scale qr))
+                 :unit (quantity-unit ql)))
+
+(define-quantity-method sub (ql qr)
+  (make-instance 'quantity
+                 :scale (sub (quantity-scale ql)
+                             (quantity-scale qr))
+                 :unit (quantity-unit ql)))
+
+(define-quantity-method unary-sub (q)
+  (make-instance 'quantity
+                 :scale (unary-sub (quantity-scale q))
+                 :unit (quantity-unit q)))
+
+(define-quantity-method mult (ql qr)
+  (quantity-if-necessary
+   (with-accessors ((scalel quantity-scale)
+                    (unitl quantity-unit))
+       ql
+     (with-accessors ((scaler quantity-scale)
+                      (unitr quantity-unit))
+         qr
+       (make-instance 'quantity
+                      :scale (* scalel scaler)
+                      :unit (unit-mult unitl unitr))))))
+
+(define-quantity-method unary-div (q)
+  (with-slots (scale unit)
+      q
+    (make-instance 'quantity
+                   :scale (unary-div scale)
+                   :unit (unit-div 1 unit))))
+
+(define-quantity-method div (ql qr)
+  (quantity-if-necessary
+   (with-accessors ((scalel quantity-scale)
+                    (unitl quantity-unit))
+       ql
+     (with-accessors ((scaler quantity-scale)
+                      (unitr quantity-unit))
+         qr
+       (make-instance 'quantity
+                      :scale (div scalel scaler)
+                      :unit (unit-div unitl unitr))))))
+
+;; Could provide the protected-div functions, but I'm lazy right now.
+
+;; Note that expt treats x as a pure number, ignoring the unit for it
+;; as a quantity.
+
+(define-quantity-method expt (q x)
+  (with-slots (scale unit)
+      q
+    (let ((x (quantity-scale x)))
+      (make-instance 'quantity
+                     :scale (expt scale x)
+                     :unit (unit-expt unit x)))))
+
+(define-quantity-method sqrt (q)
+  (expt q 1/2))
+
+;;; Metric prefixes (e.g. mega, micro, kilo, ...)
+
+(defun ten-factor (x y)
+  (* x
+     (expt 10 y)))
+
+(defmacro define-metric-prefix (prefix-name exponent)
+  `(defun ,prefix-name (x)
+     (ten-factor x ,exponent)))
+
+(define-metric-prefix yotta  24)
+(define-metric-prefix zetta  21)
+(define-metric-prefix exa    18)
+(define-metric-prefix peta   15)
+(define-metric-prefix tera   12)
+(define-metric-prefix giga   9)
+(define-metric-prefix mega   6)
+(define-metric-prefix kilo   3)
+(define-metric-prefix hecto  2)
+(define-metric-prefix deca   1)
+(define-metric-prefix deci  -1)
+(define-metric-prefix centi -2)
+(define-metric-prefix milli -3)
+(define-metric-prefix micro -6)
+(define-metric-prefix nano  -9)
+(define-metric-prefix pico  -12)
+(define-metric-prefix femto -15)
+(define-metric-prefix atto  -18)
+(define-metric-prefix zepto -21)
+(define-metric-prefix yocto -24)
