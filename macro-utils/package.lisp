@@ -50,4 +50,8 @@
            ;; macro for timing processes (returning time)
            :time-proc
            ;; handling lambda lists:
-           :lambda-list-call-form))
+           :lambda-list-call-form
+           ;; context macros:
+           :*context*
+           :with-context
+           :in-context))

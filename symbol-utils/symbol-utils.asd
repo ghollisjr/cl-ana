@@ -23,6 +23,6 @@
   :description "Basic utilities for working with symbols"
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on ()
+  :depends-on (#:list-utils)
   :components ((:file "package")
 	       (:file "symbol-utils")))

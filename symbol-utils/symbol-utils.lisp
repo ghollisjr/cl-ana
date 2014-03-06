@@ -25,3 +25,17 @@
   (intern
    (string symbol-or-string)
    (package-name :keyword)))
+
+(defun keysymb (args)
+  "Returns a keyword symbol formed by symbol versions of each element
+in args interspersed with hyphens (-)."
+  (intern
+   (apply #'concatenate 'string
+          (intersperse "-"
+                       (mapcar #'string args)))
+   :keyword))
+
+(defmacro keysymbq (&rest args)
+  "Convenient macro for using keysymb; quotes the list of args and
+passes it to keysymb."
+  `(keysymb (quote ,args)))

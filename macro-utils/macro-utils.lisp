@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -289,3 +289,17 @@ practical way to use this method for macros."
        `(apply #',fname ,@xs ,(car rest-xs))))
     (t
      `(,fname ,@lambda-list))))
+
+;;;; Context macros: It seems beneficial to create a context (a list
+;;;; variable storing each layer of nested context) for certain code
+;;;; structures; here's my implementation.
+
+(defvar *context* nil)
+
+(defmacro with-context (val &body body)
+  `(let ((*context* (append *context*
+                            (quote ,(mklist val)))))
+     ,@body))
+
+(defmacro in-context (&rest vals)
+  `(append *context* (quote ,vals)))

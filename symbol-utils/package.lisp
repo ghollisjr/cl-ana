@@ -19,5 +19,8 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 (defpackage #:symbol-utils 
-  (:use :cl)
-  (:export :keywordify))
+  (:use :cl
+        :list-utils)
+  (:export :keywordify
+           :keysymb
+           :keysymbq))

@@ -67,6 +67,17 @@ given, the elements are mapped directly (i.e. not in a list)"
                (cons xs (apply fn xs))))
          lists))
 
+(defun intersperse (obj lst)
+  "Inserts obj in between each pair of elements in lst"
+  (labels ((rec (lst &optional result)
+             (if (null (cdr lst))
+                 (nreverse (cons (car lst)
+                                 result))
+                 (rec (rest lst) (cons obj
+                                       (cons (car lst)
+                                             result))))))
+    (rec lst)))
+
 (defun transpose (xs)
   (labels
       ((transpose-worker (xs result)

@@ -29,6 +29,7 @@
 	   :zip
 	   :unzip
            :mapzip
+           :intersperse
 	   :transpose
 	   :cartesian-product
 	   :every-nth
