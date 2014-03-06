@@ -21,5 +21,8 @@
 
 (defpackage #:hash-table-utils
   (:use :cl)
-  (:export :hmap
+  (:export :hash-table->alist
+           :hash-keys
+           :hash-values
+           :hmap
            :alist->hash-table))

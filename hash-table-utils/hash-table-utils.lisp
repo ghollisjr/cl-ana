@@ -21,6 +21,18 @@
 
 (in-package :hash-table-utils)
 
+(defun hash-table->alist (hash-table)
+  (loop
+     for k being the hash-keys of hash-table
+     for v being the hash-values of hash-table
+     collect (cons k v)))
+
+(defun hash-keys (hash-table)
+  (mapcar #'car (hash-table->alist hash-table)))
+
+(defun hash-values (hash-table)
+  (mapcar #'cdr (hash-table->alist hash-table)))
+
 (defun hmap (fn hash-table)
   "hmap is a more functional version of maphash; instead of returning
 nil and relying on mutable state, hmap returns a new hash table with

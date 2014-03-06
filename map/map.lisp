@@ -38,10 +38,7 @@
   (:method ((obj list))
     obj)
   (:method ((obj hash-table))
-    (loop
-       for k being the hash-keys of obj
-       for v being the hash-values of obj
-       collect (cons k v))))
+    (hash-table->alist obj)))
 
 (defun map->hash-table (object &optional test)
   (alist->hash-table
