@@ -289,17 +289,3 @@ practical way to use this method for macros."
        `(apply #',fname ,@xs ,(car rest-xs))))
     (t
      `(,fname ,@lambda-list))))
-
-;;;; Context macros: It seems beneficial to create a context (a list
-;;;; variable storing each layer of nested context) for certain code
-;;;; structures; here's my implementation.
-
-(defvar *context* nil)
-
-(defmacro with-context (val &body body)
-  `(let ((*context* (append *context*
-                            (quote ,(mklist val)))))
-     ,@body))
-
-(defmacro in-context (&rest vals)
-  `(append *context* (quote ,vals)))

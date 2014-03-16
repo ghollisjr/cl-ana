@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -39,15 +39,15 @@
 ;;;; be plotted inside of a plot.
 ;;;;
 ;;;; There are a couple of convenience generic functions for plotting:
-;;;; quick-draw and make-line.
+;;;; quick-draw and line.
 ;;;;
 ;;;; quick-draw is for quickly drawing some object in graphical form.
 ;;;;
-;;;; make-line is for generating a line representing some object.
+;;;; line is for generating a line representing some object.
 ;;;;
 ;;;; quick-draw by the default method creates a 2-D plot using
-;;;; make-line on the object, which means that in most cases all you
-;;;; have to do is define a method of make-line for your type and you
+;;;; line on the object, which means that in most cases all you
+;;;; have to do is define a method of line for your type and you
 ;;;; can already use quick-draw.
 ;;;;
 ;;;; test.lisp demonstrates an example of using the full structure for
@@ -185,6 +185,11 @@
     number of types so this makes more sense to be added as a slot
     then to have different page types.")))
 
+(defun page (plots &rest key-args)
+  "Creates a page object with list of plots from plots argument and
+other initargs from key-args."
+  (apply #'make-instance 'page :plots plots key-args))
+
 (defgeneric page-add-plot (page plot)
   (:documentation "Adds a plot to the page.")
   (:method (page plot)
@@ -226,12 +231,13 @@
                 collecting (generate-cmd plot)))
      "unset multiplot")))
 
-(defun draw (page)
-  "Draws the contents of a page using the multiplot layout specified
-in the page."
-  (with-accessors ((session page-gnuplot-session))
-      page
-    (gnuplot-cmd session (generate-cmd page))))
+(defgeneric draw (page &rest key-args)
+  (:documentation "Draws the contents of a page using the multiplot
+layout specified in the page.")
+  (:method ((p page) &rest key-args)
+    (with-accessors ((session page-gnuplot-session))
+        p
+      (gnuplot-cmd session (generate-cmd p)))))
 
 (defmethod initialize-instance :after
     ((p page) &key)
@@ -350,6 +356,11 @@ in the page."
     :initarg :y2-title
     :accessor plot2d-y2-title
     :documentation "Title for right y axis")))
+
+(defun plot2d (lines &rest key-args)
+  "Creates a plot2d object with lines from lines argument and other
+initargs from key-args."
+  (apply #'make-instance 'plot2d :lines lines key-args))
 
 (defmethod plot-axis-commands ((p plot2d))
   (flet ((maybe-make-str (label var)
@@ -600,115 +611,100 @@ in the page."
             (funcall strategy legend line)))))
 
 ;;; Convenience functions:
-;; Note that these functions make use of the useful #k reader macro
-;; which allows for the placement of &when-keys in the form which
-;; means that all arguments that follow will be given to when-keywords
-;; and the form properly formatted to make use of this; this is so
-;; that redundant keyword arguments don't have to know about default
-;; values.
 
-(defun quick-multidraw (object-specs &key
-                                       type
-                                       page-title
-                                       shown-page-title
-                                       plot-title
-				       x-range
-				       y-range
-                                       cb-range
-                                       x-title
-                                       y-title
-                                       x2-title
-                                       y2-title)
-  "Plots objects all on one plot similarly to quick-draw but
-  pluralized, as well as optionally giving each object's line a title.
-
-  An object-spec is a list being the object to plot consed onto a
-  plist specifying the keyword arguments to give to make-line."
-  (let ((page
-         #k(make-instance
-            'page
-            &when-keys
-            (:title page-title)
-            (:shown-title shown-page-title)
-            type
-            (:plots (list
-                     #k(make-instance
-                        'plot2d
-                        &when-keys
-                        (:title plot-title)
-                        x-title
-                        x2-title
-                        y-title
-                        y2-title
-                        x-range
-                        y-range
-                        cb-range
-                        (:lines (mapcar
-                                 (lambda (object-spec)
-                                   (apply #'make-line object-spec))
-                                 object-specs))))))))
-    (draw page)
-    page))
-
-(defgeneric make-line (object &key &allow-other-keys)
-  (:documentation "Returns a line appropriate for plotting object."))
-
-;; There is an awful lot of redundant code being shared between
-;; quick-draw and quick-multidraw, which could make it cumbersome if
-;; too many changes need to be made.  But: gnuplot's interface seems
-;; to be very stable, so this hopefully won't be the case.  If it
-;; becomes a problem, I'll think of some sort of way to share the
-;; code.
-(defgeneric quick-draw (object &key &allow-other-keys)
-  (:documentation "Returns a page which stores a single plot and
-  single line as well as drawing the page.")
+;;; Methods on draw for plots, lines, etc.
+(defmethod draw ((line line) &rest key-args)
+  "Method on draw for a line.  Takes as keyword arguments plot-args
+and page-args, which themselves are plists for the keyword arguments
+appropriate for plots and pages respectively."
   ;; Default method for 2-D plotting
-  (:method (object &key
-                     type
-                     page-title
-                     shown-page-title
-                     plot-title
-                     x-title
-                     y-title
-                     x2-title
-                     y2-title
-		     x-range
-		     y-range
-                     cb-range
-                     color)
-    (let* ((line #k(make-line
-                    object
-                    &when-keys
-                    color))
-           (page
-            #k(make-instance
-               'page
-               &when-keys
-               type
-               (:title page-title)
-               (:shown-title shown-page-title)
-               (:plots (list #k(make-instance
-                                'plot2d
-                                &when-keys
-                                (:title plot-title)
-                                x-title
-                                y-title
-                                x2-title
-                                y2-title
-                                x-range
-                                y-range
-                                cb-range
-                                (:lines (list line))))))))
-      (draw page)
-      page)))
+  (destructuring-bind (&key
+                       plot-args
+                       page-args)
+      key-args
+    (draw
+     (apply #'page
+            (list
+             (apply #'plot2d
+                    (list
+                     line)
+                    plot-args))
+            page-args))))
+
+(defmethod draw ((plot2d plot2d) &rest key-args)
+  "Method on draw for a plot2d object.  key-args should be a plist
+denoting the page initargs."
+  (draw
+   (apply #'page
+          (list
+           plot2d)
+          key-args)))
+
+(defmethod draw (object &rest key-args)
+  (destructuring-bind (&key
+                       page-args
+                       plot-args
+                       line-args)
+      key-args
+    (draw
+     (apply #'page
+            (list
+             (apply #'plot2d
+                    (list (apply #'line
+                                 object
+                                 line-args))
+                    plot-args))
+            page-args))))
+
+(defmethod draw ((lst list) &rest key-args)
+  "Method on lists of either plots or lines; utilizes"
+  (flet ((line-handler (lines &rest keys)
+           (destructuring-bind (&key plot-args page-args)
+               keys
+             (draw
+              (apply #'page
+                     (list
+                      (apply #'plot2d
+                             (mapcar #'line lines)
+                             plot-args))
+                     page-args))))
+         (plot-handler (plots &rest keys)
+           (draw
+            (apply #'page
+                   plots
+                   keys))))
+    (when lst
+      (typecase (first lst)
+        (plot2d (apply #'plot-handler
+                       lst
+                       key-args))
+        (line (apply #'line-handler
+                     lst
+                     key-args))
+        (t nil)))))
+
+;;; line construction:
+(defgeneric line (object &key &allow-other-keys)
+  (:documentation "Returns a line appropriate for plotting object.")
+  ;; so lines are handled automatically
+  (:method ((l line) &key)
+    l))
+
+(defun lines (line-arg-lists)
+  "Function for applying line to a list of argument lists to line.
+
+Example: (lines '((#'sin :sampling (:low -3 :high 3 :nsamples 100))
+                  (#'cos :sampling (:low -3 :high 3 :nsamples 100))))"
+  (mapcar (lambda (x) (apply #'line (mklist x)))
+          line-arg-lists))
 
 ;; analytic functions:
-(defmethod make-line ((s string) &key
-                                   (title "" title-given-p)
-                                   (style "lines")
-                                   line-type
-                                   line-width
-                                   color)
+(defmethod line ((s string) &key
+                              (title "" title-given-p)
+                              (style "lines")
+                              line-type
+                              line-width
+                              color)
   (apply #'make-instance 'analytic-line
          :fn-string s
          :style style
@@ -720,14 +716,14 @@ in the page."
              (list :title s))))
 
 ;; data:
-(defmethod make-line ((data-alist list) &key
-                                          (title "data")
-                                          (style "points")
-                                          point-type
-                                          point-size
-                                          line-type
-                                          line-width
-                                          color)
+(defmethod line ((data-alist list) &key
+                                     (title "data")
+                                     (style "points")
+                                     point-type
+                                     point-size
+                                     line-type
+                                     line-width
+                                     color)
   "Assumes"
   (make-instance 'data-line
                  :title title
@@ -774,18 +770,18 @@ that point."
          (mapcar fn domain))))
 
 ;; functions:
-(defmethod make-line ((fn function) &key
-                                      (sampling
-                                       (list :low -3d0
-                                             :high 3d0
-                                             :nsamples 100))
-                                      (title "function")
-                                      (style "lines")
-                                      point-type
-                                      point-size
-                                      line-type
-                                      line-width
-                                      color)
+(defmethod line ((fn function) &key
+                                 (sampling
+                                  (list :low -3d0
+                                        :high 3d0
+                                        :nsamples 100))
+                                 (title "function")
+                                 (style "lines")
+                                 point-type
+                                 point-size
+                                 line-type
+                                 line-width
+                                 color)
   "Samples your function based on the keyword arguments and creates a
   data-line mapping your function to the output values.
 
@@ -816,28 +812,28 @@ of up to two double-float arguments."
            (if nsamples
                nsamples
                100))))
-    (make-line (sample-function fn
-                                lower-bounds
-                                upper-bounds
-                                nsamples)
-               :title title
-               :style style
-               :point-type point-type
-               :point-size point-size
-               :line-type line-type
-               :line-width line-width
-               :color color)))
+    (line (sample-function fn
+                           lower-bounds
+                           upper-bounds
+                           nsamples)
+          :title title
+          :style style
+          :point-type point-type
+          :point-size point-size
+          :line-type line-type
+          :line-width line-width
+          :color color)))
 
 ;; histogram plotting:
 
 ;; still need to allow for error bars
-(defmethod make-line ((histogram histogram)
-                      &key
-                        (title "histogram")
-                        (style nil style-supplied-p)
-                        fill-style
-                        fill-density
-                        color)
+(defmethod line ((histogram histogram)
+                 &key
+                   (title "histogram")
+                   (style nil style-supplied-p)
+                   fill-style
+                   fill-density
+                   color)
   (let* ((hist (sparse->contiguous histogram))
          (ndims (hist-ndims hist))
          (bin-data

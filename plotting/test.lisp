@@ -70,16 +70,16 @@
 ;; Quick example of how to draw a single plot with a function and some
 ;; data:
 (defparameter *quick-page*
-  (quick-multidraw (list (list (zip (list 1 1.5 2 2.5 3)
-                                    (list 0.9 1.2 1 0.3 0.1))
-                               :title "test data"
-                               :point-type 3)
-                         (list "sin(x)" :title "sine"))
-                   :page-title "Test plot"
-                   :plot-title "Test plot"))
+  (draw (lines (list (list (zip (list 1 1.5 2 2.5 3)
+                                (list 0.9 1.2 1 0.3 0.1))
+                           :title "test data"
+                           :point-type 3)
+                     (list "sin(x)" :title "sine")))
+        :page-args '(:title "Test plot")
+        :plot-args '(:title "Test plot")))
 
 (defparameter *hist2d*
-  (make-contiguous-hist
+  (make-chist
    (list (list :name "x" :nbins 100 :low -3d0 :high 3d0)
          (list :name "y" :nbins 100 :low -3d0 :high 3d0))))
 
@@ -91,12 +91,10 @@
    do (hist-insert *hist2d*
 		   (list (gaus) (gaus))))
 
-(quick-draw *hist2d*)
+(draw *hist2d*)
 
 (defparameter *hist1d*
   (hist-project *hist2d* "x"))
-
-;;(quick-draw *hist1d* :title "histogram" :color "black")
 
 (defparameter *fit-results*
   (multiple-value-list
@@ -109,7 +107,7 @@
 
 (defparameter *fitfunc* (first *fit-results*))
 
-(quick-multidraw
+(draw
  (list (list *hist1d*
              :title "Data Histogram"
              :fill-style "empty"
@@ -118,5 +116,5 @@
        (list *fitfunc*
              :title "Fitted Gaussian"
              :color "red"))
- :x-title "x"
- :y-title "N")
+ :plot-args '(:x-title "x"
+              :y-title "N"))

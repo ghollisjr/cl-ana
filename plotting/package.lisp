@@ -65,6 +65,7 @@
            :plot2d-x-range
            :plot2d-y-range
            ;; line functions
+           :lines
            :line-style
            :line-line-style
            :line-point-type
@@ -83,10 +84,6 @@
            :legend-contents
            :legend-update-strategy
            :legend-update
-           ;; ease of use
-           :quick-multidraw
-           :quick-draw
-           :make-line
            ;; utilities
            :sample-function))
 
