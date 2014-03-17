@@ -183,7 +183,12 @@
     :accessor page-type
     :documentation "The type of page, gnuplot only supports a fixed
     number of types so this makes more sense to be added as a slot
-    then to have different page types.")))
+    then to have different page types.")
+   (output
+    :initarg :output
+    :initform nil
+    :accessor page-output
+    :documentation "Name for output file when appropriate")))
 
 (defun page (plots &rest key-args)
   "Creates a page object with list of plots from plots argument and
@@ -200,6 +205,7 @@ other initargs from key-args."
                    (shown-title page-shown-title)
                    (id page-id)
                    (type page-type)
+                   (output page-output)
                    (layout page-layout)
                    (dimensions page-dimensions)
 		   (default-dimensions page-default-dimensions)
@@ -208,6 +214,7 @@ other initargs from key-args."
       p
     (string-append
      (with-output-to-string (s)
+       (format s "set output~%")
        (if (equal title "")
 	   (format s "set term ~a ~a title 'Page ~a'" type id id)
 	   (format s "set term ~a ~a title '~a'" type id title))
@@ -217,6 +224,7 @@ other initargs from key-args."
 		   (car default-dimensions)
 		   (cdr default-dimensions)))
        (format s "~%")
+       (when output (format s "set output '~a'~%" output))
        (format s "set multiplot layout ~a,~a title '~a'"
                (car layout) (cdr layout)
                (if shown-title

@@ -80,6 +80,23 @@ long."
 	    (,op2 ,x (+ ,xhi ,prec))
 	    t)))
 
+;; Macro for limited case using equal for comparison:
+(defmacro case-equal (form &body cases)
+  (with-gensyms (ev-form)
+    (let* ((otherwise nil)
+           (tests
+            (loop for c in cases
+               when (eq (car c) 'otherwise)
+               do (setf otherwise (cdr c))
+               else
+               collecting `(equal ,ev-form ,(car c))))
+           (bodies (mapcar #'cdr cases)))
+      `(let ((,ev-form ,form))
+         (cond
+           ,@(nconc (zip tests bodies)
+                    (when otherwise
+                      `((t ,@otherwise)))))))))
+
 (defmacro cond-setf (place value &optional (condition t))
   "Only sets the place when the condition is met.
 

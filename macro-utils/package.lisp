@@ -28,6 +28,7 @@
         #:symbol-utils
 	#:alexandria)
   (:export :inrange
+           :case-equal
 	   :cond-setf
 	   :print-eval
            :when-keywords
