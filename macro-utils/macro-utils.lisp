@@ -86,7 +86,8 @@ long."
     (let* ((otherwise nil)
            (tests
             (loop for c in cases
-               when (eq (car c) 'otherwise)
+               when (or (eq (car c) 'otherwise)
+                        (eq (car c) 't))
                do (setf otherwise (cdr c))
                else
                collecting `(equal ,ev-form ,(car c))))
@@ -129,6 +130,30 @@ values."
        (prin1 ,varname)
        (format t "~%")
        ,varname)))
+
+;; Calls a function with default argument values
+(defmacro with-default-args (fn (&rest argbindings) &body body)
+  "Executes body with default argument values supplied to fn in a convenient way.
+
+fn is either the name of a function or a list (function local-name);
+fn is defined via flet and takes no arguments, but refers to the
+arguments in argbindings.
+
+argbindings are used analogously to let.
+
+Example: (with-default-args (list fn) ((x 3)) (fn)) yields (3).  More
+useful examples would involve conditionally setting argument values in
+the body."
+  `(let (,@argbindings)
+     (flet ((,(if (listp fn)
+                  (second fn)
+                  fn)
+                ()
+              (funcall (symbol-function ',(if (listp fn)
+                                              (first fn)
+                                              fn))
+                       ,@(mapcar #'car argbindings))))
+       ,@body)))
 
 ;; Very useful macro for combining keyword arguments only when
 ;; appropriate

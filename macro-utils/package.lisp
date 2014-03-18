@@ -31,6 +31,7 @@
            :case-equal
 	   :cond-setf
 	   :print-eval
+           :with-default-args
            :when-keywords
            :defun-with-setf
            :abbrev
