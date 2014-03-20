@@ -67,20 +67,19 @@
 
 (defvar *gnuplot-sessions* nil)
 
-(defparameter *gnuplot-single-session* nil
-  "Set this parameter to t if you want only one session of gnuplot to
-  be used for subsequent plots.  Useful if you wish to generate large
-  numbers of plots as gnuplot sessions have a not-so-small memory
-  footprint.")
+(defparameter *gnuplot-single-session* t
+  "Set this parameter to nil if you want each page to have its own
+  gnuplot session; this is expensive and requires
+  (restart-gnuplot-sessions) occasionally for freeing memory.")
 
 ;; run any initialization functions:
 (defun gnuplot-settings (session)
   ;; Image style settings:
   ;;(gnuplot-cmd session "set palette rgb 33,13,10")
   (gnuplot-cmd session "set palette defined (0 \"white\", 0.0001 \"dark-violet\", 3 \"blue\", 8 \"light-green\", 13 \"orange\", 15 \"red\")")
+  ;; Boxes style settings:  
+  (gnuplot-cmd session "set style fill solid 0.5")
   session)
-;; Boxes style settings:
-;;(gnuplot-cmd *gnuplot-session* "set style fill solid 0.5"))
 
 (defun spawn-gnuplot-session ()
   (if *gnuplot-single-session*
@@ -173,14 +172,14 @@
     page.")
    (layout
     :initarg :layout
-    :initform (cons 1 1)
+    :initform nil
     :accessor page-layout
     :documentation "A cons (numrows . numcols) telling how to arrange
     the plots in the multiplot.")
-   (type
-    :initarg :type
+   (terminal
+    :initarg :terminal
     :initform "wxt"
-    :accessor page-type
+    :accessor page-terminal
     :documentation "The type of page, gnuplot only supports a fixed
     number of types so this makes more sense to be added as a slot
     then to have different page types.")
@@ -204,7 +203,7 @@ other initargs from key-args."
   (with-accessors ((title title)
                    (shown-title page-shown-title)
                    (id page-id)
-                   (type page-type)
+                   (terminal page-terminal)
                    (output page-output)
                    (layout page-layout)
                    (dimensions page-dimensions)
@@ -216,8 +215,8 @@ other initargs from key-args."
      (with-output-to-string (s)
        (format s "set output~%")
        (if (equal title "")
-	   (format s "set term ~a ~a title 'Page ~a'" type id id)
-	   (format s "set term ~a ~a title '~a'" type id title))
+	   (format s "set term ~a ~a title 'Page ~a'" terminal id id)
+	   (format s "set term ~a ~a title '~a'" terminal id title))
        (if dimensions
 	   (format s " size ~a,~a" (car dimensions) (cdr dimensions))
 	   (format s " size ~a,~a"
@@ -249,10 +248,12 @@ layout specified in the page.")
 
 (defmethod initialize-instance :after
     ((p page) &key)
-  (with-slots (session)
+  (with-slots (session layout plots)
       p
     (incf (slot-value p 'next-id))
-    (setf session (spawn-gnuplot-session))))
+    (setf session (spawn-gnuplot-session))
+    (when (not layout)
+      (setf layout (cons 1 (length plots))))))
 
 (defmethod initialize-instance ((p page)
                                 &key id
@@ -664,33 +665,6 @@ denoting the page initargs."
                     plot-args))
             page-args))))
 
-(defmethod draw ((lst list) &rest key-args)
-  "Method on lists of either plots or lines; utilizes"
-  (flet ((line-handler (lines &rest keys)
-           (destructuring-bind (&key plot-args page-args)
-               keys
-             (draw
-              (apply #'page
-                     (list
-                      (apply #'plot2d
-                             (mapcar #'line lines)
-                             plot-args))
-                     page-args))))
-         (plot-handler (plots &rest keys)
-           (draw
-            (apply #'page
-                   plots
-                   keys))))
-    (when lst
-      (typecase (first lst)
-        (plot2d (apply #'plot-handler
-                       lst
-                       key-args))
-        (line (apply #'line-handler
-                     lst
-                     key-args))
-        (t nil)))))
-
 ;;; line construction:
 (defgeneric line (object &key &allow-other-keys)
   (:documentation "Returns a line appropriate for plotting object.")
@@ -885,3 +859,105 @@ of up to two double-float arguments."
                                      "image")
                           :color color)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
+
+;;; Terminal type functions:
+
+(defun join-strings (&rest objects)
+  (with-output-to-string (s)
+    (loop
+       for o in objects
+       do (format s "~a" o))))
+
+;; Function for generating the terminal type string of a page for
+;; images in gnuplot
+(defun png-term (&key
+                   (size (cons 640 480))
+                   (font-face "arial")
+                   font-point-size
+                   ;; fontsize can be :tiny, :small, :medium, :large, :giant
+                   (font-size :medium)
+                   transparent
+                   interlace
+                   truecolor
+                   (rounded t)
+                   enhanced
+                   colors)
+  "Generates the type string for a png terminal with options"
+  (string-downcase
+   (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "png"
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (list "font"
+                           font-face
+                           (when font-point-size
+                             font-point-size)))
+                   font-size
+                   (when transparent
+                     "transparent")
+                   (when interlace
+                     "interlace")
+                   (when truecolor
+                     "truecolor")
+                   (when (not rounded)
+                     "butt")
+                   (when enhanced
+                     "enhanced")
+                   (when colors
+                     colors))))))))
+
+(defun ps-term (&key
+                  (size (cons 640 480))
+                  (font-face "arial")
+                  font-point-size
+                  ;; fontsize can be :tiny, :small, :medium, :large, :giant
+                  (font-size :medium)
+                  transparent
+                  interlace
+                  truecolor
+                  (rounded t)
+                  enhanced
+                  colors)
+  "Generates the type string for a postscript terminal with options"
+  (string-downcase
+   (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "ps"
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (list "font"
+                           font-face
+                           (when font-point-size
+                             font-point-size)))
+                   font-size
+                   (when transparent
+                     "transparent")
+                   (when interlace
+                     "interlace")
+                   (when truecolor
+                     "truecolor")
+                   (when (not rounded)
+                     "butt")
+                   (when enhanced
+                     "enhanced")
+                   (when colors
+                     colors))))))))
+
+(defun eps-term (&rest args)
+  "Generates term type string for eps terminals; takes the same
+arguments as ps-term minus the orientation argument (this is used by
+gnuplot to distinguish eps from ps)"
+  (apply #'ps-term
+         :orientation "eps"
+         args))
