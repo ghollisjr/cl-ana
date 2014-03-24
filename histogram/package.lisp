@@ -75,6 +75,9 @@
            :hpref ;; hist-point-ref
            :hbv ;; hist-bin-values
            :hdn ;; hist-dim-names
-           :hds)) ;; hist-dim-specs
+           :hds ;; hist-dim-specs
+           ;; For generating discrete dim-specs
+           :discrete-dim-spec
+           :dds))
 
 (gmath:use-gmath :histogram)

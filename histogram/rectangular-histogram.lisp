@@ -145,3 +145,28 @@ dimension in the histogram."
 (defun hds (histogram)
   "Abbreviation for hist-dim-specs"
   (hist-dim-specs histogram))
+
+;; Ease of use:
+
+;; nbins * delta + low = high
+;; -> delta = (high - low)/nbins
+;; if nbins = floor((high-low/delta)) then
+;; newhigh = floor((high-low)/delta)*delta + low
+(defun discrete-dim-spec (&key low high (delta 1d0))
+  "Returns dim-spec for discrete/integral data, e.g. digital event
+counter readouts."
+  (let* ((newlow (- low
+                    (* delta 0.5)))
+         (newnbins (1+ (floor (- high low)
+                              delta)))
+         (newhigh (+ low
+                     (* (1- newnbins)
+                        delta)
+                     (* delta 0.5))))
+    (list :low newlow
+          :high newhigh
+          :nbins newnbins)))
+
+(defun dds (&rest args)
+  "Abbreviation for discrete-dim-spec"
+  (apply #'discrete-dim-spec args))
