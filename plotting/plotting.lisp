@@ -214,7 +214,8 @@ other initargs from key-args."
     (string-append
      (with-output-to-string (s)
        (format s "set output~%")
-       (if (equal title "")
+       (if (or (equal title "")
+               (null title))
 	   (format s "set term ~a ~a title 'Page ~a'" terminal id id)
 	   (format s "set term ~a ~a title '~a'" terminal id title))
        (if dimensions
