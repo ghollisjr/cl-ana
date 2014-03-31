@@ -42,7 +42,7 @@
     (expt (hecto :meter) 2))
 
 (define-unit :liter
-    (expt (deca :meter) 3))
+    (expt (deci :meter) 3))
 
 (define-unit :tonne
     (expt (mega :gram)))
