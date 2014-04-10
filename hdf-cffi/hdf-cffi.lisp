@@ -79,6 +79,9 @@
 ;; H5F_ACC_RDONLY
 (defconstant +H5F-ACC-RDONLY+ 0)
 
+;; H5F_ACC_RDWR
+(defconstant +H5F-ACC-RDWR+ 1)
+
 ;; H5P_DEFAULT
 (defconstant +H5P-DEFAULT+ 0)
 

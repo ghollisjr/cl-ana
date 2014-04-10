@@ -138,7 +138,9 @@ if-does-not-exist can be :create :error nil"
                   ;; rename "file" to "file.bak"
                   ;; then create new file
                   (rename-file filename (concatenate 'string filename ".bak"))
-                  (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))))
+                  (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters)))
+               (:append
+                (h5fopen filename +H5F-ACC-RDWR+ read-access-parameters)))
 	     (case if-does-not-exist
 	       (:create
 		(apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
