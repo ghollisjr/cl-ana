@@ -21,6 +21,7 @@
 ;;;; package.lisp
 
 (defpackage #:map 
-  (:use #:cl)
+  (:use #:cl
+        #:hash-table-utils)
   (:export :map->alist
            :map->hash-table))
