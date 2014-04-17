@@ -52,6 +52,7 @@
            :hist-dim-specs
 	   :hist-ndims
 	   :hist-dim-names
+           :hist-bin-widths
 	   :hist-empty-bin-value
 	   :hist-default-increment
            :hist-total-integral
@@ -77,6 +78,7 @@
            :hbv ;; hist-bin-values
            :hdn ;; hist-dim-names
            :hds ;; hist-dim-specs
+           :hbw
            ;; For generating discrete dim-specs
            :discrete-dim-spec
            :dds))

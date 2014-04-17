@@ -140,11 +140,21 @@ dimension in the histogram."
                         :low low
                         :high high))))
 
+(defun hist-bin-widths (hist)
+  (mapcar (lambda (lst)
+            (destructuring-bind (&key name low high nbins)
+                lst
+              (/ (- high low) nbins)))
+          (hist-dim-specs hist)))
+
 ;; abbrevations:
 
 (defun hds (histogram)
   "Abbreviation for hist-dim-specs"
   (hist-dim-specs histogram))
+
+(defun hbw (histogram)
+  (hist-bin-widths histogram))
 
 ;; Ease of use:
 

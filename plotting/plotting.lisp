@@ -673,11 +673,11 @@ denoting the page initargs."
   (:method ((l line) &key)
     l))
 
-(defun lines (line-arg-lists)
+(defun lines (&rest line-arg-lists)
   "Function for applying line to a list of argument lists to line.
 
-Example: (lines '((#'sin :sampling (:low -3 :high 3 :nsamples 100))
-                  (#'cos :sampling (:low -3 :high 3 :nsamples 100))))"
+Example: (lines (list #'sin :sampling '(:low -3 :high 3 :nsamples 100)
+                (list #'cos :sampling '(:low -3 :high 3 :nsamples 100))))"
   (mapcar (lambda (x) (apply #'line (mklist x)))
           line-arg-lists))
 

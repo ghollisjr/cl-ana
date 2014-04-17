@@ -33,6 +33,7 @@
 	   :power
 	   :logarithm
 	   :sinusoid
-	   :gaussian))
+	   :gaussian
+           :gauss-amp))
 
 (gmath:use-gmath :fitting)

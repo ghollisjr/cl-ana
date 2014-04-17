@@ -70,11 +70,11 @@
 ;; Quick example of how to draw a single plot with a function and some
 ;; data:
 (defparameter *quick-page*
-  (draw (lines (list (list (zip (list 1 1.5 2 2.5 3)
-                                (list 0.9 1.2 1 0.3 0.1))
-                           :title "test data"
-                           :point-type 3)
-                     (list "sin(x)" :title "sine")))
+  (draw (lines (list (zip (list 1 1.5 2 2.5 3)
+                          (list 0.9 1.2 1 0.3 0.1))
+                     :title "test data"
+                     :point-type 3)
+               (list "sin(x)" :title "sine"))
         :page-args '(:title "Test plot")
         :plot-args '(:title "Test plot")))
 

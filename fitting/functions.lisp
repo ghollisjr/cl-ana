@@ -93,3 +93,14 @@ f(x) = A/(sigma*sqrt(2*pi)) * exp(-((x-mu)/sigma)^2/2)
 			   sigma)
 			2)
 		  2))))))
+
+;; a helper function for guessing the appropriate value of the
+;; gaussian amplitude:
+(defun gauss-amp (peak sigma)
+  "The relationship between the peak of a gaussian and the amplitude
+is complicated by sigma, so this function computes the amplitude given
+the peak height and sigma estimate."
+  (* (sqrt (* 2
+              pi))
+     peak
+     sigma))
