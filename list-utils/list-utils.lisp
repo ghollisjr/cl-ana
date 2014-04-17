@@ -286,6 +286,14 @@ concatenation of n lists."
 	    sizes
 	    :initial-value (list 0)))))
 
+;;; useful for alists:
+
+(defun cdrs (xs)
+  (mapcar #'cdr xs))
+
+(defun cars (xs)
+  (mapcar #'car xs))
+
 ;;; Stuff (mostly) from Paul Graham's On Lisp, as well as some of my
 ;;; own improvements.
 

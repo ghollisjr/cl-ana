@@ -41,6 +41,9 @@
 	   :list-greater-than
 	   :aref-by-list
 	   :make-offsets
+           ;;; alists
+           :cars
+           :cdrs
            ;;; plists
            :plist-select-fields
            :plist->alist
