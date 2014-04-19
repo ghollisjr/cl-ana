@@ -109,6 +109,8 @@ the peak height and sigma estimate."
   "Poisson distribution: (poisson (lambda) n)
 ==> lambda^n * exp(-lambda) / n!"
   (let ((l (first p)))
-    (/ (* (expt l n)
-          (exp (- l)))
-       (factorial n))))
+    (* (exp (- l))
+       (let ((res 1d0))
+         (do ((i 1 (1+ i)))
+             ((>= i n) res)
+           (setf res (* res (/ l (float i 0d0)))))))))
