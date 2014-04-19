@@ -81,7 +81,7 @@ f(x) = A * sin(omega*x + phi) ==> (sinusoid (list A omega phi) x)"
 (defun gaussian (params x)
   "Gaussian fit function:
 f(x) = A/(sigma*sqrt(2*pi)) * exp(-((x-mu)/sigma)^2/2)
-  ==> (gaussian (list A mu sigma))"
+  ==> (gaussian (A mu sigma) x)"
   (let ((A (first params))
 	(mu (second params))
 	(sigma (third params)))
@@ -104,3 +104,11 @@ the peak height and sigma estimate."
               pi))
      peak
      sigma))
+
+(defun poisson (p n)
+  "Poisson distribution: (poisson (lambda) n)
+==> lambda^n * exp(-lambda) / n!"
+  (let ((l (first p)))
+    (/ (* (expt l n)
+          (exp (- l)))
+       (factorial n))))

@@ -306,7 +306,13 @@ layout specified in the page.")
       (format s "~%")
       (loop
          for l in lines
-         do (format s "~a" (line-data-cmd l))))))
+         do (format s "~a"
+                    (map 'string
+                         (lambda (c)
+                           (if (eq c #\f)
+                               #\e
+                               c))
+                         (line-data-cmd l)))))))
 
 (defgeneric plot-add-line (plot line)
   (:documentation "Adds a line to the plot; usually updates the legend

@@ -27,13 +27,15 @@
         :alexandria)
   (:export :fit
 	   :get-value-alist
-	   ;; fit functions:
+	   ;; standard fit functions:
 	   :polynomial
 	   :exponential
 	   :power
 	   :logarithm
 	   :sinusoid
+           ;; distributions:
 	   :gaussian
-           :gauss-amp))
+           :gauss-amp
+           :poisson))
 
 (gmath:use-gmath :fitting)
