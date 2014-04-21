@@ -334,19 +334,19 @@ layout specified in the page.")
 (defclass plot2d (plot)
   ((x-range
     :initarg :x-range
-    :initform nil
+    :initform (cons "*" "*")
     :accessor plot2d-x-range
     :documentation "Sets the domain for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
    (y-range
     :initarg :y-range
-    :initform nil
+    :initform (cons "*" "*")
     :accessor plot2d-y-range
     :documentation "Sets the range for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
    (cb-range
     :initarg :cb-range
-    :initform nil
+    :initform (cons "*" "*")
     :accessor plot2d-cb-range
     :documentation "Sets the range for the colorbox (if applicable)
     for the plot; a cons where the car is the lower bound and the cdr
