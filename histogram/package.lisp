@@ -27,7 +27,9 @@
         #:symbol-utils
         #:string-utils
 	#:list-utils
+        #:hash-table-utils
 	#:macro-utils
+        #:functional-utils
 	#:iter
 	#:alexandria
 	#:fitting
@@ -59,6 +61,7 @@
 	   :hist-integrate
 	   :hist-project
            :hist-slice
+           :getslice
 	   :hist-insert
            :hist-insert-list
 	   :hist-index-ref ; setf-able

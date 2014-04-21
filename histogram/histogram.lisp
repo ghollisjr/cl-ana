@@ -142,6 +142,16 @@ center, we have to do some footwork here."
   dimension in dims to a histogram of the same kind as hist which has
   only the leftover dimensions."))
 
+(defun getslice (slices bin)
+  "Function for finding a slice from (hist-slice hist) via minimizing
+the sum of squares of the vector difference between bin and each slice
+center."
+  (ensure-lists (bin)
+    (gethash (minimum (hash-keys slices)
+                      :key (lambda (s)
+                             (sum (expt (- s bin) 2))))
+             slices)))
+
 ;; Functional access to histograms:
 (defun hist-map (fn hist)
   "hist-map maps the function fn over the histogram hist bin-by-bin.

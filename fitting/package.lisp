@@ -36,6 +36,7 @@
            ;; distributions:
 	   :gaussian
            :gauss-amp
-           :poisson))
+           :poisson
+           :poisson-alist))
 
 (gmath:use-gmath :fitting)

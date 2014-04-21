@@ -338,6 +338,20 @@ list."
       object
       (list object)))
 
+(defmacro ensure-lists ((&rest list-bindings) &body body)
+  "Ensures and rebinds variables as lists via mklist.  Each
+list-binding must be either a symbol or a list (symbol form); for a
+symbol it will be bound to (mklist symbol) in the body; for a list the
+first element of the list-binding will be bound to (mklist (second
+list-binding))."
+  `(let ,(loop
+            for lb in list-bindings
+            collect (if (listp lb)
+                        `(,(first lb)
+                           (mklist ,(second lb)))
+                        `(,lb (mklist ,lb))))
+     ,@body))
+
 (defun longer (x y)
   "Efficiently compares two lists, or if they're not both lists simply
 calls length on each and compares.  This could be sped up a bit if one

@@ -106,11 +106,31 @@ the peak height and sigma estimate."
      sigma))
 
 (defun poisson (p n)
-  "Poisson distribution: (poisson (lambda) n)
-==> lambda^n * exp(-lambda) / n!"
-  (let ((l (first p)))
-    (* (exp (- l))
+  "Poisson distribution: (poisson (A lambda) n)
+==> A * lambda^n * exp(-lambda) / n!"
+  (destructuring-bind (A l)
+      p
+    (* A (exp (- l))
        (let ((res 1d0))
          (do ((i 1 (1+ i)))
              ((>= i n) res)
            (setf res (* res (/ l (float i 0d0)))))))))
+
+(defun poisson-alist (p n)
+  "Since computing poisson distribution is relatively inefficient
+point-by-point, but there is an efficient algorithm for computing a
+range of values of the poisson distribution, this function provides
+this functionality, returning an alist mapping each integer from 0 to
+n to the poisson distribution value."
+  (destructuring-bind (A l)
+      p
+    (let ((f (* A (exp (- l)))))
+      (do ((i 1 (1+ i))
+           (r (* f l)
+              (* r
+                 l
+                 (/ (float (1+ i) 0d0))))
+           (result (list (cons 0 f))
+                   (cons (cons i r)
+                         result)))
+          ((> i n) (nreverse result))))))

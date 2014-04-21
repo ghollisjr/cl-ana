@@ -29,8 +29,9 @@
   :depends-on (#:clos-utils
                #:symbol-utils
                #:list-utils
-               #:list-utils
-	       #:macro-utils
+               #:hash-table-utils
+               #:macro-utils
+               #:functional-utils
 	       #:iterate
 	       #:generic-math
 	       #:map

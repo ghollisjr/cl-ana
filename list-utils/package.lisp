@@ -41,6 +41,7 @@
 	   :list-greater-than
 	   :aref-by-list
 	   :make-offsets
+           :ensure-lists
            ;;; alists
            :cars
            :cdrs
