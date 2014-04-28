@@ -76,7 +76,7 @@
 (defun gnuplot-settings (session)
   ;; Image style settings:
   ;;(gnuplot-cmd session "set palette rgb 33,13,10")
-  (gnuplot-cmd session "set palette defined (0 \"white\", 0.0001 \"dark-violet\", 3 \"blue\", 8 \"light-green\", 13 \"orange\", 15 \"red\")")
+  (gnuplot-cmd session "set palette defined (0 \"white\", 0 \"dark-violet\", 3 \"blue\", 8 \"light-green\", 13 \"orange\", 15 \"red\")")
   ;; Boxes style settings:  
   (gnuplot-cmd session "set style fill solid 0.5")
   session)
@@ -332,7 +332,12 @@ layout specified in the page.")
 ;; "x2" for the axis along the top, and
 ;; "y2" for the axis along the right edge.
 (defclass plot2d (plot)
-  ((x-range
+  ((logaxes
+    :initarg :logaxes
+    :initform nil
+    :accessor plot2d-logaxes
+    :documentation "List of axes which should be in log scale.")
+   (x-range
     :initarg :x-range
     :initform (cons "*" "*")
     :accessor plot2d-x-range
@@ -379,21 +384,34 @@ initargs from key-args."
   (apply #'make-instance 'plot2d :lines lines key-args))
 
 (defmethod plot-axis-commands ((p plot2d))
-  (flet ((maybe-make-str (label var)
+  (flet ((maybe-make-str (label var &optional noquotes-p)
            (when var
              (list
-              (format nil "set ~a '~a'~%" label var)))))
-    (with-slots (x-title x2-title y-title y2-title)
+              (if noquotes-p
+                  (format nil "set ~a ~a~%" label var)
+                  (format nil "set ~a '~a'~%" label var))))))
+    (with-slots (logaxes x-title x2-title y-title y2-title)
         p
       (append
-       (list "unset xlabel"
-             "unset x2label"
-             "unset ylabel"
-             "unset y2label")
-       (maybe-make-str "xlabel" x-title)
-       (maybe-make-str "x2label" x2-title)
-       (maybe-make-str "ylabel" y-title)
-       (maybe-make-str "y2label" y2-title)))))
+       (append
+        (list "unset xlabel"
+              "unset x2label"
+              "unset ylabel"
+              "unset y2label"
+              "set nologscale x"
+              "set nologscale y"
+              "set nologscale zcb")
+        (maybe-make-str "xlabel" x-title)
+        (maybe-make-str "x2label" x2-title)
+        (maybe-make-str "ylabel" y-title)
+        (maybe-make-str "y2label" y2-title))
+       (mapcan (lambda (axis)
+                 (maybe-make-str "logscale"
+                                 (if (equal axis "z")
+                                     "zcb"
+                                     axis)
+                                 t))
+               logaxes)))))
 
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range y-range cb-range)
