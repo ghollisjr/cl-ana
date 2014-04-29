@@ -836,7 +836,7 @@ of up to two double-float arguments."
 ;; still need to allow for error bars
 (defmethod line ((histogram histogram)
                  &key
-                   (title "histogram")
+                   (title "")
                    (style nil style-supplied-p)
                    fill-style
                    fill-density
