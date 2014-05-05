@@ -43,7 +43,9 @@ names or none of them do."
                         "/"
                         path)))
     (let* ((data-names-specs
-            (cons (cons "count" :int)
+            ;; had to change this to double-float to allow for
+            ;; normalized histograms etc.
+            (cons (cons "count" :double)
                   (loop
                      for i from 0
                      for n in (hist-dim-names histogram)
@@ -91,9 +93,7 @@ names or none of them do."
                  for field in datum
                  for sym in data-field-symbols
                  do (table-set-field data-table sym
-                                     (if (zerop i)
-                                         field
-                                         (->double-float field))))
+                                     (->double-float field)))
               (table-commit-row data-table)))
       (table-close data-table)
       ;; write bin-spec table
