@@ -21,8 +21,11 @@
 
 (defpackage #:binary-tree 
   (:use #:cl
+        #:macro-utils
 	#:list-utils)
   (:export :make-balanced-tree
+           :node-leaf-p
 	   :node-value
 	   :node-left-child
-	   :node-right-child))
+	   :node-right-child
+           :bref))

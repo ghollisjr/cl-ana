@@ -22,6 +22,10 @@
 
 ;;; Binary Tree: (value left-child right-child numvalues)
 
+(defun node-leaf-p (node)
+  (not (or (node-left-child node)
+           (node-right-child node))))
+
 (defun node-value (tree)
   (first tree))
 
@@ -78,3 +82,51 @@ enabled."
     (if (= 1 length)
 	0
 	(1- (floor (/ length 2))))))
+
+;;;; Access functions:
+
+(defun bref (tree val &key key)
+  "Returns a cons pair of node values which form the most constraining
+interval around val using key."
+  (labels ((rightmost (tree)
+             (if (node-leaf-p tree)
+                 (node-value tree)
+                 (rightmost (node-right-child tree))))
+           (leftmost (tree)
+             (if (node-leaf-p tree)
+                 (node-value tree)
+                 (leftmost (node-left-child tree))))
+           (rec (tree val &optional low hi)
+             (let* ((tval (node-value tree))
+                    (kval (funcall key tval)))
+               (if (node-leaf-p tree)
+                   (if (= kval val)
+                       (values tval t)
+                       (values
+                        (cons (if (< kval val)
+                                  tval
+                                  low)
+                              (if (> kval val)
+                                  tval
+                                  hi))
+                        nil))
+                   (cond
+                     ((= kval val)
+                      (values tval t))
+                     ((> kval val)
+                      (let ((left (node-left-child tree)))
+                        (if left
+                            (rec (node-left-child tree)
+                                 val
+                                 low
+                                 tval)
+                            (values (cons low tval) nil))))
+                     (t
+                      (let ((right (node-right-child tree)))
+                        (if right
+                            (rec (node-right-child tree)
+                                 val
+                                 tval
+                                 hi)
+                            (values (cons tval hi) nil)))))))))
+    (rec tree val)))

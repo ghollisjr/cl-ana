@@ -25,6 +25,7 @@
   :license "GPLv3"
   :description "Simple binary-tree implementation, not meant for
   high-performance code."
-  :depends-on (#:list-utils)
+  :depends-on (#:list-utils
+               #:macro-utils)
   :components ((:file "package")
 	       (:file "binary-tree")))
