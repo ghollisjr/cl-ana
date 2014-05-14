@@ -30,6 +30,7 @@
                #:generic-math
                #:math-functions
                #:calculus
+               #:binary-tree
                ;; Make sure to place tensor after defining all gmath
                ;; generic functions
                #:tensor
