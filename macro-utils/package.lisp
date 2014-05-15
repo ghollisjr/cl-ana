@@ -52,4 +52,6 @@
            ;; macro for timing processes (returning time)
            :time-proc
            ;; handling lambda lists:
-           :lambda-list-call-form))
+           :lambda-list-call-form
+           ;; Suppress output:
+           :suppress-output))

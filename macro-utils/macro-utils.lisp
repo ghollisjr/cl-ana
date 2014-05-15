@@ -331,3 +331,14 @@ practical way to use this method for macros."
        `(apply #',fname ,@xs ,(car rest-xs))))
     (t
      `(,fname ,@lambda-list))))
+
+;; Macro for suppressing output:
+(defmacro suppress-output (&body body)
+  "suppress-output redirects all output to /dev/null, thus silencing
+any messages printed to *standard-output*."
+  `(with-open-file (*standard-output* "/dev/null"
+                                      :direction :output
+                                      :if-exists :supersede
+                                      :if-does-not-exist :error)
+     (let ((*error-output* *standard-output*))
+       ,@body)))
