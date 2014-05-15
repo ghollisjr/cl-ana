@@ -77,7 +77,7 @@
   ;; Image style settings:
   ;;(gnuplot-cmd session "set palette rgb 33,13,10")
   (gnuplot-cmd session "set palette defined (0 \"white\", 0 \"dark-violet\", 3 \"blue\", 8 \"light-green\", 13 \"orange\", 15 \"red\")")
-  ;; Boxes style settings:  
+  ;; Boxes style settings:
   (gnuplot-cmd session "set style fill solid 0.5")
   session)
 
@@ -292,27 +292,28 @@ layout specified in the page.")
                    (lines plot-lines)
                    (legend plot-legend))
       p
-    (with-output-to-string (s)
-      (format s "set title '~a'~%" title)
-      (loop
-         for a in (plot-axis-commands p)
-         do (format s "~a~%" a))
-      (format s "~a " (plot-cmd p))
-      (loop
-         for cons on lines
-         do (format s "~a" (generate-cmd (car cons)))
-         when (cdr cons)
-         do (format s ", "))
-      (format s "~%")
-      (loop
-         for l in lines
-         do (format s "~a"
-                    (map 'string
-                         (lambda (c)
-                           (if (eq c #\f)
-                               #\e
-                               c))
-                         (line-data-cmd l)))))))
+    (let ((lines (remove-if #'null lines)))
+      (with-output-to-string (s)
+        (format s "set title '~a'~%" title)
+        (loop
+           for a in (plot-axis-commands p)
+           do (format s "~a~%" a))
+        (format s "~a " (plot-cmd p))
+        (loop
+           for cons on lines
+           do (format s "~a" (generate-cmd (car cons)))
+           when (cdr cons)
+           do (format s ", "))
+        (format s "~%")
+        (loop
+           for l in lines
+           do (format s "~a"
+                      (map 'string
+                           (lambda (c)
+                             (if (eq c #\f)
+                                 #\e
+                                 c))
+                           (line-data-cmd l))))))))
 
 (defgeneric plot-add-line (plot line)
   (:documentation "Adds a line to the plot; usually updates the legend
@@ -711,7 +712,8 @@ Example: (lines (list #'sin :sampling '(:low -3 :high 3 :nsamples 100)
                               (style "lines")
                               line-type
                               line-width
-                              color)
+                              color
+                              &allow-other-keys)
   (apply #'make-instance 'analytic-line
          :fn-string s
          :style style
@@ -730,17 +732,19 @@ Example: (lines (list #'sin :sampling '(:low -3 :high 3 :nsamples 100)
                                      point-size
                                      line-type
                                      line-width
-                                     color)
+                                     color
+                                     &allow-other-keys)
   "Assumes"
-  (make-instance 'data-line
-                 :title title
-                 :data data-alist
-                 :style style
-                 :point-type point-type
-                 :point-size point-size
-                 :line-type line-type
-                 :line-width line-width
-                 :color color))
+  (when data-alist
+    (make-instance 'data-line
+                   :title title
+                   :data data-alist
+                   :style style
+                   :point-type point-type
+                   :point-size point-size
+                   :line-type line-type
+                   :line-width line-width
+                   :color color)))
 
 (defun sample-function (fn lower-bounds upper-bounds nsamples)
   "Samples a function which takes a single argument according to
@@ -788,7 +792,8 @@ that point."
                                  point-size
                                  line-type
                                  line-width
-                                 color)
+                                 color
+                                 &allow-other-keys)
   "Samples your function based on the keyword arguments and creates a
   data-line mapping your function to the output values.
 
@@ -840,7 +845,8 @@ of up to two double-float arguments."
                    (style nil style-supplied-p)
                    fill-style
                    fill-density
-                   color)
+                   color
+                   &allow-other-keys)
   (let* ((hist (sparse->contiguous histogram))
          (ndims (hist-ndims hist))
          (bin-data
