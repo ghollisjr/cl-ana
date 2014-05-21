@@ -24,4 +24,5 @@
   (:use :cl)
   (:export :mkstr
            :lispify
-           :string-append))
+           :string-append
+           :words))
