@@ -48,7 +48,7 @@
            :make-cathist
            :sparse->contiguous
            :contiguous->sparse
-           :empty-hist ; returns an empty copy of a histogram
+           :copy-hist ; returns a filled or empty copy of a histogram
 	   :map-contiguous-hist
            :rectangular-hist-bin-specs
            :hist-dim-specs

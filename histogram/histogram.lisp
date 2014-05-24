@@ -276,7 +276,7 @@ data as either atom for 1-D or lists for any dimensionality."
     `(defmethod ,fname ((,a histogram))
        (let ((,a-bin-values
               (hist-bin-values ,a))
-             (,result (empty-hist ,a)))
+             (,result (copy-hist ,a t)))
          (loop
             for (,count . ,centers) in ,a-bin-values
             do (hist-insert ,result
@@ -319,7 +319,7 @@ data as either atom for 1-D or lists for any dimensionality."
                       (reduce #'histogram::set-insert
                               (mapcar #'cdr (hbv ,b))
                               :initial-value ,res))))
-                  (,result (empty-hist ,a)))
+                  (,result (copy-hist ,a t)))
               (loop
                  for ,centers in ,all-centers
                  do (hist-insert ,result
@@ -330,7 +330,7 @@ data as either atom for 1-D or lists for any dimensionality."
           (lbody
            `(let ((,a-bin-values
                    (hist-bin-values ,a))
-                  (,result (empty-hist ,a)))
+                  (,result (copy-hist ,a t)))
               (loop
                  for (,count . ,centers) in ,a-bin-values
                  do (hist-insert ,result
@@ -340,7 +340,7 @@ data as either atom for 1-D or lists for any dimensionality."
           (rbody
            `(let ((,b-bin-values
                    (hist-bin-values ,b))
-                  (,result (empty-hist ,b)))
+                  (,result (copy-hist ,b t)))
               (loop
                  for (,count . ,centers) in ,b-bin-values
                  do (hist-insert ,result
@@ -379,7 +379,7 @@ data as either atom for 1-D or lists for any dimensionality."
             (reduce #'histogram::set-insert
                     (mapcar #'cdr (hbv b))
                     :initial-value res))))
-        (result (empty-hist a)))
+        (result (copy-hist a t)))
     (loop
        for centers in all-centers
        do (hist-insert result
@@ -390,13 +390,17 @@ data as either atom for 1-D or lists for any dimensionality."
                                       protected-value)))
     result))
 
-;;;; Internal use:
+(defgeneric copy-hist (hist &optional empty-p)
+  (:documentation "Returns a filled copy of hist for null empty-p,
+  otherwise returns empty copy")
+  (:method (hist &optional empty-p)
+    (hist-map (if empty-p
+                  (constantly nil)
+                  (lambda (count &key &allow-other-keys)
+                    count))
+              hist)))
 
-(defgeneric empty-hist (hist)
-  (:documentation "Returns a duplicate of hist but with no filled
-  bins.")
-  (:method (hist)
-    (hist-map (constantly nil) hist)))
+;;;; Internal use:
 
 (defun condense-indices (indices)
   (let* ((sorted (sort (copy-list indices) #'<))
