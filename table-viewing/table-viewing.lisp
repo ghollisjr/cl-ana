@@ -51,7 +51,7 @@ viewing.  By default it always returns t."
                       (hist-insert hist
                                    (mklist (apply processor (rest xs)))))))
     (values hist
-            (quick-draw hist))))
+            (draw hist))))
 
 (defmacro table-easy-view (table fields bin-specs &key
                                                     processor

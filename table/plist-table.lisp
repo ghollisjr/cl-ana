@@ -45,7 +45,7 @@
 
 (defun open-plist-table (plists)
   (make-instance 'plist-table
-		 :plists (concatenate 'vector plists)
+		 :plists (coerce plists 'vector)
 		 :field-names (mapcar (compose #'lispify #'string)
                                        (every-nth (first plists) 2))))
 
