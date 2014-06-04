@@ -62,7 +62,8 @@
 (defun fit (data-source fn init-params &key
                                          (max-iterations 25)
                                          (prec 1.0d-6)
-                                         (derivative-delta 1d-11))
+                                         (derivative-delta 1d-11)
+                                         post-residual)
   "Fits a function fn against data from data-source using the initial
 parameters init-params.  Use err-num data type in the dependent
 variable's value if you want to do a weighted least squares fit.
@@ -82,6 +83,11 @@ having the user decide.
 
 init-params: a list of the initial parameter values.
 
+post-residual: an optional function called on the residual.  This
+allows for vector/list dependent values of fit function and data.
+E.g. euclidean-norm2 will result in fitting the norm squared of the
+vector residuals.
+
 The return values of fit are:
 
 1. fn with the best-fit parameters applied,
@@ -98,15 +104,20 @@ The return values of fit are:
 	 covariance
 	 num-iterations)
     (let ((residual-fn
-	   (if (subtypep (type-of (first ylist))
-			 'err-num)
-	       (lambda (param-list x y)
-                 (/ (- (funcall fn param-list x)
-                       (err-num-value y))
-                    (err-num-error y)))
-	       (lambda (param-list x y)
-                 (- (funcall fn param-list x)
-                    y)))))
+	   (let ((res (if (subtypep (type-of (first ylist))
+                                    'err-num)
+                          (lambda (param-list x y)
+                            (/ (- (funcall fn param-list x)
+                                  (err-num-value y))
+                               (err-num-error y)))
+                          (lambda (param-list x y)
+                            (- (funcall fn param-list x)
+                               y)))))
+             (if post-residual
+                 (lambda (&rest xs)
+                   (funcall post-residual
+                            (apply res xs)))
+                 res))))
       (labels ((residual (param-grid result-grid)
 		 (let ((param-list (grid-to-list param-grid)))
                    (loop

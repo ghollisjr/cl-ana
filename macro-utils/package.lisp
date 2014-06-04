@@ -54,4 +54,6 @@
            ;; handling lambda lists:
            :lambda-list-call-form
            ;; Suppress output:
-           :suppress-output))
+           :suppress-output
+           ;; lambda especially for keywords
+           :klambda))

@@ -342,3 +342,10 @@ any messages printed to *standard-output*."
                                       :if-does-not-exist :error)
      (let ((*error-output* *standard-output*))
        ,@body)))
+
+;; Modified lambda for keyword args
+(defmacro klambda ((&rest key-args) &body body)
+  "Modified lambda which returns a keyword arg-accepting function with
+&allow-other-keys"
+  `(lambda (&key ,@key-args &allow-other-keys)
+     ,@body))
