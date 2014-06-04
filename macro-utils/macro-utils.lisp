@@ -349,3 +349,29 @@ any messages printed to *standard-output*."
 &allow-other-keys"
   `(lambda (&key ,@key-args &allow-other-keys)
      ,@body))
+
+;; Once-only let macro
+(defmacro olet ((&rest bindings) &body body)
+  "olet (at the moment) functions much like let*, except that each
+binding is only evaluated once at most, and not at all if the lexical
+binding is never used in the body."
+  (loop
+     for (sym val) in bindings
+     do
+       (progn
+         (setf (get sym 'presence) nil)
+         (unless (get sym 'alt)
+           (setf (get sym 'alt) (gensym)))))
+  `(let (,@(loop for b in bindings collecting (get (first b) 'alt)))
+     (macrolet ((if-present (sym val)
+                  (if (get sym 'presence)
+                      (get sym 'alt)
+                      (progn
+                        (setf (get sym 'presence) t)
+                        `(setf ,(get sym 'alt) ,val)))))
+       (symbol-macrolet
+           (,@(loop
+                 for b in bindings
+                 collecting `(,(first b)
+                               (if-present ,(first b) ,(second b)))))
+         ,@body))))

@@ -56,4 +56,6 @@
            ;; Suppress output:
            :suppress-output
            ;; lambda especially for keywords
-           :klambda))
+           :klambda
+           ;; once-only let macro
+           :olet))
