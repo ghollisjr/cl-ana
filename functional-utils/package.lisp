@@ -22,6 +22,7 @@
 (defpackage #:functional-utils 
   (:use :cl)
   (:export :flip
+           :splice
 	   :to-pair-function
 	   :lfuncall
            :min-by

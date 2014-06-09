@@ -27,6 +27,20 @@
   conjunction with reduce."
   (lambda (x y) (funcall f y x)))
 
+(defun splice (xsplit fn1 fn2)
+  "Splices two functions togother at xsplit.  If either function is
+nil, returns the other function or nil if both are nil."
+  (cond
+    ((and fn1
+          fn2)
+     (lambda (x)
+       (if (<= x xsplit)
+           (funcall fn1 x)
+           (funcall fn2 x))))
+    (fn1 fn1)
+    (fn2 fn2)
+    (t nil)))
+
 ;; (defun compose (&rest fs)
 ;;   "Arbitrary number of functions composed"
 ;;   (let ((f (first fs)))

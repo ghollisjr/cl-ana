@@ -58,4 +58,6 @@
            ;; lambda especially for keywords
            :klambda
            ;; once-only let macro
-           :olet))
+           :olet
+           ;; dlambda (dispatching lambda) from let over lambda
+           :dlambda))

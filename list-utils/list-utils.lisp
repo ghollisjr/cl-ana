@@ -67,6 +67,22 @@ given, the elements are mapped directly (i.e. not in a list)"
                (cons xs (apply fn xs))))
          lists))
 
+;; Tree map
+(defun tree-map (fn &rest trees)
+  "Maps function over identically structured trees (lists)"
+  (when trees
+    (cond
+      ((null (first trees))
+       nil)
+      ((or (atom (first trees))
+           (cdr (last (first trees))))
+       (apply fn trees))
+      ((listp (first trees))
+       (apply #'mapcar
+              (lambda (&rest ts)
+                (apply #'tree-map fn ts))
+              trees)))))
+
 (defun intersperse (obj lst)
   "Inserts obj in between each pair of elements in lst"
   (labels ((rec (lst &optional result)

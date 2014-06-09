@@ -29,6 +29,7 @@
 	   :zip
 	   :unzip
            :mapzip
+           :tree-map
            :intersperse
 	   :transpose
 	   :cartesian-product

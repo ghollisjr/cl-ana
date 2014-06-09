@@ -350,28 +350,46 @@ any messages printed to *standard-output*."
   `(lambda (&key ,@key-args &allow-other-keys)
      ,@body))
 
-;; Once-only let macro
+;; Only-when-present let macro
 (defmacro olet ((&rest bindings) &body body)
   "olet (at the moment) functions much like let*, except that each
 binding is only evaluated once at most, and not at all if the lexical
-binding is never used in the body."
-  (loop
-     for (sym val) in bindings
-     do
-       (progn
-         (setf (get sym 'presence) nil)
-         (unless (get sym 'alt)
-           (setf (get sym 'alt) (gensym)))))
-  `(let (,@(loop for b in bindings collecting (get (first b) 'alt)))
-     (macrolet ((if-present (sym val)
-                  (if (get sym 'presence)
-                      (get sym 'alt)
-                      (progn
-                        (setf (get sym 'presence) t)
-                        `(setf ,(get sym 'alt) ,val)))))
-       (symbol-macrolet
-           (,@(loop
-                 for b in bindings
-                 collecting `(,(first b)
-                               (if-present ,(first b) ,(second b)))))
+binding is never used in the body.  This can result in a tremendous
+speedup when used in creating context, e.g. looping over a table but
+only needing a few fields from the table.  In test cases the compiler
+appeared to remove unused bindings entirely thanks to the
+symbol-macrolet."
+  (let* ((gsyms (mapcar (lambda (x) (gensym)) bindings))
+         (gsets (mapcar (lambda (x) (gensym)) bindings))
+         (sym-macros
+          (mapcar (lambda (b gsym gset)
+                    (destructuring-bind (sym val) b
+                      `(,sym
+                        (if ,gset
+                            ,gsym
+                            (progn
+                              (setf ,gset t)
+                              (setf ,gsym ,val))))))
+                  bindings
+                  gsyms
+                  gsets)))
+    `(let (,@gsyms
+           ,@gsets)
+       (symbol-macrolet ,sym-macros
          ,@body))))
+
+;; dlambda from let over lambda
+(defmacro dlambda (&rest ds)
+  (alexandria:with-gensyms (args)
+    `(lambda (&rest ,args)
+       (case (car ,args)
+         ,@(mapcar
+            (lambda (d)
+              `(,(if (eq t (car d))
+                     t
+                     (list (car d)))
+                 (apply (lambda ,@(cdr d))
+                        ,(if (eq t (car d))
+                             args
+                             `(cdr ,args)))))
+            ds)))))

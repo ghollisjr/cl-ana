@@ -202,6 +202,97 @@ beginning of the loop body; otherwise this is not supported."
             (values 'integer
                     rowvar))
       (if field-selections
+          ;; explicit fields
+          (let ((field-keyword-symbols
+                 (mapcar (compose #'keywordify
+                                  #'lispify
+                                  #'string)
+                         selected-field-names)))
+            (with-gensyms (load-row tab)
+              `(let ((,tab ,table))
+                 (do ((,rowv 0 (1+ ,rowv))
+                      (,load-row (table-load-next-row ,tab)
+                                 (table-load-next-row ,tab)))
+                     ((not ,load-row) nil)
+                   (declare (,rowt ,rowv))
+                   (olet ,(loop
+                             for b in bound-field-symbols
+                             for k in field-keyword-symbols
+                             collecting `(,b (table-get-field ,tab ,k)))
+                     ,@body)))))
+          ;; implicit fields
+          (with-gensyms (field-symbols
+                         field-names
+                         bound-symbols
+                         bound
+                         xs
+                         x)
+            `(let* ((,field-names
+                     (table-field-names ,table))
+                    (,field-symbols
+                     (table-field-symbols ,table))
+                    (,bound-symbols
+                     (mapcar (compose #'intern #'string)
+                             ,field-symbols)))
+               (table-reduce ,table
+                             ,field-names
+                             (lambda (,rowv &rest ,xs)
+                               (declare (,rowt ,rowv))
+                               (loop
+                                  for ,bound in ,bound-symbols
+                                  for ,x in ,xs
+                                  do (set ,bound ,x))
+                               ,@body
+                               (1+ ,rowv))
+                             :initial-value 0)))))))
+
+;; This is kept for comparison with the non-olet version
+(defmacro do-table-old ((rowvar table) field-selections
+                    &body body)
+  "Macro for iterating over a table.
+
+rowvar is a symbol which will be bound to the row number inside the
+loop body.  You can optionally use a list (rowtype rowvar) which will
+allow for the rowvar to have a type declared for it.
+
+table is the table which will be looped upon.
+
+To select specific fields from the table for reading, specify all the
+desired field names in field-selections; if field-selections
+is nil then all fields will be read.  Note that it is still more
+efficient to specify all desired fields; for two field data this
+results in about a 16% running time difference.  Also you must specify
+either none or all of the desired fields to work with during the loop
+body.
+
+Each field-selection is a list of 1. field names to access during
+the loop, by default the value will be bound to the lispified field
+name as a symbol, 2. A list containing a symbol as the first element
+and the field name as the second which will be bound to the symbol
+given as the first element of the list.
+
+The code body will be run for each row in the table.  If fields are
+explicitly selected, then you can use declare statements at the
+beginning of the loop body; otherwise this is not supported."
+  (let* ((selected-field-names
+          (mapcar (lambda (x)
+                    (if (listp x)
+                        (second x)
+                        x))
+                  field-selections))
+         (bound-field-symbols
+          (mapcar (lambda (x)
+                    (if (listp x)
+                        (first x)
+                        (intern (lispify x))))
+                  field-selections)))
+    (multiple-value-bind (rowt rowv)
+        (if (listp rowvar)
+            (values (first rowvar)
+                    (second rowvar))
+            (values 'integer
+                    rowvar))
+      (if field-selections
           `(table-reduce ,table
                          (list ,@selected-field-names)
                          (lambda (,rowv ,@bound-field-symbols)
