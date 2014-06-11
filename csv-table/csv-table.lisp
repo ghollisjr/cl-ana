@@ -113,7 +113,7 @@
 
 ;;; Writing functions:
 
-(defun make-csv-table (filename field-names &optional (delimeter #\,))
+(defun create-csv-table (filename field-names &optional (delimeter #\,))
   "Creates a CSV file to be written to as a table."
   (let* ((file (open filename
 		     :direction :output

@@ -55,3 +55,26 @@ the field values of each field-name in the row."
      for fn in field-names
      appending (list (keywordify (lispify fn))
                      (table-get-field table fn))))
+
+(defun table-copy (from to &optional fields)
+  "Reads all entries from from and writes them to to.  If fields are
+specified, only selected fields are used, otherwise all fields are
+copied."
+  (let* ((field-names
+          (if fields
+              fields
+              (table-field-names from)))
+         (field-keysyms
+          (mapcar (lambda (x)
+                    (keywordify
+                     (lispify x)))
+                  field-names)))
+    (do ((load-state (table-load-next-row from)
+                     (table-load-next-row from)))
+        ((null load-state) nil)
+      (loop
+         for k in field-keysyms
+         do (table-set-field to
+                             k
+                             (table-get-field from k)))
+      (table-commit-row to))))

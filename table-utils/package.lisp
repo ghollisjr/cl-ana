@@ -25,4 +25,5 @@
         :string-utils
         :table)
   (:export :table->plists
-           :table-row->plist))
+           :table-row->plist
+           :table-copy))
