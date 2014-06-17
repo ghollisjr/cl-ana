@@ -277,7 +277,9 @@ layout specified in the page.")
     :initarg :legend
     :initform nil
     :accessor plot-legend
-    :documentation "The legend (if any) to be drawn on the plot.")))
+    :documentation "The legend (if any) to be drawn on the plot.
+    Either nil or a string, use the function legend to generate legend
+    strings.")))
 
 (defgeneric plot-cmd (plot)
   (:documentation "The command used for plotting the plot in gnuplot;
@@ -295,6 +297,8 @@ layout specified in the page.")
     (let ((lines (remove-if #'null lines)))
       (with-output-to-string (s)
         (format s "set title '~a'~%" title)
+        (when legend
+          (format s "~a~%" legend))
         (loop
            for a in (plot-axis-commands p)
            do (format s "~a~%" a))
@@ -314,17 +318,6 @@ layout specified in the page.")
                                  #\e
                                  c))
                            (line-data-cmd l))))))))
-
-(defgeneric plot-add-line (plot line)
-  (:documentation "Adds a line to the plot; usually updates the legend
-  based on the legend's update strategy.")
-  (:method (plot line)
-    (with-accessors ((lines plot-lines)
-                     (legend plot-legend))
-        plot
-      (push line lines)
-      (setf legend
-            (legend-update legend line)))))
 
 ;; A two-dimensional plot has up to four labelled axes:
 ;;
@@ -620,30 +613,77 @@ initargs from key-args."
 (defmethod (setf line-plot-arg) :after (value (l analytic-line))
   (analytic-line-set-plot-arg l))
 
-(defclass legend ()
-  ((contents
-    :initform ""
-    :initarg :contents
-    :accessor legend-contents
-    :documentation "The legend contents to be shown.")
-   (update-strategy
-    :initform #'identity
-    :initarg :update-strategy
-    :accessor legend-update-strategy
-    :documentation "A function which updates the legend based on the
-    addition of a line.  Could be simply add the title to the legend,
-    or do nothing.  Strategy is functional, i.e. it should return a
-    lew legend based on the old one and the new line, not actually
-    change the state of the current legend.")))
-
-(defgeneric legend-update (legend line)
-  (:documentation "Updates the legend for the plot based on the
-  legend's update strategy.")
-  (:method (legend line)
-    (with-accessors ((strategy legend-update-strategy))
-        legend
-      (setf legend
-            (funcall strategy legend line)))))
+(defun legend (&key
+                 ;; if non-nil, default legend settings
+                 (default nil)
+                 ;; if nil, don't show legend at all
+                 (show t)
+                 ;; can be drawn :outside or :inside the plotting area
+                 (mode :inside)
+                 ;; tell legend where to draw itself.  A cons pair of
+                 ;; either coordinates or a combination of (:left
+                 ;; :center :right) and (:top :center :bottom)
+                 ;; (e.g. (cons :left :top), (cons 5 20))
+                 (location nil)
+                 ;; can be :vertical, :horizontal, :left or :right alligned
+                 (arrangement :vertical)
+                 ;; length of sample line
+                 samplen
+                 ;; spacing between entries
+                 spacing
+                 ;; legend width increment (see gnuplot manual)
+                 width-inc
+                 ;; legend height increment (see gnuplot manual)
+                 height-inc
+                 ;; autotitle is of no use due to design of interface
+                 ;; explicit title of legend
+                 title
+                 ;; border line type and width
+                 line-type
+                 line-width
+                 ;; or can use user-defined style:
+                 line-style)
+  (when (not default)
+    (with-output-to-string (s)
+      (format s "set key")
+      (if show
+          ;; show legend
+          (progn
+            (format s " ~a"
+                    (string-downcase (mkstr mode)))
+            (when location
+              (if (symbolp (car location))
+                  (format s " ~a ~a"
+                          (string-downcase
+                           (mkstr (car location)))
+                          (string-downcase
+                           (mkstr (cdr location))))
+                  (format s " at ~a,~a"
+                          (car location)
+                          (cdr location))))
+            (format s " ~a"
+                    (string-downcase
+                     (mkstr arrangement)))
+            (when samplen
+              (format s " samplen ~a"
+                      samplen))
+            (when spacing
+              (format s " spacing ~a"
+                      spacing))
+            (when width-inc
+              (format s " width ~a"
+                      width-inc))
+            (when height-inc
+              (format s " height ~a"
+                      height-inc))
+            (when title
+              (format s " title \"~a\"" title))
+            (when line-type
+              (format s " linetype ~a" line-type))
+            (when line-width
+              (format s " linewidth ~a" line-width)))
+          ;; don't show legend
+          (format s " off")))))
 
 ;;; Convenience functions:
 

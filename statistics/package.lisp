@@ -27,7 +27,13 @@
            :standard-deviation)
   (:export :mean
            :mean-accumulator
+           :variance
            :standard-deviation
+           :standard-scores
+           ;; general sample moment function:
+           :sample-moment
+           ;; general k-statistic function:
+           :k-statistic
            :skewness
            :kirtosis
            :moving-average

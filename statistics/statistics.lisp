@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -67,9 +67,89 @@
 (defun standard-deviation (data)
   (sqrt (variance data)))
 
-(defun skewness (data))
+(defun standard-scores (data)
+  "Returns the list of standard-scores (number of standard deviations
+away from the mean) for the data"
+  (let ((mean (mean data))
+        (sigma (standard-deviation data)))
+    (mapcar (lambda (x)
+              (/ (- x mean)
+                 sigma))
+            data)))
 
-(defun kirtosis (data))
+(defun sample-moment (data &key
+                             (order 1)
+                             (type :r))
+  "Returns the order-th sample moment of the data according to type.
+
+type can be :r (raw), :c (central), or :s (standardized).
+
+second return value is size of data sample."
+  (case type
+    ;; raw
+    (:r
+     (mean (mapcar (lambda (x)
+                     (expt x order))
+                   data)))
+    (:c
+     (let ((mean (mean data)))
+       (mean (mapcar (lambda (x)
+                       (expt (- x mean)
+                             order))
+                     data))))
+    (:s
+     (let ((mean (mean data))
+           (sigma (standard-deviation data)))
+       (mean
+        (mapcar (lambda (x)
+                  (expt (/ (- x mean)
+                           sigma)
+                        order))
+                data))))))
+
+;; Technically, all the standard moments like mean, variance,
+;; skewness, etc. should come from this k-statistic function, but
+;; since I can't seem to find a reference which gives a formula for
+;; all of them, I'm stuck with this approach where I basically splice
+;; the function together.
+(defun k-statistic (data order)
+  "Returns the orderth k-statistic (unbiased estimator of orderth
+cumulant)"
+  (case order
+    (1 (mean data))
+    (2 (variance data))
+    (3 (multiple-value-bind (m3 n)
+           (sample-moment data
+                          :order 3
+                          :type :c)
+         (* n n
+            (/
+             (* (- n 1)
+                (- n 2)))
+            m3)))
+    (4 (multiple-value-bind (m4 n)
+           (sample-moment data
+                          :order 4
+                          :type :c)
+         (let ((m2 (sample-moment data
+                                  :order 2
+                                  :type :c)))
+           (/ (* n n
+                 (- (* (+ n 1)
+                       m4)
+                    (* 3
+                       (- n 1)
+                       m2
+                       m2)))
+              (* (- n 1)
+                 (- n 2)
+                 (- n 3))))))))
+
+(defun skewness (data)
+  (k-statistic data 3))
+
+(defun kirtosis (data)
+  (k-statistic data 4))
 
 (defun quantiles (data)
   "Returns an alist mapping each datum to its quantile."
@@ -88,7 +168,8 @@
 
 (defun probability-plot (data cdf-inv)
   "Returns data suitable for probability scatter plot given data and
-inverse of cummulative density function."
+inverse of cummulative density function.  Useful for checking whether
+data is distribution according to cdf or not."
   (mapcar (lambda (x)
             (cons (funcall cdf-inv (cdr x))
                   (car x)))

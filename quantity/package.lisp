@@ -56,6 +56,32 @@
    :femto
    :atto
    :zepto
-   :yocto))
+   :yocto
+   ;; Constants:
+   :+c+
+   :+G+
+   :+h+
+   :+hbar+
+   :+mu0+
+   :+eps0+
+   :+Z0+
+   :+k-coulomb+
+   :+e+
+   :+mu-bohr+
+   :+a0+
+   :+r-electron+
+   :+me+
+   :+alpha+
+   :+mp+
+   :+mn+
+   :+md+
+   :+rydberg+
+   :+NA+
+   :+k-boltzmann+
+   :+R+
+   :+stefan-boltzmann+
+   :+graviational-acceleration+
+   :+vsound+
+   :+T0+))
 
 (gmath:use-gmath :quantity)
