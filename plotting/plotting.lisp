@@ -638,7 +638,9 @@ initargs from key-args."
                  ;; autotitle is of no use due to design of interface
                  ;; explicit title of legend
                  title
-                 ;; border line type and width
+                 ;; box borders drawn (non-nil) or not (nil)
+                 box
+                 ;; box border line type and width
                  line-type
                  line-width
                  ;; or can use user-defined style:
@@ -662,8 +664,15 @@ initargs from key-args."
                           (car location)
                           (cdr location))))
             (format s " ~a"
-                    (string-downcase
-                     (mkstr arrangement)))
+                    (case arrangement
+                      (:vertical
+                       "vertical")
+                      (:horizontal
+                       "horizontal")
+                      (:left
+                       "Left")
+                      (:right
+                       "Right")))
             (when samplen
               (format s " samplen ~a"
                       samplen))
@@ -678,10 +687,14 @@ initargs from key-args."
                       height-inc))
             (when title
               (format s " title \"~a\"" title))
-            (when line-type
-              (format s " linetype ~a" line-type))
-            (when line-width
-              (format s " linewidth ~a" line-width)))
+            (if box
+                (progn
+                  (format s " box")
+                  (when line-type
+                    (format s " linetype ~a" line-type))
+                  (when line-width
+                    (format s " linewidth ~a" line-width)))
+                (format s " nobox")))
           ;; don't show legend
           (format s " off")))))
 
