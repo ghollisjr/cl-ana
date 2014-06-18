@@ -37,9 +37,6 @@
         :file-utils
         :fitting
         :functional-utils
-        :currying ; had to give it its own system due to circular
-                  ; dependencies of functional-utils and list-utils
-                  ; otherwise.
         :gnuplot-interface
         :gsl-cffi
         :hdf-cffi
