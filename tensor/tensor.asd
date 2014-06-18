@@ -31,7 +31,6 @@
   :depends-on (#:generic-math
                #:symbol-utils
 	       #:list-utils
-               #:currying
 	       #:alexandria
                ;;debug
                #:macro-utils)

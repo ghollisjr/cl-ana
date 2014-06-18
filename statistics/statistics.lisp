@@ -166,10 +166,10 @@ cumulant)"
        collecting (cons x (/ acc denom)) into result
        finally (return result))))
 
-(defun probability-plot (data cdf-inv)
-  "Returns data suitable for probability scatter plot given data and
-inverse of cummulative density function.  Useful for checking whether
-data is distribution according to cdf or not."
+(defun qq-plot (data cdf-inv)
+  "Returns data suitable for a Q-Q probability scatter plot given data
+and inverse of cummulative density function.  Useful for checking
+whether data is distribution according to cdf or not."
   (mapcar (lambda (x)
             (cons (funcall cdf-inv (cdr x))
                   (car x)))

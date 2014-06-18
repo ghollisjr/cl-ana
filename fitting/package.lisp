@@ -26,6 +26,7 @@
 	:map
         :alexandria)
   (:export :fit
+           :residuals
 	   :get-value-alist
 	   ;; standard fit functions:
 	   :polynomial

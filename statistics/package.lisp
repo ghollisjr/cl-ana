@@ -39,6 +39,6 @@
            :moving-average
            :quantiles
            :percentiles
-           :probability-plot))
+           :qq-plot))
 
 (gmath:use-gmath :statistics)

@@ -65,7 +65,6 @@
            :plot2d-x-range
            :plot2d-y-range
            ;; line functions
-           :lines
            :line-style
            :line-line-style
            :line-point-type

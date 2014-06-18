@@ -20,8 +20,7 @@
 ;;;; ghollisjr@gmail.com
 
 ;;;; This library provides access to gnuplot from CL via
-;;;; gnuplot-i-cffi, which in turn uses gnuplot_i (see
-;;;; gnuplot-i-cffi's files for appropriate copyright info).
+;;;; gnuplot-i-cffi, which in turn uses external-program.
 ;;;;
 ;;;; The structure of the classes follows gnuplot, with the exception
 ;;;; of the plot/graph distinction being seen as unnecessary.
@@ -38,17 +37,20 @@
 ;;;; Line: A line is a single function or collection of data which can
 ;;;; be plotted inside of a plot.
 ;;;;
-;;;; There are a couple of convenience generic functions for plotting:
-;;;; quick-draw and line.
+;;;; The preferred approach to drawing is to use the draw, page,
+;;;; plot2d/plot3d, and line functions to construct a plottable object
+;;;; and then draw it.
 ;;;;
-;;;; quick-draw is for quickly drawing some object in graphical form.
+;;;; draw is the universal drawing function, it can plot a page, a
+;;;; plot, or a line.  Additionally, since e.g. drawing a line
+;;;; requires a page and plot to place it in, draw accepts arguments
+;;;; for whatever plot objects must be generated as well.  (This does
+;;;; mean there are multiple ways to use draw to draw the same thing,
+;;;; but the freedom is nice).
 ;;;;
-;;;; line is for generating a line representing some object.
-;;;;
-;;;; quick-draw by the default method creates a 2-D plot using
-;;;; line on the object, which means that in most cases all you
-;;;; have to do is define a method of line for your type and you
-;;;; can already use quick-draw.
+;;;; line is special in that it generates a line object from objects
+;;;; of other types, e.g. (line #'sin) creates a line from sampling
+;;;; #'sin and defaults the style to "lines".
 ;;;;
 ;;;; test.lisp demonstrates an example of using the full structure for
 ;;;; creating more complex plots; one can presumably define his own
@@ -275,7 +277,7 @@ layout specified in the page.")
     :documentation "The lines which are part of the plot.")
    (legend
     :initarg :legend
-    :initform nil
+    :initform (legend)
     :accessor plot-legend
     :documentation "The legend (if any) to be drawn on the plot.
     Either nil or a string, use the function legend to generate legend
@@ -624,7 +626,7 @@ initargs from key-args."
                  ;; either coordinates or a combination of (:left
                  ;; :center :right) and (:top :center :bottom)
                  ;; (e.g. (cons :left :top), (cons 5 20))
-                 (location nil)
+                 (location (cons :right :top))
                  ;; can be :vertical, :horizontal, :left or :right alligned
                  (arrangement :vertical)
                  ;; length of sample line
@@ -693,7 +695,9 @@ initargs from key-args."
                   (when line-type
                     (format s " linetype ~a" line-type))
                   (when line-width
-                    (format s " linewidth ~a" line-width)))
+                    (format s " linewidth ~a" line-width))
+                  (when line-style
+                    (format s " linestyle ~a" line-style)))
                 (format s " nobox")))
           ;; don't show legend
           (format s " off")))))
@@ -750,14 +754,6 @@ denoting the page initargs."
   ;; so lines are handled automatically
   (:method ((l line) &key)
     l))
-
-(defun lines (&rest line-arg-lists)
-  "Function for applying line to a list of argument lists to line.
-
-Example: (lines (list #'sin :sampling '(:low -3 :high 3 :nsamples 100)
-                (list #'cos :sampling '(:low -3 :high 3 :nsamples 100))))"
-  (mapcar (lambda (x) (apply #'line (mklist x)))
-          line-arg-lists))
 
 ;; analytic functions:
 (defmethod line ((s string) &key
