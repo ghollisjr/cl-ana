@@ -34,7 +34,7 @@
 	#:alexandria
 	#:fitting
 	#:map)
-  (:export :quick-hist ; useful for quickly plotting small datasets
+  (:export :bin ; useful for quickly plotting small datasets
            :histogram
            :rectangular-histogram
 	   :contiguous-histogram

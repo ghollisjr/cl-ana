@@ -32,46 +32,6 @@
     :initform nil
     :documentation "Nested arrays representing the bin values")))
 
-;; ease of use function:
-(defun quick-hist (data-list nbin-list &key
-                                         empty-bin-value
-                                         default-increment)
-  "Creates a histogram using the min/max limits as taken from the data
-and using the number of bins for each dimension as specified in
-nbin-list.  data-list can be a list of atoms for 1-D data or a list of
-lists for any dimensionality."
-  (let ((data-per-dim
-         (transpose (mapcar #'mklist data-list))))
-    (destructuring-bind (mins maxs)
-        (loop
-           for dim in data-per-dim
-           collect
-             (loop
-                for x in dim
-                minimizing x into min
-                maximizing x into max
-                finally (return (list min max)))
-           into limit-list
-           finally (return (transpose limit-list)))
-      (let* ((hist-specs
-              (loop
-                 for min in mins
-                 for max in maxs
-                 for nbins in nbin-list
-                 collect
-                   (let* ((delta (/ (- max min) (- nbins 2)))
-                          (real-min (- min (* 0.5 delta)))
-                          (real-max (+ max (* 0.5 delta))))
-                     (list :low real-min :high real-max :nbins nbins))))
-             (result
-              (apply #'make-contiguous-hist
-                     hist-specs
-                     (when-keywords
-                       empty-bin-value
-                       default-increment))))
-        (hist-insert-list result data-list)
-        result))))
-
 ;; I was thinking about making this a method on initialize-instance,
 ;; but it seems cleaner to keep this as a distinct function, since if
 ;; I wish to directly copy histogram contents the initialize-instance

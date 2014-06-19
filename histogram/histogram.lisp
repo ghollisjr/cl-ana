@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -399,6 +399,123 @@ data as either atom for 1-D or lists for any dimensionality."
                   (lambda (count &key &allow-other-keys)
                     count))
               hist)))
+
+;; ease of use function:
+(defun bin (data
+            &key
+              dim-names
+              mins
+              maxs
+              nbins
+              empty-bin-value
+              default-increment)
+  "Creates a sparse histogram determining min, max, and number of bins
+from the data.
+
+data can be a list of atoms for 1-D data or a list of lists for any
+dimensionality.
+
+dim-names is an optional list of dimension names
+
+mins, maxs, and nbins can be alists mapping from dimension name/index
+to a value, or if all dimensions have a value specified, just a list
+of values taken to be given in order of dimension.
+
+empty-bin-value and default-increment will be supplied to the
+histogram if present."
+  (when data
+    (let* ((dimensionality
+            (let ((d (first data)))
+              (if (atom d)
+                  1
+                  (length d))))
+           (dim-names
+            (if dim-names
+                dim-names
+                (loop for i below dimensionality
+                   collect nil))))
+      (flet ((mkspecs (specs)
+               (if specs
+                   (if (consp (first specs))
+                       ;; alists
+                       (labels ((rec (spcs names result)
+                                  ;; spcs should be a hash-table mapping
+                                  ;; from whatever is in names to a value
+                                  (if names
+                                      (let ((spec (gethash (first names)
+                                                           spcs)))
+                                        (rec spcs (rest names) (cons spec result)))
+                                      (nreverse result))))
+                         (rec (map->hash-table specs 'equal)
+                              (if dim-names
+                                  dim-names
+                                  (range 0 (1- dimensionality)))
+                              nil))
+                       ;; full spec list
+                       specs)
+                   (loop for i below dimensionality
+                      collect nil))))
+        ;; each spec has either an explicit value or nil for each
+        ;; dimension
+        (let ((min-specs (mkspecs mins))
+              (max-specs (mkspecs maxs))
+              (nbin-specs (mkspecs nbins))
+              (data-per-dim
+               (transpose (mapcar #'mklist data))))
+          (when (or (not (length-equal min-specs dimensionality))
+                    (not (length-equal max-specs dimensionality))
+                    (not (length-equal nbin-specs dimensionality)))
+            (error "Inconsistent histogram dimensionality"))
+          ;; final version of mins, maxs and nbins
+          (let* ((hist-specs
+                  (loop
+                     for min in min-specs
+                     for max in max-specs
+                     for n in nbin-specs
+                     for name in dim-names
+                     for d in data-per-dim
+                     collect
+                       (let ((mi
+                              (if min
+                                  min
+                                  (minimum d)))
+                             (ma
+                              (if max
+                                  max
+                                  (maximum d)))
+                             (n
+                              (if n n (ceiling (sqrt (length d))))))
+                         (let (real-min real-max)
+                           (if (and min
+                                    max)
+                               ;; min & max both explicit
+                               (progn
+                                 (setf real-min min)
+                                 (setf real-max max))
+                               ;; need delta
+                               (let ((delta (/ (- ma mi) n)))
+                                 (setf real-min
+                                       (if min
+                                           min
+                                           (- mi (* 0.5 delta))))
+                                 (setf real-max
+                                       (if max
+                                           max
+                                           (+ ma (* 0.5 delta))))))
+                           (list :low real-min
+                                 :high real-max
+                                 :nbins n
+                                 :name name)))))
+                 (result
+                  (apply #'make-sparse-hist
+                         hist-specs
+                         (when-keywords
+                           empty-bin-value
+                           default-increment))))
+            (loop
+               for d in data
+               do (hins result (mklist d)))
+            result))))))
 
 ;;;; Internal use:
 
