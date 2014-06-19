@@ -1,3 +1,29 @@
+;;;; dataset is a macro-driven library for analyzing data in a
+;;;; dataset-centric, declarative way.
+;;;;
+;;;; E.g., typically when one is dealing with large datasets, one
+;;;; relies on programming libraries which provide low-level access to
+;;;; the data and then manually keep track of histograms and other
+;;;; reductions taken from the data.
+;;;;
+;;;; This library provides a way to talk about datasets declaratively
+;;;; (which is typically the way one talks about it theoretically,
+;;;; thus bridging the gap between implementation language and
+;;;; theoretical language).
+;;;;
+;;;; One defines datasets either in terms of a physical source or by a
+;;;; transformation of another dataset.  Reductions (e.g. histograms,
+;;;; means, standard deviations...) are properties of datasets, and
+;;;; can be easily transferred down to derivative datasets simply by
+;;;; asking for them.
+;;;;
+;;;; One of the reasons I am working on this is simply because I have
+;;;; not run into another project which aims to do something similar.
+;;;; I suspect that using Common Lisp may be the reason it occurred to
+;;;; me, since it will most likely require macros to make it worth
+;;;; using but simultaneously must be efficient/fast enough to use on
+;;;; large/semi-large data sets.
+
 (require 'cl-ana)
 
 (in-package :cl-ana)
