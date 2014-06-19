@@ -121,21 +121,8 @@
 
 ;; A page is a whole window, sheet of paper, etc.  It can contain
 ;; multiple plots/graphs.
-(defclass page (titled)
-  ((next-id
-    :initform 0
-    :documentation "The next available id for a page."
-    :reader page-next-id
-    :allocation :class)
-   ;; I'll keep using the id
-   (id
-    ;;:initarg :id
-    :initform -1
-    :reader page-id
-    :documentation "The numerical id of the page; necessary for
-    gnuplot to know to create a distinct page rather than reuse the
-    last one used.")
-   (session
+(defclass page ()
+  ((session
     :initarg :gnuplot-session
     :initform nil
     :accessor page-gnuplot-session
@@ -149,17 +136,6 @@
     gnuplot, there is the possibility of the page having a title as
     well as the plots having a collective title.  This sets the shown
     title.")
-   (default-dimensions
-       :initform (cons 800 600)
-     :accessor page-default-dimensions
-     :allocation :class
-     :documentation "Default page size.")
-   (dimensions
-    :initform nil
-    :initarg :dimensions
-    :accessor page-dimensions
-    :documentation "A cons pair (width . height) in pixels for the
-    page size.")
    (scale
     :initform (cons 1 1)
     :initarg :scale
@@ -180,7 +156,7 @@
     the plots in the multiplot.")
    (terminal
     :initarg :terminal
-    :initform "wxt"
+    :initform nil
     :accessor page-terminal
     :documentation "The type of page, gnuplot only supports a fixed
     number of types so this makes more sense to be added as a slot
@@ -202,29 +178,19 @@ other initargs from key-args."
     (push plot (page-plots page))))
 
 (defmethod generate-cmd ((p page))
-  (with-accessors ((title title)
-                   (shown-title page-shown-title)
-                   (id page-id)
+  (with-accessors ((shown-title page-shown-title)
                    (terminal page-terminal)
                    (output page-output)
                    (layout page-layout)
-                   (dimensions page-dimensions)
-		   (default-dimensions page-default-dimensions)
                    (scale page-scale)
                    (plots page-plots))
       p
+    (when (not terminal)
+      (setf terminal (wxt-term)))
     (string-append
      (with-output-to-string (s)
        (format s "set output~%")
-       (if (or (equal title "")
-               (null title))
-	   (format s "set term ~a ~a title 'Page ~a'" terminal id id)
-	   (format s "set term ~a ~a title '~a'" terminal id title))
-       (if dimensions
-	   (format s " size ~a,~a" (car dimensions) (cdr dimensions))
-	   (format s " size ~a,~a"
-		   (car default-dimensions)
-		   (cdr default-dimensions)))
+       (format s "set term ~a" terminal)
        (format s "~%")
        (when output (format s "set output '~a'~%" output))
        (format s "set multiplot layout ~a,~a title '~a'"
@@ -253,18 +219,9 @@ layout specified in the page.")
     ((p page) &key)
   (with-slots (session layout plots)
       p
-    (incf (slot-value p 'next-id))
     (setf session (spawn-gnuplot-session))
     (when (not layout)
       (setf layout (cons 1 (length plots))))))
-
-(defmethod initialize-instance ((p page)
-                                &key id
-                                  &allow-other-keys)
-  (let ((next-id (slot-value p 'next-id)))
-    (when (not id)
-      (setf (slot-value p 'id) next-id)))
-  (call-next-method))
 
 ;; A plot is defined by an abscissa and an ordinate, though these
 ;; don't necessarily have to be drawn, as well as the margins and any
@@ -948,10 +905,30 @@ of up to two double-float arguments."
        for o in objects
        do (format s "~a" o))))
 
+(defvar *wxt-id* 0)
+
+(defun wxt-term (&key
+                   (size (cons 800 600))
+                   id
+                   title)
+  (when (not id)
+    (setf id *wxt-id*)
+    (incf *wxt-id*))
+  (when (not title)
+    (setf title
+          (with-output-to-string (s)
+            (format s "Page ~a" id))))
+  (with-output-to-string (s)
+    (format s "wxt")
+    (format s " ~a" id)
+    (format s " title '~a'" title)
+    (when size
+      (format s " size ~a,~a" (car size) (cdr size)))))
+
 ;; Function for generating the terminal type string of a page for
 ;; images in gnuplot
 (defun png-term (&key
-                   (size (cons 640 480))
+                   (size (cons 800 600))
                    (font-face "arial")
                    font-point-size
                    ;; fontsize can be :tiny, :small, :medium, :large, :giant
@@ -978,7 +955,8 @@ of up to two double-float arguments."
                            font-face
                            (when font-point-size
                              font-point-size)))
-                   font-size
+                   (when (not font-point-size)
+                     font-size)
                    (when transparent
                      "transparent")
                    (when interlace
@@ -992,8 +970,43 @@ of up to two double-float arguments."
                    (when colors
                      colors))))))))
 
+;; JPEG terminal
+(defun jpeg-term (&key
+                    (size (cons 800 600))
+                    (font-face "arial")
+                    font-point-size
+                    ;; fontsize can be :tiny, :small, :medium, :large, :giant
+                    (font-size :medium)
+                    interlace
+                    enhanced
+                    colors)
+  "Generates the type string for a png terminal with options"
+  (string-downcase
+   (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "jpeg"
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (list "font"
+                           font-face
+                           (when font-point-size
+                             font-point-size)))
+                   (when (not font-point-size)
+                     font-size)
+                   (when interlace
+                     "interlace")
+                   (when enhanced
+                     "enhanced")
+                   (when colors
+                     colors))))))))
+
 (defun ps-term (&key
-                  (size (cons 640 480))
+                  (size (cons 800 600))
                   (font-face "arial")
                   font-point-size
                   ;; fontsize can be :tiny, :small, :medium, :large, :giant
@@ -1012,7 +1025,7 @@ of up to two double-float arguments."
            (remove-if-not
             #'identity
             (alexandria:flatten
-             (list "ps"
+             (list "postscript"
                    (when size
                      (list 'size (car size) "," (cdr size)))
                    (when font-face
@@ -1020,7 +1033,8 @@ of up to two double-float arguments."
                            font-face
                            (when font-point-size
                              font-point-size)))
-                   font-size
+                   (when (not font-point-size)
+                     font-size)
                    (when transparent
                      "transparent")
                    (when interlace
@@ -1041,3 +1055,50 @@ gnuplot to distinguish eps from ps)"
   (apply #'ps-term
          :orientation "eps"
          args))
+
+(defun pdf-term (&key
+                   (color-p t)
+                   (size (cons "5" "3"))
+                   (font-face "arial")
+                   font-size
+                   line-width
+                   (dashed-p nil dashed-supplied-p)
+                   dash-length
+                   (rounded t)
+                   enhanced)
+  "Generates the type string for a png terminal with options"
+  (string-downcase
+   (apply #'join-strings
+            (intersperse
+             " "
+             (remove-if-not
+              #'identity
+              (alexandria:flatten
+               (list "pdf"
+                     (if color-p
+                         "color"
+                         "monochrome")
+                     (when size
+                       (list 'size (car size) "," (cdr size)))
+                     (when font-face
+                       (with-output-to-string (s)
+                         (format s "font \"~a" font-face)
+                         (if font-size
+                             (format s ",~a\"" font-size)
+                             (format s "\""))))
+                     (when line-width
+                       (list "linewidth" line-width))
+                     (if (not dashed-supplied-p)
+                         (if color-p
+                             "solid"
+                             "dashed")
+                         (if dashed-p
+                             "dashed"
+                             "solid"))
+                     (when dashed-p
+                       (when dash-length
+                         (list "dl" dash-length)))
+                     (when (not rounded)
+                       "butt")
+                     (when enhanced
+                       "enhanced"))))))))

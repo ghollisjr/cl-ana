@@ -85,7 +85,11 @@
            :legend-update
            ;; utilities
            :sample-function
+           :wxt-term
            :png-term
-           :ps-term))
+           :jpeg-term
+           :ps-term
+           :eps-term
+           :pdf-term))
 
 (gmath:use-gmath :plotting)

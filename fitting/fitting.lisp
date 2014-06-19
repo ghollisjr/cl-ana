@@ -196,7 +196,7 @@ The return values of fit are:
                         (expt c 2)
                         num-iterations)))))))))
 
-(defun residuals (fn data)
+(defun residuals (data fn)
   "Computes the residuals from the fit to data (- data fit)"
   (mapcar (lambda (d)
             (destructuring-bind (x . y) d
