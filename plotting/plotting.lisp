@@ -205,7 +205,9 @@ other initargs from key-args."
              (loop
                 for plot in plots
                 collecting (generate-cmd plot)))
-     "unset multiplot")))
+     (with-output-to-string (s)
+       (format s "unset multiplot~%")
+       (format s "set output")))))
 
 (defgeneric draw (page &rest key-args)
   (:documentation "Draws the contents of a page using the multiplot
@@ -1005,6 +1007,7 @@ of up to two double-float arguments."
                    (when colors
                      colors))))))))
 
+;; Does not correctly generate PS file
 (defun ps-term (&key
                   (size (cons 800 600))
                   (font-face "arial")
@@ -1048,6 +1051,7 @@ of up to two double-float arguments."
                    (when colors
                      colors))))))))
 
+;; Does not produce correct EPS file
 (defun eps-term (&rest args)
   "Generates term type string for eps terminals; takes the same
 arguments as ps-term minus the orientation argument (this is used by
