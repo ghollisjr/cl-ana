@@ -1,0 +1,151 @@
+Final version: Two main tools, makeres and urd, along with glue to
+make a powerful trinity of cl-ana, makeres and urd.
+
+makeres is a tool for declarative computing using graph
+transformations.  By passing an initial computation graph through a
+pipeline of transformations, a final literal graph is compiled into a
+function which has built-in error handling, parameters, etc.  These
+transformations are specified by the user, meaning possibilities are
+almost endless.
+
+urd, Universal Result Database, is a result storage tool for easily
+loading and saving results from analysis.  Instead of a heirarchy, it
+uses a tag system, which is more general than a heirachy and allows
+easier implementation of advanced searches.
+
+The final trinity tool would consist of macros which would
+simultaneously define makeres nodes and urd entries, loading and
+storing results efficiently.
+
+---------------------------------------------------------
+
+I may have to scratch most if not all of these specs due to further
+considerations of the project.  What is truly needed is a general
+purpose library for defining computation operators and how they should
+be compiled into explicit computation.  Tabular data analysis would be
+built on top of this framework.  Dependency graphs may play a large
+role in the implementation and concept, as they always do in
+declarative languages.
+
+This general tool is probably outside the scope of my current
+research, but as a substitute, what would be useful is at least a tool
+which takes functional programming operations like fold/reduce (I
+could call it red) and compiles a result specification into a
+generating function.  Table reductions should be done in parallel/in
+the same pass over a table if permitted in the dependencies.
+
+Advantages to this approach include being able to define
+analysis-specific macros on top of this result specification language
+which alleviate redundancies specific to my analysis.
+
+-----------------------------------------------------------
+
+This document outlines the design ideas and requirements of the cl-tab
+declarative tabular data analysis library for Common Lisp.
+
+**TABLE OF CONTENTS**
+
+1. Abstract
+2. Key Concepts
+3. Pattern of Use
+4. 
+
+**ABSTRACT**
+
+cl-tab is a declarative tabular data analysis library written in and
+for Common Lisp.  It is built on top of cl-ana, and intended to be
+used alongside the utilities and functionality provided by cl-ana.
+Declarative programming seemed more suitable for my own work analyzing
+particle accelerator data as it was the most successful way I
+internally conceptualized my analysis.  The popularity, success, and
+(in my humble opinion) simplicity of the Map-Reduce methodology due to
+Google further convinced me to prototype a more powerful and thorough
+declarative approach to data analysis.
+
+**KEY CONCEPTS**
+
+Dataset: A collection of similar data, i.e. a set of points which have
+a common structure (referred to as fields).  Statistics refers to
+these all the time.  Examples: Product prices supplied by a vendor;
+each product has a name/I.D. and a price, so the structure is the same
+(same number and types of fields) but the values of each field can
+vary from product to product.
+
+Reduction: A value obtained as a function of the data contained in a
+dataset.  More explicitly, obtained by applying the higher-order
+function reduce to a closure and the data.  Examples: mean of
+numerical data, histogram of any number of fields from a dataset.
+
+
+**** Instead of post processing, allow post reductions.  Filtered
+     datasets would be reductions.  Full consistency of design.
+     Reductions should have: 1. Reset function, 2. Reduction function
+     (the one supplied to reduce), 3. Result function (for run time
+     processing, returns resulting reduction), 4. Load function (given
+     a pathname, loads the result from the file at that pathname),
+     5. Save function (given a pathname, saves the result in a file at
+     that pathname).
+
+*********************
+
+It appears after much thought that a more robust and evolutionary
+approach would be to
+
+1. Improve and generalize the histogram result system I have already
+written.  Improve in the sense that it should not be a heirarchy but a
+graph, representing the dependencies among the components.  Generalize
+in the sense that non-histogram results could be stored and recalled.
+
+2. Write dataset processing functions/macros which ease the burden of
+writing custom code for each pass function.  They all have a common
+form, open inputs & outputs -> pass over data -> close inputs &
+outputs -> save results.  For most efficiency, macros which generate
+code using closures would be the best approach.  Thinking about passes
+may be necessary for quite some time since it keeps the code close to
+Common Lisp.  Abandoning the CL programming model too much leaves me
+stranded when I want to do something I forgot to support in the new
+model.
+
+Another way to think about it:
+
+Whenever I analyze data, I have to design and maintain a dependency
+graph of the sources and processing steps, then construct functions
+which will execute the steps necessary for generating the result nodes
+in the graph.  Then I have to call the functions in the correct order
+given the readiness status of various nodes (in the simplest case this
+just generates all reductions and tables, but if some results are
+available then they can simply be loaded).
+
+This approach exposes all of the working parts, so it is very flexible
+for changing any aspect of the computation, but does not optimize for
+the most common changes needed.  Since I am having to mentally convert
+a graph into a pipeline, conceptually small changes at the graph level
+can escalate into difficult to manage changes in the pipeline
+structure.  For example, adding a dependency to a generated table
+which is a reduction from another table, then the pipeline must be
+rearranged so that the pass over the generated table must happen after
+the reduction from the other table is calculated.  Also, if reductions
+are added to a table and desired to be carried through filtered
+reduction tables, then each pass for each filtered result must have
+appropriate reduction code added at the correct location.  This should
+be as easy as stating a new reduction and requesting the reduction to
+be copied to descendents.
+
+**************************************************************
+
+Third iteration of idea: Each node in the graph can be parametric,
+i.e. can accept parameters in addition to the nodal dependencies.
+
+This fixes the problem of specifying input file lists for e.g. the
+pass1 and pass2 tables I'm using in my physics analysis now.
+
+The computation function generated by compiling this dependency graph
+would then accept all the parameters which are needed for each
+parametric node.  I'm not sure what the argument list should be;
+naively the parameters could be required to have different names, but
+a more intelligent approach would be to use lists with the node id as
+the first element and the rest of the list being the arguments to be
+supplied.
+
+Using parametrized nodes also allows for hooks into the procedure.
+E.g., if you need to examine reductions of a table in order to 

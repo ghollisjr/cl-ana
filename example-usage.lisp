@@ -1,21 +1,6 @@
-;;;; dataset is a macro-driven library for analyzing data in a
-;;;; dataset-centric, declarative way.
-;;;;
-;;;; E.g., typically when one is dealing with large datasets, one
-;;;; relies on programming libraries which provide low-level access to
-;;;; the data and then manually keep track of histograms and other
-;;;; reductions taken from the data.
-;;;;
-;;;; This library provides a way to talk about datasets declaratively
-;;;; (which is typically the way one talks about it theoretically,
-;;;; thus bridging the gap between implementation language and
-;;;; theoretical language).
-;;;;
-;;;; One defines datasets either in terms of a physical source or by a
-;;;; transformation of another dataset.  Reductions (e.g. histograms,
-;;;; means, standard deviations...) are properties of datasets, and
-;;;; can be easily transferred down to derivative datasets simply by
-;;;; asking for them.
+;;;; makeres is a macro-driven library for performing computations
+;;;; from declarative specifications of the computation, allowing
+;;;; users to specify optimizations in computations directly.
 ;;;;
 ;;;; One of the reasons I am working on this is simply because I have
 ;;;; not run into another project which aims to do something similar.
@@ -23,10 +8,47 @@
 ;;;; me, since it will most likely require macros to make it worth
 ;;;; using but simultaneously must be efficient/fast enough to use on
 ;;;; large/semi-large data sets.
+;;;;
+;;;; makeres is built on top of cl-ana, my library for general data
+;;;; analysis.
+
+;;;; The general flow of working with makeres should be:
+;;;;
+;;;; 1. Define as much about the computation as you like
+;;;;
+;;;; 2. Load these into a REPL
+;;;;
+;;;; 3. Generate results from these specifications
+;;;;
+;;;; 4. Modify/add information about computation results
+;;;;
+;;;; Then repeat 2-4 until you're done with analysis.
+
+;;;; makeres is so close to the cells library that it makes me sad
+;;;; inside that I cannot easily use it.  Ultimately the difference is
+;;;; computation time, cells tries to recalculate on the fly and is an
+;;;; extension to CLOS, whereas makeres aims to generate a function
+;;;; which will perform computations given different parameters and
+;;;; allow users to define operations which can be optimized.
+
+;;;; My idea about declarative tabular data analysis should be built
+;;;; on top of makeres in the form of defined optimizations and
+;;;; operators.
+
+;;;; The reductions can be stored in memory, but physical datasets
+;;;; need to be stored on disk.  There should be a directory in which
+;;;; all physical datasets are stored.  If reductions are to be stored
+;;;; as well (necessary for very large datasets), then this can be
+;;;; added as a feature
 
 (require 'cl-ana)
 
-(in-package :cl-ana)
+(defpackage #:cl-tab
+  (:use :cl))
+
+(package-utils:use-package-group :cl-ana :cl-tab)
+
+(in-package :cl-tab)
 
 ;; some datasets need to be generated in parallel with other datasets;
 ;; this should be done with a single pass over the source dataset.
@@ -80,7 +102,7 @@ and path are evaluated."
       (setf (gethash name *ana-paths*) val)
       (setf (gethash *ana* *ana-paths*) val)))
 
-(defmacro define-dataset (name type source)
+(defmacro dataset (name type source)
   "Defines a dataset.
 
 name is any object identifying the dataset (lists are useful)
@@ -95,8 +117,8 @@ HDF5 files, a plist, CSV, a filtered source dataset, etc.")
 ;; examples:
 
 ;; Defines an HDF5 dataset with
-(define-dataset (source) physical
-  (open-hdf-table-chain input-files "/group"))
+(dataset (source) physical
+         (open-hdf-table-chain input-files "/group"))
 
 ;; Reductions are any quantity obtained by passing over the data once.
 ;; Typically used for histograms, max/min field values, means, etc.
@@ -107,13 +129,13 @@ HDF5 files, a plist, CSV, a filtered source dataset, etc.")
 ;; default case.  Closure should return the reduction value given the
 ;; argument :get, and reset the reduction value given the argument
 ;; :reset.
-(define-reductions (source)
-    (x (hist-closure
-        (make-shist
-         ((:name "x" :low -3d0 :high 3d0 :nbins 100))))
-       (list x))
-  (y (hist-closure ((:name "y" :low -5d0 :high 0d0 :nbins 5)))
-     (list y)))
+(reductions (source)
+            (x (hist-closure
+                (make-shist
+                 ((:name "x" :low -3d0 :high 3d0 :nbins 100))))
+               (list x))
+            (y (hist-closure ((:name "y" :low -5d0 :high 0d0 :nbins 5)))
+               (list y)))
 
 ;; dlambda may not be efficient enough, we'll test it out
 (defmacro hist-closure (creation-form &optional weighted)
@@ -164,25 +186,25 @@ operator."
 ;; (or maybe a &rest) specifying options for the filtered table,
 ;; e.g. copied fields, additional fields, or an explicit list of
 ;; fields.
-(define-dataset (source above) logical
-  (filter (source)
-          (> x 10)
-          (add-fields (z logical (+ x y))
-                      (w physical (sqrt (sin x))))))
+(dataset (source above) logical
+         (filter (source)
+                 (> x 10)
+                 (add-fields (z logical (+ x y))
+                             (w physical (sqrt (sin x))))))
 
 ;; import-reductions: takes arguments from-dataset, to-dataset, and
 ;; the reduction names.  May provide special arguments e.g. for
 ;; copying all reductions
-(import-reductions (source)
-                   (source above)
-                   x y)
+(include-reductions (source)
+                    (source above)
+                    x y)
 
-(define-dataset (source below) logical
-  (filter (source)
-          (<= x 10)
-          (add-fields (omega physical (sin x))
-                      (theta logical (sqrt y)))))
+(dataset (source below) logical
+         (filter (source)
+                 (<= x 10)
+                 (add-fields (omega physical (sin x))
+                             (theta logical (sqrt y)))))
 
-(import-reductions (source)
-                   (source below)
-                   x y)
+(include-reductions (source)
+                    (source below)
+                    x y)
