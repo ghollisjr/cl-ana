@@ -4,7 +4,7 @@
 ;;;; Each node specifies nodes connected with "away" arrows from
 ;;;; itself.
 
-(in-package :depgraph)
+(in-package :makeres)
 
 (defun node (id deps content)
   "Creates a node with id, dependencies deps, and content.
