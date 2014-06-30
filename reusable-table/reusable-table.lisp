@@ -49,15 +49,26 @@
     :documentation "Boolean which tells the wrapper when it needs to
     close and re-open the table.")))
 
+(defun make-reusable-table (creation-fn)
+  "Returns result of creation-fn if reusable-table, else returns
+reusable-table which will make use of creation-fn to generate new
+copies when needed."
+  (let ((tab (funcall creation-fn)))
+    (if (typep tab 'reusable-table)
+        tab
+        (make-instance 'reusable-table
+                       :creation-fn creation-fn
+                       :raw-table tab))))
+        
 (defmacro wrap-for-reuse (table-creation-form)
-  "Creates a reusable table which places the table-creation-form into
-a closure which will be evaluated each time the table gets re-read
-from the beginning."
+  "Creates a reusable (when table-creation-from does not return a
+reusable-table) table which places the table-creation-form into a
+closure which will be evaluated each time the table gets re-read from
+the beginning.  If the creation form returns a reusable-table, simply
+returns the table."
   (let ((lambda-form
          `(lambda () ,table-creation-form)))
-    `(make-instance 'reusable-table
-                    :creation-fn ,lambda-form
-                    :raw-table (funcall ,lambda-form))))
+    `(make-reusable-table ,lambda-form)))
 
 (defmethod table-load-next-row ((table reusable-table))
   (with-slots (raw-table creation-fn needs-reloading)
