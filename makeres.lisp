@@ -98,12 +98,13 @@
       :accessor target-deps
       :initarg :deps
       :documentation "list of target ids which are needed prior")
-     (stat
-      :accessor target-stat
-      :initarg :stat
+     (val
+      :accessor target-val
+      :initarg :val
       :initform nil
-      :documentation "computation status, nil when needs computing")))
-  
+      :documentation "computation status, nil when needs computing,
+      return value whenever computed")))
+
   (defvar *symbol-tables*
     (make-hash-table :test 'equal)
     "Maps from project id to symbol-table for that project")
@@ -113,10 +114,16 @@
 
   (defvar *project-id* nil)
 
+  (defvar *transformation-table*
+    (make-hash-table :test 'equal))
+
+  (defvar *params-table*
+    (make-hash-table :test 'equal))
+
   (defun project ()
     "Returns current project"
     *project-id*)
-  
+
   (defun symbol-table (&optional (project-id *project-id*))
     "Returns symboltable identified by id; defaults to current graph"
     (gethash project-id *symbol-tables*))
@@ -140,14 +147,49 @@ which is then interpreted as a dependency on x"
                        (mapcar #'rec ex)))))
         (rec expr)
         (hash-keys deps))))
-  
-  (defun make-target (id expr &optional stat)
+
+  (defun make-target (id expr &optional val)
     (let ((deps (find-dependencies expr)))
       (make-instance 'target
                      :id id
                      :expr expr
                      :deps deps
-                     :stat stat))))
+                     :val val)))
+
+  ;; makeres utilities:
+  (defun pipe-functions (fns input)
+    "Evaluates each function in fns given input either from the
+  initial input or from the output of the previous function in the
+  list fns"
+    (let ((val input))
+      (dolist (f fns)
+        (setf val (funcall f val)))
+      val))
+
+  ;; Major function: depsort
+  ;;
+  ;; this is majorly inefficient for large dependency graphs, so it
+  ;; needs to be updated in the future
+  (defun depsort (target-table)
+    "Returns list of ids from target-table in the order from least
+  dependent to most dependent."
+    (let ((depmap (make-hash-table :test 'equal)))
+      (labels ((rec (id)
+                 ;; returns full list of dependencies for id
+                 (let ((deps (target-deps (gethash id target-table))))
+                   (when deps
+                     (reduce (lambda (ds d)
+                               (adjoin d ds :test #'equal))
+                             (mapcan #'rec deps)
+                             :initial-value deps)))))
+        (loop
+           for id being the hash-keys in target-table
+           do (setf (gethash id depmap)
+                    (rec id)))
+        (sort (hash-keys target-table)
+              (lambda (x y)
+                (not (member y (gethash x depmap)
+                             :test #'equal))))))))
 
 (defmacro res (id &optional (project-id *project-id*))
   "Expands to whatever the symbol for id in project identified by
@@ -169,26 +211,146 @@ initialization, will be initialized automatically if necessary."
   (when (not (gethash project-id *symbol-tables*))
     (setf (gethash project-id *symbol-tables*)
           (make-hash-table :test 'equal)))
+  `',project-id)
+
+(defmacro defpars (params &optional (project-id *project-id*))
+  "Adds parameters to project"
+  (let ((result
+         (set-difference (gethash project-id *params-table*)
+                         params
+                         :key (lambda (x)
+                                (if (listp x)
+                                    (first x)
+                                    x)))))
+    (loop for p in params
+       do (push p result))
+    (setf (gethash project-id *params-table*)
+          result))
   nil)
 
-(defmacro defres (id expr &optional (project-id *project-id*))
-  "Defines a result target with id and value expression expr."
+(defmacro undefpars (params &optional (project-id *project-id*))
+  "Undefines parameters in params from project"
+  (setf (gethash project-id *params-table*)
+        (remove-if (lambda (p)
+                     (member p params
+                             :test #'equal))
+                   (gethash project-id *params-table*))))
+
+(defmacro defres (id params &body body)
+  "Defines a result target with id and value expression `(progn ,@body)."
   ;; establish symbol mapping
-  (let* ((symtab (symbol-table project-id))
-         (sym (aif (gethash id symtab)
-                   it
-                   (let ((result (gensym)))
-                     ;; set symbol mapping when needed
-                     (setf (gethash id symtab)
-                           result)
-                     result)))
-         (tartab (target-table project-id)))
+  (let ((result (set-difference (gethash *project-id* *params-table*)
+                                params
+                                :key (lambda (x)
+                                       (if (listp x)
+                                           (first x)
+                                           x)))))
+    (loop
+       for p in params
+       do (push p
+                result))
+    (setf (gethash *project-id* *params-table*)
+          result))
+  (let* ((symtab (symbol-table *project-id*))
+         (tartab (target-table *project-id*)))
+    ;; set symbol mapping when needed
+    (when (not (gethash id symtab))
+      (setf (gethash id symtab)
+            (gentemp "res" :makeres)))
     ;; add target to table
     (let* ((oldtar (gethash id tartab))
-           (stat (if oldtar
-                     (target-stat oldtar)
-                     nil))
-           (tar (make-target id expr)))
+           (val (if oldtar
+                    (target-val oldtar)
+                    nil)))
       (setf (gethash id tartab)
-            (make-target id expr stat))))
+            (make-target id `(progn ,@body) val))))
   `',id)
+
+(defun setresfn (id value)
+  "Function version of setres"
+  (setf (target-val
+         (gethash id
+                  (gethash *project-id* *target-tables*)))
+        value))
+
+(defmacro setres (id value)
+  "Sets target value of id in project to value"
+  `(setresfn ',id ,value))
+
+(defmacro settrans (transforms &key
+                                 (op :add)
+                                 (project-id *project-id*))
+  "Takes each transformation function in list transforms (should be
+literal functions, available at compile & load times) and depending on
+op does something to the project referred to by project-id.
+
+transforms will not be evaluated and should be a list form containing
+the transform functions.
+
+op can be :set or :add for setting the entire list of
+transforms or adding to the end of the transform list.
+
+Each transformation is a function taking a target table and returning
+a new target table.  The only constraint is that the initial targets
+be present in the output table.
+
+Returns full transformation list from project after applying op."
+  (case op
+    (:add
+     (setf (gethash project-id *transformation-table*)
+           (nconc (gethash project-id *transformation-table*)
+                  transforms)))
+    (:set
+     (setf (gethash project-id *transformation-table*)
+           transforms)))
+  `',(gethash project-id *transformation-table*))
+
+;; makeres::comp-func is now off-limits for function names
+(defmacro makeres (&optional (project-id *project-id*))
+  "Returns a compiled function which will execute"
+  (let ((symtab (gethash project-id *symbol-tables*))
+        (tartab (gethash project-id *target-tables*))
+        (fintab
+         (let ((fns (gethash project-id *transformation-table*))
+               (input (gethash project-id *target-tables*)))
+           (if fns
+               (pipe-functions fns input)
+               input))))
+    ;; ensure symbols are defined for fintab
+    (loop
+       for id being the hash-keys in fintab
+       do (let ((sym (gethash id symtab)))
+            (when (not sym)
+              (setf (gethash id symtab)
+                    (gentemp "res" :makeres)))))
+    (let* ((sorted-ids
+            (depsort fintab))
+           (symbindings
+            (loop
+               for id in sorted-ids
+               collecting
+                 (let ((tar (gethash id fintab)))
+                   `(,(gethash id symtab)
+                      (aif (target-val
+                            (gethash ',id
+                                     (gethash ',project-id *target-tables*)))
+                           it
+                           ,(target-expr tar))))))
+           (body
+            `(let* ,symbindings
+               (setf
+                ,@(loop
+                     for id being the hash-keys in symtab
+                     for sym being the hash-values in symtab
+                     appending
+                       `(;; symbol
+                         (symbol-value ',sym)
+                         ,sym
+                         ;; target table
+                         (target-val (gethash ',id ,tartab))
+                         ,sym)))))
+           (comp-form
+            `(lambda (&key ,@(gethash project-id *params-table*))
+               ,body)))
+      `(symbol-function
+        (compile 'makeres::comp-func ,comp-form)))))
