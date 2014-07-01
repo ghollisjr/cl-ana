@@ -14,8 +14,10 @@
             (* x x))
           (res filtered)))
 
-(defres sum-scaled (scale)
+(defres sum-scaled ((scale 1))
   (print 'sum-scaled)
   (* scale
      (+ (res filtered)
         (res squared))))
+
+;; execute (funcall (makeres)) to test

@@ -6,5 +6,5 @@
   :license "GPLv3"
   :depends-on (#:cl-ana)
   :components ((:file "package")
-               (:file "hash-graph")
+               ;;(:file "hash-graph")
                (:file "makeres")))
