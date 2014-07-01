@@ -1,12 +1,3 @@
-* Fix parameter behavior.
-
-  At the moment, using different parameters doesn't change which
-  targets are supposedly completed, so the function will always return
-  the value for the first parameter settings. 
-
-  This may (or will) require more advanced parameter dependency
-  tracking.
-
 * Test various graph transformations
 
   Of special interest is the collapsing of table passes.  Approach:
