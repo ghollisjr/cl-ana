@@ -354,14 +354,16 @@ it will not be recomputed."
                                  (op :add)
                                  (project-id *project-id*))
   "Takes each transformation function in list transforms (should be
-literal functions, available at compile & load times) and depending on
+names of functions available at compile & load times) and depending on
 op does something to the project referred to by project-id.
 
 transforms will not be evaluated and should be a list form containing
 the transform functions.
 
-op can be :set or :add for setting the entire list of
-transforms or adding to the end of the transform list.
+op can be :set or :add for setting the entire list of transforms or
+adding to the front of the transform list.  (Front-adding seemed more
+reasonable since this allows languages to be built on top of previous
+layers.)
 
 Each transformation is a function taking a target table and returning
 a new target table.  The only constraint is that the initial targets
@@ -371,8 +373,8 @@ Returns full transformation list from project after applying op."
   (case op
     (:add
      (setf (gethash project-id *transformation-table*)
-           (nconc (gethash project-id *transformation-table*)
-                  transforms)))
+           (append transforms
+                   (gethash project-id *transformation-table*))))
     (:set
      (setf (gethash project-id *transformation-table*)
            transforms)))
@@ -386,7 +388,9 @@ is given."
   (let ((symtab (gethash project-id *symbol-tables*))
         (tartab (gethash project-id *target-tables*))
         (fintab
-         (let ((fns (gethash project-id *transformation-table*))
+         (let ((fns
+                (mapcar #'symbol-function
+                        (gethash project-id *transformation-table*)))
                (input (gethash project-id *target-tables*)))
            (if fns
                (pipe-functions fns input)
