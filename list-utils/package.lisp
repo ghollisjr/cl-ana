@@ -27,7 +27,9 @@
         :alexandria)
   (:export :range
 	   :zip
+           :lzip
 	   :unzip
+           :unlzip
            :mapzip
            :tree-map
            :intersperse
@@ -46,6 +48,8 @@
            ;;; alists
            :cars
            :cdrs
+           ;; lists as sets
+           :list->set
            ;;; plists
            :plist-select-fields
            :plist->alist

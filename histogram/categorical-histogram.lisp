@@ -72,7 +72,8 @@
           (incf (gethash datum bin-table)
                 weight)
           (setf (gethash datum bin-table)
-                (+ empty-bin-value weight))))))
+                (+ empty-bin-value weight)))))
+  hist)
 
 (defmethod hist-point-ref ((hist categorical-histogram)
                            point)

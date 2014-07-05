@@ -1,0 +1,44 @@
+* BUG: I use keyword arguments in table-get-field and table-set-field,
+  but I technically need to allow strings as well and just interpret
+  symbols as lower-case strings.  This is for the same reason as I
+  used strings to begin with: input tables sometimes have fields named
+  with a mix of lower and upper case characters, so I need to handle
+  these correctly.
+
+* Could possibly offload smart computation due to olet in do-table
+  macro into table-get-field.  olet may still be useful for letting
+  the compiler know that some fields would not be needed, but
+  technically table-reduce could still be almost as efficient if the
+  call to table-get-field would keep track of whether it's return
+  value for the current row had been set.  It could be exactly as
+  efficient if the needed fields from the table were requested ahead
+  of time.  (table-reduce would not be able selectively evaluate
+  fields by itself, since it wouldn't know which arguments to pass in
+  unevaluated to the reduction function.)
+
+  This suggests a different model of computing with tables, treating
+  them simply as sequences of rows.  Upon calling table-reduce, one
+  would inform the table of which columns the function is interested
+  in.  The list of columns occurring in the order specified would be
+  pass in as the row argument, and the function could do whatever it
+  pleased with the row.
+
+  To achieve a similar level of comfort as is provided by do-table,
+  macros which aid in forming table-reduce expressions could be made.
+  One could alternatively specify fields explicitly or simply use a
+  locally defined macro (e.g. (field X)) which would keep track of
+  which fields are actually called in the body, and thus it would be
+  possible to pass the active fields to table-reduce.
+
+* The general idea is to make tables more functional, hopefully both
+  at the use and implementation level.
+
+  E.g. there is a distinction between read and write table modes, but
+  this should be removed if possible, and replaced by functional
+  access.
+
+  * This does not appear feasible, at least not at the lowest levels.
+    If we are to build more advanced tools on top of these low levels,
+    then it does not matter much what the underlying structure is as
+    long as it's efficient (as it is currently).  Functional/other
+    access patterns can be provided by DSLs.

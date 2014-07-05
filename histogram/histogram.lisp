@@ -93,7 +93,8 @@ bound over which to integrate, and the upper bound."))
   (:documentation "Inserts a value specified by the datum (An atom for
   1-D or a list of values for more dimensions) into the histogram;
   i.e. increments the bin value by weight (which defaults to 1 or
-  whatever you set)."))
+  whatever you set).  Returns histogram (though it does change the
+  histogram state)."))
 
 ;;;; Not sure if index-ref functions are appropriate for all types of
 ;;;; histograms

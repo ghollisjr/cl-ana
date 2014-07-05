@@ -41,6 +41,10 @@
 (defun zip (x y)
   (mapcar #'cons x y))
 
+(defun lzip (&rest lists)
+  "Like zip, but uses lists instead of cons pairs thus allowing ntuples"
+  (transpose lists))
+
 (defun unzip (xs)
   "Returns a cons with the car being the cars of the zipped xs and the
 cdr being the cdrs."
@@ -52,6 +56,12 @@ cdr being the cdrs."
 			   (cons (cdr (car xs)) rs))
 	     (cons (nreverse ls) (nreverse rs)))))
     (unzip-helper xs () ())))
+
+(defun unlzip (xs)
+  "lzip is an inverse (through apply) of itself, simply applies lzip
+to its argument, returning a list of the previously zipped lists in
+xs."
+  (apply #'lzip xs))
 
 ;; Useful for creating mappings from data to values:
 (defun mapzip (fn &rest lists)
@@ -309,6 +319,15 @@ concatenation of n lists."
 
 (defun cars (xs)
   (mapcar #'car xs))
+
+;;; lists as sets utilities:
+
+(defun list->set (list &optional (test #'eql))
+  "Returns list with duplicates removed"
+  (reduce (lambda (res el)
+            (adjoin el res :test test))
+          list
+          :initial-value nil))
 
 ;;; Stuff (mostly) from Paul Graham's On Lisp, as well as some of my
 ;;; own improvements.

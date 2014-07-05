@@ -184,7 +184,8 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 			   (hist-default-increment hist))))
     (cond-setf (hist-point-ref hist data-list)
 	       (+ (hist-point-ref hist data-list) weight-factor)
-	       :place)))
+	       :place)
+    hist))
 
 (defmethod hist-index-ref ((hist contiguous-histogram) index-list)
   "Unchecked, assumes you know what the allowed index values are."
