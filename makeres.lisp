@@ -153,6 +153,9 @@ symbol)"
   (defvar *target-tables*
     (make-hash-table :test 'equal))
 
+  (defvar *fin-target-tables*
+    (make-hash-table :test 'equal))
+
   (defvar *project-id* nil)
 
   (defvar *transformation-table*
@@ -189,13 +192,15 @@ symbol)"
   ;;
   ;; this uses lists for sets, inefficient for large dependency
   ;; graphs, so it needs to be updated in the future
-  (defun depsort (target-table)
-    "Returns list of ids from target-table in the order from least
-  dependent to most dependent."
+
+  (defun dep< (target-table)
+    "Returns comparison function for depsort from target-table which
+returns true when the left argument does not depend on the right
+argument."
     (let ((depmap (make-hash-table :test 'equal)))
       (labels ((rec (id)
                  ;; returns full list of dependencies for id
-                 (let ((deps (target-deps (gethash id target-table))))
+                 (let ((deps (copy-list (target-deps (gethash id target-table)))))
                    (when deps
                      (reduce (lambda (ds d)
                                (adjoin d ds :test #'equal))
@@ -205,10 +210,15 @@ symbol)"
            for id being the hash-keys in target-table
            do (setf (gethash id depmap)
                     (rec id)))
-        (sort (hash-keys target-table)
-              (lambda (x y)
-                (not (member y (gethash x depmap)
-                             :test #'equal)))))))
+        (lambda (x y)
+          (not (member y (gethash x depmap)
+                       :test #'equal))))))
+
+  (defun depsort (target-table)
+    "Returns list of ids from target-table in the order from least
+  dependent to most dependent."
+    (sort (hash-keys target-table)
+          (dep< target-table)))
 
   ;; Major function: param-dependencies
   ;;
@@ -270,6 +280,10 @@ initialization, will be initialized automatically if necessary."
   (when (not (gethash project-id *target-tables*))
     (setf (gethash project-id *target-tables*)
           (make-hash-table :test 'equal)))
+  ;; initialize final target table
+  (when (not (gethash project-id *fin-target-tables*))
+    (setf (gethash project-id *fin-target-tables*)
+          (make-hash-table :test 'equal)))
   ;; initialize symbol table
   (when (not (gethash project-id *symbol-tables*))
     (setf (gethash project-id *symbol-tables*)
@@ -325,6 +339,7 @@ initialization, will be initialized automatically if necessary."
 
 (defun setresfn (id value)
   "Function version of setres"
+  ;; *target-tables*:
   (setf (target-val
          (gethash id
                   (gethash *project-id* *target-tables*)))
@@ -332,7 +347,18 @@ initialization, will be initialized automatically if necessary."
   (setf (target-stat
          (gethash id
                   (gethash *project-id* *target-tables*)))
-        t))
+        t)
+  ;; *fin-target-tables*:
+  (when (gethash id
+                 (gethash *project-id* *fin-target-tables*))
+    (setf (target-val
+           (gethash id
+                    (gethash *project-id* *fin-target-tables*)))
+          value)
+    (setf (target-stat
+           (gethash id
+                    (gethash *project-id* *fin-target-tables*)))
+          t)))
 
 (defmacro setres (id value)
   "Sets target value of id in project to value and the status to t so
@@ -344,11 +370,34 @@ it will not be recomputed."
   (setf (target-stat
          (gethash id
                   (gethash *project-id* *target-tables*)))
-        nil))
+        nil)
+  (when (gethash id
+                 (gethash *project-id* *fin-target-tables*))
+    (setf (target-stat
+           (gethash id
+                    (gethash *project-id* *fin-target-tables*)))
+          nil)))
 
 (defmacro unsetres (id)
   "Sets status of target to nil, will be recomputed."
   `(unsetresfn ',id))
+
+(defun clrresfn ()
+  "Function version of clrres"
+  (let ((tartab (gethash *project-id* *target-tables*))
+        (fintab (gethash *project-id* *fin-target-tables*)))
+    (loop
+       for k being the hash-keys in tartab
+       do (setf (target-stat (gethash k tartab))
+                nil))
+    (loop
+       for k being the hash-keys in fintab
+       do (setf (target-stat (gethash k fintab))
+                nil))))
+
+(defmacro clrres ()
+  "Clears all status for result targets in current project"
+  `(clrresfn))
 
 (defmacro settrans (transforms &key
                                  (op :add)
@@ -394,7 +443,28 @@ is given."
                (input (gethash project-id *target-tables*)))
            (if fns
                (pipe-functions fns input)
-               input))))
+               input)))
+        (oldfintab
+         (gethash project-id *fin-target-tables*)))
+    ;; Update fintab:
+    (setf (gethash project-id *fin-target-tables*)
+          fintab)
+    ;; Set values and status when available for new fintab from old fintab:
+    (loop
+       for id being the hash-keys in fintab
+       do
+         (if (gethash id tartab)
+             (progn
+               (setf (target-val (gethash id fintab))
+                     (target-val (gethash id tartab)))
+               (setf (target-stat (gethash id fintab))
+                     (target-stat (gethash id tartab))))
+             (when (gethash id oldfintab)
+               (setf (target-val (gethash id fintab))
+                     (target-val (gethash id oldfintab)))
+               (setf (target-stat (gethash id fintab))
+                     (target-stat (gethash id oldfintab))))))
+
     ;; ensure symbols are defined for fintab
     (loop
        for id being the hash-keys in fintab
@@ -402,7 +472,7 @@ is given."
             (when (not sym)
               (setf (gethash id symtab)
                     (gentemp "res" :makeres)))))
-    (alexandria:with-gensyms (expr)
+    (alexandria:with-gensyms (val)
       (let* ((sorted-ids
               (depsort fintab))
              (symbindings
@@ -412,21 +482,42 @@ is given."
                    (let ((tar (gethash id fintab)))
                      `(,(gethash id symtab)
                         (if (target-stat
-                              (gethash ',id
-                                       (gethash ',project-id *target-tables*)))
+                             (gethash ',id
+                                      ;; (gethash ',project-id *target-tables*)
+                                      (gethash ',project-id *fin-target-tables*)))
                             (target-val
                              (gethash ',id
-                                      (gethash ',project-id *target-tables*)))
+                                      (gethash ',project-id *fin-target-tables*)))
                             ,(aif (gethash id symtab)
-                                  `(let ((,expr
+                                  `(let ((,val
                                           ,(target-expr tar)))
-                                     (setf (symbol-value ',it)
-                                           ,expr
-                                           (target-val (gethash ',id ,tartab))
-                                           ,expr
-                                           (target-stat (gethash ',id ,tartab))
-                                           t)
-                                     ,expr)
+                                     (progn
+                                       (setf (symbol-value ',it)
+                                             ,val
+                                             (target-val
+                                              (gethash ',id
+                                                       (gethash ',project-id
+                                                                *fin-target-tables*)))
+                                             ,val
+                                             (target-stat
+                                              (gethash ',id
+                                                       (gethash ',project-id
+                                                                *fin-target-tables*)))
+                                             t)
+                                       (when (gethash ',id
+                                                      (gethash ',project-id
+                                                               *target-tables*))
+                                         (setf (target-val
+                                                (gethash ',id
+                                                         (gethash ',project-id
+                                                                  *target-tables*)))
+                                               ,val
+                                               (target-stat
+                                                (gethash ',id
+                                                         (gethash ',project-id
+                                                                  *target-tables*)))
+                                               t)))
+                                     ,val)
                                   (target-expr tar)))))))
              (lambda-list (gethash project-id *params-table*))
              (params (mapcar (lambda (x)
@@ -460,7 +551,7 @@ is given."
                                                 (target-stat (gethash ',pdep ,tartab)))
                                        (setf (target-stat (gethash ',pdep ,tartab))
                                              nil)))))))
-                 
+
                  ;; execute computations for targets which need
                  ;; updating.
                  (let* ,(cars symbindings)
@@ -481,3 +572,17 @@ is given."
 Treat args as if they will be evaluated."
   `(let ((comp (compres)))
      (funcall comp ,@args)))
+
+;;;; Utilities:
+
+(defun target-ids ()
+  "Returns list of ids for defined targets in project"
+  (hash-keys (gethash *project-id* *target-tables*)))
+
+(defun fin-target-ids ()
+  "Returns list of ids for defined targets in final target table."
+  (hash-keys (gethash *project-id* *fin-target-tables*)))
+
+;; Could create print representation of targets, that way there could
+;; just be targets and fin-targets as functions which would return all
+;; project targets and final target table targets.
