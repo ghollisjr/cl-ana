@@ -71,9 +71,9 @@ this is my naive code walking strategy's fault."
            (flet ((row-number ()
                     ,ri))
              ,@(remove-if (lambda (x)
-                          (and (listp x)
-                               (eq (first x)
-                                   'declare)))
+                            (and (listp x)
+                                 (eq (first x)
+                                     'declare)))
                           body)))
          ,result))))
 
@@ -82,6 +82,9 @@ this is my naive code walking strategy's fault."
   (defvar *tabletrans-symmap*
     (make-hash-table :test 'equal))
 
+  ;; need to makesure that pass targets have appropriate statuses
+  ;; based on dependencies of table-pass targets; makeres now sets
+  ;; statuses based on supplied parameters in original target table.
   (defun tabletrans (target-table)
     "Transforms target-table according to table-pass operator."
     (let* (;; result
@@ -161,59 +164,106 @@ this is my naive code walking strategy's fault."
         (loop
            for tab being the hash-keys in tab->ids
            for ids being the hash-values in tab->ids
-           do (let (;; list of id lists per pass.
-                    (ids-by-pass
-                     (group-ids-by-pass tab)))
-                ;; do stuff with ids by pass
-                (loop
-                   for pass in ids-by-pass
-                   for pass-number from 1
-                   do (flet ((merge-bindings (ids)
-                               (mapcan (lambda (id)
-                                         (copy-list (gethash id id->inits)))
-                                       ids)))
-                        (let* ((bindings
-                                (merge-bindings pass))
-                               (row-sym (gensym))
-                               (expr
+           do
+             (let (;; list of id lists per pass.
+                   (ids-by-pass
+                    (group-ids-by-pass tab)))
+               ;; do stuff with ids by pass
+               (loop
+                  for pass in ids-by-pass
+                  for pass-number from 1
+                  do
+                    (flet ((merge-bindings (ids)
+                             (mapcan (lambda (id)
+                                       (copy-list (gethash id id->inits)))
+                                     ids)))
+                      ;; compute expressions
+                      (let* (;; only keep pass ids which need updating
+                             (pass-need (remove-if
+                                         (lambda (id)
+                                           (target-stat
+                                            (gethash id target-table)))
+                                         pass))
+                             (bindings
+                              (merge-bindings pass-need))
+                             (expr
+                              (when pass-need
                                 `(table-pass (wrap-for-reuse ,tab)
                                      ,bindings
                                      (list ,@(loop
-                                                for id in pass
-                                                collecting (gethash id
-                                                                    id->return)))
+                                                for id in pass-need
+                                                collecting
+                                                  (gethash id
+                                                           id->return)))
                                    ,@(loop
-                                        for id in pass
-                                        collecting (gethash id id->body))))
-                               (id-key (list tab
-                                             `(pass ,pass-number))))
-                          ;; create pass target
-                          (setf (gethash (aif (gethash id-key *tabletrans-symmap*)
-                                              it
-                                              ;; set symbol in symmap & return:
-                                              (setf (gethash id-key
-                                                             *tabletrans-symmap*)
-                                                    (gensym)))
-                                         result-table)
-                                (make-target (gethash id-key *tabletrans-symmap*)
-                                             expr))
-                          ;; create new targets for final results:
-                          (let ((tabsym (gethash id-key *tabletrans-symmap*)))
-                            (loop
-                               for id in pass
-                               for index from 0
-                               do (setf (gethash id result-table)
-                                        ;; copy old value and status
-                                        (let* ((oldtar
-                                                (gethash id target-table))
-                                               (old-val
-                                                (target-val oldtar))
-                                               (old-stat
-                                                (target-stat oldtar)))
-                                          (make-target id
-                                                       `(elt (res ,tabsym) ,index)
-                                                       :val old-val
-                                                       :stat old-stat))))))))))
+                                        for id in pass-need
+                                        collecting (gethash id id->body)))))
+                             (id-key (list tab
+                                           `(pass ,pass-number))))
+                        ;; create pass target
+                        (setf (gethash (aif
+                                        (gethash id-key
+                                                 *tabletrans-symmap*)
+                                        it
+                                        ;; set symbol in symmap & return:
+                                        (setf (gethash id-key
+                                                       *tabletrans-symmap*)
+                                              (gensym)))
+                                       result-table)
+                              (make-target (gethash id-key
+                                                    *tabletrans-symmap*)
+                                           expr))
+                        ;; Set pass target status based on immediate
+                        ;; dependents
+                        (setf
+                         (target-stat
+                          (gethash (gethash id-key
+                                            *tabletrans-symmap*)
+                                   result-table))
+                         (every (lambda (p)
+                                  (target-stat
+                                   (gethash p target-table)))
+                                pass))
+
+                        ;; create new targets for final results:
+                        (let ((tabsym
+                               (gethash id-key
+                                        *tabletrans-symmap*)))
+                          ;; need executing
+                          (loop
+                             for id in pass-need
+                             for index from 0
+                             do (setf
+                                 (gethash id result-table)
+                                 ;; copy old value and status
+                                 (let* ((oldtar
+                                         (gethash id target-table))
+                                        (old-val
+                                         (target-val oldtar))
+                                        (old-stat
+                                         (target-stat oldtar)))
+                                   (make-target id
+                                                `(elt (res ,tabsym) ,index)
+                                                :val old-val
+                                                :stat old-stat))))
+                          ;; don't need executing
+                          (loop
+                             for id in (set-difference pass pass-need
+                                                       :test #'equal)
+                             for index from 0
+                             do (setf
+                                 (gethash id result-table)
+                                 ;; copy old value and status
+                                 (let* ((oldtar
+                                         (gethash id target-table))
+                                        (old-val
+                                         (target-val oldtar))
+                                        (old-stat
+                                         (target-stat oldtar)))
+                                   (make-target id
+                                                `(elt (res ,tabsym) ,index)
+                                                :val old-val
+                                                :stat old-stat))))))))))
         ;; Copy old bindings:
         (loop
            for id being the hash-keys in target-table
