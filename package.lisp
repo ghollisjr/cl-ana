@@ -18,6 +18,7 @@
    :*transformation-table*
    :*params-table*
    :*args-tables*
+   :*makeres-args*
    ;; functions accessing hash tables
    :project
    :symbol-table

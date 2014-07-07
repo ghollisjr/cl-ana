@@ -167,6 +167,11 @@ symbol)"
   (defvar *args-tables*
     (make-hash-table :test 'equal))
 
+  (defvar *makeres-args*
+    (make-hash-table :test 'equal)
+    "Map from arg symbol to supplied or default value at makeres
+    execution")
+
   (defun project ()
     "Returns current project"
     *project-id*)
@@ -290,7 +295,7 @@ initialization, will be initialized automatically if necessary."
           (make-hash-table :test 'equal)))
   `',project-id)
 
-(defmacro defpars (params)
+(defmacro defpars (&rest params)
   "Adds parameters to project"
   (let ((result
          (set-difference (gethash *project-id* *params-table*)
@@ -306,7 +311,7 @@ initialization, will be initialized automatically if necessary."
           result))
   nil)
 
-(defmacro undefpars (params)
+(defmacro undefpars (&rest params)
   "Undefines parameters in params from project"
   (setf (gethash *project-id* *params-table*)
         (remove-if (lambda (p)
@@ -339,6 +344,12 @@ initialization, will be initialized automatically if necessary."
 
 (defun setresfn (id value)
   "Function version of setres"
+  ;; symbol:
+  (let ((symtab (symbol-table *project-id*)))
+    (when symtab
+      (when (gethash id symtab)
+        (set (gethash id symtab)
+             value))))
   ;; *target-tables*:
   (setf (target-val
          (gethash id
@@ -450,20 +461,20 @@ is given."
     (setf (gethash project-id *fin-target-tables*)
           fintab)
     ;; Set values and status when available for new fintab from old fintab:
-    (loop
-       for id being the hash-keys in fintab
-       do
-         (if (gethash id tartab)
-             (progn
-               (setf (target-val (gethash id fintab))
-                     (target-val (gethash id tartab)))
-               (setf (target-stat (gethash id fintab))
-                     (target-stat (gethash id tartab))))
-             (when (gethash id oldfintab)
-               (setf (target-val (gethash id fintab))
-                     (target-val (gethash id oldfintab)))
-               (setf (target-stat (gethash id fintab))
-                     (target-stat (gethash id oldfintab))))))
+    ;; (loop
+    ;;    for id being the hash-keys in fintab
+    ;;    do
+    ;;      (if (gethash id tartab)
+    ;;          (progn
+    ;;            (setf (target-val (gethash id fintab))
+    ;;                  (target-val (gethash id tartab)))
+    ;;            (setf (target-stat (gethash id fintab))
+    ;;                  (target-stat (gethash id tartab))))
+    ;;          (when (gethash id oldfintab)
+    ;;            (setf (target-val (gethash id fintab))
+    ;;                  (target-val (gethash id oldfintab)))
+    ;;            (setf (target-stat (gethash id fintab))
+    ;;                  (target-stat (gethash id oldfintab))))))
 
     ;; ensure symbols are defined for fintab
     (loop
@@ -531,8 +542,8 @@ is given."
                        `(gethash ',project-id *args-tables*)))
              (body
               `(progn
-                 ;; Set target values to nil which need updating due to
-                 ;; new parameter values
+                 ;; Set target statuses to nil which need updating due
+                 ;; to new parameter values
                  ,@(loop
                       for p in params
                       appending
@@ -570,6 +581,40 @@ is given."
 (defmacro makeres (&rest args)
   "Macro which compiles and executes generating function given args.
 Treat args as if they will be evaluated."
+  (when (not (gethash *project-id* *makeres-args*))
+    (setf (gethash *project-id* *makeres-args*)
+          (make-hash-table :test 'eq)))
+  (let ((params
+         (gethash *project-id* *params-table*)))
+    (loop
+       for p in params
+       do (let* ((psym (first (mklist p)))
+                 (val (getf args psym)))
+            (setf (gethash psym
+                           (gethash *project-id* *makeres-args*))
+                  (if val
+                      val
+                      (second (mklist p)))))))
+  ;; set affected target statuses to nil
+  (loop
+     for arg in (group args 2)
+     do (let* ((p (intern (string (first (mklist arg)))))
+               (val (aif (getf args p)
+                         it
+                         (second (mklist arg)))))
+          (when (not (equal val
+                            (gethash p *makeres-args*)))
+            (setf (gethash p *makeres-args*)
+                  val)
+            (let ((pdeps (param-dependencies
+                          p
+                          (gethash *project-id*
+                                   *target-tables*))))
+              (loop
+                 for pdep in pdeps
+                 do
+                   (progn
+                     (unsetresfn pdep)))))))
   `(let ((comp (compres)))
      (funcall comp ,@args)))
 
