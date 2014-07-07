@@ -589,32 +589,22 @@ Treat args as if they will be evaluated."
     (loop
        for p in params
        do (let* ((psym (first (mklist p)))
-                 (val (getf args psym)))
-            (setf (gethash psym
-                           (gethash *project-id* *makeres-args*))
-                  (if val
-                      val
-                      (second (mklist p)))))))
-  ;; set affected target statuses to nil
-  (loop
-     for arg in (group args 2)
-     do (let* ((p (intern (string (first (mklist arg)))))
-               (val (aif (getf args p)
-                         it
-                         (second (mklist arg)))))
-          (when (not (equal val
-                            (gethash p *makeres-args*)))
-            (setf (gethash p *makeres-args*)
-                  val)
-            (let ((pdeps (param-dependencies
-                          p
-                          (gethash *project-id*
-                                   *target-tables*))))
-              (loop
-                 for pdep in pdeps
-                 do
-                   (progn
-                     (unsetresfn pdep)))))))
+                 (val (getf args (keywordify psym)))
+                 (oldval (gethash psym
+                                  (gethash *project-id* *makeres-args*))))
+            (when (not (equal val oldval))
+              (setf (gethash psym
+                             (gethash *project-id* *makeres-args*))
+                    val)
+              (let ((pdeps (param-dependencies
+                            psym
+                            (gethash *project-id*
+                                     *target-tables*))))
+                (loop
+                   for pdep in pdeps
+                   do
+                     (progn
+                       (unsetresfn pdep))))))))
   `(let ((comp (compres)))
      (funcall comp ,@args)))
 
