@@ -44,6 +44,14 @@
         (when (> (field x) max)
           (setf max (field x))))))
 
+(defres min
+  (table-pass (res table)
+      ((min nil))
+      min
+    (if (not min)
+        (setf min (field x))
+        (when (< (field x) min)
+          (setf min (field x))))))
 
 (defres variance
   (table-pass (res table)
