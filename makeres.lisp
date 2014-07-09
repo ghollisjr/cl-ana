@@ -333,9 +333,15 @@ initialization, will be initialized automatically if necessary."
            (val (if oldtar
                     (target-val oldtar)
                     nil))
-           (stat (if oldtar
-                     (target-stat oldtar)
-                     nil)))
+           ;; For now I'm trying out resetting the target status as
+           ;; default behavior; makes sense for most cases and the
+           ;; user can still optionally set the stat of whatever they
+           ;; want to reuse to t
+           (stat nil)
+           ;; (stat (if oldtar
+           ;;           (target-stat oldtar)
+           ;;           nil))
+           )
       (setf (gethash id tartab)
             (make-target id `(progn ,@body)
                          :val val

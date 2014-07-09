@@ -1,3 +1,8 @@
+* Allow users to specify an update strategy for re-specifying targets
+  (i.e. executing defres).  For now I've set the default to keeping
+  the old value in place but setting the status to nil ("needs to be
+  computed")
+
 * Test various graph transformations
 
   Of special interest is the collapsing of table passes.  Approach:
