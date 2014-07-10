@@ -29,4 +29,4 @@
   :depends-on (#:cl-ana
                #:makeres)
   :components ((:file "package")
-               (:file "tabletrans")))
+               (:file "pass-merge")))

@@ -1,8 +1,16 @@
-makeres-tabletrans is a graph transformation for use with makeres.
+makeres-tabletrans is a collection of graph transformations for use with
+makeres.
 
-It provides the operator table-pass which allows separately specified
-reductions of a table to be efficiently compiled into the fewest
-number of passes required (things are done as much in parallel as
-possible).
+makeres-tabletrans is free (GPL) software.
 
-makres-tabletrans is in the public domain, use it for whatever.
+The utilities provided by the various operators are:
+
+* Merging passes over tables which could be done in parallel into a
+  single pass.
+
+* Distinction between physical (written and read via disk/memory) and
+  logical (always computed from physical sources) tables.
+
+* Operators filter and trans for returning filtered or structurally
+  transformed tables (e.g. remove rows with field x less than 2,
+  add/remove fields, etc.)

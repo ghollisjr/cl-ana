@@ -6,12 +6,12 @@
 
 ;; Demo of tabletrans
 
-(in-project transform)
+(in-project tabletrans)
 
 (settrans (tabletrans))
 
 (defpars
-    (nrows 100))
+    (nrows 5))
 
 ;; source table
 (defres table
