@@ -296,7 +296,8 @@ initialization, will be initialized automatically if necessary."
   `',project-id)
 
 (defmacro defpars (&rest params)
-  "Adds parameters to project"
+  "Adds parameters to project, updating default values for existing
+parameters."
   (let ((result
          (set-difference (gethash *project-id* *params-table*)
                          params
@@ -595,7 +596,16 @@ Treat args as if they will be evaluated."
     (loop
        for p in params
        do (let* ((psym (first (mklist p)))
-                 (val (getf args (keywordify psym)))
+                 (val (let ((res (getf args (keywordify psym))))
+                        (if res
+                            res
+                            (second
+                             (mklist
+                              (find psym params
+                                    :key (lambda (x)
+                                           (if (listp x)
+                                               (first x)
+                                               x))))))))
                  (oldval (gethash psym
                                   (gethash *project-id* *makeres-args*))))
             (when (not (equal val oldval))
