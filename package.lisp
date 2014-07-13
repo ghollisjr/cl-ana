@@ -10,10 +10,11 @@
    :target-val
    :target-stat
    :make-target
-   ;; hash tables
+   :copy-target
+   ;; hash tables (these are for debugging only
    :*symbol-tables
    :*target-tables*
-   :fin-target-tables*
+   :*fin-target-tables*
    :*project-id*
    :*transformation-table*
    :*params-table*
@@ -45,6 +46,8 @@
    :makeres ; compile and call result generator
    ;; project utilities
    :target-ids
-   :fin-target-ids))
+   :fin-target-ids
+   ;; INCLUDED TRANSFORMATIONS:
+   :lrestrans)) ; allows logical results
 
 (package-utils:use-package-group :cl-ana :makeres)

@@ -8,6 +8,11 @@
 (in-project test)
 ;; project ID can be any lisp form
 
+;; Select transformations (simply omit this expression if you don't
+;; want any):
+(settrans (lrestrans))
+;; We're using the logical result transformation
+
 ;; Define parameters for project
 (defpars
     (source (list 1 2 3 4 5 6 7))
@@ -47,6 +52,11 @@
   (* (par scale)
      (+ (res filtered)
         (res squared))))
+
+;; To demonstrate the logical result transformation, we'll define a
+;; logical result target:
+(defres lres-test
+  (lres (print 'lres-test)))
 
 ;;; execute (makeres) to test.  makeres accepts keyword arguments for
 ;;; whatever have been defined via defpars.
@@ -94,20 +104,3 @@ depending on a parameter value which was not used last.")
 
 (print (par source))
 (print (par scale))
-
-;;;; ADDING GRAPH TRANSFORMATIONS
-
-;;; Graph transformations are the key ingredient to making makeres
-;;; useful in practice.
-;;;
-;;; We can define new declarative or imperative operators, however you
-;;; wish to interpret them via your own transformations.
-;;;
-;;; For an in-depth example, see the makeres-tabletrans project.
-;;;
-;;; For a quick example, let's create a simple transformation which
-;;; will print the return value of each id along with it's id every
-;;; time it's computed.  (This would be better done via a simpler
-;;; approach with macros, but works as a simple example.)
-
-(in-project with-print)

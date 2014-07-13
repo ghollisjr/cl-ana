@@ -115,23 +115,37 @@
       :documentation "computation status, nil when needs computing, t
       otherwise")))
 
+  (defmethod print-object ((tar target) stream)
+    (format stream "~S"
+            `(target
+              :id ,(target-id tar)
+              :expr ,(target-expr tar)
+              :deps ,(target-deps tar)
+              :pdeps ,(target-pdeps tar)
+              :val ,(target-val tar)
+              :stat ,(target-stat tar))))
+
   (defun find-dependencies (expr token)
     "Descends through expr, finding any forms of the form (token x)
 which is then interpreted as a dependency on x (token must be a
 symbol)"
     (let ((deps
            (make-hash-table :test 'equal)))
-      (labels ((rec (ex)
-                 (when (listp ex)
-                   (if (and (length-equal ex 2)
-                            (eq (first ex)
-                                token))
-                       (setf (gethash (second ex)
-                                      deps)
-                             t)
-                       (mapcar #'rec ex)))))
-        (rec expr)
-        (hash-keys deps))))
+      (flet ((actual-listp (x)
+               (and (listp x)
+                    (listp (cdr (last x))))))
+        (labels ((rec (ex)
+                   ;; check for 
+                   (when (actual-listp ex)
+                     (if (and (length-equal ex 2)
+                              (eq (first ex)
+                                  token))
+                         (setf (gethash (second ex)
+                                        deps)
+                               t)
+                         (mapcar #'rec ex)))))
+          (rec expr)
+          (hash-keys deps)))))
 
   (defun make-target (id expr &key
                                 val
@@ -141,10 +155,21 @@ symbol)"
       (make-instance 'target
                      :id id
                      :expr expr
-                     :deps deps
+                     :deps (remove-if (lambda (d)
+                                        (equal d id))
+                                      deps)
                      :pdeps pdeps
                      :val val
                      :stat stat)))
+
+  (defun copy-target (target)
+    (make-instance 'target
+                   :id (target-id target)
+                   :expr (target-expr target)
+                   :deps (target-deps target)
+                   :pdeps (target-pdeps target)
+                   :val (target-val target)
+                   :stat (target-stat target)))
 
   (defvar *symbol-tables*
     (make-hash-table :test 'equal)
@@ -188,7 +213,7 @@ symbol)"
     "Evaluates each function in fns given input either from the
   initial input or from the output of the previous function in the
   list fns"
-    (let ((val input))
+    (let ((val (alexandria:copy-hash-table input)))
       (dolist (f fns)
         (setf val (funcall f val)))
       val))
@@ -349,6 +374,14 @@ parameters."
                          :stat stat))))
   `',id)
 
+(defmacro undefres (res)
+  "Undefines a result target"
+  (remhash res
+           (gethash *project-id* *target-tables*))
+  (remhash res
+           (gethash *project-id* *fin-target-tables*))
+  nil)
+
 (defun setresfn (id value)
   "Function version of setres"
   ;; symbol:
@@ -358,25 +391,25 @@ parameters."
         (set (gethash id symtab)
              value))))
   ;; *target-tables*:
-  (setf (target-val
-         (gethash id
-                  (gethash *project-id* *target-tables*)))
-        value)
   (setf (target-stat
          (gethash id
                   (gethash *project-id* *target-tables*)))
         t)
+  (setf (target-val
+         (gethash id
+                  (gethash *project-id* *target-tables*)))
+        value)
   ;; *fin-target-tables*:
   (when (gethash id
                  (gethash *project-id* *fin-target-tables*))
-    (setf (target-val
-           (gethash id
-                    (gethash *project-id* *fin-target-tables*)))
-          value)
     (setf (target-stat
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
-          t)))
+          t)
+    (setf (target-val
+           (gethash id
+                    (gethash *project-id* *fin-target-tables*)))
+          value)))
 
 (defmacro setres (id value)
   "Sets target value of id in project to value and the status to t so
@@ -501,7 +534,6 @@ is given."
                      `(,(gethash id symtab)
                         (if (target-stat
                              (gethash ',id
-                                      ;; (gethash ',project-id *target-tables*)
                                       (gethash ',project-id *fin-target-tables*)))
                             (target-val
                              (gethash ',id
@@ -510,31 +542,31 @@ is given."
                                   `(let ((,val
                                           ,(target-expr tar)))
                                      (progn
-                                       (setf (symbol-value ',it)
-                                             ,val
-                                             (target-val
-                                              (gethash ',id
-                                                       (gethash ',project-id
-                                                                *fin-target-tables*)))
-                                             ,val
-                                             (target-stat
+                                       (setf (target-stat
                                               (gethash ',id
                                                        (gethash ',project-id
                                                                 *fin-target-tables*)))
                                              t)
+                                       (setf (symbol-value ',it)
+                                             ,val)
+                                       (setf (target-val
+                                              (gethash ',id
+                                                       (gethash ',project-id
+                                                                *fin-target-tables*)))
+                                             ,val)
                                        (when (gethash ',id
                                                       (gethash ',project-id
                                                                *target-tables*))
+                                         (setf (target-stat
+                                                (gethash ',id
+                                                         (gethash ',project-id
+                                                                  *target-tables*)))
+                                               t)
                                          (setf (target-val
                                                 (gethash ',id
                                                          (gethash ',project-id
                                                                   *target-tables*)))
-                                               ,val
-                                               (target-stat
-                                                (gethash ',id
-                                                         (gethash ',project-id
-                                                                  *target-tables*)))
-                                               t)))
+                                               ,val)))
                                      ,val)
                                   (target-expr tar)))))))
              (lambda-list (gethash project-id *params-table*))

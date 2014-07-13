@@ -27,4 +27,5 @@
   :license "GPLv3"
   :depends-on (#:cl-ana)
   :components ((:file "package")
-               (:file "makeres")))
+               (:file "makeres")
+               (:file "lrestrans")))
