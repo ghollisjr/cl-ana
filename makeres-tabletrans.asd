@@ -29,4 +29,8 @@
   :depends-on (#:cl-ana
                #:makeres)
   :components ((:file "package")
-               (:file "pass-merge")))
+               (:file "vars")
+               (:file "table-pass")
+               (:file "pass-merge")
+               (:file "pass-collapse")
+               (:file "hdf-utils")))

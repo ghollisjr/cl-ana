@@ -8,7 +8,7 @@
 
 (in-project tabletrans)
 
-(settrans (tabletrans))
+(settrans (pass-merge))
 
 (defpars
     (nrows 5))
@@ -23,9 +23,20 @@
                for i below (par nrows)
                collecting i)))))
 
+(deflfields table
+    (y (* 2 (field x))))
+
+(defres test
+  (dotab (res table)
+      ()
+      nil
+    (let ((z (sqrt (field x))))
+      (print (field z)))))
+    ;;(print 'test)))
+
 ;; average:
 (defres mean
-  (table-pass (res table)
+  (dotab (res table)
       ((sum 0)
        (count 0))
       (progn
@@ -35,8 +46,17 @@
     (incf sum (field x))
     (incf count)))
 
+(defres ymean
+  (dotab (res table)
+      ((sum 0)
+       (count 0))
+      (/ sum count)
+    (print 'ymean)
+    (incf sum (field y))
+    (incf count)))
+
 (defres max
-  (table-pass (res table)
+  (dotab (res table)
       ((max nil))
       max
     (if (not max)
@@ -45,7 +65,7 @@
           (setf max (field x))))))
 
 (defres min
-  (table-pass (res table)
+  (dotab (res table)
       ((min nil))
       min
     (if (not min)
@@ -54,7 +74,7 @@
           (setf min (field x))))))
 
 (defres variance
-  (table-pass (res table)
+  (dotab (res table)
       ((sum-squares 0)
        (count 0)) ; safe since variance happens in second pass
       (the float

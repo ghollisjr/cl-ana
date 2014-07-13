@@ -1,0 +1,10 @@
+(partially completed) Make lfields nicer.  table-pass, if used for the
+  implementation, needs to have lfields arguments so that it can
+  directly expand into executable code.  But: users should be able to
+  safely define local lfields only used for a single table pass (and
+  same for the inits).
+
+- Fixed init bindings: pass-merge uses symbol-macrolets to bind inits
+  so that each table-pass has its own private initialization bindings.
+
++ Still could fix the lfields to be the same
