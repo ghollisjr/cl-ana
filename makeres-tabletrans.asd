@@ -34,4 +34,5 @@
                (:file "table-pass")
                (:file "pass-merge")
                (:file "pass-collapse")
+               (:file "tabletrans")
                (:file "hdf-utils")))

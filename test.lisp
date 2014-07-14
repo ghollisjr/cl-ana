@@ -11,7 +11,7 @@
 (settrans (pass-merge))
 
 (defpars
-    (nrows 5))
+    ((nrows 5)))
 
 ;; source table
 (defres table

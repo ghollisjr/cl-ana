@@ -38,3 +38,7 @@ The primary use of logical tables is to denote subsets of data which
 do not really deserve to be written to disk, but are still helpful for
 describing a computation (e.g. applying filters or defining a new
 structure for a subset of data).
+
+Any fields from the source table are available as long as they are not
+shadowed by stating them in the call to push-fields in the ltab
+definition.

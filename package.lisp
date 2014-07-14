@@ -2,11 +2,16 @@
   (:use :cl
         :makeres)
   (:export
-   ;; general table reduction:
+   ;; table reduction operators:
    :dotab
+   :ltab
+   :tab
+   ;; field macro:
+   :field
    ;; implementation macro:
    :table-pass
    ;; transformations
+   :tabletrans
    :pass-merge
    :pass-collapse
    ;; hash tables

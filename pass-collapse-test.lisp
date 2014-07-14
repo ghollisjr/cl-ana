@@ -14,8 +14,10 @@
   (ltab (res source)
       ()
     (when (< (field x) 4)
+      ;; you only have to add new fields, all source
+      ;; fields not shadowed are still available:
       (push-fields
-       (x (field x))
+       ;; new field y, x is still accessible, unshadowed
        (y (* 2 (field x)))))))
 
 (defres filtered2
@@ -23,6 +25,9 @@
       ()
     (when (< (field x) 5)
       (push-fields
+       ;; shadow field x:
+       (x (sqrt (field x)))
+       ;; new field y:
        (y (field x))))))
 
 (defres canon
@@ -32,7 +37,7 @@
                     ("y" . :float)
                     ("z" . :float)))
       ()
-    (push-fields (x (field y))
+    (push-fields (x (field x))
                  (y (sqrt (field y)))
                  (z (float
                      (expt (field y)
