@@ -1,10 +1,21 @@
-(partially completed) Make lfields nicer.  table-pass, if used for the
-  implementation, needs to have lfields arguments so that it can
-  directly expand into executable code.  But: users should be able to
-  safely define local lfields only used for a single table pass (and
-  same for the inits).
+- Make lfields nicer.  table-pass, if used for the implementation,
+  needs to have lfields arguments so that it can directly expand into
+  executable code.  But: users should be able to safely define local
+  lfields only used for a single table pass (and same for the inits).
 
 - Fixed init bindings: pass-merge uses symbol-macrolets to bind inits
   so that each table-pass has its own private initialization bindings.
 
-+ Still could fix the lfields to be the same
+- Still could fix the lfields to be the same
+
++ Add pass collapsing for physical tables.
+
+  * Algorithm: define collapse! for physical tables much like
+    collapse! for logical tables.  The major difference is that
+    collapse! for a given tab will need to group-by-pass (copy
+    function from pass-merge) the various reductions of itself (first
+    collapse tab reductions below the currently analyzed tab, just
+    like the ltab collapse!) and then get the number of required
+    passes for the source table.  Only for the passes which are
+    present both for the source and the physical table should be
+    collapsed from the physical table.
