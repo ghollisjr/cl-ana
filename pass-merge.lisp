@@ -138,10 +138,12 @@ init-bindings let form."
         (loop
            for id being the hash-keys in target-table
            for tar being the hash-values in target-table
-           when (and (second (target-expr tar))
-                     (listp (second (target-expr tar)))
-                     (eq (first (second (target-expr tar)))
-                         'table-pass))
+           when (destructuring-bind (progn &rest body)
+                    (target-expr tar)
+                  (and body
+                       (listp (first body))
+                       (eq (first (first body))
+                           'table-pass)))
            do
              (destructuring-bind
                    (progn
@@ -177,205 +179,210 @@ init-bindings let form."
                   for pass in ids-by-pass
                   for pass-number from 1
                   do
-                    (flet ((merge-inits (ids symmap)
-                             (loop
-                                for p in ids
-                                append
-                                  (loop
-                                     for b in (gethash p id->inits)
-                                     for gsymb in (gethash p symmap)
-                                     collect `(,(second gsymb) ,@(rest b)))))
-                           (merge-lfields (src ids symmap)
-                             (list->set
-                              (append
-                               (when (and (listp src)
-                                          (eq (first src) 'res))
-                                 (append
-                                  (awhen (gethash *project-id* *proj->tab->lfields*)
-                                    (gethash (second src)
-                                             it))
-                                  (awhen (gethash *project-id*
-                                                  *proj->tab->ltab-lfields*)
-                                    (gethash (second src)
-                                             it))))
-                               (mapcan
-                                (lambda (id)
-                                  (let ((oldbindings
-                                         (gethash id id->lfields)))
-                                    (mapcan
-                                     (lambda (old)
-                                       (list
-                                        `(,(gethash (first old)
-                                                    (gethash id symmap))
-                                           ,@(rest old))))
-                                     oldbindings)))
-                                ids)))))
-                      ;; compute expressions
-                      (let* (;; only keep pass ids which need updating
-                             (pass-need (remove-if
-                                         (lambda (id)
-                                           (target-stat
-                                            (gethash id target-table)))
-                                         pass))
-                             (pass->initsymmap
-                              (let ((result (make-hash-table :test 'equal)))
-                                (loop for p in pass-need
-                                   do (setf (gethash p result)
-                                            (destructuring-bind
-                                                  (progn-op
-                                                   (tab-op src inits &rest xs))
-                                                (target-expr
-                                                 (gethash p target-table))
-                                              (loop
-                                                 for b in inits
-                                                 collect (list (first b)
-                                                               (gensym))))))
-                                result))
-                             ;; bindings needs updating due to using
-                             ;; gensyms for init bindings
-                             (inits
-                              (merge-inits pass-need pass->initsymmap))
-                             (pass->lfieldsymmap
-                              (let (;; map from pass id to hash table
-                                    ;; mapping from first symbol from
-                                    ;; raw lfield binding to gensym
-                                    (result
-                                     (make-hash-table :test 'equal)))
-                                (loop
-                                   for p in pass-need
-                                   do (setf
-                                       (gethash p result)
-                                       (let ((map (make-hash-table :test 'equal)))
-                                         (destructuring-bind
-                                               (progn-op
-                                                (tab-op src inits r lfields &rest xs))
-                                             (target-expr (gethash p target-table))
-                                           (loop
-                                              for i in lfields
-                                              do (setf (gethash (first i) map)
-                                                       (gensym))))
-                                         map)))
-                                result))
-                             (lfield-bindings
-                              ;; lfields come from all targets, not
-                              ;; just the ones which need passing.
-                              (merge-lfields tab pass pass->lfieldsymmap))
-                             (expr
-                              (when pass-need
-                                `(table-pass ,tab
-                                     ,inits
-                                     (list ,@(loop
-                                                for id in pass-need
-                                                collecting
-                                                  `(symbol-macrolet
-                                                       ,(gethash id pass->initsymmap)
-                                                     ,(gethash id
-                                                               id->return))))
-                                     ,lfield-bindings
-                                   ,@(loop
-                                        for id in pass-need
-                                        collecting
-                                        ;; id->initsymmap is a map
-                                        ;; from id to the bindings
-                                        ;; given to symbol-macrolet
-                                          `(symbol-macrolet
-                                               ,(gethash id pass->initsymmap)
-                                             ,(sublis
-                                               (loop
-                                                  for old being the hash-keys
-                                                  in (gethash id pass->lfieldsymmap)
-                                                  for new being the hash-values
-                                                  in (gethash id pass->lfieldsymmap)
-                                                  collect (cons (copy-list
-                                                                 `(field ,old))
-                                                                (copy-list
-                                                                 `(field ,new))))
-                                               (gethash id id->body)
-                                               :test #'equal))))))
-                             (id-key (list tab
-                                           `(pass ,pass-number))))
-                        ;; create pass target
-                        (setf (gethash (aif
-                                        (gethash id-key
-                                                 *pass-merge-symmap*)
-                                        it
-                                        ;; set symbol in symmap & return:
-                                        (setf (gethash id-key
-                                                       *pass-merge-symmap*)
-                                              (gensym)))
-                                       result-table)
-                              (make-instance 'target
-                                             ;;:id id-key
-                                             :id  (gethash id-key
-                                                           *pass-merge-symmap*)
-                                             :expr expr
-                                             :deps (list->set
-                                                    (mapcan
-                                                     #'copy-list
-                                                     (loop
-                                                        for i in pass
-                                                        collecting
-                                                          (gethash i id->deps))))
-                                             :pdeps (list->set
-                                                     (mapcan
-                                                      #'copy-list
-                                                      (loop
-                                                         for i in pass
-                                                         collecting
-                                                           (gethash i id->pdeps))))
-                                             :stat nil
-                                             :val nil))
-                        ;; Set pass target status based on immediate
-                        ;; dependents
-                        (setf
-                         (target-stat
-                          (gethash (gethash id-key
-                                            *pass-merge-symmap*)
-                                   result-table))
-                         (every (lambda (p)
-                                  (target-stat
-                                   (gethash p target-table)))
-                                pass))
+                    (let* ((pass-need (remove-if
+                                       (lambda (id)
+                                         (target-stat
+                                          (gethash id target-table)))
+                                       pass))
+                           (pass->initsymmap
+                            (let ((result (make-hash-table :test 'equal)))
+                              (loop for p in pass-need
+                                 do (setf (gethash p result)
+                                          (destructuring-bind
+                                                (progn-op
+                                                 (tab-op src inits &rest xs))
+                                              (target-expr
+                                               (gethash p target-table))
+                                            (loop
+                                               for b in inits
+                                               collect (list (first b)
+                                                             (gensym))))))
+                              result)))
+                      (flet ((merge-inits (ids symmap)
+                               (loop
+                                  for p in ids
+                                  append
+                                    (loop
+                                       for b in (gethash p id->inits)
+                                       for gsymb in (gethash p symmap)
+                                       collect `(,(second gsymb)
+                                                  (symbol-macrolet
+                                                      ,(gethash p pass->initsymmap)
+                                                    ,@(rest b))))))
+                             (merge-lfields (src ids symmap)
+                               (list->set
+                                (append
+                                 (when (and (listp src)
+                                            (eq (first src) 'res))
+                                   (append
+                                    (awhen (gethash *project-id* *proj->tab->lfields*)
+                                      (gethash (second src)
+                                               it))
+                                    (awhen (gethash *project-id*
+                                                    *proj->tab->ltab-lfields*)
+                                      (gethash (second src)
+                                               it))))
+                                 (mapcan
+                                  (lambda (id)
+                                    (let ((oldbindings
+                                           (gethash id id->lfields)))
+                                      (mapcan
+                                       (lambda (old)
+                                         (list
+                                          `(,(gethash (first old)
+                                                      (gethash id symmap))
+                                             ,@(rest old))))
+                                       oldbindings)))
+                                  ids)))))
+                        ;; compute expressions
+                        (let* (;; only keep pass ids which need updating
 
-                        ;; create new targets for final results:
-                        (let ((tabsym
-                               (gethash id-key
-                                        *pass-merge-symmap*)))
-                          ;; need executing
-                          (loop
-                             for id in pass-need
-                             for index from 0
-                             do (setf
-                                 (gethash id result-table)
-                                 ;; copy old value and status
-                                 (let* ((oldtar
-                                         (gethash id target-table))
-                                        (old-val
-                                         (target-val oldtar))
-                                        (old-stat
-                                         (target-stat oldtar)))
-                                   (make-target id
-                                                `(elt (res ,tabsym) ,index)
-                                                :val old-val
-                                                :stat old-stat))))
-                          ;; don't need executing
-                          (loop
-                             for id in (set-difference pass pass-need
-                                                       :test #'equal)
-                             for index from 0
-                             do (setf
-                                 (gethash id result-table)
-                                 ;; copy old value and status
-                                 (let* ((oldtar
-                                         (gethash id target-table))
-                                        (old-val
-                                         (target-val oldtar))
-                                        (old-stat
-                                         (target-stat oldtar)))
-                                   (make-target id
-                                                `(elt (res ,tabsym) ,index)
-                                                :val old-val
-                                                :stat old-stat))))))))))
+                               ;; bindings needs updating due to using
+                               ;; gensyms for init bindings
+                               (inits
+                                (merge-inits pass-need pass->initsymmap))
+                               (pass->lfieldsymmap
+                                (let (;; map from pass id to hash table
+                                      ;; mapping from first symbol from
+                                      ;; raw lfield binding to gensym
+                                      (result
+                                       (make-hash-table :test 'equal)))
+                                  (loop
+                                     for p in pass-need
+                                     do (setf
+                                         (gethash p result)
+                                         (let ((map (make-hash-table :test 'equal)))
+                                           (destructuring-bind
+                                                 (progn-op
+                                                  (tab-op src inits r lfields &rest xs))
+                                               (target-expr (gethash p target-table))
+                                             (loop
+                                                for i in lfields
+                                                do (setf (gethash (first i) map)
+                                                         (gensym))))
+                                           map)))
+                                  result))
+                               (lfield-bindings
+                                ;; lfields come from all targets, not
+                                ;; just the ones which need passing.
+                                (merge-lfields tab pass pass->lfieldsymmap))
+                               (expr
+                                (when pass-need
+                                  `(table-pass ,tab
+                                       ,inits
+
+                                       (list ,@(loop
+                                                  for id in pass-need
+                                                  collecting
+                                                    `(symbol-macrolet
+                                                         ,(gethash id pass->initsymmap)
+                                                       ,(gethash id
+                                                                 id->return))))
+                                       ,lfield-bindings
+                                     ,@(loop
+                                          for id in pass-need
+                                          collecting
+                                          ;; id->initsymmap is a map
+                                          ;; from id to the bindings
+                                          ;; given to symbol-macrolet
+                                            `(symbol-macrolet
+                                                 ,(gethash id pass->initsymmap)
+                                               ,(sublis
+                                                 (loop
+                                                    for old being the hash-keys
+                                                    in (gethash id pass->lfieldsymmap)
+                                                    for new being the hash-values
+                                                    in (gethash id pass->lfieldsymmap)
+                                                    collect (cons (copy-list
+                                                                   `(field ,old))
+                                                                  (copy-list
+                                                                   `(field ,new))))
+                                                 (gethash id id->body)
+                                                 :test #'equal))))))
+                               (id-key (list tab
+                                             `(pass ,pass-number))))
+                          ;; create pass target
+                          (setf (gethash (aif
+                                          (gethash id-key
+                                                   *pass-merge-symmap*)
+                                          it
+                                          ;; set symbol in symmap & return:
+                                          (setf (gethash id-key
+                                                         *pass-merge-symmap*)
+                                                (gensym)))
+                                         result-table)
+                                (make-instance 'target
+                                               ;;:id id-key
+                                               :id  (gethash id-key
+                                                             *pass-merge-symmap*)
+                                               :expr expr
+                                               :deps (list->set
+                                                      (mapcan
+                                                       #'copy-list
+                                                       (loop
+                                                          for i in pass
+                                                          collecting
+                                                            (gethash i id->deps))))
+                                               :pdeps (list->set
+                                                       (mapcan
+                                                        #'copy-list
+                                                        (loop
+                                                           for i in pass
+                                                           collecting
+                                                             (gethash i id->pdeps))))
+                                               :stat nil
+                                               :val nil))
+                          ;; Set pass target status based on immediate
+                          ;; dependents
+                          (setf
+                           (target-stat
+                            (gethash (gethash id-key
+                                              *pass-merge-symmap*)
+                                     result-table))
+                           (every (lambda (p)
+                                    (target-stat
+                                     (gethash p target-table)))
+                                  pass))
+
+                          ;; create new targets for final results:
+                          (let ((tabsym
+                                 (gethash id-key
+                                          *pass-merge-symmap*)))
+                            ;; need executing
+                            (loop
+                               for id in pass-need
+                               for index from 0
+                               do (setf
+                                   (gethash id result-table)
+                                   ;; copy old value and status
+                                   (let* ((oldtar
+                                           (gethash id target-table))
+                                          (old-val
+                                           (target-val oldtar))
+                                          (old-stat
+                                           (target-stat oldtar)))
+                                     (make-target id
+                                                  `(elt (res ,tabsym) ,index)
+                                                  :val old-val
+                                                  :stat old-stat))))
+                            ;; don't need executing
+                            (loop
+                               for id in (set-difference pass pass-need
+                                                         :test #'equal)
+                               for index from 0
+                               do (setf
+                                   (gethash id result-table)
+                                   ;; copy old value and status
+                                   (let* ((oldtar
+                                           (gethash id target-table))
+                                          (old-val
+                                           (target-val oldtar))
+                                          (old-stat
+                                           (target-stat oldtar)))
+                                     (make-target id
+                                                  `(elt (res ,tabsym) ,index)
+                                                  :val old-val
+                                                  :stat old-stat)))))))))))
         ;; Copy old bindings:
         (loop
            for id being the hash-keys in target-table

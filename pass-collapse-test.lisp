@@ -2,7 +2,7 @@
 
 (in-project pass-collapse)
 
-(settrans (pass-collapse))
+(settrans (pass-collapse pass-merge))
 
 (defres source
   (wrap-for-reuse
@@ -23,7 +23,7 @@
       ()
     (when (> (field x) 5)
       (push-fields
-       (x (field x))))))
+       (y (field x))))))
 
 (defres canon
   (tab (res filtered)

@@ -1,4 +1,4 @@
-* Known bug with pass-collapse: table-push-fields inside an ltab is
+- Known bug with pass-collapse: table-push-fields inside an ltab is
   supposed to result in added lfields for the ultimate source table.
   Something is broken along these lines because the example in
   pass-collapse-test.lisp does not work.
@@ -8,15 +8,32 @@
     there is clearly a push-fields inside of the filtered and filtered2
     ltab bodies.
 
-  + New irritating result: The strategy of pushing all the lfields onto
+  * New irritating result: The strategy of pushing all the lfields onto
     the source tables ends up clobbering the lfields from the other
     ltabs and possibly even the actual fields from the source table.
     Solution would be to generate gensyms for the lfields and replace
     the (field ...) in the immediately dependent reductions with (field
     gensym), the same technique used in e.g. pass-merge.
 
-  * Current status: Still need to fix the irritating result, and
+  - Current status: Still need to fix the irritating result, and
     additionally even though the ltab-lfields seem to be handled
     correctly by pass-collapse, there are still errors when run with
     makeres, which suggests that pass-merge is not handling the new
     ltab-lfields quite right.
+
++ Known bug with makeres-tabletrans: if a push-fields inside an ltab
+  has the same fields as the source table, this causes some of the
+  macros/recursive functions/something to loop forever.  It's because
+  the field names need to be gensyms inside the ltab context.  So:
+  
+  + Fix ltab push-fields context so that the new bindings from
+    push-fields are gensyms.
+
+    * This involves calling replace-push-fields on all the constituent
+      bodies to replace the old symbols with gensyms (only inside the
+      (field ...) macro)
+
+    * Decision: ltab push-fields necessarily shadows the previously
+      available fields, and so I'm forcing the user to be responsible
+      and not shadow a field they'll need later; i.e. I'm not
+      providing tools to access shadowed fields.

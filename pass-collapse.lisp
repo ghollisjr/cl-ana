@@ -469,7 +469,8 @@ not inside a macrolet definition"
                                       tab-form)
                     expr
                   (setf (target-expr tar)
-                        (macroexpand-1 tab-form))))))
+                        (list 'progn
+                              (macroexpand-1 tab-form)))))))
       
       ;; return transformed graph
       result)))
