@@ -22,7 +22,9 @@ So far the functionality this library provides includes:
   files (buffered read-write), ntuples (like CERN's PAW uses), comma
   separated value (CSV) files, and plists for all-in-memory operation.
   Adding a new table type is as easy as extending the table class and
-  defining 4 functions for the table type.
+  defining 4 functions for the table type.  (The libraries cl-csv and
+  GSLL provide the backbone for the CSV and ntuple tables; the HDF5
+  table access is completely new.)
 
 * Histograms: Supports categorical, contiguous, and sparse histograms
   of arbitrary dimensions.  Provides functional access to histograms

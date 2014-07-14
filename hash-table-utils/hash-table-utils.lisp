@@ -57,3 +57,13 @@ returns an updated value for the resulting hash table."
        do (setf (gethash k result)
                 v))
     result))
+
+;; not sure if this is the same as the one alexandria provides
+(defun copy-hash-table (ht)
+  "Returns a new copy of ht"
+  (let ((result (make-hash-table :test (hash-table-test ht))))
+    (maphash (lambda (k v)
+               (setf (gethash k result)
+                     v))
+             ht)
+    result))

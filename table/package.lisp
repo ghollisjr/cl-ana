@@ -29,6 +29,7 @@
 	#:functional-utils
 	#:alexandria)
   (:export :table
+           :table-open-p
 	   :table-field-names
 	   :table-access-mode
 	   :table-field-symbols

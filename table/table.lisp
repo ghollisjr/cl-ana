@@ -57,7 +57,11 @@
     :accessor table-access-mode
     :documentation ":write for a writable table, :read for a readable
     table, and :both for a table which has no restriction on being
-    written to or read from only.")))
+    written to or read from only.  nil for a table which is not
+    open.")))
+
+(defun table-open-p (table)
+  (table-access-mode table))
 
 (defun table-field-symbols (table)
   (let* ((field-names (table-field-names table))
@@ -111,6 +115,11 @@ field-symbol and the variable storing the field data."
 ;; default: do nothing
 (defmethod table-close (table)
   (call-next-method))
+
+;; after method for taking care of access mode:
+(defmethod table-close :after ((tab table))
+  (setf (table-access-mode tab)
+        nil))
 
 ;; Some tables can tell you about their size:
 (defgeneric table-nrows (table)

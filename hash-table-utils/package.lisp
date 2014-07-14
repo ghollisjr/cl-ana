@@ -26,3 +26,6 @@
            :hash-values
            :hmap
            :alist->hash-table))
+;; :copy-hash-table))
+;; 
+;; leaving in case alexandria's doesn't do things quite right
