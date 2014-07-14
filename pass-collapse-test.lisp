@@ -15,13 +15,13 @@
       ()
     (when (< (field x) 4)
       (push-fields
-       ;;(x (field x))
+       (x (field x))
        (y (* 2 (field x)))))))
 
 (defres filtered2
   (ltab (res source)
       ()
-    (when (> (field x) 5)
+    (when (< (field x) 5)
       (push-fields
        (y (field x))))))
 
@@ -37,3 +37,11 @@
                  (z (float
                      (expt (field y)
                            2))))))
+
+(defres other
+  (tab (res filtered2)
+      (hdf-opener "/home/ghollisjr/other.h5"
+                  '(("x" . :int)))
+      ()
+    (push-fields
+     (x (field y)))))

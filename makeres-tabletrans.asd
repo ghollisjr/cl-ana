@@ -29,6 +29,7 @@
   :depends-on (#:cl-ana
                #:makeres)
   :components ((:file "package")
+               (:file "smart-gensym")
                (:file "vars")
                (:file "table-pass")
                (:file "pass-merge")

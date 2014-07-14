@@ -28,12 +28,13 @@
 ;;;; logical tables need special treatment, they are not simply
 ;;;; logical results:
 ;;;;
-;;;; A physical table's first pass can (sometimes) be collapsed into a
+;;;; A physical table's passes can (sometimes) be collapsed into a
 ;;;; pass of the source table, and targets which depend on information
 ;;;; from the first pass can be acquired via a pass over the saved
-;;;; physical table (i.e. the second pass is a pass over the resulting
-;;;; table, but the first pass is in a special context inside a pass
-;;;; over the source table).
+;;;; physical table (i.e. when a pass over the source table is
+;;;; necessary you should execute the table reductions in a special
+;;;; context in the source pass as many times as necessary, might be
+;;;; more than one necessary pass over the source table).
 ;;;;
 ;;;; A logical table's passes must always be a pass over the contents
 ;;;; over the source table, so if the logical table were a target it
@@ -151,6 +152,8 @@ not inside a macrolet definition"
       (rec form)))
 
   (defun pass-collapse (target-table)
+    ;; Clear gsym table:
+    (clrgsym 'pass-collapse)
     ;; Initialize hash table for *proj->tab->ltab-lfields*
     (when (not (gethash (project) *proj->tab->lfields*))
       (setf (gethash (project) *proj->tab->lfields*)
@@ -222,7 +225,13 @@ not inside a macrolet definition"
 
       ;; start with most fundamental ltabs and collapse by recursion.
       ;; This function should be mapped across most fundamental ltabs.
-      (let ((ltabs-copy (copy-list ltab-ids)))
+      (let ((ltabs-copy (copy-list ltab-ids))
+            ;; map from ltab to the lfield gensyms due to push-fields
+            (ltab->pf-gsyms
+             (make-hash-table :test 'equal))
+            ;; map from ltab to lfield expressions from push-fields
+            (ltab->pf-exprs
+             (make-hash-table :test 'equal)))
         (labels ((sync-ltab->reds ()
                    (setf ltab->reds
                          (make-hash-table :test 'equal))
@@ -250,7 +259,7 @@ not inside a macrolet definition"
                    ;; returns list of symbol-macrolet bindings for inits
                    (loop
                       for i in inits
-                      collecting (list i (gensym))))
+                      collecting (list i (gsym 'pass-collapse))))
                  (init-bindings (ltab-inits inits sml-bindings)
                    ;; returns new inits given ltab-inits, inits and sml-bindings
                    (list->set
@@ -261,6 +270,21 @@ not inside a macrolet definition"
                                        (rest init)))
                              inits sml-bindings))
                     #'equal))
+                 (replace-pf-fields (expr ltab)
+                   ;; returns expr but with all fields from
+                   ;; ltab->pf-gsyms for ltab in (field x) replaced
+                   ;; with the appropriate gsym.
+                   (let ((pf-gsyms
+                          (gethash ltab ltab->pf-gsyms)))
+                     (sublis
+                      (loop
+                         for pf being the hash-keys in pf-gsyms
+                         for gsym being the hash-values in pf-gsyms
+                         collecting
+                           (cons `(field ,pf)
+                                 `(field ,gsym)))
+                      expr
+                      :test #'equal)))
                  (collapse-expr (expr ltab)
                    ;; returns collapsed expression through ltab
                    (destructuring-bind (progn
@@ -286,7 +310,9 @@ not inside a macrolet definition"
                                     (symbol-macrolet ,sml-bindings
                                       ,(replace-push-fields
                                         `(progn ,@ltab-body)
-                                        `(progn ,@body)))))))))
+                                        (replace-pf-fields
+                                         `(progn ,@body)
+                                         ltab)))))))))
                          ((eq tab-op 'tab)
                           (destructuring-bind (source opener inits &rest body)
                               args
@@ -303,7 +329,9 @@ not inside a macrolet definition"
                                     (symbol-macrolet ,sml-bindings
                                       ,(replace-push-fields
                                         `(progn ,@ltab-body)
-                                        `(progn ,@body)))))))))
+                                        (replace-pf-fields
+                                         `(progn ,@body)
+                                         ltab)))))))))
                          ((eq tab-op 'dotab)
                           (destructuring-bind (source inits return &rest body)
                               args
@@ -320,7 +348,9 @@ not inside a macrolet definition"
                                     (symbol-macrolet ,sml-bindings
                                       ,(replace-push-fields
                                         `(progn ,@ltab-body)
-                                        `(progn ,@body)))))))))
+                                        (replace-pf-fields
+                                         `(progn ,@body)
+                                         ltab)))))))))
                          ((eq tab-op 'table-pass)
                           (destructuring-bind (source inits return lfields &rest body)
                               args
@@ -338,7 +368,9 @@ not inside a macrolet definition"
                                     (symbol-macrolet ,sml-bindings
                                       ,(replace-push-fields
                                         `(progn ,@ltab-body)
-                                        `(progn ,@body)))))))))))))
+                                        (replace-pf-fields
+                                         `(progn ,@body)
+                                         ltab)))))))))))))
                  (collapse! (ltab)
                    ;; collapses logical table ltab
                    ;;
@@ -346,23 +378,34 @@ not inside a macrolet definition"
                    ;; current reduction.  (This also eliminates
                    ;; the entire chain of ltabs chained
                    ;; together with this one via recursion)
+
+                   ;; remove ltab from list of ltabs needing processing
                    (setf ltabs-copy
                          (remove ltab ltabs-copy))
+
                    (destructuring-bind (progn-op
                                         (ltab-op source inits &rest body))
                        (target-expr (gethash ltab result))
-                     ;; add lfields to *proj->tab->ltab-lfields*:
-                     ;; (when (not (gethash (project)
-                     ;;                     *proj->tab->ltab-lfields*))
-                     ;;   (setf (gethash (project)
-                     ;;                  *proj->tab->ltab-lfields*)
-                     ;;         (make-hash-table :test 'equal)))
-                     ;; (when (not (gethash (project)
-                     ;;                     *proj->tab->lfields*))
-                     ;;   (setf (gethash (project)
-                     ;;                  *proj->tab->lfields*)
-                     ;;         (make-hash-table :test 'equal)))
 
+                     ;; Get push-fields bindings for ltab:
+                     (let ((pfs (find-push-fields body)))
+                       (let ((ltab->pf-gsyms-result
+                              (make-hash-table :test 'equal))
+                             (ltab->pf-exprs-result
+                              (make-hash-table :test 'equal)))
+                         (loop
+                            for (pf pfexpr) in pfs
+                            do
+                              (progn
+                                (setf (gethash pf ltab->pf-gsyms-result)
+                                      (gsym 'pass-collapse))
+                                (setf (gethash pf ltab->pf-exprs-result)
+                                      pfexpr)))
+                         (setf (gethash ltab ltab->pf-gsyms)
+                               ltab->pf-gsyms-result)
+                         (setf (gethash ltab ltab->pf-exprs)
+                               ltab->pf-exprs-result)))
+                     
                      ;; collapse dependent ltabs:
                      (loop for red in (gethash ltab ltab->reds)
                         do (let* ((rtar (gethash red result))
@@ -376,13 +419,13 @@ not inside a macrolet definition"
                                  (collapse! red)))))
 
                      ;; order should be:
-                     ;; 
+                     ;;
                      ;; 1. collapse ltab reds
-                     ;; 
+                     ;;
                      ;; 2. copy ltab-lfields for this ltab into
                      ;;    lfields for this ltab
                      ;;
-                     ;; 3. copy find-push-fields... into ltab-lfields
+                     ;; 3. copy find-push-fields... into lfields
                      ;;    for this ltab
                      ;;
                      ;; 4. copy lfields for this ltab into
@@ -398,7 +441,16 @@ not inside a macrolet definition"
                              (union (gethash ltab tab->lfields)
                                     (union
                                      (gethash ltab tab->ltab-lfields)
-                                     (find-push-fields body)
+                                     (loop
+                                        for pf being the hash-keys
+                                        in (gethash ltab ltab->pf-gsyms)
+                                        for gsym being the hash-values
+                                        in (gethash ltab ltab->pf-gsyms)
+                                        collecting
+                                          (list gsym
+                                                (gethash pf
+                                                         (gethash ltab
+                                                                  ltab->pf-exprs))))
                                      :test #'eq
                                      :key #'first)
                                     :test #'eq
@@ -471,6 +523,6 @@ not inside a macrolet definition"
                   (setf (target-expr tar)
                         (list 'progn
                               (macroexpand-1 tab-form)))))))
-      
+
       ;; return transformed graph
       result)))

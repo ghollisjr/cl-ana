@@ -63,6 +63,8 @@ init-bindings let form."
   ;; statuses based on supplied parameters in original target table.
   (defun pass-merge (target-table)
     "Transforms target-table according to table-pass operator."
+    ;; Clear gsym table:
+    (clrgsym 'pass-merge)
     ;; Initialization: Expand all dotab targets into table-pass for merging
     (loop
        for id being the hash-keys in target-table
@@ -196,7 +198,7 @@ init-bindings let form."
                                             (loop
                                                for b in inits
                                                collect (list (first b)
-                                                             (gensym))))))
+                                                             (gsym 'pass-merge))))))
                               result)))
                       (flet ((merge-inits (ids symmap)
                                (loop
@@ -259,7 +261,7 @@ init-bindings let form."
                                              (loop
                                                 for i in lfields
                                                 do (setf (gethash (first i) map)
-                                                         (gensym))))
+                                                         (gsym 'pass-merge))))
                                            map)))
                                   result))
                                (lfield-bindings
@@ -309,7 +311,7 @@ init-bindings let form."
                                           ;; set symbol in symmap & return:
                                           (setf (gethash id-key
                                                          *pass-merge-symmap*)
-                                                (gensym)))
+                                                (gsym 'pass-merge)))
                                          result-table)
                                 (make-instance 'target
                                                ;;:id id-key
