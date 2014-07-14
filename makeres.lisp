@@ -171,6 +171,10 @@ symbol)"
                    :val (target-val target)
                    :stat (target-stat target)))
 
+  (defparameter *makeres-propogate* t
+    "Set to nil if you don't want dependents of uncomputed results to
+have their statuses set to nil")
+
   (defvar *symbol-tables*
     (make-hash-table :test 'equal)
     "Maps from project id to symbol-table for that project")
@@ -218,6 +222,41 @@ symbol)"
         (setf val (funcall f val)))
       val))
 
+  ;; Major function: res-dependencies
+  ;;
+  ;; returns full list of dependencies on a target
+  (defun res-dependents (res-id target-table)
+    "Returns full list of parameter-dependent targets in target-table"
+    (let* (;; table mapping from id to those targets immediately
+           ;; dependent on id
+           (dependent-table
+            (make-hash-table :test 'equal))
+           (explicit-deps
+            (loop
+               for id being the hash-keys in target-table
+               for tar being the hash-values in target-table
+               when (member res-id (target-deps tar)
+                            :test #'equal)
+               collecting id))
+           (deps nil))
+      ;; fill dependent-table
+      (loop
+         for id being the hash-keys in target-table
+         for target being the hash-values in target-table
+         do
+           (loop
+              for d in (target-deps target)
+              do (push id
+                       (gethash d dependent-table))))
+      ;; collect all dependents of explicit-deps and insert into deps
+      (labels ((rec (id)
+                 (setf deps
+                       (adjoin id deps
+                               :test #'equal))
+                 (mapcar #'rec (gethash id dependent-table))))
+        (mapcar #'rec explicit-deps)
+        deps)))
+
   ;; Major function: depsort
   ;;
   ;; this uses lists for sets, inefficient for large dependency
@@ -250,11 +289,11 @@ argument."
     (sort (hash-keys target-table)
           (dep< target-table)))
 
-  ;; Major function: param-dependencies
+  ;; Major function: param-dependents
   ;;
   ;; finds full list of targets which depend on parameter and returns
   ;; list of ids
-  (defun param-dependencies (parameter target-table)
+  (defun param-dependents (parameter target-table)
     "Returns full list of parameter-dependent targets in target-table"
     (let* (;; table mapping from id to those targets immediately
            ;; dependent on id
@@ -320,7 +359,7 @@ initialization, will be initialized automatically if necessary."
           (make-hash-table :test 'equal)))
   `',project-id)
 
-(defmacro defpars (&rest params)
+(defmacro defpars (params)
   "Adds parameters to project, updating default values for existing
 parameters."
   (let ((result
@@ -591,7 +630,7 @@ is given."
                             (setf (gethash ',p ,argmap)
                                   ,p)
                             ,@(loop
-                                 for pdep in (param-dependencies p fintab)
+                                 for pdep in (param-dependents p fintab)
                                  appending
                                    `((when (target-stat (gethash ',pdep ,fintab))
                                        (setf (target-stat (gethash ',pdep ,fintab))
@@ -623,6 +662,7 @@ Treat args as if they will be evaluated."
   (when (not (gethash *project-id* *makeres-args*))
     (setf (gethash *project-id* *makeres-args*)
           (make-hash-table :test 'eq)))
+  ;; unset any results dependent on new parameter values
   (let ((params
          (gethash *project-id* *params-table*)))
     (loop
@@ -644,7 +684,7 @@ Treat args as if they will be evaluated."
               (setf (gethash psym
                              (gethash *project-id* *makeres-args*))
                     val)
-              (let ((pdeps (param-dependencies
+              (let ((pdeps (param-dependents
                             psym
                             (gethash *project-id*
                                      *target-tables*))))
@@ -653,6 +693,24 @@ Treat args as if they will be evaluated."
                    do
                      (progn
                        (unsetresfn pdep))))))))
+  ;; Whenever *makeres-propogate* is non-nil, unset any results
+  ;; dependent on null-stat results
+  (when *makeres-propogate*
+    (loop
+       for id being the hash-keys in (gethash *project-id*
+                                              *target-tables*)
+       for tar being the hash-values in (gethash *project-id*
+                                                 *target-tables*)
+       do (when (null (target-stat tar))
+            (loop
+               for r in (res-dependents id (gethash *project-id*
+                                                    *target-tables*))
+               do (unsetresfn r))
+            (loop
+               for r in (res-dependents id (gethash *project-id*
+                                                    *fin-target-tables*))
+               do (unsetresfn r)))))
+  
   `(let ((comp (compres)))
      (funcall comp ,@args)))
 

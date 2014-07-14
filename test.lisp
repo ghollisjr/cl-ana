@@ -15,8 +15,8 @@
 
 ;; Define parameters for project
 (defpars
-    (source (list 1 2 3 4 5 6 7))
-    (scale 1))
+    ((source (list 1 2 3 4 5 6 7))
+     (scale 1)))
 
 ;; Each parameter form will be used in a keyword lambda-list, so you
 ;; can provide default values if you like or just use a symbol if

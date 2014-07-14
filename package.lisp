@@ -11,6 +11,8 @@
    :target-stat
    :make-target
    :copy-target
+   ;; Variable for propogation setting:
+   :*makeres-propogate*
    ;; hash tables (these are for debugging only
    :*symbol-tables
    :*target-tables*
