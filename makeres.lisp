@@ -705,10 +705,6 @@ Treat args as if they will be evaluated."
             (loop
                for r in (res-dependents id (gethash *project-id*
                                                     *target-tables*))
-               do (unsetresfn r))
-            (loop
-               for r in (res-dependents id (gethash *project-id*
-                                                    *fin-target-tables*))
                do (unsetresfn r)))))
   
   `(let ((comp (compres)))
