@@ -43,6 +43,28 @@
                      (expt (field y)
                            2))))))
 
+(defres (canon (sum x))
+  (dotab (res canon)
+      ((sum 0))
+      sum
+    (incf sum (field x))))
+
+(defres (filter canon)
+  (ltab (res canon)
+      ()
+    (when (< (field x)
+             (res (canon (sum x))))
+      (push-fields
+       (x (field x))))))
+
+(defres (filter source)
+  (ltab (res source)
+      ()
+    (when (< (field x)
+             (res (canon (sum x))))
+      (push-fields
+       (x (field x))))))
+
 (defres other
   (tab (res filtered2)
       (hdf-opener "/home/ghollisjr/other.h5"
