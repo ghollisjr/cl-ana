@@ -29,6 +29,7 @@
    ;; dependency sorting:
    :dep<
    :depsort
+   :depsort-graph
    ;; target and parameter macros
    :res
    :par

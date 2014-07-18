@@ -135,7 +135,7 @@ symbol)"
                (and (listp x)
                     (listp (cdr (last x))))))
         (labels ((rec (ex)
-                   ;; check for 
+                   ;; check for
                    (when (actual-listp ex)
                      (if (and (length-equal ex 2)
                               (eq (first ex)
@@ -283,12 +283,115 @@ argument."
           (not (member y (gethash x depmap)
                        :test #'equal))))))
 
-  (defun depsort (target-table)
-    "Returns list of ids from target-table in the order from least
-  dependent to most dependent."
-    (sort (hash-keys target-table)
-          (dep< target-table)))
+  ;;   (defun depsort (target-table)
+  ;;     "Returns list of ids from target-table in the order from least
+  ;;   dependent to most dependent."
+  ;;     (sort (hash-keys target-table)
+  ;;           (dep< target-table)))
 
+  (defun dep-chains (target-table src)
+    "Returns list of all dependency chains from target-table stemming
+from src."
+    (let ((reverse-map (make-hash-table :test 'equal)))
+      (loop
+         for id being the hash-keys in target-table
+         for tar being the hash-values in target-table
+         do (loop
+               for d in (target-deps tar)
+               do (setf (gethash d reverse-map)
+                        (adjoin id (gethash d reverse-map)
+                                :test #'equal))))
+      (labels ((rec (src &optional init-chain)
+                 (let ((deps (gethash src reverse-map)))
+                   (if deps
+                       (mapcan (lambda (x)
+                                 (rec x (cons x init-chain)))
+                               deps)
+                       (list (copy-list init-chain))))))
+
+        (mapcar (lambda (x)
+                  (cons src x))
+                (mapcar #'reverse
+                        (rec src))))))
+
+  ;; (defun depsort (target-table &optional dep<)
+;;     "Returns list of ids from target-table with the guarantee that all
+;; elements which depend on other elements come after their
+;; dependencies."
+;;     (labels ((condense-repeats (lst &optional result)
+;;                (cond
+;;                  ((null lst)
+;;                   (nreverse result))
+;;                  ((null result)
+;;                   (condense-repeats (rest lst) (list (first lst))))
+;;                  ((equal (first result) (first lst))
+;;                   (condense-repeats (rest lst) result))
+;;                  (t
+;;                   (condense-repeats (rest lst) (cons (first lst)
+;;                                                      result))))))
+
+;;       (let ((dep< (if dep<
+;;                       dep<
+;;                       (dep< target-table)))
+;;             (ult-srcs
+;;              (loop
+;;                 for id being the hash-keys in target-table
+;;                 for tar being the hash-values in target-table
+;;                 when (or (null (target-deps tar))
+;;                          (every (lambda (x) (null (gethash x target-table)))
+;;                                 (target-deps tar)))
+;;                 collect id)))
+;;         ;; note: this doesn't find all cycles, only some
+;;         (when (null ult-srcs)
+;;           (error "cycle detected in dependency graph"))
+;;         (let ((chains
+;;                (loop
+;;                   for ult-src in ult-srcs
+;;                   appending (dep-chains target-table
+;;                                         ult-src))))
+;;           (condense-repeats
+;;            (reduce (lambda (x y)
+;;                      (merge 'list x y dep<))
+;;                    (rest chains)
+  ;;                    :initial-value (first chains)))))))
+
+  (defun last-dep (x lst dep<)
+    (let ((res
+           (remove-if-not (lambda (d)
+                            (not (funcall dep< x d)))
+                          lst)))
+      (if res
+          (values (first (last res))
+                  t)
+          (values nil nil))))
+
+  (defun insert-after! (insertion lst token)
+    (if (null lst)
+        (push insertion lst)
+        (if (equal (first lst) token)
+            (setf (cdr lst)
+                  (cons insertion
+                        (cdr lst)))
+            (insert-after! insertion (cdr lst) token))))
+
+  (defun depsort (ids dep<)
+    (let ((result nil))
+      (loop
+         for i in ids
+         do (multiple-value-bind (last-dep any)
+                (last-dep i ids dep<)
+              (if any
+                  (insert-after! i result last-dep)
+                  (push i result))))
+      result))
+
+  (defun depsort-graph (target-table &optional dep<)
+    (let ((dep< (if dep<
+                    dep<
+                    (dep< target-table))))
+      (depsort (hash-keys target-table)
+               dep<)))
+  
   ;; Major function: param-dependents
   ;;
   ;; finds full list of targets which depend on parameter and returns
@@ -564,7 +667,7 @@ is given."
                     (gentemp "res" :makeres)))))
     (alexandria:with-gensyms (val)
       (let* ((sorted-ids
-              (depsort fintab))
+              (depsort-graph fintab))
              (symbindings
               (loop
                  for id in sorted-ids
@@ -706,7 +809,7 @@ Treat args as if they will be evaluated."
                for r in (res-dependents id (gethash *project-id*
                                                     *target-tables*))
                do (unsetresfn r)))))
-  
+
   `(let ((comp (compres)))
      (funcall comp ,@args)))
 
