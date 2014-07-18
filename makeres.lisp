@@ -257,15 +257,14 @@ have their statuses set to nil")
         (mapcar #'rec explicit-deps)
         deps)))
 
-  ;; Major function: depsort
+  ;; Major function: dep<
   ;;
   ;; this uses lists for sets, inefficient for large dependency
   ;; graphs, so it needs to be updated in the future
 
   (defun dep< (target-table)
-    "Returns comparison function for depsort from target-table which
-returns true when the left argument does not depend on the right
-argument."
+    "Returns comparison function from target-table which returns true
+when the left argument does not depend on the right argument."
     (let ((depmap (make-hash-table :test 'equal)))
       (labels ((rec (id)
                  ;; returns full list of dependencies for id
@@ -283,79 +282,11 @@ argument."
           (not (member y (gethash x depmap)
                        :test #'equal))))))
 
-  ;;   (defun depsort (target-table)
-  ;;     "Returns list of ids from target-table in the order from least
-  ;;   dependent to most dependent."
-  ;;     (sort (hash-keys target-table)
-  ;;           (dep< target-table)))
-
-  (defun dep-chains (target-table src)
-    "Returns list of all dependency chains from target-table stemming
-from src."
-    (let ((reverse-map (make-hash-table :test 'equal)))
-      (loop
-         for id being the hash-keys in target-table
-         for tar being the hash-values in target-table
-         do (loop
-               for d in (target-deps tar)
-               do (setf (gethash d reverse-map)
-                        (adjoin id (gethash d reverse-map)
-                                :test #'equal))))
-      (labels ((rec (src &optional init-chain)
-                 (let ((deps (gethash src reverse-map)))
-                   (if deps
-                       (mapcan (lambda (x)
-                                 (rec x (cons x init-chain)))
-                               deps)
-                       (list (copy-list init-chain))))))
-
-        (mapcar (lambda (x)
-                  (cons src x))
-                (mapcar #'reverse
-                        (rec src))))))
-
-  ;; (defun depsort (target-table &optional dep<)
-;;     "Returns list of ids from target-table with the guarantee that all
-;; elements which depend on other elements come after their
-;; dependencies."
-;;     (labels ((condense-repeats (lst &optional result)
-;;                (cond
-;;                  ((null lst)
-;;                   (nreverse result))
-;;                  ((null result)
-;;                   (condense-repeats (rest lst) (list (first lst))))
-;;                  ((equal (first result) (first lst))
-;;                   (condense-repeats (rest lst) result))
-;;                  (t
-;;                   (condense-repeats (rest lst) (cons (first lst)
-;;                                                      result))))))
-
-;;       (let ((dep< (if dep<
-;;                       dep<
-;;                       (dep< target-table)))
-;;             (ult-srcs
-;;              (loop
-;;                 for id being the hash-keys in target-table
-;;                 for tar being the hash-values in target-table
-;;                 when (or (null (target-deps tar))
-;;                          (every (lambda (x) (null (gethash x target-table)))
-;;                                 (target-deps tar)))
-;;                 collect id)))
-;;         ;; note: this doesn't find all cycles, only some
-;;         (when (null ult-srcs)
-;;           (error "cycle detected in dependency graph"))
-;;         (let ((chains
-;;                (loop
-;;                   for ult-src in ult-srcs
-;;                   appending (dep-chains target-table
-;;                                         ult-src))))
-;;           (condense-repeats
-;;            (reduce (lambda (x y)
-;;                      (merge 'list x y dep<))
-;;                    (rest chains)
-  ;;                    :initial-value (first chains)))))))
-
+  ;; depsort-graph functions:
+  
   (defun last-dep (x lst dep<)
+    "Returns last dependency of x found in lst and t; if no
+dependencies are found then returns two nil values"
     (let ((res
            (remove-if-not (lambda (d)
                             (not (funcall dep< x d)))
@@ -366,6 +297,8 @@ from src."
           (values nil nil))))
 
   (defun insert-after! (insertion lst token)
+    "Inserts insertion into list immediately following the first
+element #'equal to token."
     (if (null lst)
         (push insertion lst)
         (if (equal (first lst) token)
@@ -375,6 +308,9 @@ from src."
             (insert-after! insertion (cdr lst) token))))
 
   (defun depsort (ids dep<)
+    "Sorts a list of values given dependency comparison function dep<;
+special algorithm since sort needs transitive operator while dep< is
+not transitive in general."
     (let ((result nil))
       (loop
          for i in ids
@@ -386,6 +322,9 @@ from src."
       result))
 
   (defun depsort-graph (target-table &optional dep<)
+    "Returns dependency-sorted target ids from target-table, if dep<
+is provided then it is used instead of the dep< computed from the
+target-table."
     (let ((dep< (if dep<
                     dep<
                     (dep< target-table))))
@@ -505,11 +444,7 @@ parameters."
            ;; default behavior; makes sense for most cases and the
            ;; user can still optionally set the stat of whatever they
            ;; want to reuse to t
-           (stat nil)
-           ;; (stat (if oldtar
-           ;;           (target-stat oldtar)
-           ;;           nil))
-           )
+           (stat nil))
       (setf (gethash id tartab)
             (make-target id `(progn ,@body)
                          :val val
@@ -642,22 +577,6 @@ is given."
     ;; Update fintab:
     (setf (gethash project-id *fin-target-tables*)
           fintab)
-    ;; Set values and status when available for new fintab from old fintab:
-    ;; (loop
-    ;;    for id being the hash-keys in fintab
-    ;;    do
-    ;;      (if (gethash id tartab)
-    ;;          (progn
-    ;;            (setf (target-val (gethash id fintab))
-    ;;                  (target-val (gethash id tartab)))
-    ;;            (setf (target-stat (gethash id fintab))
-    ;;                  (target-stat (gethash id tartab))))
-    ;;          (when (gethash id oldfintab)
-    ;;            (setf (target-val (gethash id fintab))
-    ;;                  (target-val (gethash id oldfintab)))
-    ;;            (setf (target-stat (gethash id fintab))
-    ;;                  (target-stat (gethash id oldfintab))))))
-
     ;; ensure symbols are defined for fintab
     (loop
        for id being the hash-keys in fintab
