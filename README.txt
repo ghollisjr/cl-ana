@@ -19,11 +19,11 @@ The operators provided are:
 
 * tab: Iteration over a table to produce a physical table.
 
-(Pending) If the source table for a physical table needs to be
-iterated, then as many of the necessary passes over the physical table
-are generated during the source table iteration (known as collapsing a
-pass).  The assumption is that disk access is the bottleneck, so that
-as much computation should be done per disk accesss as possible.
+If the source table for a physical table needs to be iterated, then as
+many of the necessary passes over the physical table are generated
+during the source table iteration (known as collapsing a pass).  The
+assumption is that disk access is the bottleneck, so that as much
+computation should be done per disk accesss as possible.
 
 * ltab: Iteration over a table to produce a logical table.
 

@@ -1,8 +1,19 @@
+(require 'cl-ana)
+
+(require 'makeres)
+
 (require 'makeres-tabletrans)
 
-(in-package makeres-tabletrans)
+(defpackage #:simple-test
+  (:use :cl
+        :makeres
+        :makeres-tabletrans))
 
-(in-project simple-test2)
+(package-utils:use-package-group :cl-ana :simple-test)
+
+(in-package simple-test)
+
+(in-project simple-test)
 
 (settrans (tabletrans) :op :set)
 
@@ -13,8 +24,8 @@
        for i below 10000000
        collecting (list :x i)))))
 
-;; (deflfields source
-;;     (y (* 2 (field x))))
+(deflfields source
+    (y (* 2 (field x))))
 
 (defres sum
   (dotab (res source)

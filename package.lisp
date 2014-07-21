@@ -6,17 +6,15 @@
    :dotab
    :ltab
    :tab
-   ;; field macro:
+   ;; field macros
+   :deflfields
    :field
+   :push-fields
    ;; implementation macro:
    :table-pass
    ;; transformations
    :tabletrans
-   :pass-merge
-   :pass-collapse
-   ;; hash tables
-   :*tabletrans-symmap*
-   ;; hdf-utils:
+   ;; openers:
    :hdf-opener))
 
 (package-utils:use-package-group :cl-ana :makeres-tabletrans)
