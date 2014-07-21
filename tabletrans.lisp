@@ -310,11 +310,6 @@ non-ignored sources."
     "Returns tree of contexts each pass would be inside if collapsed up
 to src.  Physical table reductions are treated as reductions with
 themselves as context."
-    ;; debug
-    ;; (format t "trct args: ~a~%"
-    ;;         (list (map->alist graph)
-    ;;               src
-    ;;               ids))
     (let (;; map from source to immediate reductions used by ids
           (source->reds (make-hash-table :test 'equal)))
       (labels ((build-source->reds (id)
@@ -324,9 +319,6 @@ themselves as context."
                                   (table-reduction-source
                                    (target-expr
                                     (gethash id graph))))))
-                     ;; (format t "bs->r args:~a~%"
-                     ;;         (list id))
-                     ;; (format t "bs->r source:~a~%" source)
                      (setf (gethash source source->reds)
                            (adjoin id (gethash source source->reds)
                                    :test #'equal))
@@ -344,7 +336,8 @@ themselves as context."
                                         (ltab? (target-expr (gethash red graph)))))
                                   reds)
                                  (when (and (gethash source graph)
-                                            (tab? (target-expr (gethash source graph))))
+                                            (tab? (target-expr (gethash source graph)))
+                                            (member source ids :test #'equal))
                                    (list source))))
                         ;; reductions used as sources
                         (source-reds
@@ -354,7 +347,6 @@ themselves as context."
                    (apply #'node source need-context-reds
                           (mapcar #'source->tree source-reds)))))
         (mapcar #'build-source->reds ids)
-        ;; (format t "source->reds: ~a~%" (map->alist source->reds))
         (source->tree src))))
 
   ;; some shitty code walking
@@ -410,7 +402,7 @@ from pass up to src."
              ;; reduction ids needing to be placed in this context, and
              ;; sub context trees.
              (context-tree
-              (table-reduction-context-tree graph src pass))
+              (print-eval(table-reduction-context-tree graph src pass)))
              ;; set of reductions generated:
              (reductions
               (remove src
@@ -461,8 +453,6 @@ from pass up to src."
                 (setf (gethash r reduction->return)
                       (let ((expr (target-expr tar)))
                         (when (not (ltab? expr))
-                          (format t "expr: ~a~%" expr)
-                          (format t "r: ~a~%" r)
                           (let ((res
                                  (table-reduction-return
                                   (if (tab? expr)
@@ -470,7 +460,6 @@ from pass up to src."
                                             `(progn
                                                ,(macroexpand-1 (second expr))))
                                       expr))))
-                            (format t "res: ~a~%" res)
                             res))))
                 ;; inits:
                 (loop
@@ -492,7 +481,6 @@ from pass up to src."
                                         collect `(,s ,(gethash s initsym->gsym)))
                                   ,@initexpr)))
                         (push initsym processed-initsym-bindings)))))
-
         ;; Make body via recursing through context tree
 
         ;; * Make sure to make use of gsymed inits via symbol-macrolets in
@@ -513,17 +501,18 @@ from pass up to src."
                ;; the gsym in each result form, and return list of
                ;; result forms.
                (result-list
-                `(list
-                  ,@(loop
-                       for r in reductions
-                       collect
-                         (let ((initsym->gsym (gethash r reduction->initsym->gsym)))
-                           `(symbol-macrolet
-                                ,(loop
-                                    for s being the hash-keys in initsym->gsym
-                                    for gsym being the hash-values in initsym->gsym
-                                    collect (list s gsym))
-                              ,(gethash r reduction->return))))))
+                (progn
+                  `(list
+                    ,@(loop
+                         for r in pass
+                         collect
+                           (let ((initsym->gsym (gethash r reduction->initsym->gsym)))
+                             `(symbol-macrolet
+                                  ,(loop
+                                      for s being the hash-keys in initsym->gsym
+                                      for gsym being the hash-values in initsym->gsym
+                                      collect (list s gsym))
+                                ,(gethash r reduction->return)))))))
                ;; map from table to lfields for table:
                (tab->lfields
                 (gethash (project) *proj->tab->lfields*))
@@ -543,8 +532,11 @@ from pass up to src."
                                  (mapcar #'rec
                                          (node-children node))))
                               (push-field-bindings
-                               (when (tab? expr)
-                                 (find-push-fields (table-reduction-body expr))))
+                               (cond
+                                 ((tab? expr)
+                                  (find-push-fields (gethash c tab-expanded-expr)))
+                                 ((ltab? expr)
+                                  (find-push-fields (table-reduction-body expr)))))
                               (olet-field-bindings
                                (append push-field-bindings lfields))
                               (olet-field-gsyms
@@ -557,6 +549,8 @@ from pass up to src."
                                           for (field form) in olet-field-bindings
                                           for gsym in olet-field-gsyms
                                           collect `(,gsym ,form))
+                                  ;; debug:
+                                  (format t "source: ~a~%" ',c)
                                   ;; replace (field x) with x for x for every
                                   ;; x in the push-field-bindings
                                   ,@(sublis
@@ -579,25 +573,29 @@ from pass up to src."
                                                          for gsym being the hash-values
                                                          in initsym->gsym
                                                          collecting (list s gsym))))
-                                            ,@(table-reduction-body
-                                               (let ((expr (target-expr
-                                                            (gethash id graph))))
-                                                 (if (tab? expr)
-                                                     `(progn
-                                                        ,(gethash
-                                                          id
-                                                          tab-expanded-expr))
-                                                     expr)))))
-                                       (node-content node))
-                                      children-exprs)
+                                            ,@(let ((expr (target-expr
+                                                           (gethash id graph))))
+                                                   (if (tab? expr)
+                                                       (table-reduction-body
+                                                        (gethash id tab-expanded-expr))
+                                                       (table-reduction-body expr)))))
+                                       (progn
+                                         (format t "node: ~a~%" node)
+                                         (format t "node-content: ~a~%"
+                                                 (node-content node))
+                                         (node-content node)))
+                                      (print-eval children-exprs))
                                      :test #'equal))))
-                         (if (table-reduction? expr)
+                         (if (and (not (equal c src))
+                                  (table-reduction? expr))
                              (replace-push-fields
                               `(progn
-                                 ,@(table-reduction-body expr))
+                                 ,@(table-reduction-body
+                                    (if (tab? expr)
+                                        (gethash c tab-expanded-expr)
+                                        expr)))
                               sub-body)
                              sub-body))))
-                  ;; (format t "context-tree: ~a~%" context-tree)
                   (rec context-tree))))
           `(progn
              (table-pass ,(if (and (listp src)
@@ -612,7 +610,6 @@ from pass up to src."
   (defun set-pass-result-targets! (result-graph id pass)
     "Sets result-graph targets from pass so that they make use of the
   returned results for the pass target id."
-    (format t "pass: ~a~%" pass)
     (loop
        for p in pass
        for i from 0
@@ -636,8 +633,6 @@ true when given the key and value from ht."
 
   (defun tabletrans (target-table)
     "Performs necessary graph transformations for table operators"
-    ;; debug:
-    ;; (format t "tt: target-table=~a~%" (map->alist target-table))
     ;; clear gsyms
     (clrgsym 'tabletrans)
     ;; establish *proj->tab->lfields*:
@@ -649,7 +644,6 @@ true when given the key and value from ht."
            ;;                     (not (target-stat tar)))
            ;;                   (copy-target-table target-table)))
            (graph (copy-target-table target-table))
-           (dep< (dep< graph))
            ;; special dep< for treating reductions as if they did not
            ;; depend on src as a source table, but preserving other
            ;; dependencies as a consequence of being a reduction of the
@@ -691,17 +685,18 @@ true when given the key and value from ht."
                            (list->set
                             (append processed-srcs
                                     ltabs))))
-                   ;; (format t "processed-srcs: ~a~%" processed-srcs)
-                   ;; (format t "processed-reds: ~a~%" processed-reds)
                    (let* (;; reductions which must be computed via a
                           ;; pass over src
                           (nec-reds
                            (remove-if
                             (lambda (k)
-                              (member k processed-reds
-                                      :test #'equal))
-                            (necessary-pass-reductions
-                             graph src)))
+                              (target-stat (gethash k graph)))
+                            (remove-if
+                             (lambda (k)
+                               (member k processed-reds
+                                       :test #'equal))
+                             (necessary-pass-reductions
+                              graph src))))
                           ;; necessary passes:
                           (nec-passes
                            (remove
@@ -726,29 +721,31 @@ true when given the key and value from ht."
                             (mapcar
                              (lambda (pass)
                                (remove-if (lambda (p)
-                                            (ltab? (target-expr (gethash p graph))))
+                                            (target-stat (gethash p graph)))
                                           pass))
                              (mapcar
                               (lambda (pass)
                                 (remove-if (lambda (p)
-                                             (member p processed-reds
-                                                     :test #'equal))
+                                             (ltab? (target-expr
+                                                     (gethash p graph))))
                                            pass))
-                              (group-ids-by-pass
-                               ;; must remove logical tables and previously
-                               ;; processed reduction targets:
-                               graph
-                               src
-                               remsrc-dep<)))))
+                              (mapcar
+                               (lambda (pass)
+                                 (remove-if (lambda (p)
+                                              (member p processed-reds
+                                                      :test #'equal))
+                                            pass))
+                               (group-ids-by-pass
+                                ;; must remove logical tables and previously
+                                ;; processed reduction targets:
+                                graph
+                                src
+                                remsrc-dep<))))))
                           ;; collapsible reductions of src:
                           (collapsible-passes
                            (mapcar (lambda (x y)
                                      y)
                                    nec-passes ult-passes)))
-                     ;; (format t "ult-passes: ~a~%" ult-passes)
-                     ;; (format t "nec-reds: ~a~%" nec-reds)
-                     ;; (format t "nec-passes: ~a~%" nec-passes)
-                     ;; (format t "collapsible-passes: ~a~%" collapsible-passes)
                      (dolist (pass collapsible-passes)
                        (dolist (p pass)
                          (push p processed-reds))
