@@ -1,9 +1,9 @@
 (in-package :makeres-tabletrans)
 
-;;;; This file defines various utilities for using hdf-tables with the
-;;;; makeres-tabletrans system.
+;;;; This file defines openers for use with tab for various tables
+;;;; provided by cl-ana.
 
-;; opener for use with tab:
+;; hdf-table & hdf-table-chain:
 (defun hdf-opener (path fields-specs
                    &key
                      buffer-size
@@ -45,3 +45,9 @@
          (close-hdf-file file)
          (setf file nil)
          table)))))
+
+;; PAW ntuple:
+
+;; CSV:
+
+;; plist-table (need to add write capability to plist table).

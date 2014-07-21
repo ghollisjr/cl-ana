@@ -1,3 +1,28 @@
++ When running tabletrans-test, canon has a value of 6, causing an
+  error when this is passed to table-load-next-row.  I'm pretty sure
+  it's got something to do with the return values getting mixed up in
+  the return lists.
+
+* Also: Note that I'm (maybe temporarily) using the full target-table
+  in the graph variable in tabletrans; the missing dependencies seem
+  to be causing difficulties later on, so I need to find a way to deal
+  with the t-stat values, perhaps simply removing them from the
+  passes.
+
+* Also thought about modifying dep< so that targets with t-stat are
+  not treated as dependencies.  This seems to make sense in all cases.
+
+-----------------------------------------------
+OLD:
+
++ New depsort is possibly wrong, run tabletrans on the test project in
+  this directory and look at first entry.
+
+  + Bug is with depsort: Results in two copies of variance
+
+----------------------------------------------
+OLD:
+
 - Known bug with pass-collapse: table-push-fields inside an ltab is
   supposed to result in added lfields for the ultimate source table.
   Something is broken along these lines because the example in

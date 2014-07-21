@@ -393,16 +393,3 @@ init-bindings let form."
            do (setf (gethash id result-table)
                     (gethash id target-table)))
         result-table))))
-
-;; logical field macro:
-(defmacro deflfields (table-id &rest lfields)
-  "Sets logical fields for table-id; can be referenced via field by
-any reductions of the table."
-  (when (not (gethash *project-id* *proj->tab->lfields*))
-    (setf (gethash *project-id* *proj->tab->lfields*)
-          (make-hash-table :test 'equal)))
-  (setf (gethash table-id
-                 (gethash *project-id*
-                          *proj->tab->lfields*))
-        lfields)
-  nil)

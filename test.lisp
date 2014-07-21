@@ -6,7 +6,7 @@
 
 ;; Demo of tabletrans
 
-(in-project tabletrans)
+(in-project tabletrans-simple-test)
 
 (settrans (pass-merge))
 
