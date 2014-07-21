@@ -26,6 +26,7 @@
    :project
    :symbol-table
    :target-table
+   :copy-target-table
    ;; dependency sorting:
    :dep<
    :depsort
