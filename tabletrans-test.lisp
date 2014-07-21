@@ -39,9 +39,7 @@
                   '(("x" . :int)
                     ("y" . :float)
                     ("z" . :float)))
-    (push-fields (x (progn
-                      (format t "canon row: ~a~%" (row-number))
-                      (field x)))
+    (push-fields (x (field x))
                  (y (sqrt (field y)))
                  (z (float
                      (expt (field y)

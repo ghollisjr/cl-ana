@@ -305,6 +305,16 @@ non-ignored sources."
         (rec node))
       result))
 
+  (defun node-subcontent (node)
+    "Returns set of contents contained by node and all its children"
+    (list->set
+     (append (node-content node)
+             (mapcan
+              (lambda (x)
+                (copy-list (node-subcontent x)))
+              (node-children node)))
+     #'equal))
+
   ;; must be given complete target graph, not just the null-stat targets
   (defun table-reduction-context-tree (graph src ids)
     "Returns tree of contexts each pass would be inside if collapsed up
@@ -343,9 +353,24 @@ themselves as context."
                         (source-reds
                          (remove-if-not (lambda (red)
                                           (gethash red source->reds))
-                                        reds)))
-                   (apply #'node source need-context-reds
-                          (mapcar #'source->tree source-reds)))))
+                                        reds))
+                        ;; child nodes:
+                        (children (mapcar #'source->tree source-reds)))
+                   (apply #'node
+                          source
+                          ;; remove any reds needing context which are
+                          ;; covered by some child node:
+                          (let ((subcontent
+                                 (list->set
+                                  (mapcan (lambda (x)
+                                            (copy-list (node-subcontent x)))
+                                          children)
+                                  #'equal)))
+                            (remove-if (lambda (r)
+                                         (member r subcontent
+                                                 :test #'equal))
+                                       need-context-reds))
+                          children))))
         (mapcar #'build-source->reds ids)
         (source->tree src))))
 
@@ -402,7 +427,7 @@ from pass up to src."
              ;; reduction ids needing to be placed in this context, and
              ;; sub context trees.
              (context-tree
-              (print-eval(table-reduction-context-tree graph src pass)))
+              (table-reduction-context-tree graph src pass))
              ;; set of reductions generated:
              (reductions
               (remove src
@@ -549,8 +574,6 @@ from pass up to src."
                                           for (field form) in olet-field-bindings
                                           for gsym in olet-field-gsyms
                                           collect `(,gsym ,form))
-                                  ;; debug:
-                                  (format t "source: ~a~%" ',c)
                                   ;; replace (field x) with x for x for every
                                   ;; x in the push-field-bindings
                                   ,@(sublis
@@ -580,11 +603,8 @@ from pass up to src."
                                                         (gethash id tab-expanded-expr))
                                                        (table-reduction-body expr)))))
                                        (progn
-                                         (format t "node: ~a~%" node)
-                                         (format t "node-content: ~a~%"
-                                                 (node-content node))
                                          (node-content node)))
-                                      (print-eval children-exprs))
+                                      children-exprs)
                                      :test #'equal))))
                          (if (and (not (equal c src))
                                   (table-reduction? expr))
