@@ -47,4 +47,5 @@
 	   :open-table-chain
 	   :reset-table-chain
 	   ;; plist-table:
-	   :open-plist-table))
+	   :open-plist-table
+           :create-plist-table))

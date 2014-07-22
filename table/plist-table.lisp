@@ -47,7 +47,8 @@
   (make-instance 'plist-table
 		 :plists (coerce plists 'vector)
 		 :field-names (mapcar (compose #'lispify #'string)
-                                       (every-nth (first plists) 2))))
+                                      (every-nth (first plists) 2))
+                 :access-mode :read))
 
 (defmethod table-load-next-row ((table plist-table))
   (with-accessors ((plists plist-table-plists)
@@ -64,4 +65,25 @@
     (getf (elt plists current-table-index) field-symbol)))
 
 (defmethod table-close ((table plist-table))
+  (when (eq (table-access-mode table) :write)
+    (pop (plist-table-plists table)))
   nil)
+
+;;; Writing functions:
+
+(defun create-plist-table (field-names)
+  (make-instance 'plist-table
+                 :plists (list (list))
+                 :field-names field-names
+                 :access-mode :write))
+
+(defmethod table-set-field ((tab plist-table) field-symbol value)
+  (with-accessors ((plists plist-table-plists))
+      tab
+    (setf (getf (first plists) field-symbol)
+          value)))
+
+(defmethod table-commit-row ((tab plist-table))
+  (with-accessors ((plists plist-table-plists))
+      tab
+    (push (list) plists)))
