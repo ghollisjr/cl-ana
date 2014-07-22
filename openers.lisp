@@ -50,4 +50,37 @@
 
 ;; CSV:
 
-;; plist-table (need to add write capability to plist table).
+;; plist-table:
+
+(defun plist-opener (&optional plists)
+  (let ((table nil)
+        (plists plists))
+    (lambda (op)
+      (case op
+        (:read
+         (when (and table
+                    (table-open-p table))
+           (table-close table))
+         (setf table
+               (wrap-for-reuse
+                (open-hdf-table-chain (list path) group)))
+         table)
+        (:write
+         (when (and table
+                    (table-open-p table))
+           (table-close table))
+         (when file
+           (close-hdf-file file))
+         (setf file
+               (open-hdf-file path
+                              :direction :output
+                              :if-exists :supersede
+                              :if-does-not-exist :create))
+         (setf table
+               (apply #'create-hdf-table
+                      file group fields-specs
+                      (when buffer-size
+                        (list :buffer-size buffer-size))))
+         (close-hdf-file file)
+         (setf file nil)
+         table)))))
