@@ -25,7 +25,7 @@
        collecting (list :x i)))))
 
 (deflfields source
-    (y (* 2 (field x))))
+    ((y (* 2 (field x)))))
 
 (defres sum
   (dotab (res source)

@@ -197,9 +197,7 @@ over src using the dependency checker dep<."
                                       sorted-ids))
                      (if sorted-ids
                          (progn
-
                            (setf pass (list (pop sorted-ids)))
-
                            (rec))
                          (nreverse result))))
             (rec))))))
@@ -232,8 +230,14 @@ non-ignored sources."
   (defun removed-source-dep< (target-table)
     (let ((depmap (make-hash-table :test 'equal)))
       (labels ((rec (id)
-                 ;; returns full list of dependencies for id
-                 (let ((deps (copy-list (target-deps (gethash id target-table)))))
+                 ;; returns full list of dependencies for id, ignoring
+                 ;; t-stat targets (otherwise we neglect possible
+                 ;; optimizations)
+                 (let ((deps
+                        (remove-if
+                         (lambda (d)
+                           (target-stat (gethash d target-table)))
+                         (copy-list (target-deps (gethash id target-table))))))
                    (when deps
                      (reduce (lambda (ds d)
                                (adjoin d ds :test #'equal))
@@ -257,8 +261,14 @@ non-ignored sources."
   (defun removed-ltab-source-dep< (target-table)
     (let ((depmap (make-hash-table :test 'equal)))
       (labels ((rec (id)
-                 ;; returns full list of dependencies for id
-                 (let ((deps (copy-list (target-deps (gethash id target-table)))))
+                 ;; returns full list of dependencies for id, ignoring
+                 ;; t-stat dependencies (otherwise we neglect possible
+                 ;; optimizations).
+                 (let ((deps
+                        (remove-if
+                         (lambda (d)
+                           (target-stat (gethash d target-table)))
+                         (copy-list (target-deps (gethash id target-table))))))
                    (when deps
                      (reduce (lambda (ds d)
                                (adjoin d ds :test #'equal))

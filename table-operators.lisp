@@ -6,7 +6,7 @@
     "Map from table id to any lfields defined via deflfields."))
 
 ;; logical field definition:
-(defmacro deflfields (table-id &rest lfields)
+(defmacro deflfields (table-id lfields)
   "Sets logical fields for table-id; can be referenced via field by
 any reductions of the table."
   (when (not (gethash *project-id* *proj->tab->lfields*))
