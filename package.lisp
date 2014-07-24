@@ -15,6 +15,9 @@
    ;; transformations
    :tabletrans
    ;; openers:
-   :hdf-opener))
+   :hdf-opener
+   :ntuple-opener
+   :csv-opener
+   :plist-opener))
 
 (package-utils:use-package-group :cl-ana :makeres-tabletrans)
