@@ -66,7 +66,9 @@
 
 (defmethod table-close ((table plist-table))
   (when (eq (table-access-mode table) :write)
-    (pop (plist-table-plists table)))
+    (setf (plist-table-plists table)
+          (reverse
+           (rest (plist-table-plists table)))))
   nil)
 
 ;;; Writing functions:

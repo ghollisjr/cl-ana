@@ -106,3 +106,7 @@ the table needs closing."
 ;; table-nrows method:
 (defmethod table-nrows ((table reusable-table))
   (table-nrows (internal-table table)))
+
+;; access mode:
+(defmethod table-access-mode ((table reusable-table))
+  (table-access-mode (internal-table table)))
