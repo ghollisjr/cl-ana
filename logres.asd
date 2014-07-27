@@ -32,4 +32,5 @@
                (:file "logres")
                (:file "histogram")
                (:file "table")
-               (:file "function")))
+               (:file "function")
+               (:file "hash-table")))

@@ -16,3 +16,9 @@
                     (getf x :x))
                   (res source)))
      (length (res source))))
+
+(defres hash-table
+  (let ((hash-table (make-hash-table :test 'equal)))
+    (setf (gethash 'x hash-table)
+          'x)
+    hash-table))
