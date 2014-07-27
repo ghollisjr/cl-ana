@@ -162,6 +162,7 @@ open/with-open-file."
         (loop
            for res being the hash-keys in res->lid
            for lid being the hash-values in res->lid
+           when (target-stat (gethash res tartab))
            do (let ((type (type-of (resfn res))))
                 (format index-file
                         "~a ~a ~a~%"
@@ -169,6 +170,7 @@ open/with-open-file."
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
+         when (target-stat (gethash id tartab))
          do (let* ((lid (gethash id res->lid))
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
