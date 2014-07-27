@@ -166,7 +166,10 @@ open/with-open-file."
            do (let ((type (type-of (resfn res))))
                 (format index-file
                         "~a ~a ~a~%"
-                        res lid type))))
+                        res lid type))
+           when (not (target-stat (gethash res tartab)))
+           do (format t "WARNING: ~a stat is null, not saving~%"
+                      res)))
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
