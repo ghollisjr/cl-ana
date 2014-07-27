@@ -1,3 +1,7 @@
+* Add restarts to compres-generated functions which allow for retrying
+  a result, skipping a result, aborting, or halt & store results in
+  the target-table.
+
 * Allow users to specify an update strategy for re-specifying targets
   (i.e. executing defres).  For now I've set the default to keeping
   the old value in place but setting the status to nil ("needs to be

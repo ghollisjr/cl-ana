@@ -33,7 +33,9 @@
    :depsort-graph
    ;; target and parameter macros
    :res
+   :resfn
    :par
+   :parfn
    ;; project macros
    :in-project
    :defpars

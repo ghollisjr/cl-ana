@@ -402,6 +402,11 @@ project-id is, nil if id or project not specified."
     (awhen (gethash id it)
       it)))
 
+(defun resfn (id &optional (project-id *project-id*))
+  (awhen (symbol-table project-id)
+    (awhen (gethash id it)
+      (symbol-value it))))
+
 (defmacro par (id)
   "Outside of generating function, returns the last used value of a
 parameter.  Inside, expands to whatever the current parameter value
@@ -409,6 +414,9 @@ is."
   `(values
     (gethash ',id
              (gethash *project-id* *args-tables*))))
+
+(defun parfn (id)
+  (values (gethash id (gethash *project-id* *args-tables*))))
 
 (defmacro in-project (project-id)
   "Selects graph identified by graph-id for use.  Graph does not need
