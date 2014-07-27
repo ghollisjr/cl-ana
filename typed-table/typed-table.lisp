@@ -72,8 +72,8 @@
                    (c->lisp-converter-map
                     typed-table-c->lisp-converter-map))
       table
-    (setf lisp->c-converter-map (make-hash-table :test 'equal))
-    (setf c->lisp-converter-map (make-hash-table :test 'equal))
+    (setf lisp->c-converter-map (make-hash-table :test 'eq))
+    (setf c->lisp-converter-map (make-hash-table :test 'eq))
     (loop
        for s in (table-field-symbols table)
        for cs in field-specs

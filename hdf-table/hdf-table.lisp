@@ -348,7 +348,9 @@ the dataset."
 
 (defun load-chunk (table row-number)
   (labels ((get-chunk-index (row-index buffer-size)
-	     (floor row-index buffer-size)))
+             (declare (fixnum buffer-size row-index))
+	     (the fixnum
+                  (floor row-index buffer-size))))
     (with-accessors ((buffer-size hdf-table-buffer-size)
 		     (current-chunk-index hdf-table-chunk-index)
 		     (row-buffer hdf-table-row-buffer)

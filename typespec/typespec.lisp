@@ -303,11 +303,46 @@ lisp object containing the converted values."
     ((typespec-array-p typespec)
      (let* ((element-type (typespec-array-element-type typespec))
             (dim-list (typespec-array-dim-list typespec))
+            ;; these should be used whenever the lisp array version is used:
+            ;; (dim-vector (coerce dim-list 'vector))
+            ;; (ndims (length dim-list))
             (num-elements (typespec-array-size typespec))
             (element-cffi-type
              (typespec->cffi-type element-type))
             (element-getter
              (typespec->c-to-lisp element-type)))
+       ;; function which returns an array of appropriate dimensions
+       ;; with the foreign content.
+
+       ;; ;; This function is here as an example of how to do this
+       ;; ;; with lisp arrays, faster than using the tensors but at
+       ;; ;; the cost of the tensor functions.
+       ;; 
+       ;; (lambda (c-pointer)
+       ;;   (let ((result-array
+       ;;          (make-array dim-list))
+       ;;         (indices (make-array (list (length dim-vector))
+       ;;                              :initial-element 0)))
+       ;;     (labels ((inc-indices! ()
+       ;;                (inc-indices-worker! (1- ndims)))
+       ;;              (inc-indices-worker! (inc-index)
+       ;;                (if (>= (elt indices inc-index)
+       ;;                        (1- (elt dim-vector inc-index)))
+       ;;                    (when (plusp inc-index)
+       ;;                      (setf (elt indices inc-index) 0)
+       ;;                      (inc-indices-worker! (1- inc-index)))
+       ;;                    (incf (elt indices inc-index)))))
+       ;;       (loop
+       ;;          for i below num-elements
+       ;;          do (progn
+       ;;               (setf (apply #'aref result-array (coerce indices 'list))
+       ;;                     (funcall element-getter
+       ;;                              (mem-aptr c-pointer
+       ;;                                        element-cffi-type
+       ;;                                        i)))
+       ;;               (inc-indices!)))
+       ;;       result-array)))
+       
        (lambda (c-pointer)
          (let ((result-tensor
                 (make-tensor dim-list)))
@@ -318,7 +353,8 @@ lisp object containing the converted values."
                                 (mem-aptr c-pointer
                                           element-cffi-type
                                           i))))
-           result-tensor))))
+           result-tensor))
+       ))
     ;; primitive
     (t
      (lambda (c-pointer)

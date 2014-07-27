@@ -137,13 +137,22 @@ sequences given by the optional type argument."
 (defun function->tensor (dimension-list fn &key
                                              (type 'vector))
   (let* ((result (make-tensor dimension-list :type type))
-         (size (tensor-size result)))
+         (size (apply #'* dimension-list )))
     (loop
        for i below size
        do (setf (tensor-flat-ref result i)
                 (apply fn
                        (unflatten-index i dimension-list))))
     result))
+
+;; (defgeneric tensor-ref (tensor &rest subscripts)
+;;   (:documentation "References an object as a tensor"))
+
+;; (defmethod tensor-ref ((tensor sequence) &rest subscripts)
+;;   (reduce #'elt subscripts :initial-value tensor))
+
+;; (defmethod tensor-ref (tensor &rest subscripts)
+;;   tensor)
 
 (defun tensor-ref (tensor &rest subscripts)
   "References tensor via subscripts"
@@ -180,21 +189,19 @@ Assumes rectangular tensor."
   (tensor-flat-ref tensor subscript))
 
 (defun (setf tensor-flat-ref) (value tensor subscript)
-  (when (sequencep tensor)
-    (let* ((dim-list (tensor-dimensions tensor))
-           (subscripts (unflatten-index subscript dim-list)))
-      (setf (apply #'tensor-ref tensor subscripts)
-            value))))
+  (let* ((dim-list (tensor-dimensions tensor))
+         (subscripts (unflatten-index subscript dim-list)))
+    (setf (apply #'tensor-ref tensor subscripts)
+          value)))
 
 (defun (setf tfref) (value tensor subscript)
   (setf (tensor-flat-ref tensor subscript) value))
 
 (defun (setf tensor-ref) (value tensor &rest subscripts)
-  (when (sequencep tensor)
-    (let* ((last-sequence
-            (apply #'tensor-ref tensor (butlast subscripts)))
-           (last-subscript (lastcar subscripts)))
-      (setf (elt last-sequence last-subscript) value))))
+  (let* ((last-sequence
+          (apply #'tensor-ref tensor (butlast subscripts)))
+         (last-subscript (lastcar subscripts)))
+    (setf (elt last-sequence last-subscript) value)))
 
 (defun (setf tref) (value tensor &rest subscripts)
   (setf (apply #'tensor-ref tensor subscripts)
@@ -222,11 +229,6 @@ Assumes rectangular tensor."
 (defun tensor-size (tensor)
   (reduce #'* (tensor-dimensions tensor)))
 
-(defun sequence-length (x)
-  "Returns the length of a sequence for sequences, else returns nil."
-  (when (sequencep x)
-    (length x)))
-
 (defun map* (type fn &rest xs)
   "map* behaves like map except that non-sequences are treated
 as arbitrarily deep sequences with uniform value (that of the
@@ -236,7 +238,7 @@ object)."
                   (loop
                      for x in xs
                      appending (mklist
-                                (sequence-length x)))))
+                                (length x)))))
          (result (make-tensor (list min-length) :type type)))
     (if (zerop min-length)
         nil

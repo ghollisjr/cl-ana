@@ -30,6 +30,8 @@
 
 (in-package :histogram)
 
+(declaim (optimize (speed 3)))
+
 ;;;; Provides a rectangular histogram; i.e. the binning is fixed-width
 ;;;; and the width is uniform in every dimension.
 (defclass rectangular-histogram (histogram)
@@ -90,29 +92,26 @@ calling this function; it is unchecked in this respect for speed."
 		       ; between data-list and bin-specs
 	     (let* ((datum (first data-list))
 		    (bin-spec (first bin-specs))
-		    (bin-index (get-axis-bin-index datum bin-spec)))
-	       (if (not (or (equal bin-index :underflow)
-			    (equal bin-index :overflow)))
-		   (get-bin-index-worker (rest data-list)
-					 (rest bin-specs)
-					 (cons bin-index result))))
+                    (nbins (the fixnum (first bin-spec)))
+		    (bin-index (the fixnum
+                                    (get-axis-bin-index datum bin-spec))))
+	       (when (not (or (minusp bin-index)
+                              (>= bin-index nbins)))
+                 (get-bin-index-worker (rest data-list)
+                                       (rest bin-specs)
+                                       (cons bin-index result))))
 	     (nreverse result))))
     (get-bin-index-worker data-list bin-specs)))
 
 (defun get-axis-bin-index (value bin-spec)
   "Computes the bin index (-1 underflow, binnum overflow) for value
 given the bin-spec for a single axis/dimension."
-  (let* ((nbins (first bin-spec))
-	 (binlo (second bin-spec))
-	 (binhi (third bin-spec))
-	 (delta (/ (- binhi binlo) nbins)))
-    (labels ((internal-bin (i)
-	       (cond ((< i 0) :underflow)
-		     ((> i (- nbins 1)) :overflow)
-		     (t i))))
-      (internal-bin
-       (floor
-	(/ (- value binlo) delta))))))
+  (declare (list bin-spec)
+           (real value))
+  (destructuring-bind (nbins binlo binhi) bin-spec
+    (declare (fixnum nbins))
+    (let ((delta (cl:/ (- binhi binlo) nbins)))
+      (the fixnum (floor (- value binlo) delta)))))
 
 (defun get-bin-center-worker (bin-spec index)
   (let* ((nbins (first bin-spec))
@@ -142,7 +141,7 @@ dimension in the histogram."
 
 (defun hist-bin-widths (hist)
   (mapcar (lambda (lst)
-            (destructuring-bind (&key name low high nbins)
+            (destructuring-bind (&key low high nbins &allow-other-keys)
                 lst
               (/ (- high low) nbins)))
           (hist-dim-specs hist)))
