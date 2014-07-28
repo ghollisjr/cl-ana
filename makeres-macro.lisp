@@ -60,7 +60,14 @@ none are present."
     (let ((result
            (copy-target-table target-table)))
       (loop
+         for id being the hash-keys in result
          for tar being the hash-values in result
-         do (setf (target-expr tar)
-                  (expand-res-macros (target-expr tar))))
+         do (let* ((newtar (copy-target tar))
+                   (oldval (target-val tar))
+                   (oldstat (target-stat tar)))
+              (setf (gethash id result)
+                    (make-target id
+                                 (expand-res-macros (target-expr tar))
+                                 :val oldval
+                                 :stat oldstat))))
       result)))

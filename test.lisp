@@ -28,14 +28,14 @@
 (settrans (macrotrans) :op :set)
 
 (define-res-macro tagged-res (&rest tags)
-  `(copy-list ',(loop
-                   for m in (loop
-                               for id being the hash-keys in (target-table)
-                               when (every (lambda (tag)
-                                             (member tag id :test #'eq))
-                                           tags)
-                               collect id)
-                   append m)))
+  `(list ,@(loop
+              for m in (loop
+                          for id being the hash-keys in (target-table)
+                          when (every (lambda (tag)
+                                        (member tag id :test #'eq))
+                                      tags)
+                          collect id)
+              append (copy-list `((res ,m))))))
 
 (defres (x) 'x)
 
