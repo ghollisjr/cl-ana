@@ -22,6 +22,7 @@
 (defpackage #:makeres-macro
   (:use :cl
         :makeres)
-  (:export :define-res-macro))
+  (:export :define-res-macro
+           :macrotrans))
 
 (package-utils:use-package-group :cl-ana :makeres-macro)

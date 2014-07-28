@@ -21,7 +21,6 @@
 
 (in-package makeres-macro)
 
-;; uncomment when finished:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *proj->res-macros*
     (make-hash-table :test 'equal)
