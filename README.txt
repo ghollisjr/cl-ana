@@ -1,8 +1,8 @@
-makeres-tabletrans is a collection of graph transformations for use
-with makeres for efficiently analyzing large structured datasets.
+makeres-table is a collection of graph transformations for use with
+makeres for efficiently analyzing large structured datasets.
 
-makeres-tabletrans is free (GPL) software, and is built on top of
-makeres and cl-ana (both GPL).
+makeres-table is free (GPL) software, and is built on top of makeres
+and cl-ana (both GPL).
 
 The utilities provided by the various operators are:
 

@@ -2,12 +2,12 @@
 
 (require 'makeres)
 
-(require 'makeres-tabletrans)
+(require 'makeres-table)
 
 (defpackage #:simple-test
   (:use :cl
         :makeres
-        :makeres-tabletrans))
+        :makeres-table))
 
 (package-utils:use-package-group :cl-ana :simple-test)
 

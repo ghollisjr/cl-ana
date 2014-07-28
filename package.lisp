@@ -1,4 +1,4 @@
-(defpackage #:makeres-tabletrans
+(defpackage #:makeres-table
   (:use :cl
         :makeres)
   (:export
@@ -20,4 +20,4 @@
    :csv-opener
    :plist-opener))
 
-(package-utils:use-package-group :cl-ana :makeres-tabletrans)
+(package-utils:use-package-group :cl-ana :makeres-table)

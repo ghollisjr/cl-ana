@@ -1,4 +1,4 @@
-(in-package :makeres-tabletrans)
+(in-package :makeres-table)
 
 ;; NOTE: tabletrans is an example of a graph transformation which
 ;; needs to have makeres run even when the only thing updated is the

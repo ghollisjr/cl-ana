@@ -1,4 +1,4 @@
-(in-package :makeres-tabletrans)
+(in-package :makeres-table)
 
 (declaim (optimize (debug 3)))
 

@@ -1,4 +1,4 @@
-(in-package :makeres-tabletrans)
+(in-package :makeres-table)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *proj->tab->lfields*
@@ -83,7 +83,7 @@ table (will be supplied the result table)."
 ;;;;   note is for future reference if concerns about lfields arise.
 
 ;; general purpose table iteration, more functional than do-table,
-;; used as implementation backbone for all makeres-tabletrans
+;; used as implementation backbone for all makeres-table
 ;; transformations
 (defmacro table-pass (table inits result lfields &body body)
   "Loops over table with external bindings inits and result form

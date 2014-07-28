@@ -1,6 +1,6 @@
-(require 'makeres-tabletrans)
+(require 'makeres-table)
 
-(in-package :makeres-tabletrans)
+(in-package :makeres-table)
 
 (in-project tabletrans-test)
 

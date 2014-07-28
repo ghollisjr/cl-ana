@@ -1,4 +1,4 @@
-(in-package :makeres-tabletrans)
+(in-package :makeres-table)
 
 ;;;; This file defines openers for use with tab for various tables
 ;;;; provided by cl-ana.

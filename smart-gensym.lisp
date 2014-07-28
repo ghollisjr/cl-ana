@@ -1,4 +1,4 @@
-(in-package makeres-tabletrans)
+(in-package makeres-table)
 
 ;;;; Defines gensym tables which allows the reuse of gensyms
 (eval-when (:compile-toplevel :load-toplevel :execute)
