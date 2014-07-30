@@ -15,7 +15,7 @@
 
 (in-project simple-test)
 
-(settrans (tabletrans) :op :set)
+(settrans (list #'tabletrans) :op :set)
 
 (defres source
   (wrap-for-reuse
