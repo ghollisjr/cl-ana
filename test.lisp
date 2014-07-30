@@ -1,3 +1,5 @@
+(require 'makeres)
+
 (in-package :makeres)
 
 ;;;; Demo of language:
@@ -10,7 +12,7 @@
 
 ;; Select transformations (simply omit this expression if you don't
 ;; want any):
-(settrans (lrestrans))
+(settrans (list #'lrestrans))
 ;; We're using the logical result transformation
 
 ;; Define parameters for project
