@@ -8,6 +8,7 @@
    :tab
    ;; field macros
    :deflfields
+   :deflfieldsfn
    :field
    :push-fields
    ;; implementation macro:

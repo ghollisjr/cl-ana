@@ -558,12 +558,30 @@ from pass up to src."
                                 (find-push-fields (gethash c tab-expanded-expr)))
                                ((ltab? expr)
                                 (find-push-fields (table-reduction-body expr)))))
-                            (olet-field-bindings
-                             (append push-field-bindings lfields))
-                            (olet-field-gsyms
+                            (lfield-gsyms
                              (loop
-                                for b in olet-field-bindings
+                                for l in lfields
                                 collecting (gsym 'tabletrans)))
+                            (lfield-bindings
+                             (sublis
+                              (loop
+                                 for (field form) in lfields
+                                 for gsym in lfield-gsyms
+                                 collecting (cons `(field ,field) gsym))
+                              lfields))
+                            (olet-field-bindings
+                             (progn
+                               (format t "source: ~a~%" c)
+                               (format t "lfields: ~a~%" lfields)
+                               (format t "olet-field-bindings: ~a~%"
+                                       (append push-field-bindings lfield-bindings))
+                               (append push-field-bindings lfield-bindings)))
+                            (olet-field-gsyms
+                             (append
+                              (loop
+                                 for b in push-field-bindings
+                                 collecting (gsym 'tabletrans))
+                              lfield-gsyms))
                             (sub-body
                              ;; create push-fields and lfields bindings:
                              `(olet ,(loop
@@ -600,7 +618,7 @@ from pass up to src."
                                                      (table-reduction-body expr)))))
                                      (progn
                                        (node-content node)))
-                                    children-exprs)
+                                    (print-eval children-exprs))
                                    :test #'equal))))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))

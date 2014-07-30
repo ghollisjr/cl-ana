@@ -1,22 +1,26 @@
 (in-package :makeres-table)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *proj->tab->lfields*
-    (make-hash-table :test 'equal)
-    "Map from table id to any lfields defined via deflfields."))
+(defvar *proj->tab->lfields*
+  (make-hash-table :test 'equal)
+  "Map from table id to any lfields defined via deflfields.")
 
-;; logical field definition:
-(defmacro deflfields (table-id lfields)
-  "Sets logical fields for table-id; can be referenced via field by
-any reductions of the table."
-  (when (not (gethash *project-id* *proj->tab->lfields*))
-    (setf (gethash *project-id* *proj->tab->lfields*)
+;; logical lfield definition:
+(defun deflfieldsfn (table-id lfields)
+  "function version of deflfields"
+  (when (not (gethash (project) *proj->tab->lfields*))
+    (setf (gethash (project) *proj->tab->lfields*)
           (make-hash-table :test 'equal)))
   (setf (gethash table-id
-                 (gethash *project-id*
+                 (gethash (project)
                           *proj->tab->lfields*))
         lfields)
   nil)
+
+;; and the macro:
+(defmacro deflfields (table-id lfields)
+  "Sets logical fields for table-id; can be referenced via field by
+any reductions of the table."
+  `(deflfieldsfn ',table-id ',lfields))
 
 ;; General table reduction:
 (defmacro dotab (source-table init-bindings return &body body)
