@@ -5,6 +5,8 @@
   (:export :load-object
            :save-object
            :set-project-path
-           :save-project))
+           :save-project
+           :logres-ignore
+           :logres-ignorefn))
 
 (package-utils:use-package-group :cl-ana :logres)

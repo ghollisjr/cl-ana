@@ -41,6 +41,22 @@
   "Map from project id to map to result id to log id (used as
 pathname)")
 
+(defvar *proj->ignore*
+  (make-hash-table :test 'equal)
+  "Map from project id to list of result ids to ignore (never log)")
+
+(defun logres-ignorefn (res)
+  "function version of logres-ignore"
+  (symbol-macrolet ((ignore
+                     (gethash (project) *proj->ignore*)))
+    (setf ignore
+          (adjoin res ignore
+                  :test #'equal))))
+
+(defmacro logres-ignore (res)
+  "Ignores result with id res when logging (loading or saving)"
+  `(logres-ignorefn ',res))
+
 (defun set-project-path (pathname-or-string)
   "Sets the output directory path for current project and ensures that
 the necessary subdirectories are present."
@@ -124,7 +140,8 @@ stored so that (next-log-id) returns an available id"
 can be nil, :error or :supersede with behavior analogous to
 open/with-open-file."
   (let* ((project-path (gethash (project) *project-paths*))
-         (tartab (gethash (project) *target-tables*)))
+         (tartab (gethash (project) *target-tables*))
+         (ignore (gethash (project) *proj->ignore*)))
     ;; are we in a project?
     (when (null project-path)
       (error "logres: No project path set"))
@@ -150,7 +167,9 @@ open/with-open-file."
       ;; allocate indices when necessary:
       (loop
          for res being the hash-keys in tartab
-         do (when (null (gethash res res->lid))
+         do (when (and (null (gethash res res->lid))
+                       (not (member res ignore
+                                    :test #'equal)))
               (setf (gethash res res->lid)
                     (next-log-id))))
       ;; save index file
@@ -162,7 +181,9 @@ open/with-open-file."
         (loop
            for res being the hash-keys in res->lid
            for lid being the hash-values in res->lid
-           when (target-stat (gethash res tartab))
+           when (and (not (member res ignore
+                                  :test #'equal))
+                     (target-stat (gethash res tartab)))
            do (let ((type (type-of (resfn res))))
                 (format index-file
                         "~a ~a ~a~%"
@@ -173,7 +194,9 @@ open/with-open-file."
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
-         when (target-stat (gethash id tartab))
+         when (and (not (member id ignore
+                                :test #'equal))
+                   (target-stat (gethash id tartab)))
          do (let* ((lid (gethash id res->lid))
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
@@ -206,6 +229,7 @@ open/with-open-file."
         (make-hash-table :test 'equal))
   (let* ((project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*))
+         (ignore (gethash (project) *proj->ignore*))
          (res->lid (gethash (project) *proj->res->lid*))
          (load-path (make-pathname
                      :directory (list :absolute
@@ -242,8 +266,10 @@ open/with-open-file."
                 (when (not (gethash id tartab))
                   (format t "Warning: result ~a not present in target table~%"
                           id))
-                (setresfn id
-                          (load-object type
-                                       (merge-pathnames (mkstr lid)
-                                                        load-path))))))))
+                (when (not (member id ignore
+                                   :test #'equal))
+                  (setresfn id
+                            (load-object type
+                                         (merge-pathnames (mkstr lid)
+                                                          load-path)))))))))
   nil)
