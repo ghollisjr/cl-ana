@@ -28,7 +28,7 @@
   (:export :lorentz-vector
 	   :make-lorentz-vector
 	   :make-double-float-vector
-	   :lorentz-boost
+	   :make-lorentz-boost
            :lorentz-vector-spatial
            :minkowski-dot
 	   :minkowski-norm
@@ -36,6 +36,7 @@
            :lorentz-phi
            :lorentz-theta
            :gamma
-           :gamma-from-beta2))
+           :gamma-from-beta2
+           :four-momentum-beta-vector))
 
 (gmath:use-gmath :lorentz)
