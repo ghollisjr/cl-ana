@@ -57,6 +57,18 @@ pathname)")
   "Ignores result with id res when logging (loading or saving)"
   `(logres-ignorefn ',res))
 
+(defun logres-trackfn (res)
+  "function version of logres-track"
+  (symbol-macrolet ((ignore
+                     (gethash (project) *proj->ignore*)))
+    (setf ignore
+          (remove res ignore
+                  :test #'equal))))
+
+(defmacro logres-track (res)
+  "Ensures that a result is not ignored"
+  `(logres-trackfn ',res))
+
 (defun set-project-path (pathname-or-string)
   "Sets the output directory path for current project and ensures that
 the necessary subdirectories are present."

@@ -7,6 +7,8 @@
            :set-project-path
            :save-project
            :logres-ignore
-           :logres-ignorefn))
+           :logres-ignorefn
+           :logres-track
+           :logres-trackfn))
 
 (package-utils:use-package-group :cl-ana :logres)
