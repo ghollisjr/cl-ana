@@ -1,6 +1,7 @@
 (defpackage #:makeres-table
   (:use :cl
-        :makeres)
+        :makeres
+        :makeres-macro)
   (:export
    ;; table reduction operators:
    :dotab

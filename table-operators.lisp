@@ -13,18 +13,23 @@
   (symbol-macrolet ((lfs (gethash table-id
                                   (gethash (project)
                                            *proj->tab->lfields*))))
-    (case op
-      (:set
-       (setf lfs
-             lfields))
-      (:add
-       (setf lfs
-             (reduce (lambda (result next)
-                       (adjoin next result
-                               :key #'first
-                               :test #'eq))
-                     lfields
-                     :initial-value lfs)))))
+    (let ((lfields (mapcar (lambda (binding)
+                             (cons (first binding)
+                                   (mapcar #'expand-res-macros
+                                           (rest binding))))
+                           lfields)))
+      (case op
+        (:set
+         (setf lfs
+               lfields))
+        (:add
+         (setf lfs
+               (reduce (lambda (result next)
+                         (adjoin next result
+                                 :key #'first
+                                 :test #'eq))
+                       lfields
+                       :initial-value lfs))))))
   nil)
 
 ;; and the macro:

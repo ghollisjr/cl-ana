@@ -1,8 +1,8 @@
 makeres-table is a collection of graph transformations for use with
 makeres for efficiently analyzing large structured datasets.
 
-makeres-table is free (GPL) software, and is built on top of makeres
-and cl-ana (both GPL).
+makeres-table is free (GPL) software, and is built on top of makeres,
+makeres-macro, and cl-ana (all GPL).
 
 The utilities provided by the various operators are:
 
@@ -42,3 +42,9 @@ structure for a subset of data).
 Any fields from the source table are available as long as they are not
 shadowed by stating them in the call to push-fields in the ltab
 definition.
+
+* deflfields: Definition of logical fields.
+
+Logical fields are analogous to logical tables in that they are always
+computed per row; they provide an alternative to physically storing
+fields which could be computed based on already available information.
