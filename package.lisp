@@ -23,6 +23,7 @@
   (:use :cl
         :makeres)
   (:export :define-res-macro
+           :expand-res-macros
            :macrotrans))
 
 (package-utils:use-package-group :cl-ana :makeres-macro)
