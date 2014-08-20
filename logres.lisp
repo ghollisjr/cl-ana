@@ -85,6 +85,11 @@ the necessary subdirectories are present."
     (setf (gethash (project) *proj->res->lid*)
           (make-hash-table :test 'equal))))
 
+(defun project-path ()
+  "Returns path for current project, nil when not set or in nil
+project"
+  (values (gethash (project) *project-paths*)))
+
 (defvar *last-id* -1
   "id used for automatically naming stored results")
 

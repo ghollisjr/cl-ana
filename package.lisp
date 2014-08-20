@@ -4,6 +4,7 @@
         :external-program)
   (:export :load-object
            :save-object
+           :project-path
            :set-project-path
            :save-project
            :logres-ignore
