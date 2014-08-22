@@ -666,6 +666,21 @@ true when given the key and value from ht."
                 v))
     result))
 
+(defparameter *table-binding-ops*
+  (list 'tab
+        'ltab
+        'dotab))
+
+(defun ensure-table-binding-ops ()
+  (symbol-macrolet ((binding-ops
+                     (gethash (project) *proj->binding-ops*)))
+    (let ((stat
+           (second
+            (multiple-value-list binding-ops))))
+      (when (not stat)
+        (setf binding-ops
+              *cl-binding-ops*)))))
+
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
   ;; clear gsyms
