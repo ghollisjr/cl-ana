@@ -36,12 +36,85 @@
     `(defmacro ,name ,lambda-list
        ,@body)))
 
+
+
+(defparameter *cl-binding-ops*
+  (list 'let
+        'flet
+        'labels
+        'macrolet
+        'symbol-macrolet)
+  "list of operators employing bindings from plain common lisp")
+
+(defparameter *cl-expander*
+  (lambda (expander form)
+    (destructuring-bind (op bindings &rest body) form
+      (let* ((bsyms (mapcar #'first bindings))
+             (bexprs
+              (mapcar expander
+                      (mapcar #'second bindings)))
+             (body (mapcar expander
+                           body)))
+        (list* op
+               (zip bsyms bexprs)
+               body)))))
+
+(defvar *proj->binding-ops*
+  (make-hash-table :test 'equal))
+
+;; Since each operator may have a different structure/different areas
+;; off-limits to expansion, this map stores the expander functions
+;; (taking expander function and form arguments)
+(defvar *proj->op->expander*
+  (make-hash-table :test 'equal)
+  "map from project to operator to expander function")
+
+(defun ensure-binding-ops ()
+  (symbol-macrolet ((binding-ops
+                     (gethash (project) *proj->binding-ops*)))
+    (let ((stat
+           (second
+            (multiple-value-list binding-ops))))
+      (when (not stat)
+        (setf binding-ops
+              *cl-binding-ops*)))))
+
+(defun ensure-op-expanders ()
+  (symbol-macrolet ((op->expander
+                     (gethash (project)
+                              *proj->op->expander*)))
+    (loop
+       for op in *cl-binding-ops*
+       do (setf (gethash op op->expander)
+                *cl-expander*))))
+
+(defun add-binding-ops (ops-expanders)
+  "Takes a list of lists of the form (op expander) and adds the
+operators along with their expanders to the current project."
+  (ensure-binding-ops)
+  (ensure-op-expanders)
+  (symbol-macrolet ((binding-ops
+                     (gethash (project)
+                              *proj->binding-ops*))
+                    (op->expander
+                     (gethash (project)
+                              *proj->op->expander*)))
+    (let ((ops (cars ops-expanders)))
+      (setf binding-ops
+            (list->set (append ops binding-ops)
+                       #'equal)))
+    (loop
+       for (op expander) in ops-expanders
+       do (setf (gethash op op->expander)
+                expander))))
+
 ;; res-macro expansion rule: inner-most macros are expanded first,
 ;; first macros found expanded before later macros
 (defun expand-res-macros (expr)
   "Finds & repeatedly expands any res-macros present in expr until
 none are present."
-  (let ((resmacs (gethash (project) *proj->res-macros*)))
+  (let ((resmacs (gethash (project) *proj->res-macros*))
+        (binding-ops (gethash (project) *proj->binding-ops*)))
     (labels ((rec (f)
                (let ((result
                       (cond
@@ -50,6 +123,14 @@ none are present."
                         ((member (first f) resmacs :test #'eq)
                          (let ((newf (macroexpand-1 f)))
                            (rec newf)))
+                        ((member (first f)
+                                 binding-ops :test #'eq)
+                         (let* ((op (first f))
+                                (expander
+                                 (gethash op
+                                          (gethash (project)
+                                                   *proj->op->expander*))))
+                           (funcall expander #'rec f)))
                         (t
                          (mapcar #'rec f)))))
                  result)))
@@ -57,6 +138,8 @@ none are present."
 
 (defun macrotrans (target-table)
   "Implements macro expansion transformation"
+  ;; initialize *proj->binding-ops* for project if necessary:
+  (ensure-binding-ops)
   (let ((result
          (copy-target-table target-table)))
     (loop

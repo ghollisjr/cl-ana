@@ -24,6 +24,7 @@
         :makeres)
   (:export :define-res-macro
            :expand-res-macros
+           :add-binding-ops
            :macrotrans))
 
 (package-utils:use-package-group :cl-ana :makeres-macro)

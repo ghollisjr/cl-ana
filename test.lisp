@@ -25,7 +25,7 @@
 
 (in-project makeres-macro)
 
-(settrans (macrotrans) :op :set)
+(settrans (list #'macrotrans) :op :set)
 
 (define-res-macro tagged-res (&rest tags)
   `(list ,@(loop
