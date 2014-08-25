@@ -25,6 +25,10 @@
   (:export :define-res-macro
            :expand-res-macros
            :add-binding-ops
-           :macrotrans))
+           :macrotrans
+           :ensure-binding-ops
+           :*proj->binding-ops*
+           :ensure-op-expanders
+           :*proj->op->expander*))
 
 (package-utils:use-package-group :cl-ana :makeres-macro)

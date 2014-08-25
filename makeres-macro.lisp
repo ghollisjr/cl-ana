@@ -36,8 +36,6 @@
     `(defmacro ,name ,lambda-list
        ,@body)))
 
-
-
 (defparameter *cl-binding-ops*
   (list 'let
         'flet
@@ -56,8 +54,12 @@
              (body (mapcar expander
                            body)))
         (list* op
-               (zip bsyms bexprs)
-               body)))))
+               (mapcar (lambda (sym bind)
+                         (list sym bind))
+                       bsyms bexprs)
+               body))))
+  "Expander function for common lisp operators needing special
+  treatment during expansion.")
 
 (defvar *proj->binding-ops*
   (make-hash-table :test 'equal))
@@ -83,6 +85,12 @@
   (symbol-macrolet ((op->expander
                      (gethash (project)
                               *proj->op->expander*)))
+    (let ((stat
+           (second
+            (multiple-value-list op->expander))))
+      (when (not stat)
+        (setf op->expander
+              (make-hash-table :test 'eq))))
     (loop
        for op in *cl-binding-ops*
        do (setf (gethash op op->expander)
