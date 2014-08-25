@@ -570,12 +570,7 @@ from pass up to src."
                                  collecting (cons `(field ,field) gsym))
                               lfields))
                             (olet-field-bindings
-                             (progn
-                               (format t "source: ~a~%" c)
-                               (format t "lfields: ~a~%" lfields)
-                               (format t "olet-field-bindings: ~a~%"
-                                       (append push-field-bindings lfield-bindings))
-                               (append push-field-bindings lfield-bindings)))
+                             (append push-field-bindings lfield-bindings))
                             (olet-field-gsyms
                              (append
                               (loop
@@ -618,7 +613,7 @@ from pass up to src."
                                                      (table-reduction-body expr)))))
                                      (progn
                                        (node-content node)))
-                                    (print-eval children-exprs))
+                                    children-exprs)
                                    :test #'equal))))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))
@@ -672,17 +667,70 @@ true when given the key and value from ht."
         'dotab))
 
 (defun ensure-table-binding-ops ()
+  (ensure-binding-ops)
   (symbol-macrolet ((binding-ops
                      (gethash (project) *proj->binding-ops*)))
-    (let ((stat
-           (second
-            (multiple-value-list binding-ops))))
-      (when (not stat)
-        (setf binding-ops
-              *cl-binding-ops*)))))
+    (setf binding-ops
+          (list->set (append binding-ops
+                             *table-binding-ops*)))))
+
+(defun ensure-table-op-expanders ()
+  (symbol-macrolet ((op->expander
+                     (gethash (project)
+                              *proj->op->expander*)))
+    ;; Create table & set expanders for cl:
+    (ensure-op-expanders)
+    ;; Set table expanders:
+    ;; ltab
+    (setf (gethash 'ltab op->expander)
+          (lambda (expander form)
+            (destructuring-bind (op source inits &rest body)
+                form
+              (list* op
+                     (funcall expander source)
+                     (mapcar (lambda (lst)
+                               (destructuring-bind (var binding)
+                                   lst
+                                 (list var
+                                       (funcall expander binding))))
+                             inits)
+                     (mapcar expander body)))))
+    ;; tab
+    (setf (gethash 'tab op->expander)
+          (lambda (expander form)
+            (destructuring-bind (op source inits opener &rest body)
+                form
+              (list* op
+                     (funcall expander source)
+                     (mapcar (lambda (lst)
+                               (destructuring-bind (var binding)
+                                   lst
+                                 (list var
+                                       (funcall expander binding))))
+                             inits)
+                     (funcall expander opener)
+                     (mapcar expander body)))))
+    ;; dotab
+    (setf (gethash 'dotab op->expander)
+          (lambda (expander form)
+            (destructuring-bind (op source inits return &rest body)
+                form
+              (list* op
+                     (funcall expander source)
+                     (mapcar (lambda (lst)
+                               (destructuring-bind (var binding)
+                                   lst
+                                 (list var
+                                       (funcall expander binding))))
+                             inits)
+                     (funcall expander return)
+                     (mapcar expander body)))))))
 
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
+  ;; initialize operator expansion
+  (ensure-table-binding-ops)
+  (ensure-table-op-expanders)
   ;; clear gsyms
   (clrgsym 'tabletrans)
   ;; establish *proj->tab->lfields*:

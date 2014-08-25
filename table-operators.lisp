@@ -7,6 +7,8 @@
 ;; logical lfield definition:
 (defun deflfieldsfn (table-id lfields &key (op :add))
   "function version of deflfields"
+  (ensure-table-binding-ops)
+  (ensure-table-op-expanders)
   (when (not (gethash (project) *proj->tab->lfields*))
     (setf (gethash (project) *proj->tab->lfields*)
           (make-hash-table :test 'equal)))
