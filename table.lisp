@@ -6,5 +6,13 @@
 (defmethod save-object ((tab table) path)
   nil)
 
-(defmethod load-object ((tab table) path)
+(defmethod load-object ((type (eql 'table)) path)
+  nil)
+
+;; reusable-table technically not a table:
+
+(defmethod save-object ((tab reusable-table) path)
+  nil)
+
+(defmethod load-object ((type (eql 'reusable-table)) path)
   nil)

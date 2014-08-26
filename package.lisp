@@ -7,6 +7,7 @@
            :project-path
            :set-project-path
            :save-project
+           :load-project
            :logres-ignore
            :logres-ignorefn
            :logres-track
