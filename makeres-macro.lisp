@@ -29,15 +29,17 @@
 
 (defmacro define-res-macro (name lambda-list &rest body)
   "Defines a res-macro to be expanded in the pipeline."
-  (symbol-macrolet ((macros (gethash (project) *proj->res-macros*)))
-    (setf macros
-          (adjoin name macros
-                  :test #'eq))
-    `(defmacro ,name ,lambda-list
+  `(progn
+     (symbol-macrolet ((macros (gethash (project) *proj->res-macros*)))
+       (setf macros
+             (adjoin ',name macros
+                     :test #'eq)))
+     (defmacro ,name ,lambda-list
        ,@body)))
 
 (defparameter *cl-binding-ops*
   (list 'let
+        'let*
         'flet
         'labels
         'macrolet
@@ -148,6 +150,7 @@ none are present."
   "Implements macro expansion transformation"
   ;; initialize *proj->binding-ops* for project if necessary:
   (ensure-binding-ops)
+  (ensure-op-expanders)
   (let ((result
          (copy-target-table target-table)))
     (loop
