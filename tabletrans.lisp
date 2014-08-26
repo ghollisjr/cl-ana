@@ -732,6 +732,19 @@ true when given the key and value from ht."
 
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
+  ;; Close any open tables needing recomputation:
+  (loop
+     for id being the hash-keys in target-table
+     for tar being the hash-values in target-table
+     do (let ((val (target-val tar))
+              (stat (target-stat tar)))
+          (when (and
+                 (not stat)
+                 (or (typep val 'table)
+                     (typep val 'reusable-table))
+                 (table-open-p val))
+            (table-close val))))
+
   ;; initialize operator expansion
   (ensure-table-binding-ops)
   (ensure-table-op-expanders)
