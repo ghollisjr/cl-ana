@@ -405,17 +405,20 @@ target-table."
 (defmacro res (id)
   "Expands to whatever the symbol for id in project identified by
 project-id is, nil if id or project not specified."
-  `(progn
-     (target-val
-      (gethash ',id
-               (gethash (project)
-                        *target-tables*)))))
+  `(resfn ',id))
 
 (defun resfn (id &optional (project-id *project-id*))
-  (target-val
-   (gethash id
-            (gethash project-id
-                     *target-tables*))))
+  (multiple-value-bind (tar tarstat)
+      (gethash id (gethash project-id *target-tables*))
+    (if tarstat
+        (target-val tar)
+        (multiple-value-bind (fintab fintabstat)
+            (gethash project-id *fin-target-tables*)
+          (if fintabstat
+              (target-val
+               (gethash id
+                        fintab))
+              (error "target ~a does not exist" id))))))
 
 (defmacro par (id)
   "Outside of generating function, returns the last used value of a
