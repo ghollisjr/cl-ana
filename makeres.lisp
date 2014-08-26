@@ -409,7 +409,7 @@ project-id is, nil if id or project not specified."
      (target-val
       (gethash ',id
                (gethash (project)
-                        *fin-target-tables*)))))
+                        *target-tables*)))))
 
 (defun resfn (id &optional (project-id *project-id*))
   (target-val
