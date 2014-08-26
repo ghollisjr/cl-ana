@@ -10,7 +10,9 @@
            :load-project
            :logres-ignore
            :logres-ignorefn
+           :logres-ignore-by
            :logres-track
-           :logres-trackfn))
+           :logres-trackfn
+           :logres-track-by))
 
 (package-utils:use-package-group :cl-ana :logres)

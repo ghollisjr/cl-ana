@@ -45,6 +45,11 @@ pathname)")
   (make-hash-table :test 'equal)
   "Map from project id to list of result ids to ignore (never log)")
 
+(defvar *proj->ignore-filters*
+  (make-hash-table :test 'equal)
+  "Map from project id to list of filter functions which should return
+  t for ignored targets")
+
 (defun logres-ignorefn (res)
   "function version of logres-ignore"
   (symbol-macrolet ((ignore
@@ -57,6 +62,14 @@ pathname)")
   "Ignores result with id res when logging (loading or saving)"
   `(logres-ignorefn ',res))
 
+(defun logres-ignore-by (filter)
+  "Ignores any result with id for which (funcall filter id) returns
+t (filter can use target table to get information from id)"
+  (symbol-macrolet ((filters
+                     (gethash (project) *proj->ignore-filters*)))
+    (setf filters
+          (adjoin filter filters))))
+
 (defun logres-trackfn (res)
   "function version of logres-track"
   (symbol-macrolet ((ignore
@@ -68,6 +81,31 @@ pathname)")
 (defmacro logres-track (res)
   "Ensures that a result is not ignored"
   `(logres-trackfn ',res))
+
+(defmacro logres-track-by (filter)
+  "Tracks any result with id for which (funcall filter id) returns
+t (filter can use target table to get information from id)"
+  (symbol-macrolet ((filters
+                     (gethash (project) *proj->ignore-filters*)))
+    (setf filters
+          (remove filter filters))))
+
+(defun ignored? (id)
+  "Returns true if a result target is ignored by logres"
+  (symbol-macrolet ((ignores
+                     (gethash (project) *proj->ignore*))
+                    (ignore-filters
+                     (gethash (project) *proj->ignore-filters*)))
+    (labels ((rec (filters)
+               (if filters
+                   (let ((f (first filters)))
+                     (if (funcall f id)
+                         t
+                         (rec (rest filters))))
+                   nil)))
+      (or (member id ignores
+                  :test #'equal)
+          (rec ignore-filters)))))
 
 (defun set-project-path (pathname-or-string)
   "Sets the output directory path for current project and ensures that
@@ -157,8 +195,7 @@ stored so that (next-log-id) returns an available id"
 can be nil, :error or :supersede with behavior analogous to
 open/with-open-file."
   (let* ((project-path (gethash (project) *project-paths*))
-         (tartab (gethash (project) *target-tables*))
-         (ignore (gethash (project) *proj->ignore*)))
+         (tartab (gethash (project) *target-tables*)))
     ;; are we in a project?
     (when (null project-path)
       (error "logres: No project path set"))
@@ -185,8 +222,7 @@ open/with-open-file."
       (loop
          for res being the hash-keys in tartab
          do (when (and (null (gethash res res->lid))
-                       (not (member res ignore
-                                    :test #'equal)))
+                       (not (ignored? res)))
               (setf (gethash res res->lid)
                     (next-log-id))))
       ;; save index file
@@ -198,8 +234,7 @@ open/with-open-file."
         (loop
            for res being the hash-keys in res->lid
            for lid being the hash-values in res->lid
-           when (and (not (member res ignore
-                                  :test #'equal))
+           when (and (not (ignored? res))
                      (target-stat (gethash res tartab)))
            do (let ((type (type-of (resfn res))))
                 (format index-file
@@ -211,8 +246,7 @@ open/with-open-file."
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
-         when (and (not (member id ignore
-                                :test #'equal))
+         when (and (not (ignored? id))
                    (target-stat (gethash id tartab)))
          do (let* ((lid (gethash id res->lid))
                    (path (merge-pathnames (mkstr lid)
@@ -246,7 +280,6 @@ open/with-open-file."
         (make-hash-table :test 'equal))
   (let* ((project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*))
-         (ignore (gethash (project) *proj->ignore*))
          (res->lid (gethash (project) *proj->res->lid*))
          (load-path (make-pathname
                      :directory (list :absolute
@@ -283,8 +316,7 @@ open/with-open-file."
                 (when (not (gethash id tartab))
                   (format t "Warning: result ~a not present in target table~%"
                           id))
-                (when (not (member id ignore
-                                   :test #'equal))
+                (when (not (ignored? id))
                   (setresfn id
                             (load-object type
                                          (merge-pathnames (mkstr lid)
