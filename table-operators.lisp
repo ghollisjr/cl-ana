@@ -7,31 +7,24 @@
 ;; logical lfield definition:
 (defun deflfieldsfn (table-id lfields &key (op :add))
   "function version of deflfields"
-  (ensure-table-binding-ops)
-  (ensure-table-op-expanders)
   (when (not (gethash (project) *proj->tab->lfields*))
     (setf (gethash (project) *proj->tab->lfields*)
           (make-hash-table :test 'equal)))
   (symbol-macrolet ((lfs (gethash table-id
                                   (gethash (project)
                                            *proj->tab->lfields*))))
-    (let ((lfields (mapcar (lambda (binding)
-                             (cons (first binding)
-                                   (mapcar #'expand-res-macros
-                                           (rest binding))))
-                           lfields)))
-      (case op
-        (:set
-         (setf lfs
-               lfields))
-        (:add
-         (setf lfs
-               (reduce (lambda (result next)
-                         (adjoin next result
-                                 :key #'first
-                                 :test #'eq))
-                       lfields
-                       :initial-value lfs))))))
+    (case op
+      (:set
+       (setf lfs
+             lfields))
+      (:add
+       (setf lfs
+             (reduce (lambda (result next)
+                       (adjoin next result
+                               :key #'first
+                               :test #'eq))
+                     lfields
+                     :initial-value lfs)))))
   nil)
 
 ;; and the macro:

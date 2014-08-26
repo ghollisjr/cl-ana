@@ -537,11 +537,15 @@ from pass up to src."
              ;; map from table to lfields for table:
              (tab->lfields
               (gethash (project) *proj->tab->lfields*))
-             ;; lfields appropriately gsymed:
+             ;; lfields expanded:
              (lfields
               ;; lfields from source
               (when tab->lfields
-                (gethash src tab->lfields)))
+                (mapcar (lambda (binding)
+                          (cons (first binding)
+                                (mapcar #'expand-res-macros
+                                        (rest binding))))
+                        (gethash src tab->lfields))))
              ;; resulting pass body:
              (body
               (labels
