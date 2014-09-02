@@ -1,13 +1,15 @@
-+ Save & load parameters as well.  May inspire improved parameter
+- Save & load parameters as well.  May inspire improved parameter
   handling in makeres (e.g. remembering last settings if no new values
   are given and having a reset argument for restoring default
   parameter values).  This is critical since running makeres always
   recomputes everything if non-default parameter values were used.
 
-+ When loading parameters: Update last-param values to be the same as
+- When loading parameters: Update last-param values to be the same as
   the loaded parameters in addition to setting the current parameter
   values (if applicable).
 
 + It may even make sense to run (makeres <param values>) after loading
   everything so that any results unable to be stored can be
   recomputed; can make this optional behavior to be safe.
+
+  I'm letting the user do this for now.
