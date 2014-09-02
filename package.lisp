@@ -27,6 +27,7 @@
    ;; functions accessing hash tables
    :project
    :project-parameters
+   :project-targets
    :symbol-table
    :target-table
    :copy-target-table
@@ -51,7 +52,6 @@
    :clrres
    :clrresfn
    :settrans ; set transformation pipeline
-   :compres ; compile result generator
    :makeres ; compile and call result generator
    ;; project utilities
    :target-ids
