@@ -42,4 +42,5 @@
 
 (defun map->hash-table (object &optional test)
   (alist->hash-table
-   (map->alist object)))
+   (map->alist object)
+   test))
