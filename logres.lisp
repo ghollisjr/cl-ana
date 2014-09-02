@@ -50,6 +50,9 @@ pathname)")
   "Map from project id to list of filter functions which should return
   t for ignored targets")
 
+(defvar *proj->par->lid*
+  (make-hash-table :test 'equal))
+
 (defun logres-ignorefn (res)
   "function version of logres-ignore"
   (symbol-macrolet ((ignore
@@ -89,6 +92,11 @@ t (filter can use target table to get information from id)"
                      (gethash (project) *proj->ignore-filters*)))
     (setf filters
           (remove filter filters))))
+
+(defun function-target? (id)
+  (let ((tar (gethash id (target-table))))
+    (and (target-stat tar)
+         (functionp (target-val tar)))))
 
 (defun ignored? (id)
   "Returns true if a result target is ignored by logres"
@@ -225,6 +233,15 @@ open/with-open-file."
                        (not (ignored? res)))
               (setf (gethash res res->lid)
                     (next-log-id))))
+      ;; and for parameters:
+      (setf (gethash *project-id* *proj->par->lid*)
+            (make-hash-table :test 'eq))
+      (loop
+         for pid being the hash-keys in (gethash *project-id* *args-tables*)
+         for pval being the hash-values in (gethash *project-id* *args-tables*)
+         do (setf (gethash pid
+                           (gethash *project-id* *proj->par->lid*))
+                  (next-log-id)))
       ;; save index file
       (with-open-file (index-file (merge-pathnames "index"
                                                    save-path)
@@ -242,7 +259,18 @@ open/with-open-file."
                         res lid type))
            when (not (target-stat (gethash res tartab)))
            do (format t "WARNING: ~a stat is null, not saving~%"
-                      res)))
+                      res))
+        ;; parameters start after empty line:
+        (format index-file "~%")
+        (loop
+           for pid being the hash-keys in (gethash *project-id* *proj->par->lid*)
+           for plid being the hash-values in (gethash *project-id* *proj->par->lid*)
+           do (let* ((pval (parfn pid))
+                     (type (type-of pval))
+                     (oldval (gethash pid
+                                      (gethash *project-id* makeres::*makeres-args*))))
+                (format index-file "~a ~a ~a ~a~%"
+                        pid plid type oldval))))
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
@@ -254,6 +282,23 @@ open/with-open-file."
               (format t "Saving ~a~%" id)
               (save-object (resfn id)
                            path)))
+      ;; and for parameters
+      ;;
+      ;; Currently parameters cannot be ignored for saving/loading,
+      ;; this limitation means that at least functions are not
+      ;; suitable parameters for use with logres.  This may be
+      ;; resolved at some future point.
+      (loop
+         for pid being the hash-keys in (gethash *project-id*
+                                                 *proj->par->lid*)
+         for plid being the hash-values in (gethash *project-id*
+                                                    *proj->par->lid*)
+         do (let ((pval (parfn pid)))
+              (format t "Saving parameter ~a~%" pid)
+              (save-object pval
+                           (merge-pathnames (mkstr plid)
+                                            save-path))))
+
       ;; copy all file results stored in work/ to the version/work
       ;; directory
       (let ((work-to-path (merge-pathnames "work/"
@@ -305,20 +350,55 @@ open/with-open-file."
            (read-lines-from-pathname
             (merge-pathnames "index"
                              load-path))))
-      (loop
-         for line in index-lines
-         do (with-input-from-string (s line)
-              (let ((id (read s))
-                    (lid (read s))
-                    (type (read s)))
-                (format t "Loading ~a~%" id)
-                (setf (gethash id res->lid) lid)
-                (when (not (gethash id tartab))
-                  (format t "Warning: result ~a not present in target table~%"
-                          id))
-                (when (not (ignored? id))
-                  (setresfn id
-                            (load-object type
-                                         (merge-pathnames (mkstr lid)
-                                                          load-path)))))))))
+      (destructuring-bind (res-lines par-lines)
+          (split-sequence:split-sequence "" index-lines
+                                         :test #'equal)
+        (loop
+           for line in res-lines
+           do
+             (with-input-from-string (s line)
+               (let ((id (read s))
+                     (lid (read s))
+                     (type (read s)))
+                 (format t "Loading ~a~%" id)
+                 (setf (gethash id res->lid) lid)
+                 (when (not (gethash id tartab))
+                   (format t "Warning: result ~a not present in target table~%"
+                           id))
+                 (when (not (ignored? id))
+                   (setresfn id
+                             (load-object type
+                                          (merge-pathnames (mkstr lid)
+                                                           load-path)))))))
+        ;; parameters:
+        (setf (gethash *project-id* *args-tables*)
+              (make-hash-table :test 'eq))
+        (setf (gethash *project-id* *makeres-args*)
+              (make-hash-table :test 'eq))
+        (when makeres::*sticky-pars*
+          (setf (gethash *project-id* *params-table*)
+                nil))
+        (loop
+           for line in par-lines
+           do
+             (with-input-from-string (s line)
+               (let ((id (read s))
+                     (lid (read s))
+                     (type (read s))
+                     (oldval (read s)))
+                 (format t "Loading parameter ~a~%" id)
+                 (setf (gethash id
+                                (gethash *project-id*
+                                         *args-tables*))
+                       (load-object type
+                                    (merge-pathnames (mkstr lid)
+                                                     load-path)))
+                 (setf (gethash id
+                                (gethash *project-id*
+                                         *makeres-args*))
+                       oldval)
+                 (when makeres::*sticky-pars*
+                   (push (list id `',oldval)
+                         (gethash *project-id*
+                                  *params-table*)))))))))
   nil)

@@ -13,6 +13,7 @@
            :logres-ignore-by
            :logres-track
            :logres-trackfn
-           :logres-track-by))
+           :logres-track-by
+           :function-target?))
 
 (package-utils:use-package-group :cl-ana :logres)
