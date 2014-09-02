@@ -19,5 +19,7 @@ for project.  Should always be run after load-project."
 (defun table-target? (id)
   (let ((tar (gethash id (target-table))))
     (and (target-stat tar)
-         (or (typep (target-val tar) 'table)
+         (or (makeres-table::tab? (target-expr tar))
+             (makeres-table::ltab? (target-expr tar))
+             (typep (target-val tar) 'table)
              (typep (target-val tar) 'reusable-table)))))
