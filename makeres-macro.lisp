@@ -37,16 +37,41 @@
      (defmacro ,name ,lambda-list
        ,@body)))
 
-(defparameter *cl-binding-ops*
+(defparameter *cl-let-ops*
   (list 'let
         'let*
         'flet
         'labels
         'macrolet
         'symbol-macrolet)
-  "list of operators employing bindings from plain common lisp")
+  "list of operators following the let binding format")
 
-(defparameter *cl-expander*
+(defparameter *cl-bind-ops*
+  (list 'destructuring-bind
+        'multiple-value-bind)
+  "list of operators following the *-bind binding format")
+
+(defparameter *lambda-ops*
+  (list 'lambda
+        ;; from cl-ana:
+        'mlambda
+        'klambda))
+
+(defparameter *lambda-expander*
+  (lambda (expander form)
+    (destructuring-bind (op lambda-list &rest body) form
+      (let* ((lambda-list
+              (mapcar (lambda (v)
+                        (if (listp v)
+                            (list* (first v)
+                                   (funcall expander (second v))
+                                   (rest (rest v)))
+                            v))
+                      lambda-list))
+             (body (mapcar expander body)))
+        (list* op lambda-list body)))))
+
+(defparameter *cl-let-expander*
   (lambda (expander form)
     (destructuring-bind (op bindings &rest body) form
       (let* ((bsyms (mapcar #'first bindings))
@@ -60,7 +85,20 @@
                          (list sym bind))
                        bsyms bexprs)
                body))))
-  "Expander function for common lisp operators needing special
+  "Expander function for common lisp let-like operators needing
+  special treatment during expansion.")
+
+(defparameter *cl-bind-expander*
+  (lambda (expander form)
+    (destructuring-bind (op bind-form expr &rest body) form
+      (let* ((expr (funcall expander expr))
+             (body (mapcar expander
+                           body)))
+        (list* op
+               bind-form
+               expr
+               body))))
+  "Expander function for common lisp *-bind operators needing special
   treatment during expansion.")
 
 (defvar *proj->binding-ops*
@@ -81,7 +119,9 @@
             (multiple-value-list binding-ops))))
       (when (not stat)
         (setf binding-ops
-              *cl-binding-ops*)))))
+              (append *cl-let-ops*
+                      *cl-bind-ops*
+                      *lambda-ops*))))))
 
 (defun ensure-op-expanders ()
   (symbol-macrolet ((op->expander
@@ -94,9 +134,17 @@
         (setf op->expander
               (make-hash-table :test 'eq))))
     (loop
-       for op in *cl-binding-ops*
+       for op in *cl-let-ops*
        do (setf (gethash op op->expander)
-                *cl-expander*))))
+                *cl-let-expander*))
+    (loop
+       for op in *cl-bind-ops*
+       do (setf (gethash op op->expander)
+                *cl-bind-expander*))
+    (loop
+       for op in *lambda-ops*
+       do (setf (gethash op op->expander)
+                *lambda-expander*))))
 
 (defun add-binding-ops (ops-expanders)
   "Takes a list of lists of the form (op expander) and adds the
@@ -125,16 +173,20 @@ operators along with their expanders to the current project."
 none are present."
   (let ((resmacs (gethash (project) *proj->res-macros*))
         (binding-ops (gethash (project) *proj->binding-ops*)))
-    (labels ((rec (f)
+    (labels ((rec (f &optional no-op)
+               ;; non-nil no-op means that the form being passed
+               ;; should not be treated for operator content.
                (let ((result
                       (cond
                         ((atom f)
                          f)
-                        ((member (first f) resmacs :test #'eq)
+                        ((and (not no-op)
+                              (member (first f) resmacs :test #'eq))
                          (let ((newf (macroexpand-1 f)))
                            (rec newf)))
-                        ((member (first f)
-                                 binding-ops :test #'eq)
+                        ((and (not no-op)
+                              (member (first f)
+                                      binding-ops :test #'eq))
                          (let* ((op (first f))
                                 (expander
                                  (gethash op
@@ -142,7 +194,8 @@ none are present."
                                                    *proj->op->expander*))))
                            (funcall expander #'rec f)))
                         (t
-                         (mapcar #'rec f)))))
+                         (cons (rec (car f))
+                               (rec (cdr f) t))))))
                  result)))
       (rec expr))))
 
