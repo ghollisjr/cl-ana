@@ -33,6 +33,7 @@
 	   :matrix-transpose
            :matrix-mult
            :phi
-           :theta))
+           :theta
+           :cross-product))
 
 (gmath:use-gmath :linear-algebra)

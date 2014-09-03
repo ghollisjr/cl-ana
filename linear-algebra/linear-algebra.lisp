@@ -83,3 +83,18 @@
 (defun theta (vector)
   (acos (/ (elt vector 2)
            (euclidean-norm vector))))
+
+(defun cross-product (a b)
+  "Returns cross product of vectors a and b"
+  (let ((ax (elt a 0))
+        (ay (elt a 1))
+        (az (elt a 2))
+        (bx (elt b 0))
+        (by (elt b 1))
+        (bz (elt b 2)))
+    (vector (- (* ay bz)
+               (* by az))
+            (- (- (* ax bz)
+                  (* bx az)))
+            (- (* ax by)
+               (* bx ay)))))
