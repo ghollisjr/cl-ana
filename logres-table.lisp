@@ -11,7 +11,7 @@ for project.  Should always be run after load-project."
             (destructuring-bind (progn
                                   (tab source inits opener &rest body))
                 expr
-              (format t "tab: ~a~%"
+              (format t "Loading table ~a~%"
                       id)
               (let ((opener (eval opener))) ; necessary eval
                 (setresfn id (funcall opener :read))))))))
