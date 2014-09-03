@@ -20,6 +20,9 @@
    :hdf-opener
    :ntuple-opener
    :csv-opener
-   :plist-opener))
+   :plist-opener
+   ;; macro expansion:
+   :ensure-table-binding-ops
+   :ensure-table-op-expanders))
 
 (package-utils:use-package-group :cl-ana :makeres-table)

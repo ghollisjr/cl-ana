@@ -668,7 +668,8 @@ true when given the key and value from ht."
 (defparameter *table-binding-ops*
   (list 'tab
         'ltab
-        'dotab))
+        'dotab
+        'push-fields))
 
 (defun ensure-table-binding-ops ()
   (ensure-binding-ops)
@@ -728,7 +729,18 @@ true when given the key and value from ht."
                                        (funcall expander binding))))
                              inits)
                      (funcall expander return)
-                     (mapcar expander body)))))))
+                     (mapcar expander body)))))
+    ;; push-fields
+    (setf (gethash 'push-fields op->expander)
+          (lambda (expander form)
+            (destructuring-bind (push-fields &rest fields) form
+              (list* push-fields
+                     (loop
+                        for f in fields
+                        collect (if (listp f)
+                                    (list (first f)
+                                          (funcall expander (second f)))
+                                    f))))))))
 
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
