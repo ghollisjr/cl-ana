@@ -237,8 +237,8 @@ open/with-open-file."
       (setf (gethash *project-id* *proj->par->lid*)
             (make-hash-table :test 'eq))
       (loop
-         for pid being the hash-keys in (gethash *project-id* *args-tables*)
-         for pval being the hash-values in (gethash *project-id* *args-tables*)
+         for pid being the hash-keys in (gethash *project-id* *makeres-args*)
+         for pval being the hash-values in (gethash *project-id* *makeres-args*)
          do (setf (gethash pid
                            (gethash *project-id* *proj->par->lid*))
                   (next-log-id)))
