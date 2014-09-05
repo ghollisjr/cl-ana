@@ -40,11 +40,14 @@
 (defparameter *cl-let-ops*
   (list 'let
         'let*
-        'flet
-        'labels
-        'macrolet
         'symbol-macrolet)
   "list of operators following the let binding format")
+
+(defparameter *cl-flet-ops*
+  (list 'flet
+        'labels
+        'macrolet)
+  "list of operators following the flet binding format")
 
 (defparameter *cl-bind-ops*
   (list 'destructuring-bind
@@ -88,6 +91,33 @@
   "Expander function for common lisp let-like operators needing
   special treatment during expansion.")
 
+(defparameter *cl-flet-expander*
+  (lambda (expander form)
+    (destructuring-bind (op bindings &rest body) form
+      (let* ((fnames (mapcar #'first bindings))
+             (fargs (mapcar #'second bindings))
+             (fbodies
+              (mapcar (lambda (x) (mapcar expander (rest (rest x))))
+                      bindings))
+             (fargs-expanded
+              (mapcar (lambda (lambda-list)
+                        (mapcar (lambda (x)
+                                  (if (listp x)
+                                      (list* (first x)
+                                             (funcall expander (second x))
+                                             (when (third x)
+                                               (list (third x))))
+                                      x))
+                                lambda-list))
+                      fargs))
+             (body (mapcar expander
+                           body)))
+        (list* op (mapcar #'list*
+                          fnames fargs-expanded fbodies)
+               body))))
+  "Expander function for common lisp flet-like operators needing
+  special treatment during expansion.")
+
 (defparameter *cl-bind-expander*
   (lambda (expander form)
     (destructuring-bind (op bind-form expr &rest body) form
@@ -120,6 +150,7 @@
       (when (not stat)
         (setf binding-ops
               (append *cl-let-ops*
+                      *cl-flet-ops*
                       *cl-bind-ops*
                       *lambda-ops*))))))
 
@@ -137,6 +168,10 @@
        for op in *cl-let-ops*
        do (setf (gethash op op->expander)
                 *cl-let-expander*))
+    (loop
+       for op in *cl-flet-ops*
+       do (setf (gethash op op->expander)
+                *cl-flet-expander*))
     (loop
        for op in *cl-bind-ops*
        do (setf (gethash op op->expander)
