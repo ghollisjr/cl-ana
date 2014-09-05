@@ -23,6 +23,8 @@
    :plist-opener
    ;; macro expansion:
    :ensure-table-binding-ops
-   :ensure-table-op-expanders))
+   :ensure-table-op-expanders
+   ;; progress printing:
+   :*print-progress*))
 
 (package-utils:use-package-group :cl-ana :makeres-table)

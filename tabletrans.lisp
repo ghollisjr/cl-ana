@@ -2,6 +2,11 @@
 
 (declaim (optimize (debug 3)))
 
+(defvar *print-progress* nil
+  "Set this to nil if you don't want to see progress messages printed;
+set this to an integer value to specify the number of rows at which to
+print a progress update message.")
+
 (defun table-reduction? (expr)
   "True if expr is a dotab, ltab or tab expression"
   (when expr
@@ -629,15 +634,49 @@ from pass up to src."
                                       expr)))
                             sub-body)
                            sub-body))))
-                (rec context-tree))))
+                (rec context-tree)))
+             (row-var (gsym 'table-pass))
+             (nrows-var (gsym 'table-pass))
+             (print-pass-targets
+              (when *print-progress*
+                `((progn
+                    (format t "Pass over ~a to compute:~%" ',src)
+                    ,@(loop
+                         for r in pass
+                         collecting `(format t "~a~%" ',r))))))
+             (print-pass-targets-var
+              (gsym 'table-pass))
+             (print-progress-inits
+              (when *print-progress*
+                `((,row-var 0)
+                  (,nrows-var (table-nrows ,(if (and (listp src)
+                                                     (eq (first src) 'res))
+                                                src
+                                                `(res ,src))))
+                  ;; message specifying what the pass will accomplish
+                  (,print-pass-targets-var
+                   ,@print-pass-targets))))
+             (print-progress
+              (when *print-progress*
+                `((progn
+                    (when (zerop (the fixnum (mod ,row-var
+                                                  (the fixnum ,*print-progress*))))
+                      (format t "Event ~a, ~$% complete~%"
+                              ,row-var
+                              (* 1f2
+                                 (/ (float ,row-var)
+                                    (float ,nrows-var)))))
+                    (incf ,row-var))))))
         `(progn
            (table-pass ,(if (and (listp src)
                                  (eq (first src) 'res))
                             src
                             `(res ,src))
-               ,inits
+               (,@inits
+                ,@print-progress-inits)
                ,result-list
                ,lfields
+             ,@print-progress
              ,body))))))
 
 (defun set-pass-result-targets! (result-graph id pass)
