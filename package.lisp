@@ -25,6 +25,12 @@
    :ensure-table-binding-ops
    :ensure-table-op-expanders
    ;; progress printing:
-   :*print-progress*))
+   :*print-progress*
+   ;; expression utilities:
+   :table-reduction?
+   :tab?
+   :ltab?
+   :dotab?
+   :table-reduction-source))
 
 (package-utils:use-package-group :cl-ana :makeres-table)
