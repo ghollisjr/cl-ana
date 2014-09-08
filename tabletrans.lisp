@@ -289,11 +289,20 @@ non-ignored sources."
 (defun node-id (node)
   (first node))
 
+(defun (setf node-id) (value node)
+  (setf (first node) value))
+
 (defun node-content (node)
   (second node))
 
+(defun (setf node-content) (value node)
+  (setf (second node) value))
+
 (defun node-children (node)
   (cddr node))
+
+(defun (setf node-children) (value node)
+  (setf (cddr node) value))
 
 (defun tree-ids (node)
   "Returns list of ids stored in node"
@@ -335,6 +344,7 @@ themselves as context."
   (let (;; map from source to immediate reductions used by ids
         (source->reds (make-hash-table :test 'equal)))
     (labels ((build-source->reds (id)
+               ;; builds map from source table to immediate reductions
                (when (and (gethash id graph)
                           (not (equal id src)))
                  (let ((source (unres
@@ -348,6 +358,11 @@ themselves as context."
                      (build-source->reds source)))))
              (source->tree (source)
                ;; generates context tree for ids from source
+               ;;
+               ;; context tree nodes consist of source, content, and
+               ;; child nodes.
+               ;;
+               ;; content is list of immediate reduction ids
                (let* (;; all reductions encountered
                       (reds (gethash source source->reds))
                       ;; reductions which need to be placed in contexts
@@ -382,9 +397,48 @@ themselves as context."
                                        (member r subcontent
                                                :test #'equal))
                                      need-context-reds))
-                        children))))
+                        children)))
+             (tab-cleanup (tree)
+               ;; Ensures that the tree obtained from source->tree
+               ;; properly stores physical table nodes.  Physical
+               ;; table nodes should never be content of the immediate
+               ;; source table, they should be child nodes which
+               ;; contain at least themselves as content.
+               (let* ((source (node-id tree))
+                      (content (node-content tree))
+                      (newcontent (remove-if (lambda (id)
+                                               (and (tab?
+                                                     (target-expr (gethash id graph)))
+                                                    (not (equal id source))))
+                                             content))
+                      (tabs (remove-if-not (lambda (id)
+                                             (and (tab?
+                                                   (target-expr (gethash id graph)))
+                                                  (not (equal id source))))
+                                           content))
+                      (children (copy-tree (node-children tree))))
+                 ;; modify children appropriately
+                 (loop
+                    for tab in tabs
+                    do (loop
+                          for child in children
+                          when (and (equal (node-id child)
+                                           tab)
+                                    (not (member tab (node-content child))))
+                          do (progn
+                               (push tab (node-content child))
+                               (return))
+                          finally (push (node tab (list tab))
+                                        children)))
+                 ;; return result
+                 (apply #'node
+                        source
+                        newcontent
+                        (mapcar #'tab-cleanup
+                                children)))))
       (mapcar #'build-source->reds ids)
-      (source->tree src))))
+      (tab-cleanup
+       (source->tree src)))))
 
 ;; some shitty code walking
 (defun find-push-fields (form)
@@ -441,8 +495,8 @@ from pass up to src."
            (context-tree
             (let ((ct
                    (table-reduction-context-tree graph src pass)))
-              (format t "context tree:~%~a~%"
-                      ct)
+              ;; (format t "context tree:~%~a~%"
+              ;;         ct)
               ct))
            ;; set of reductions generated:
            (reductions
@@ -694,11 +748,11 @@ from pass up to src."
                                        (node-content node)))
                                     children-exprs)
                                    :test #'equal))))
-                       (format t "node: ~a~%" c)
-                       (format t "content: ~a~%" (node-content node))
-                       (format t "expr:~%~a~%" expr)
-                       (format t "table-reduction? expr:~%~a~%"
-                               (table-reduction? expr))
+                       ;; (format t "node: ~a~%" c)
+                       ;; (format t "content: ~a~%" (node-content node))
+                       ;; (format t "expr:~%~a~%" expr)
+                       ;; (format t "table-reduction? expr:~%~a~%"
+                       ;;         (table-reduction? expr))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))
                            (let ((result
@@ -709,8 +763,8 @@ from pass up to src."
                                              (gethash c tab-expanded-expr)
                                              expr)))
                                    sub-body)))
-                             (format t "replaced:~%~a~%"
-                                     result)
+                             ;; (format t "replaced:~%~a~%"
+                             ;;         result)
                              result)
                            sub-body))))
                 (rec context-tree)))
