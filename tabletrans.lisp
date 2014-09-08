@@ -320,6 +320,12 @@ non-ignored sources."
 ;; BUG: Need to remove physical tables from content of nodes in
 ;; context-tree, and always ensure that there is a child node for the
 ;; physical table with the physical table itself as the content.
+;;
+;; POSSIBLE FIX: Add a function which is called on the
+;; table-reduction-context-tree function which ensures that physical
+;; table targets are treated as child nodes and not just content.  Not
+;; as easy as hacking existing code due to infinite loop (might be why
+;; I didn't do this earlier).
 ;; 
 ;; must be given complete target graph, not just the null-stat targets
 (defun table-reduction-context-tree (graph src ids)
@@ -433,7 +439,11 @@ from pass up to src."
            ;; reduction ids needing to be placed in this context, and
            ;; sub context trees.
            (context-tree
-            (table-reduction-context-tree graph src pass))
+            (let ((ct
+                   (table-reduction-context-tree graph src pass)))
+              (format t "context tree:~%~a~%"
+                      ct)
+              ct))
            ;; set of reductions generated:
            (reductions
             (remove src
