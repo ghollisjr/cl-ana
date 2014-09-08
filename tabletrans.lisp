@@ -316,6 +316,11 @@ non-ignored sources."
             (node-children node)))
    #'equal))
 
+
+;; BUG: Need to remove physical tables from content of nodes in
+;; context-tree, and always ensure that there is a child node for the
+;; physical table with the physical table itself as the content.
+;; 
 ;; must be given complete target graph, not just the null-stat targets
 (defun table-reduction-context-tree (graph src ids)
   "Returns tree of contexts each pass would be inside if collapsed up
@@ -554,38 +559,85 @@ from pass up to src."
              ;; resulting pass body:
              (body
               (labels
+                  ;; found bug: lfields are not being accumulated for
+                  ;; child nodes of collapsed tab and ltab targets
                   ((rec (node)
                      (let* ((c (node-id node))
                             (expr (target-expr (gethash c graph)))
-                            (children-exprs
-                             (when (node-children node)
-                               (mapcar #'rec
-                                       (node-children node))))
                             (push-field-bindings
                              (cond
                                ((tab? expr)
                                 (find-push-fields (gethash c tab-expanded-expr)))
                                ((ltab? expr)
                                 (find-push-fields (table-reduction-body expr)))))
+                            (push-field-syms
+                             (cars push-field-bindings))
+                            (push-field-gsyms
+                             (loop
+                                for b in push-field-syms
+                                collecting (gsym 'tabletrans)))
+                            (push-field->gsym
+                             (let ((ht (make-hash-table :test 'eq)))
+                               (loop
+                                  for sym in push-field-syms
+                                  for gsym in push-field-gsyms
+                                  do (setf (gethash sym ht)
+                                           gsym))
+                               ht))
+                            (lfields
+                             (let ((tab->lfields
+                                    (gethash (project) *proj->tab->lfields*)))
+                               (when tab->lfields
+                                 (gethash c tab->lfields))))
+                            (lfield-syms
+                             (cars lfields))
                             (lfield-gsyms
                              (loop
-                                for l in lfields
+                                for l in lfield-syms
                                 collecting (gsym 'tabletrans)))
+                            (lfield->gsym
+                             (let ((ht (make-hash-table :test 'eq)))
+                               (loop
+                                  for lfield in lfield-syms
+                                  for gsym in lfield-gsyms
+                                  do (setf (gethash lfield ht)
+                                           gsym))
+                               ht))
                             (lfield-bindings
-                             (sublis
-                              (loop
-                                 for (field form) in lfields
-                                 for gsym in lfield-gsyms
-                                 collecting (cons `(field ,field) gsym))
-                              lfields))
+                             (when lfields
+                               (mapcar
+                                (lambda (binding)
+                                  (cons
+                                   (first binding)
+                                   (sublis
+                                    (append
+                                     (loop
+                                        for lfield in lfield-syms
+                                        when (not (eq (first binding)
+                                                      lfield))
+                                        collecting
+                                          (cons `(field ,lfield)
+                                                (gethash lfield lfield->gsym)))
+                                     (loop
+                                        for push-field in push-field-syms
+                                        collecting
+                                          (cons `(field ,push-field)
+                                                (gethash push-field
+                                                         push-field->gsym))))
+                                    (mapcar #'expand-res-macros
+                                            (rest binding))
+                                    :test #'equal)))
+                                lfields)))
                             (olet-field-bindings
                              (append push-field-bindings lfield-bindings))
                             (olet-field-gsyms
                              (append
-                              (loop
-                                 for b in push-field-bindings
-                                 collecting (gsym 'tabletrans))
+                              push-field-gsyms
                               lfield-gsyms))
+                            (children-exprs
+                             (when (node-children node)
+                               (mapcar #'rec
+                                       (node-children node))))
                             (sub-body
                              ;; create push-fields and lfields bindings:
                              `(olet ,(loop
@@ -614,25 +666,42 @@ from pass up to src."
                                                        for gsym being the hash-values
                                                        in initsym->gsym
                                                        collecting (list s gsym))))
-                                          ,@(let ((expr (target-expr
-                                                         (gethash id graph))))
-                                                 (if (tab? expr)
-                                                     (table-reduction-body
-                                                      (gethash id tab-expanded-expr))
-                                                     (table-reduction-body expr)))))
+                                          ,@(let
+                                             ((expr (target-expr
+                                                     (gethash id graph))))
+                                             (if
+                                              (tab? expr)
+
+                                              ;; (table-reduction-body
+                                              ;;  (gethash id tab-expanded-expr))
+
+                                              `((push-fields
+                                                 ,@(find-push-fields
+                                                    (table-reduction-body
+                                                     (gethash id tab-expanded-expr)))))
+                                              (table-reduction-body expr)))))
                                      (progn
                                        (node-content node)))
                                     children-exprs)
                                    :test #'equal))))
+                       (format t "node: ~a~%" c)
+                       (format t "content: ~a~%" (node-content node))
+                       (format t "expr:~%~a~%" expr)
+                       (format t "table-reduction? expr:~%~a~%"
+                               (table-reduction? expr))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))
-                           (replace-push-fields
-                            `(progn
-                               ,@(table-reduction-body
-                                  (if (tab? expr)
-                                      (gethash c tab-expanded-expr)
-                                      expr)))
-                            sub-body)
+                           (let ((result
+                                  (replace-push-fields
+                                   `(progn
+                                      ,@(table-reduction-body
+                                         (if (tab? expr)
+                                             (gethash c tab-expanded-expr)
+                                             expr)))
+                                   sub-body)))
+                             (format t "replaced:~%~a~%"
+                                     result)
+                             result)
                            sub-body))))
                 (rec context-tree)))
              (row-var (gsym 'table-pass))
