@@ -5,6 +5,7 @@
   (:export
    ;; project graph -> dot code:
    :dot-compile
-   :dot->ps))
+   :dot->ps
+   :dot->png))
 
 (package-utils:use-package-group :cl-ana :makeres-graphviz)
