@@ -493,11 +493,7 @@ from pass up to src."
            ;; reduction ids needing to be placed in this context, and
            ;; sub context trees.
            (context-tree
-            (let ((ct
-                   (table-reduction-context-tree graph src pass)))
-              ;; (format t "context tree:~%~a~%"
-              ;;         ct)
-              ct))
+            (table-reduction-context-tree graph src pass))
            ;; set of reductions generated:
            (reductions
             (remove src
@@ -748,11 +744,6 @@ from pass up to src."
                                        (node-content node)))
                                     children-exprs)
                                    :test #'equal))))
-                       ;; (format t "node: ~a~%" c)
-                       ;; (format t "content: ~a~%" (node-content node))
-                       ;; (format t "expr:~%~a~%" expr)
-                       ;; (format t "table-reduction? expr:~%~a~%"
-                       ;;         (table-reduction? expr))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))
                            (let ((result
@@ -763,8 +754,6 @@ from pass up to src."
                                              (gethash c tab-expanded-expr)
                                              expr)))
                                    sub-body)))
-                             ;; (format t "replaced:~%~a~%"
-                             ;;         result)
                              result)
                            sub-body))))
                 (rec context-tree)))
