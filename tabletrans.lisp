@@ -325,17 +325,6 @@ non-ignored sources."
             (node-children node)))
    #'equal))
 
-
-;; BUG: Need to remove physical tables from content of nodes in
-;; context-tree, and always ensure that there is a child node for the
-;; physical table with the physical table itself as the content.
-;;
-;; POSSIBLE FIX: Add a function which is called on the
-;; table-reduction-context-tree function which ensures that physical
-;; table targets are treated as child nodes and not just content.  Not
-;; as easy as hacking existing code due to infinite loop (might be why
-;; I didn't do this earlier).
-;; 
 ;; must be given complete target graph, not just the null-stat targets
 (defun table-reduction-context-tree (graph src ids)
   "Returns tree of contexts each pass would be inside if collapsed up
@@ -588,9 +577,6 @@ from pass up to src."
                         for gsym being the hash-values in initsym->gsym
                         collect (list gsym (gethash s initsym->expr))))))
              ;; list of result forms making use of any gsymed values:
-             ;; TODO!!!!!!!!!!!!!!!!  Replace any init bindings with
-             ;; the gsym in each result form, and return list of
-             ;; result forms.
              (result-list
               (progn
                 `(list
@@ -619,8 +605,6 @@ from pass up to src."
              ;; resulting pass body:
              (body
               (labels
-                  ;; found bug: lfields are not being accumulated for
-                  ;; child nodes of collapsed tab and ltab targets
                   ((rec (node)
                      (let* ((c (node-id node))
                             (expr (target-expr (gethash c graph)))
@@ -731,10 +715,6 @@ from pass up to src."
                                                      (gethash id graph))))
                                              (if
                                               (tab? expr)
-
-                                              ;; (table-reduction-body
-                                              ;;  (gethash id tab-expanded-expr))
-
                                               `((push-fields
                                                  ,@(find-push-fields
                                                     (table-reduction-body
@@ -927,11 +907,7 @@ true when given the key and value from ht."
   (when (not (gethash (project) *proj->tab->lfields*))
     (setf (gethash (project) *proj->tab->lfields*)
           (make-hash-table :test 'equal)))
-  (let* (;; Only consider targets still needing computing:
-         ;; (graph (ht-filter (lambda (k tar)
-         ;;                     (not (target-stat tar)))
-         ;;                   (copy-target-table target-table)))
-         (graph (copy-target-table target-table))
+  (let* ((graph (copy-target-table target-table))
          ;; special dep< for treating reductions as if they did not
          ;; depend on src as a source table, but preserving other
          ;; dependencies as a consequence of being a reduction of the
