@@ -1,0 +1,4 @@
++ Support variable binning for 2d histograms.  Requires using pm3d, so
+  need to add 3d plotting functionality and functions to convert 2d
+  lines into 3d lines for easily superimposing other lines on a 2d
+  histogram using pm3d.
