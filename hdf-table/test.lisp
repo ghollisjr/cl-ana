@@ -18,37 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;; Test results: It looks like the slowness in reading the data files
-;;; is coming from the h5dread function, not from the LISP code!!!
-;;; This means that I may still be able to do my analysis in common
-;;; lisp after all.  The real issue seems to be the chunk size, as I
-;;; currently have this set to 1 element per chunk.  This was my first
-;;; dummy value, but now I think I should test various chunk sizes
-;;; with C++ code and then use the proper chunk settings in my data
-;;; files.
-;;;
-;;; I'll have to change the way I implement hdf-table to allow for a
-;;; chunk buffer which stores multiple rows; shouldn't be too hard.
 
 (require 'hdf-table)
 
 (in-package :hdf-table)
-
-;; (defvar *table*)
-
-;; (setf *table*
-;;       (make-instance 'hdf-table
-;;                      :field-names (list "x" "y" "z")
-;;                      :field-specs
-;;                      (list :int
-;;                            :float
-;;                            (list :compound
-;;                                  (cons "weight" :double)
-;;                                  (cons "direction vector"
-;;                                        (list :array :double 1 (list 20)))))))
-
-;; (defun hdf-table-test ()
-;;   (typespec->hdf-type (typed-table->typespec *table*)))
 
 (defun hdf-type-test ()
   (hdf-type->typespec
