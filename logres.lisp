@@ -53,6 +53,9 @@ pathname)")
 (defvar *proj->par->lid*
   (make-hash-table :test 'equal))
 
+(defvar *proj->lid->sublids*
+  (make-hash-table :test 'equal))
+
 (defun logres-ignorefn (res)
   "function version of logres-ignore"
   (symbol-macrolet ((ignore
@@ -129,6 +132,9 @@ the necessary subdirectories are present."
                       (gethash (project) *project-paths*)))
     ;; initialize project vars:
     (setf (gethash (project) *proj->res->lid*)
+          (make-hash-table :test 'equal))
+    ;; and sublid map:
+    (setf (gethash (project) *proj->lid->sublids*)
           (make-hash-table :test 'equal))))
 
 (defun project-path ()
@@ -266,10 +272,7 @@ open/with-open-file."
            for pid being the hash-keys in (gethash *project-id* *proj->par->lid*)
            for plid being the hash-values in (gethash *project-id* *proj->par->lid*)
            do (let* ((pval (parfn pid))
-                     (type (type-of pval))
-                     ;; (oldval (gethash pid
-                     ;;                  (gethash *project-id* makeres::*makeres-args*)))
-                     )
+                     (type (type-of pval)))
                 (format index-file "~a ~a ~a~%"
                         pid plid type))))
       ;; save all results:
@@ -361,24 +364,25 @@ open/with-open-file."
                (let ((id (read s))
                      (lid (read s))
                      (type (read s)))
-                 (format t "Loading ~a~%" id)
-                 (setf (gethash id res->lid) lid)
-                 (when (not (gethash id tartab))
-                   (format t "Warning: result ~a not present in target table~%"
-                           id))
-                 (when (not (ignored? id))
-                   (setresfn id
-                             (load-object type
-                                          (merge-pathnames (mkstr lid)
-                                                           load-path)))))))
+                 (cond
+                   ((not (gethash id tartab))
+                    (format
+                     t
+                     "Warning: result ~a not present in target table, skipping~%"
+                     id))
+                   ((ignored? id)
+                    (format t "Warning: result ~a is ignored, skipping~%" id))
+                   (t
+                    (format t "Loading ~a~%" id)
+                    (setf (gethash id res->lid) lid)
+                    (when (not (ignored? id))
+                      (setresfn id
+                                (load-object type
+                                             (merge-pathnames (mkstr lid)
+                                                              load-path)))))))))
         ;; parameters:
-        ;; (setf (gethash *project-id* *args-tables*)
-        ;;       (make-hash-table :test 'eq))
         (setf (gethash *project-id* *makeres-args*)
               (make-hash-table :test 'eq))
-        ;; (when makeres::*sticky-pars*
-        ;;   (setf (gethash *project-id* *params-table*)
-        ;;         nil))
         (loop
            for line in par-lines
            do
@@ -386,20 +390,91 @@ open/with-open-file."
                (let ((id (read s))
                      (lid (read s))
                      (type (read s)))
-                 (format t "Loading parameter ~a~%" id)
-                 (setf (gethash id
-                                (gethash *project-id*
-                                         *makeres-args*))
-                       (load-object type
-                                    (merge-pathnames (mkstr lid)
-                                                     load-path)))
-                 ;; (setf (gethash id
-                 ;;                (gethash *project-id*
-                 ;;                         *makeres-args*))
-                 ;;       oldval)
-                 ;; (when makeres::*sticky-pars*
-                 ;;   (push (list id `',oldval)
-                 ;;         (gethash *project-id*
-                 ;;                  *params-table*)))
-                 ))))))
+                 (if (member id (gethash *project-id* *params-table*)
+                             :key #'car)
+                     (progn
+                       (format t "Loading parameter ~a~%" id)
+                       (setf (gethash id
+                                      (gethash *project-id*
+                                               *makeres-args*))
+                             (load-object type
+                                          (merge-pathnames (mkstr lid)
+                                                           load-path))))
+                     (format
+                      t
+                      "WARNING: Parameter ~a not in project, skipping~%"
+                      id))))))))
   nil)
+
+(defun prune-log (version &key (remove-ignored t))
+  "Removes any parameters and results from log version which are not
+present in the current project specification.  If remove-ignored is
+non-nil, then ignored results are removed from the log as well.
+
+Note that any files in the work/ directory must be manually deleted
+until files in work/ are managed by logres (pending)."
+  (let* ((project-path (gethash (project) *project-paths*))
+         (tartab (gethash (project) *target-tables*))
+         (version-path (make-pathname
+                        :directory (list :absolute
+                                         (namestring project-path)
+                                         "versions"
+                                         (namestring version))))
+         (index-lines
+          (read-lines-from-pathname
+           (merge-pathnames "index"
+                            version-path)))
+         (split-lines (split-sequence:split-sequence "" index-lines
+                                                     :test #'equal))
+         (res-lines (first split-lines))
+         (par-lines (second split-lines))
+         (ignore-res-fn (if remove-ignored
+                            (lambda (id)
+                              (or (ignored? id)
+                                  (not (gethash id
+                                                tartab))))
+                            (lambda (id)
+                              (not (gethash id tartab)))))
+         (ignore-par-fn (lambda (id)
+                          (not (member id
+                                       (gethash *project-id* *params-table*)
+                                       :key #'car))))
+         (unremoved-res-lines
+          (remove-if
+           (lambda (line)
+             (let ((id (read-from-string line)))
+               (funcall ignore-res-fn id)))
+           res-lines))
+         (unremoved-par-lines
+          (remove-if
+           (lambda (line)
+             (let ((id (read-from-string line)))
+               (funcall ignore-par-fn id)))
+           par-lines)))
+    ;; overwrite index file:
+    (with-open-file (index-file (merge-pathnames "index"
+                                                 version-path)
+                                :direction :output
+                                :if-does-not-exist :create
+                                :if-exists :supersede)
+      (loop
+         for line in res-lines
+         do (format index-file "~a~%" line))
+      (format index-file "~%")
+      (loop
+         for line in par-lines
+         do (format index-file "~a~%" line)))
+    ;; remove content:
+    (loop
+       for line in (append (set-difference res-lines
+                                           unremoved-res-lines
+                                           :test #'equal)
+                           (set-difference par-lines
+                                           unremoved-par-lines
+                                           :test #'equal))
+       do (let ((lid (progn
+                       (with-input-from-string (s line)
+                         (read s)
+                         (read s)))))
+            (delete-file (merge-pathnames (mkstr lid)
+                                          version-path))))))
