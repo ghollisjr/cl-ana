@@ -5,7 +5,7 @@
 ;; file as an index, allowing e.g. lists of histograms to be stored
 ;; (histograms are stored via HDF5, not text files).
 
-(defmethod save-object ((ht hash-table) path)
+(defmethod save-target (id (ht hash-table) path)
   (let ((savedir
          (make-pathname
           :directory (pathname-directory path))))
@@ -19,19 +19,30 @@
            for v being the hash-values in ht
            do (let ((kid (next-log-id))
                     (vid (next-log-id)))
+                ;; log sublids:
+                (symbol-macrolet ((sublids
+                                   (gethash id
+                                            (gethash *project-id*
+                                                     *proj->lid->sublids*))))
+                  (push kid
+                        sublids)
+                  (push vid sublids))
+                ;; save content:
                 (push (cons (list kid (type-of k))
                             (list vid (type-of v)))
                       index-alist)
-                (save-object k
+                (save-target kid
+                             k
                              (merge-pathnames (mkstr kid)
                                               savedir))
-                (save-object v
+                (save-target vid
+                             v
                              (merge-pathnames (mkstr vid)
                                               savedir))))
         (format file "~s~%" (nreverse index-alist))
         (format file "~s~%" (hash-table-test ht))))))
 
-(defmethod load-object ((type (eql 'hash-table)) path)
+(defmethod load-target ((type (eql 'hash-table)) path)
   (let ((loaddir
          (make-pathname
           :directory (pathname-directory path))))
@@ -44,11 +55,11 @@
          (mapcar (lambda (cons)
                    (destructuring-bind ((kid ktype) . (vid vtype))
                        cons
-                     (cons (load-object ktype
+                     (cons (load-target ktype
                                         (merge-pathnames
                                          (mkstr kid)
                                          loaddir))
-                           (load-object vtype
+                           (load-target vtype
                                         (merge-pathnames
                                          (mkstr vid)
                                          loaddir)))))

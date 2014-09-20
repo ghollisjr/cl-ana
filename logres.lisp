@@ -1,3 +1,5 @@
+(declaim (optimize (debug 3)))
+
 (in-package :logres)
 
 ;;;; logres is a result logging tool for automating the storage and
@@ -13,7 +15,7 @@
 ;;;; you wish (I like to use lists which denote the chain of
 ;;;; tables/filters/etc along with a reduction id).
 
-(defgeneric load-object (type path)
+(defgeneric load-target (type path)
   (:documentation "Generic function which loads an object from a file
   located at path of type type")
   (:method (type path)
@@ -22,10 +24,10 @@
                           :if-does-not-exist :error)
       (read file))))
 
-(defgeneric save-object (object path)
+(defgeneric save-target (id object path)
   (:documentation "Generic function which saves an object to a file
   located at path")
-  (:method (obj path)
+  (:method (id obj path)
     (with-open-file (file path
                           :direction :output
                           :if-exists :supersede
@@ -55,6 +57,47 @@ pathname)")
 
 (defvar *proj->lid->sublids*
   (make-hash-table :test 'equal))
+
+(defun load-sublid-map (version)
+  "Loads the sublid map from logged version"
+  (symbol-macrolet ((sublid-map
+                     (gethash *project-id* *proj->lid->sublids*)))
+    (clrhash sublid-map)
+    (with-open-file (sublid-file (merge-pathnames
+                                  (string-append "versions/"
+                                                 version
+                                                 "/sublid-map")
+                                  (project-path))
+                                 :direction :input)
+      (do ((line (read-line sublid-file nil nil)))
+          ((null line))
+        (print line)
+        (with-input-from-string (s line)
+          (let ((lid (read s)))
+            (print lid)
+            (do ((sublid (read s nil nil)))
+                ((null sublid))
+              (print sublid)
+              (push sublid
+                    (gethash lid sublid-map)))))))))
+
+(defun save-sublid-map (version)
+  "Saves the sublid map for logged version"
+  (symbol-macrolet ((sublid-map
+                     (gethash *project-id* *proj->lid->sublids*)))
+    (with-open-file (sublid-file (merge-pathnames
+                                  (string-append "versions/"
+                                                 version
+                                                 "/sublid-map")
+                                  (project-path))
+                                 :direction :output
+                                 :if-does-not-exist :create
+                                 :if-exists :supersede)
+      (loop
+         for k being the hash-keys in sublid-map
+         for v being the hash-values in sublid-map
+         do (progn
+              (format sublid-file "~{~a~^ ~}~%" (cons k v)))))))
 
 (defun logres-ignorefn (res)
   "function version of logres-ignore"
@@ -284,7 +327,8 @@ open/with-open-file."
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
               (format t "Saving ~a~%" id)
-              (save-object (resfn id)
+              (save-target id
+                           (resfn id)
                            path)))
       ;; and for parameters
       ;;
@@ -299,7 +343,8 @@ open/with-open-file."
                                                     *proj->par->lid*)
          do (let ((pval (parfn pid)))
               (format t "Saving parameter ~a~%" pid)
-              (save-object pval
+              (save-target pid
+                           pval
                            (merge-pathnames (mkstr plid)
                                             save-path))))
 
@@ -315,7 +360,9 @@ open/with-open-file."
         (run "cp"
              (list "-r"
                    (namestring work-from-path)
-                   (namestring work-to-path))))))
+                   (namestring work-to-path)))))
+    ;; Save sublid map:
+    (save-sublid-map version-string))
   nil)
 
 ;; Use sb-mop:compute-applicable-methods-using-classes (SBCL only),
@@ -377,7 +424,7 @@ open/with-open-file."
                     (setf (gethash id res->lid) lid)
                     (when (not (ignored? id))
                       (setresfn id
-                                (load-object type
+                                (load-target type
                                              (merge-pathnames (mkstr lid)
                                                               load-path)))))))))
         ;; parameters:
@@ -397,13 +444,15 @@ open/with-open-file."
                        (setf (gethash id
                                       (gethash *project-id*
                                                *makeres-args*))
-                             (load-object type
+                             (load-target type
                                           (merge-pathnames (mkstr lid)
                                                            load-path))))
                      (format
                       t
                       "WARNING: Parameter ~a not in project, skipping~%"
                       id))))))))
+  ;; load sublid-map:
+  (load-sublid-map version)
   nil)
 
 (defun prune-log (version &key (remove-ignored t))

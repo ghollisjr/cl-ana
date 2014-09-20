@@ -1,6 +1,6 @@
 (in-package logres)
 
-(defmethod save-object ((fn function) path)
+(defmethod save-object (id (fn function) path)
   (format t "Warning: cannot save functions~%")
   nil)
 
