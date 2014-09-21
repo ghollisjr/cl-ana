@@ -5,7 +5,7 @@
 ;; file as an index, allowing e.g. lists of histograms to be stored
 ;; (histograms are stored via HDF5, not text files).
 
-(defmethod save-target (id (ht hash-table) path)
+(defmethod save-target (lid (ht hash-table) path)
   (let ((savedir
          (make-pathname
           :directory (pathname-directory path))))
@@ -21,15 +21,15 @@
                     (vid (next-log-id)))
                 ;; log sublids:
                 (symbol-macrolet ((sublids
-                                   (gethash id
+                                   (gethash lid
                                             (gethash *project-id*
                                                      *proj->lid->sublids*))))
                   (push kid
                         sublids)
                   (push vid sublids))
                 ;; save content:
-                (push (cons (list kid (type-of k))
-                            (list vid (type-of v)))
+                (push (cons (list kid (target-type k))
+                            (list vid (target-type v)))
                       index-alist)
                 (save-target kid
                              k

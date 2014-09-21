@@ -24,15 +24,21 @@
                           :if-does-not-exist :error)
       (read file))))
 
-(defgeneric save-target (id object path)
+(defgeneric save-target (lid object path)
   (:documentation "Generic function which saves an object to a file
   located at path")
-  (:method (id obj path)
+  (:method (lid obj path)
     (with-open-file (file path
                           :direction :output
                           :if-exists :supersede
                           :if-does-not-exist :create)
       (format file "~s~%" obj))))
+
+(defun target-type (object)
+  "Returns type of object with exception for vectors/arrays"
+  (if (typep object 'array)
+      'array
+      (type-of object)))
 
 (defvar *project-paths*
   (make-hash-table :test 'equal)
@@ -69,15 +75,14 @@ pathname)")
                                                  "/sublid-map")
                                   (project-path))
                                  :direction :input)
-      (do ((line (read-line sublid-file nil nil)))
+      (do ((line (read-line sublid-file nil nil)
+                 (read-line sublid-file nil nil)))
           ((null line))
-        (print line)
         (with-input-from-string (s line)
           (let ((lid (read s)))
-            (print lid)
-            (do ((sublid (read s nil nil)))
+            (do ((sublid (read s nil nil)
+                         (read s nil nil)))
                 ((null sublid))
-              (print sublid)
               (push sublid
                     (gethash lid sublid-map)))))))))
 
@@ -302,7 +307,7 @@ open/with-open-file."
            for lid being the hash-values in res->lid
            when (and (not (ignored? res))
                      (target-stat (gethash res tartab)))
-           do (let ((type (type-of (resfn res))))
+           do (let ((type (target-type (resfn res))))
                 (format index-file
                         "~a ~a ~a~%"
                         res lid type))
@@ -315,7 +320,7 @@ open/with-open-file."
            for pid being the hash-keys in (gethash *project-id* *proj->par->lid*)
            for plid being the hash-values in (gethash *project-id* *proj->par->lid*)
            do (let* ((pval (parfn pid))
-                     (type (type-of pval)))
+                     (type (target-type pval)))
                 (format index-file "~a ~a ~a~%"
                         pid plid type))))
       ;; save all results:
@@ -327,7 +332,7 @@ open/with-open-file."
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
               (format t "Saving ~a~%" id)
-              (save-target id
+              (save-target lid
                            (resfn id)
                            path)))
       ;; and for parameters
@@ -343,7 +348,7 @@ open/with-open-file."
                                                     *proj->par->lid*)
          do (let ((pval (parfn pid)))
               (format t "Saving parameter ~a~%" pid)
-              (save-target pid
+              (save-target plid
                            pval
                            (merge-pathnames (mkstr plid)
                                             save-path))))
@@ -455,75 +460,116 @@ open/with-open-file."
   (load-sublid-map version)
   nil)
 
-(defun prune-log (version &key (remove-ignored t))
-  "Removes any parameters and results from log version which are not
-present in the current project specification.  If remove-ignored is
-non-nil, then ignored results are removed from the log as well.
+;;;; At the moment, this function appears unnecessary due to the
+;;;; ability to restart a session, load & save a project to
+;;;; automatically prune the log.
+;;;;
+;;;; However: I'm leaving the code commented as a reminder of the
+;;;; issue for future readers.
 
-Note that any files in the work/ directory must be manually deleted
-until files in work/ are managed by logres (pending)."
-  (let* ((project-path (gethash (project) *project-paths*))
-         (tartab (gethash (project) *target-tables*))
-         (version-path (make-pathname
-                        :directory (list :absolute
-                                         (namestring project-path)
-                                         "versions"
-                                         (namestring version))))
-         (index-lines
-          (read-lines-from-pathname
-           (merge-pathnames "index"
-                            version-path)))
-         (split-lines (split-sequence:split-sequence "" index-lines
-                                                     :test #'equal))
-         (res-lines (first split-lines))
-         (par-lines (second split-lines))
-         (ignore-res-fn (if remove-ignored
-                            (lambda (id)
-                              (or (ignored? id)
-                                  (not (gethash id
-                                                tartab))))
-                            (lambda (id)
-                              (not (gethash id tartab)))))
-         (ignore-par-fn (lambda (id)
-                          (not (member id
-                                       (gethash *project-id* *params-table*)
-                                       :key #'car))))
-         (unremoved-res-lines
-          (remove-if
-           (lambda (line)
-             (let ((id (read-from-string line)))
-               (funcall ignore-res-fn id)))
-           res-lines))
-         (unremoved-par-lines
-          (remove-if
-           (lambda (line)
-             (let ((id (read-from-string line)))
-               (funcall ignore-par-fn id)))
-           par-lines)))
-    ;; overwrite index file:
-    (with-open-file (index-file (merge-pathnames "index"
-                                                 version-path)
-                                :direction :output
-                                :if-does-not-exist :create
-                                :if-exists :supersede)
-      (loop
-         for line in res-lines
-         do (format index-file "~a~%" line))
-      (format index-file "~%")
-      (loop
-         for line in par-lines
-         do (format index-file "~a~%" line)))
-    ;; remove content:
-    (loop
-       for line in (append (set-difference res-lines
-                                           unremoved-res-lines
-                                           :test #'equal)
-                           (set-difference par-lines
-                                           unremoved-par-lines
-                                           :test #'equal))
-       do (let ((lid (progn
-                       (with-input-from-string (s line)
-                         (read s)
-                         (read s)))))
-            (delete-file (merge-pathnames (mkstr lid)
-                                          version-path))))))
+;; (defun prune-log (version &key (remove-ignored t))
+;;   "Removes any parameters and results from log version which are not
+;; present in the current project specification.  If remove-ignored is
+;; non-nil, then ignored results are removed from the log as well.
+
+;; Note that any files in the work/ directory must be manually deleted
+;; until files in work/ are managed by logres (pending)."
+;;   (let* ((project-path (gethash (project) *project-paths*))
+;;          (tartab (gethash (project) *target-tables*))
+;;          (version-path (make-pathname
+;;                         :directory (list :absolute
+;;                                          (namestring project-path)
+;;                                          "versions"
+;;                                          (namestring version))))
+;;          (index-lines
+;;           (read-lines-from-pathname
+;;            (merge-pathnames "index"
+;;                             version-path)))
+;;          (split-lines (split-sequence:split-sequence "" index-lines
+;;                                                      :test #'equal))
+;;          (res-lines (first split-lines))
+;;          (par-lines (second split-lines))
+;;          (ignore-res-fn (if remove-ignored
+;;                             (lambda (id)
+;;                               (or (ignored? id)
+;;                                   (not (gethash id
+;;                                                 tartab))))
+;;                             (lambda (id)
+;;                               (not (gethash id tartab)))))
+;;          (ignore-par-fn (lambda (id)
+;;                           (not (member id
+;;                                        (gethash *project-id* *params-table*)
+;;                                        :key #'car))))
+;;          (unremoved-res-lines
+;;           (remove-if
+;;            (lambda (line)
+;;              (let ((id (read-from-string line)))
+;;                (funcall ignore-res-fn id)))
+;;            res-lines))
+;;          (unremoved-par-lines
+;;           (remove-if
+;;            (lambda (line)
+;;              (let ((id (read-from-string line)))
+;;                (funcall ignore-par-fn id)))
+;;            par-lines))
+;;          (res-ids
+;;           (mapcar
+;;            (lambda (line)
+;;              (read-from-string line))
+;;            res-lines))
+;;          (par-ids
+;;           (mapcar
+;;            (lambda (line)
+;;              (read-from-string line))
+;;            par-lines))
+;;          (removed-res-ids
+;;           (remove-if-not
+;;            (lambda (id)
+;;              (funcall ignore-res-fn id))
+;;            res-ids))
+;;          (removed-res-lids
+;;           (mapcar (lambda (id)
+;;                     (gethash id
+;;                              (gethash *project-id*
+;;                                       *proj->res->lid*)))
+;;                   removed-res-ids))
+;;          (removed-par-ids
+;;           (remove-if-not
+;;            (lambda (id)
+;;              (funcall ignore-par-fn id))
+;;            par-ids))
+;;          (removed-par-lids
+;;           (mapcar (lambda (id)
+;;                     (gethash id
+;;                              (gethash *project-id*
+;;                                       *proj->par->lid*)))
+;;                   removed-par-ids)))
+;;     ;; overwrite index file:
+;;     (with-open-file (index-file (merge-pathnames "index"
+;;                                                  version-path)
+;;                                 :direction :output
+;;                                 :if-does-not-exist :create
+;;                                 :if-exists :supersede)
+;;       (loop
+;;          for line in res-lines
+;;          do (format index-file "~a~%" line))
+;;       (format index-file "~%")
+;;       (loop
+;;          for line in par-lines
+;;          do (format index-file "~a~%" line)))
+;;     ;; remove content:
+;;     (labels ((remove-target-files (lid)
+;;                (let ((sublids 
+;;     (loop
+;;        for line in (append (set-difference res-lines
+;;                                            unremoved-res-lines
+;;                                            :test #'equal)
+;;                            (set-difference par-lines
+;;                                            unremoved-par-lines
+;;                                            :test #'equal))
+;;        do (let ((lid (progn
+;;                        (with-input-from-string (s line)
+;;                          (read s)
+;;                          (read s)))))
+;;             (delete-file (merge-pathnames (mkstr lid)
+;;                                           version-path))))))

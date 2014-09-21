@@ -33,4 +33,6 @@
                (:file "histogram")
                (:file "table")
                (:file "function")
-               (:file "hash-table")))
+               (:file "hash-table")
+               (:file "cons")
+               (:file "array")))
