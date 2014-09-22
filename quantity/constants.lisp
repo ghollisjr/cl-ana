@@ -42,7 +42,8 @@
   (* 4 pi
      1d-7
      :newton
-     (/ :ampere))
+     (/ (expt :ampere
+              2)))
   "Permeability of free space")
 
 (defvar +eps0+
