@@ -45,6 +45,7 @@
    :defpars
    :undefpars
    :defres
+   :undefres
    :setresfn
    :setres
    :unsetresfn

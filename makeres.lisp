@@ -476,13 +476,17 @@ parameters."
                           :stat ,stat))
        ',id)))
 
-(defmacro undefres (res)
-  "Undefines a result target"
+(defmacro undefres (&rest res)
+  "Undefines result targets"
   `(progn
-     (remhash ',res
-              (gethash *project-id* *target-tables*))
-     (remhash ',res
-              (gethash *project-id* *fin-target-tables*))
+     ,@(loop
+          for r in res
+          collecting
+            `(progn
+               (remhash ',r
+                        (gethash *project-id* *target-tables*))
+               (remhash ',r
+                        (gethash *project-id* *fin-target-tables*))))
      nil))
 
 (defun setresfn (id value)
