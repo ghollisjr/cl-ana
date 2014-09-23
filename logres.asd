@@ -35,4 +35,5 @@
                (:file "function")
                (:file "hash-table")
                (:file "cons")
-               (:file "array")))
+               (:file "array")
+               (:file "string")))

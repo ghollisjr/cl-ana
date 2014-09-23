@@ -36,9 +36,12 @@
 
 (defun target-type (object)
   "Returns type of object with exception for vectors/arrays"
-  (if (typep object 'array)
-      'array
-      (type-of object)))
+  (cond
+    ((stringp object)
+     'string)
+    ((arrayp object)
+     'array)
+    (t (type-of object))))
 
 (defvar *project-paths*
   (make-hash-table :test 'equal)
