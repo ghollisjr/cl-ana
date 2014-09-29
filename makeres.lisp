@@ -235,7 +235,7 @@ target-table."
   ;;
   ;; returns full list of dependencies on a target
   (defun res-dependents (res-id target-table)
-    "Returns full list of parameter-dependent targets in target-table"
+    "Returns full list of result-dependent targets in target-table"
     (let* (;; table mapping from id to those targets immediately
            ;; dependent on id
            (dependent-table
