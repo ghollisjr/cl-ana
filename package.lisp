@@ -25,6 +25,8 @@
    :*params-table*
    :*args-tables*
    :*makeres-args*
+   ;; noisy messages:
+   :*makeres-warnings*
    ;; functions accessing hash tables
    :project
    :project-parameters

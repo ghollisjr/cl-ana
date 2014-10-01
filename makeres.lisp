@@ -581,6 +581,9 @@ Returns full transformation list from project after applying op."
              transforms)))
     (gethash pid *transformation-table*)))
 
+(defparameter *makeres-warnings* t
+  "Set to nil if you want to suppress warnings from compilation")
+
 (defun compres (&optional (project-id *project-id*))
   "Returns a compiled function which will generate result targets
 given keyword arguments for each project parameter.  If default values
@@ -670,7 +673,10 @@ is given."
                               id))
                    ,body))))
         (symbol-function
-         (compile (compres-fname project-id) comp-form))))))
+         (if *makeres-warnings*
+             (compile (compres-fname project-id) comp-form)
+             (suppress-output
+               (compile (compres-fname project-id) comp-form))))))))
 
 (defun makeres-propogate! ()
   (loop
