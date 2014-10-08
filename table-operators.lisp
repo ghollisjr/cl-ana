@@ -24,7 +24,12 @@
                                :key #'first
                                :test #'eq))
                      lfields
-                     :initial-value lfs)))))
+                     :initial-value
+                     (remove-if (lambda (lf)
+                                  (member (first lf) lfields
+                                          :key #'first
+                                          :test #'eq))
+                                lfs))))))
   nil)
 
 ;; and the macro:
