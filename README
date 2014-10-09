@@ -1,10 +1,9 @@
 cl-ana is a free (GPL) library of Common Lisp code for doing data
-analysis; specifically it has to at least support what I'm doing right
-now: analyzing particle accelerator event data.  It aims to be a
-general purpose framework for analyzing small and large scale
-datasets, including binned data analysis and visualization.  Much
-effort has been made to ensure modularity so that individual
-components may be used/re-used for a new purpose.
+analysis via either straightforward programming or dependency oriented
+programming.  It aims to be a general purpose framework for analyzing
+small and large scale datasets, including binned data analysis and
+visualization.  Much effort has been made to ensure modularity so that
+individual components may be used/re-used for a new purpose.
 
 cl-ana is available via quicklisp (http://www.quicklisp.org/beta/);
 for other dependencies see below.
@@ -16,7 +15,8 @@ is located on the wiki page: http://github.com/ghollisjr/cl-ana/wiki
 Whenever possible, features are implemented via generic functions so
 that users can extend cl-ana to whatever they want to do.
 
-So far the functionality this library provides includes:
+The functionality of this framework is divided into two layers.  The
+lower layer provides basic libraries for the following:
 
 * Tabulated data: Supports data tables read-from and written-to HDF5
   files (buffered read-write), ntuples (like CERN's PAW uses), comma
@@ -50,6 +50,14 @@ So far the functionality this library provides includes:
   units), and treating CL sequences as tensors with all the usual math
   functions being applied element-by-element in a MATLAB/GNU Octave
   fashion.
+
+The higher layer provides dependency oriented programming.  Dependency
+oriented programming is my own term for defining your program in terms
+of targets needing execution as opposed to an explicit computation.
+It is a hybrid of imperative and declarative programming.  The target
+table can be transformed to allow for optimizations.  Provided
+optimizations include table pass merge and collapse which minimize the
+number of passes over source datasets.
 
 Also included are various utilities which have use in a variety of
 places.
