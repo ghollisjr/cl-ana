@@ -1,5 +1,14 @@
 (defpackage #:logres
   (:use :cl
+        :hdf-utils
+        :map
+        :functional-utils
+        :file-utils
+        :string-utils
+        :serialization
+        :histogram
+        :table
+        :reusable-table
         :makeres
         :external-program)
   (:export :load-object

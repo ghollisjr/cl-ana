@@ -68,33 +68,6 @@
 (makeres :source (list 9 15)
          :scale -1)
 
-;;; Technically, makeres is an inefficient technique if one wishes to
-;;; run the computation for various parameter values; one could use
-;;; compres if this is an issue.  However: re-calling compres/calling
-;;; makeres is necessary whenever the dependency graph is changed in
-;;; some way, so you'll need to call makeres after manually modifying
-;;; the graph(s).
-;;;
-;;; In short: It's only safe to reuse functions from compres when the
-;;; changes you want when running it are only to the supplied
-;;; parameter values.
-
-;; how you use compres:
-(defparameter *generator*
-  (compres)
-  "Computation function which accepts any parameters for this project
-and computes only those values which need computing either due to not
-being previously computed, having their status set to nil, or
-depending on a parameter value which was not used last.")
-
-;; default args
-(funcall *generator*)
-(funcall *generator*
-         :scale -1)
-(funcall *generator*
-         :source (list 11 12)
-         :scale 5)
-
 ;;; After you've run whatever computations you're interested in, you
 ;;; can examine the results with the res macro:
 

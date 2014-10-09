@@ -26,6 +26,7 @@
   results in Common Lisp"
   :license "GPLv3"
   :depends-on (#:alexandria
+               #:macro-utils
                #:list-utils
                #:symbol-utils
                #:map

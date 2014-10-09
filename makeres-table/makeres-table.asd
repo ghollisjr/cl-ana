@@ -26,7 +26,17 @@
   :description "makeres-table is a graph transformation for makeres"
   :license "GPLv3"
   :depends-on (#:makeres
-               #:makeres-macro)
+               #:makeres-macro
+               #:macro-utils
+               #:table
+               #:reusable-table
+               #:hdf-utils
+               #:csv-table
+               #:ntuple-table
+               #:hdf-table
+               #:hash-table-utils
+               #:string-utils
+               #:list-utils)
   :components ((:file "package")
                (:file "smart-gensym")
                (:file "table-operators")

@@ -1,5 +1,15 @@
 (defpackage #:makeres-table
   (:use :cl
+        :list-utils
+        :macro-utils
+        :table
+        :reusable-table
+        :hdf-utils
+        :csv-table
+        :ntuple-table
+        :hdf-table
+        :hash-table-utils
+        :string-utils
         :makeres
         :makeres-macro)
   (:export

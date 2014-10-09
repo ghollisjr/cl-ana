@@ -1,17 +1,6 @@
 (require 'cl-ana)
 
-(require 'makeres)
-
-(require 'makeres-table)
-
-(defpackage #:simple-test
-  (:use :cl
-        :makeres
-        :makeres-table))
-
-(package-utils:use-package-group :cl-ana :simple-test)
-
-(in-package simple-test)
+(in-package cl-ana)
 
 (in-project simple-test)
 

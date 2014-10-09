@@ -1,5 +1,6 @@
 (defpackage #:makeres
   (:use :cl
+        :macro-utils
         :list-utils
         :symbol-utils
         :map
@@ -65,6 +66,7 @@
    :target-ids
    :fin-target-ids
    ;; INCLUDED TRANSFORMATIONS:
-   :lrestrans)) ; allows logical results
+   :lrestrans ; allows logical results
+   :lres))
 
 (generic-math:use-gmath :makeres)

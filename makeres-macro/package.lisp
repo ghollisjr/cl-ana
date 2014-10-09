@@ -21,6 +21,7 @@
 
 (defpackage #:makeres-macro
   (:use :cl
+        :list-utils
         :makeres)
   (:export :define-res-macro
            :expand-res-macros
