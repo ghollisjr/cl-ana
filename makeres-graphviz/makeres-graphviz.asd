@@ -27,8 +27,7 @@
   :description "makeres-graphviz provides graph visualization for
   makeres target graphs."
   :license "GPLv3"
-  :depends-on (#:cl-ana
-               #:makeres
+  :depends-on (#:makeres
                #:external-program)
   :components ((:file "package")
                (:file "dot")))

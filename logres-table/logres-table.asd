@@ -26,8 +26,7 @@
   :description "logres-table is a tabular result logging (storage and
   retrieval tool for use with logres"
   :license "GPLv3"
-  :depends-on (#:cl-ana
-               #:makeres
+  :depends-on (#:makeres
                #:makeres-table)
   :components ((:file "package")
                (:file "logres-table")))

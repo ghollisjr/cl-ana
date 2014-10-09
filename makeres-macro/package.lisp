@@ -30,5 +30,3 @@
            :*proj->binding-ops*
            :ensure-op-expanders
            :*proj->op->expander*))
-
-(package-utils:use-package-group :cl-ana :makeres-macro)

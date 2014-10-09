@@ -25,8 +25,7 @@
   :description "logres is a result logging (storage and retrieval tool
   for use with makeres"
   :license "GPLv3"
-  :depends-on (#:cl-ana
-               #:makeres
+  :depends-on (#:makeres
                #:external-program)
   :components ((:file "package")
                (:file "logres")

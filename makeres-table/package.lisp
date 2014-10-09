@@ -32,5 +32,3 @@
    :ltab?
    :dotab?
    :table-reduction-source))
-
-(package-utils:use-package-group :cl-ana :makeres-table)

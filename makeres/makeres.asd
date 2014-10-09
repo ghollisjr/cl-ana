@@ -25,7 +25,11 @@
   :description "makeres is a make-like tool for building analysis
   results in Common Lisp"
   :license "GPLv3"
-  :depends-on (#:cl-ana)
+  :depends-on (#:alexandria
+               #:list-utils
+               #:symbol-utils
+               #:map
+               #:hash-table-utils)
   :components ((:file "package")
                (:file "makeres")
                (:file "lrestrans")))

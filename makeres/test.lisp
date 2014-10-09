@@ -1,6 +1,6 @@
-(require 'makeres)
+(require 'cl-ana)
 
-(in-package :makeres)
+(in-package :cl-ana)
 
 ;;;; Demo of language:
 

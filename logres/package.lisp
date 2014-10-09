@@ -15,5 +15,3 @@
            :logres-trackfn
            :logres-track-by
            :function-target?))
-
-(package-utils:use-package-group :cl-ana :logres)

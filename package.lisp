@@ -65,7 +65,14 @@
         :typespec
         :int-char
         :clos-utils
-        :serialization))
+        :serialization
+        ;; makeres:
+        :makeres
+        :makeres-macro
+        :makeres-table
+        :makeres-graphviz
+        :logres
+        :logres-table))
 
 (loop
    for p in *cl-ana-package-names*

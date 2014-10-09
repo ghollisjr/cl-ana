@@ -25,7 +25,6 @@
   :description "makeres-macro is a graph transformation for use with
   makeres"
   :license "GPLv3"
-  :depends-on (#:cl-ana
-               #:makeres)
+  :depends-on (#:makeres)
   :components ((:file "package")
                (:file "makeres-macro")))

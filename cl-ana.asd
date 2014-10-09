@@ -54,5 +54,12 @@
                #:clos-utils
                #:serialization
                #:hash-table-utils
-               #:map)
+               #:map
+               ;; makeres
+               :makeres
+               :makeres-macro
+               :makeres-table
+               :makeres-graphviz
+               :logres
+               :logres-table)
   :components ((:file "package")))

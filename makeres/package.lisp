@@ -1,5 +1,9 @@
 (defpackage #:makeres
-  (:use :cl)
+  (:use :cl
+        :list-utils
+        :symbol-utils
+        :map
+        :hash-table-utils)
   (:export
    ;; target
    :target
@@ -63,4 +67,4 @@
    ;; INCLUDED TRANSFORMATIONS:
    :lrestrans)) ; allows logical results
 
-(package-utils:use-package-group :cl-ana :makeres)
+(generic-math:use-gmath :makeres)
