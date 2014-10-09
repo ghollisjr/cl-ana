@@ -1,0 +1,20 @@
+* Add restarts to compres-generated functions which allow for retrying
+  a result, skipping a result, aborting, or halt & store results in
+  the target-table.
+
+* Allow users to specify an update strategy for re-specifying targets
+  (i.e. executing defres).  For now I've set the default to keeping
+  the old value in place but setting the status to nil ("needs to be
+  computed")
+
+* Test various graph transformations
+
+  Of special interest is the collapsing of table passes.  Approach:
+  Use new form (tabred table bindings &body body) which will be
+  interpreted as executing body inside a loop over table with bindings
+  declared outside the loop.  These bindings can be collapsed into a
+  single let/let*, and the bodies can be executed in parallel as long
+  as there are no interdependencies.  If there are interdependencies,
+  then more than one pass will be required, but this same strategy can
+  be applied to all the results which depend on first pass values, so
+  that second pass values happen in a single second pass, and so on.
