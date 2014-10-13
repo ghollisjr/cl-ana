@@ -24,6 +24,7 @@
   (:use #:cl
         #:clos-utils
 	#:tensor
+        #:binary-tree
         #:symbol-utils
         #:string-utils
 	#:list-utils

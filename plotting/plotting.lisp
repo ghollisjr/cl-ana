@@ -847,7 +847,7 @@ of up to two double-float arguments."
 ;; histogram plotting:
 
 ;; still need to allow for error bars
-(defmethod line ((histogram histogram)
+(defmethod line ((histogram rectangular-histogram)
                  &key
                    (title "")
                    (style nil style-supplied-p)
@@ -898,6 +898,31 @@ of up to two double-float arguments."
                                      "image")
                           :color color)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
+
+;; (defmethod line ((hist variable-binning-histogram)
+;;                  &key
+;;                    sampling
+;;                    (title "")
+;;                    (style nil style-supplied-p)
+;;                    fill-style
+;;                    fill-density
+;;                    color
+;;                    &allow-other-keys)
+;;   (when (not sampling)
+;;     (error "Must supply sampling information for variable-binning-histogram"))
+;;   (case (hist-ndims hist)
+;;     (1
+;;      (let ((centers
+;;             (mapcar (lambda (dim-spec)
+;;                       (let ((result nil))
+;;                         (do* ((ds dim-spec (rest ds))
+;;                               (c (/ (+ (first ds) (second ds))
+;;                                     2)
+;;                                  (/ (+ (first ds) (second ds))
+;;                                     2)))
+;;                              ((null (cdr dim-spec)) (nreverse result))
+;;                           (push c result))))
+;;                     dim-specs))
 
 ;;; Terminal type functions:
 

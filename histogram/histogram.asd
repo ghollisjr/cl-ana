@@ -34,6 +34,7 @@
                #:functional-utils
 	       #:iterate
 	       #:generic-math
+               #:binary-tree
 	       #:map
 	       #:tensor
 	       #:alexandria
@@ -43,5 +44,6 @@
 	       (:file "rectangular-histogram")
 	       (:file "contiguous-histogram")
 	       (:file "sparse-histogram")
+               (:file "variable-binning-histogram")
                (:file "categorical-histogram")
                (:file "conversion")))

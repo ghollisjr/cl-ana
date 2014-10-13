@@ -85,7 +85,7 @@ enabled."
 
 ;;;; Access functions:
 
-(defun bref (tree val &key key)
+(defun bref (tree val &key (key #'identity))
   "Returns a cons pair of node values which form the most constraining
 interval around val using key."
   (labels ((rightmost (tree)
