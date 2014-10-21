@@ -134,5 +134,3 @@
 (defvar +T0+
   #q(273.15d0 :kelvin)
   "Freezing point of water")
-
-;;(defvar 
