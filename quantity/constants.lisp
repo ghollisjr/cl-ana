@@ -21,7 +21,7 @@
 (in-package :quantity)
 
 (defvar +c+
-  #q(299792458 :meter (:second -1))
+  (* 299792458 :meter (expt :second -1))
   "Speed of light in vacuum")
 
 (defvar +G+

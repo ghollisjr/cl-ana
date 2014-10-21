@@ -41,9 +41,14 @@
     (setf unit (unit-standard-order unit))))
 
 (defmethod print-object ((q quantity) stream)
-  (format stream "#q~S" ; ~S tries to print READable formatting.
+  (format stream "(* ~{~S~^ ~})" ; ~S tries to print READable formatting.
           (cons (quantity-scale q)
-                (mklist (quantity-unit q)))))
+                (loop
+                   for u in (mklist (quantity-unit q))
+                   collecting
+                     (if (listp u)
+                         `(expt ,@u)
+                         u)))))
 
 (defun quantity-transformer-reader-macro (stream subchar arg)
   (let* ((expr (read stream t)))

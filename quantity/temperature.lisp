@@ -20,7 +20,7 @@
 ;;;; ghollisjr@gmail.com
 (in-package :quantity)
 
-;;;; Temperature units are: :farenheit, :celsius, :kelvin, and :rankine
+;;;; Temperature units are: :fahrenheit, :celsius, :kelvin, and :rankine
 
 (defun invert-linear (linear-coefs)
   "Yields the coefficients of the inverse of a linear function; i.e. A
@@ -93,52 +93,57 @@ linear function and its inverse based on coefs."
                           *linear-fn-coefs*)
                  ,invcs))))))
 
-;; (defun ,fname (x)
-;;   (+ (first ,cs)
-;;      (* (second ,cs) x)))
-;; (defun ,finvname (x)
-;;   (+ (first ,invcs)
-;;      (* (second ,invcs) x)))
-
-;;;; Required pairings:
-;;;; celsius farenheit
-;;;; celsius kelvin
-;;;; farenheit kelvin
-;;;; farenheit rankine
-;;;; celsius rankine
-;;;; kelvin rankine
-
-(deflinear celsius farenheit
-  (list (* 32 :farenheit)
-        (* 9/5 :farenheit (/ :celsius))))
+(deflinear celsius fahrenheit
+  (list 32
+        9/5))
 
 (deflinear celsius kelvin
-  (list +T0+
-        (/ :kelvin :celsius)))
+  (list (/ +T0+ :kelvin)
+        1))
 
-(deflinear farenheit kelvin
+(deflinear fahrenheit kelvin
   (linear-composition-chain
-   'farenheit 'celsius 'kelvin))
+   'fahrenheit 'celsius 'kelvin))
 
-(deflinear farenheit rankine
-  (list (* 459.67d0 :rankine)
-        (/ :rankine
-           :farenheit)))
+(deflinear fahrenheit rankine
+  (list 459.67d0
+        1))
 
 (deflinear celsius rankine
   (linear-composition-chain
-   'celsius 'farenheit 'rankine))
+   'celsius 'fahrenheit 'rankine))
 
 (deflinear kelvin rankine
   (linear-composition-chain
    'kelvin 'celsius 'rankine))
 
+(defmacro define-temperature-mult (temp-keyword)
+  `(progn
+     (defmethod-commutative mult ((x (eql ,temp-keyword)) (y number))
+       (with-slots (quantity-scale) x
+         (mult (linear-trans ,temp-keyword :kelvin y) :kelvin)))
+     (defmethod-commutative mult ((y number) (x (eql ,temp-keyword)))
+       (with-slots (quantity-scale) x
+         (mult (linear-trans ,temp-keyword :kelvin y) :kelvin)))))
+
+(define-temperature-mult :fahrenheit)
+(define-temperature-mult :celsius)
+(define-temperature-mult :rankine)
+
+(defmacro define-temperature-quantity (temp-keyword)
+  `(defmethod quantity ((x (eql ,temp-keyword)))
+     (mult 1 ,temp-keyword)))
+
+(define-temperature-quantity :fahrenheit)
+(define-temperature-quantity :celsius)
+(define-temperature-quantity :rankine)
+
 ;;;; General temperature conversion function:
 (defun convert-temperature (temp to-units)
   "Converts the temperature quantity temp into the temperature units to-units.
 
-Note that temp must have units, so (* 0 :celsius) would not work, one
-should instead use #q(0 :celsius)."
+Note that the result is unitless."
   (let* ((raw-from-units (unit-standard-form (quantity-unit temp)))
          (from-units (first (first raw-from-units))))
-    (linear-trans (keywordify from-units) (keywordify to-units) temp)))
+    (linear-trans (keywordify from-units) (keywordify to-units)
+                  (quantity-scale temp))))
