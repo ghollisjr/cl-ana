@@ -14,7 +14,8 @@ for project.  Should always be run after load-project."
               (format t "Loading table ~a~%"
                       id)
               (let ((opener (eval opener))) ; necessary eval
-                (setresfn id (funcall opener :read))))))))
+                (handler-case (setresfn id (funcall opener :read))
+                  (error () (unsetresfn id)))))))))
 
 (defun table-target? (id)
   (let ((tar (gethash id (target-table))))
