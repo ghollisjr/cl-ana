@@ -753,72 +753,79 @@ list args"
                     (or (null argstat)
                         (not (equal argval lastval))))))))))
 
-(defun makeres (&rest args)
-  "Function which compiles and executes generating function given args.
-Treat args as if they will be evaluated."
+(defun makeres (&rest all-args)
+  "Function which compiles and executes generating function given args."
   (when (not (gethash *project-id* *makeres-args*))
     (setf (gethash *project-id* *makeres-args*)
           (make-hash-table :test 'eq)))
   (when (not (gethash *project-id* *proj->par->def-last?*))
     (setf (gethash *project-id* *proj->par->def-last?*)
           (make-hash-table :test 'eq)))
-  ;; unset any results dependent on new parameter values
-  (let* ((params
-          (gethash *project-id* *params-table*))
-         (arg-map
-          (map->hash-table (plist->alist args)
-                           'eq)))
-    (loop
-       for p in params
-       do (let ((psym (first (mklist p))))
-            (multiple-value-bind (val stat)
-                (gethash (keywordify psym)
-                         arg-map)
+  ;; argument parsing:
+  (let* ((targets (if (keywordp (first all-args))
+                      (project-targets)
+                      (first all-args)))
+         (args (if (keywordp (first all-args))
+                   all-args
+                   (rest all-args))))
+    ;; unset any results dependent on new parameter values
+    (let* ((params
+            (gethash *project-id* *params-table*))
 
-              (multiple-value-bind (oldval oldstat)
-                  (gethash psym
-                           (gethash *project-id* *makeres-args*))
-                (when (par-needs-updating? psym args)
-                  (when stat
-                    (setf (gethash psym
-                                   (gethash *project-id* *makeres-args*))
-                          val))
-                  (let ((pdeps (param-dependents
-                                psym
-                                (gethash *project-id*
-                                         *target-tables*))))
-                    (loop
-                       for pdep in pdeps
-                       do
-                         (progn
-                           (unsetresfn pdep)))))
-                ;; remove from stored table if not specified and not sticky:
-                (when (and (not *sticky-pars*)
-                           (null stat))
-                  (remhash psym
-                           (gethash *project-id* *makeres-args*))))))))
-  ;; When sticky pars update args:
-  (when *sticky-pars*
-    (loop
-       for psym being the hash-keys in (gethash *project-id*
-                                                *makeres-args*)
-       do
-         (when (second
-                (multiple-value-list
-                 (gethash psym
-                          (gethash *project-id*
-                                   *makeres-args*))))
-           (setf (getf args (keywordify psym))
-                 (gethash psym
-                          (gethash *project-id*
-                                   *makeres-args*))))))
-  ;; Whenever *makeres-propogate* is non-nil, unset any results
-  ;; dependent on null-stat results
-  (when *makeres-propogate*
-    (makeres-propogate!))
+           (arg-map
+            (map->hash-table (plist->alist args)
+                             'eq)))
+      (loop
+         for p in params
+         do (let ((psym (first (mklist p))))
+              (multiple-value-bind (val stat)
+                  (gethash (keywordify psym)
+                           arg-map)
 
-  (let ((comp (compres)))
-    (apply comp args)))
+                (multiple-value-bind (oldval oldstat)
+                    (gethash psym
+                             (gethash *project-id* *makeres-args*))
+                  (when (par-needs-updating? psym args)
+                    (when stat
+                      (setf (gethash psym
+                                     (gethash *project-id* *makeres-args*))
+                            val))
+                    (let ((pdeps (param-dependents
+                                  psym
+                                  (gethash *project-id*
+                                           *target-tables*))))
+                      (loop
+                         for pdep in pdeps
+                         do
+                           (progn
+                             (unsetresfn pdep)))))
+                  ;; remove from stored table if not specified and not sticky:
+                  (when (and (not *sticky-pars*)
+                             (null stat))
+                    (remhash psym
+                             (gethash *project-id* *makeres-args*))))))))
+    ;; When sticky pars update args:
+    (when *sticky-pars*
+      (loop
+         for psym being the hash-keys in (gethash *project-id*
+                                                  *makeres-args*)
+         do
+           (when (second
+                  (multiple-value-list
+                   (gethash psym
+                            (gethash *project-id*
+                                     *makeres-args*))))
+             (setf (getf args (keywordify psym))
+                   (gethash psym
+                            (gethash *project-id*
+                                     *makeres-args*))))))
+    ;; Whenever *makeres-propogate* is non-nil, unset any results
+    ;; dependent on null-stat results
+    (when *makeres-propogate*
+      (makeres-propogate!))
+
+    (let ((comp (compres)))
+      (apply comp args))))
 
 ;;;; Utilities:
 
