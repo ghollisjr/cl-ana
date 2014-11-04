@@ -72,11 +72,8 @@ pathname)")
   (symbol-macrolet ((sublid-map
                      (gethash *project-id* *proj->lid->sublids*)))
     (clrhash sublid-map)
-    (with-open-file (sublid-file (merge-pathnames
-                                  (string-append "versions/"
-                                                 version
-                                                 "/sublid-map")
-                                  (project-path))
+    (with-open-file (sublid-file (merge-pathnames "sublid-map"
+                                                  (ensure-absolute-pathname version))
                                  :direction :input)
       (do ((line (read-line sublid-file nil nil)
                  (read-line sublid-file nil nil)))
@@ -93,11 +90,8 @@ pathname)")
   "Saves the sublid map for logged version"
   (symbol-macrolet ((sublid-map
                      (gethash *project-id* *proj->lid->sublids*)))
-    (with-open-file (sublid-file (merge-pathnames
-                                  (string-append "versions/"
-                                                 version
-                                                 "/sublid-map")
-                                  (project-path))
+    (with-open-file (sublid-file (merge-pathnames "sublid-map"
+                                                  (ensure-absolute-pathname version))
                                  :direction :output
                                  :if-does-not-exist :create
                                  :if-exists :supersede)
@@ -253,6 +247,15 @@ stored so that (next-log-id) returns an available id"
                            (directory (merge-pathnames path
                                                        "*")))))))))
 
+(defun ensure-absolute-pathname (pathname-or-string)
+  (if (pathname-absolute-p pathname-or-string)
+      (pathname pathname-or-string)
+      (make-pathname
+       :directory (list :absolute
+                        (namestring (project-path))
+                        "versions"
+                        pathname-or-string))))
+
 ;; only save results which have t-stat and non-default parameters
 (defun save-project (version-string
                      &key (if-exists :error))
@@ -265,11 +268,7 @@ open/with-open-file."
     (when (null project-path)
       (error "logres: No project path set"))
     ;; output directory handling
-    (let ((save-path (make-pathname
-                      :directory (list :absolute
-                                       (namestring project-path)
-                                       "versions"
-                                       version-string)))
+    (let ((save-path (ensure-absolute-pathname version-string))
           (res->lid (gethash (project) *proj->res->lid*)))
       (when (probe-file save-path)
         (case if-exists
@@ -385,11 +384,7 @@ open/with-open-file."
   (let* ((project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*))
          (res->lid (gethash (project) *proj->res->lid*))
-         (load-path (make-pathname
-                     :directory (list :absolute
-                                      (namestring project-path)
-                                      "versions"
-                                      (namestring version)))))
+         (load-path (ensure-absolute-pathname version)))
     ;; load *last-id*:
     (load-last-id load-path)
     ;; load working files:

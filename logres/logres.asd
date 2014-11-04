@@ -32,6 +32,7 @@
                #:functional-utils
                #:file-utils
                #:histogram
+               #:pathname-utils
                #:table
                #:reusable-table
                #:makeres

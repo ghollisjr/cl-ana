@@ -7,6 +7,7 @@
         :string-utils
         :serialization
         :histogram
+        :pathname-utils
         :table
         :reusable-table
         :makeres
