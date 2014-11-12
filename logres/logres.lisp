@@ -256,17 +256,42 @@ stored so that (next-log-id) returns an available id"
                         "versions"
                         pathname-or-string))))
 
+(defun checkout-version (version-string)
+  "Sets symlink in project-path/versions/current to point to
+version-string as absolute path or relative path from project
+directory."
+  (let ((version-path (ensure-absolute-pathname version-string))
+        (current-path
+         (make-pathname :name "current"
+                        :directory (list :absolute
+                                         (namestring (project-path))
+                                         "versions"))))
+    (when (probe-file current-path)
+      (delete-file current-path))
+    (run "ln"
+         (list "-s"
+               "-T"
+               version-path
+               current-path)))
+  nil)
+
 ;; only save results which have t-stat and non-default parameters
 (defun save-project (version-string
-                     &key (if-exists :error))
+                     &key
+                       (if-exists :error)
+                       (current-p t))
   "Saves a project to a path project-path/version-string; if-exists
 can be nil, :error or :supersede with behavior analogous to
-open/with-open-file."
+open/with-open-file.  If current-p is t, sets symlink current to point
+to this project."
   (let* ((project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*)))
     ;; are we in a project?
     (when (null project-path)
       (error "logres: No project path set"))
+    ;; set current:
+    (when current-p
+      (checkout-version version-string))
     ;; output directory handling
     (let ((save-path (ensure-absolute-pathname version-string))
           (res->lid (gethash (project) *proj->res->lid*)))
@@ -377,7 +402,8 @@ open/with-open-file."
 ;; the objects saved to keep track of and load results.
 
 ;; make sure to call load-last-id in the version directory
-(defun load-project (version)
+(defun load-project (version &key (work-p t))
+  "work-p nil = assume work files already present"
   ;; reset res->lid
   (setf (gethash (project) *proj->res->lid*)
         (make-hash-table :test 'equal))
@@ -388,17 +414,18 @@ open/with-open-file."
     ;; load *last-id*:
     (load-last-id load-path)
     ;; load working files:
-    (format t "Loading work/ files~%")
-    (let ((work-from-path (merge-pathnames "work/"
-                                           load-path))
-          (work-to-path (merge-pathnames "work/"
-                                         project-path)))
-      (when (probe-file work-to-path)
-        (sb-ext:delete-directory work-to-path :recursive t))
-      (run "cp"
-           (list "-r"
-                 (namestring work-from-path)
-                 (namestring work-to-path))))
+    (when work-p
+      (format t "Loading work/ files~%")
+      (let ((work-from-path (merge-pathnames "work/"
+                                             load-path))
+            (work-to-path (merge-pathnames "work/"
+                                           project-path)))
+        (when (probe-file work-to-path)
+          (sb-ext:delete-directory work-to-path :recursive t))
+        (run "cp"
+             (list "-r"
+                   (namestring work-from-path)
+                   (namestring work-to-path)))))
     ;; load results:
     (let ((index-lines
            (read-lines-from-pathname
@@ -557,7 +584,7 @@ open/with-open-file."
 ;;          do (format index-file "~a~%" line)))
 ;;     ;; remove content:
 ;;     (labels ((remove-target-files (lid)
-;;                (let ((sublids 
+;;                (let ((sublids
 ;;     (loop
 ;;        for line in (append (set-difference res-lines
 ;;                                            unremoved-res-lines

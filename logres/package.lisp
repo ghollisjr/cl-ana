@@ -18,6 +18,7 @@
            :set-project-path
            :save-project
            :load-project
+           :checkout-version
            :logres-ignore
            :logres-ignorefn
            :logres-ignore-by
