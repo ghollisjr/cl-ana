@@ -115,25 +115,26 @@
 
 (defun create-csv-table (filename field-names &optional (delimeter #\,))
   "Creates a CSV file to be written to as a table."
-  (let* ((file (open filename
-		     :direction :output
-		     :if-exists :supersede
-		     :if-does-not-exist :create))
-	 (row (make-hash-table :test #'equal))
-	 (table (make-instance 'csv-table
-			       :field-names field-names
-			       :file file
-			       :delimeter delimeter
-			       :row row)))
-    (setf (csv-table-field-symbols table)
-	  (table-field-symbols table))
-    (iter (for i upfrom 0)
-	  (for n in field-names)
-	  (when (not (= i 0))
-	    (format file "~a" delimeter))
-	  (format file "~a" n))
-    (format file "~%")
-    table))
+  (let ((*print-pretty* nil))
+    (let* ((file (open filename
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create))
+           (row (make-hash-table :test #'equal))
+           (table (make-instance 'csv-table
+                                 :field-names field-names
+                                 :file file
+                                 :delimeter delimeter
+                                 :row row)))
+      (setf (csv-table-field-symbols table)
+            (table-field-symbols table))
+      (iter (for i upfrom 0)
+            (for n in field-names)
+            (when (not (= i 0))
+              (format file "~a" delimeter))
+            (format file "~a" n))
+      (format file "~%")
+      table)))
 
 (defmethod table-set-field ((table csv-table) field-symbol value)
   (with-accessors ((row csv-table-row))
@@ -141,17 +142,18 @@
     (setf (gethash field-symbol row) value)))
 
 (defmethod table-commit-row ((table csv-table))
-  (with-accessors ((file csv-table-file)
-		   (row csv-table-row)
-		   (field-symbols csv-table-field-symbols)
-		   (delimeter csv-table-delimeter))
-      table
-    (iter (for i upfrom 0)
-	  (for (key value) in-hashtable row)
-	  (when (not (= i 0))
-	    (format file "~a" delimeter))
-	  (format file "~a" value))
-    (format file "~%")))
+  (let ((*print-pretty* nil))
+    (with-accessors ((file csv-table-file)
+                     (row csv-table-row)
+                     (field-symbols csv-table-field-symbols)
+                     (delimeter csv-table-delimeter))
+        table
+      (iter (for i upfrom 0)
+            (for (key value) in-hashtable row)
+            (when (not (= i 0))
+              (format file "~a" delimeter))
+            (format file "~a" value))
+      (format file "~%"))))
 
 (defmethod table-close ((table csv-table))
   (with-accessors ((file csv-table-file))

@@ -5,7 +5,9 @@
 (defvar *print-progress* nil
   "Set this to nil if you don't want to see progress messages printed;
 set this to an integer value to specify the number of rows at which to
-print a progress update message.")
+print a progress update message.  Note that this should only be used
+for tables which know their size (so CSV tables don't work with
+this).")
 
 (defun table-reduction? (expr)
   "True if expr is a dotab, ltab or tab expression"
@@ -761,8 +763,9 @@ from pass up to src."
              (print-progress
               (when *print-progress*
                 `((progn
-                    (when (zerop (the fixnum (mod ,row-var
-                                                  (the fixnum ,*print-progress*))))
+                    (when (zerop (the fixnum
+                                      (mod ,row-var
+                                           (the fixnum ,*print-progress*))))
                       (format t "Event ~a, ~$% complete~%"
                               ,row-var
                               (* 1f2
