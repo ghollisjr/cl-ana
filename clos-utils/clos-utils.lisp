@@ -23,16 +23,8 @@
 (defun slot-names (obj)
   "Returns the list of slot symbols for a structure/CLOS class
 instance."
-  ;; This is implementation dependent, so I'm including the
-  ;; implementation for those I have access to:
-  #+sbcl
-  (loop
-     for slot in (sb-pcl:class-slots (class-of obj))
-     collect (sb-pcl:slot-definition-name slot))
-  #+clisp
-  (loop
-     for slot in (clos:class-slots (class-of obj))
-     collect (clos:slot-definition-name slot)))
+  (mapcar #'c2mop:slot-definition-name
+          (c2mop:class-slots (class-of obj))))
 
 (defun slot-keyword-names (obj)
   (mapcar #'keywordify (slot-names obj)))

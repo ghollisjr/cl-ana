@@ -26,7 +26,8 @@
   written/read with standard stream objects portably."
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on (#:list-utils
+  :depends-on (#:closer-mop
+               #:list-utils
                #:symbol-utils
                #:tensor)
   :components ((:file "package")
