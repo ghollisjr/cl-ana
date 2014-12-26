@@ -123,6 +123,7 @@ The dependencies for this project are:
 * Alexandria (http://common-lisp.net/project/alexandria/)
 * iterate (http://common-lisp.net/project/iterate/)
 * antik (http://www.common-lisp.net/project/antik/)
+* closer-mop (http://common-lisp.net/project/closer/closer-mop.html)
 * cl-csv (https://github.com/AccelerationNet/cl-csv)
 * gnuplot (http://www.gnuplot.info/)
 * external-program (http://github.com/sellout/external-program)
