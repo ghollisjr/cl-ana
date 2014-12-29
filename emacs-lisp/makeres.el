@@ -9,3 +9,8 @@
           '(lambda ()
              (local-set-key [f5]
                             'makeres)))
+
+(add-hook 'slime-repl-mode-hook
+          '(lambda ()
+             (local-set-key [f5]
+                            'makeres)))
