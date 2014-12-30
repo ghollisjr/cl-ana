@@ -18,12 +18,11 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage :lorentz 
+(defpackage #:cl-ana.lorentz 
   (:use :cl
-	:linear-algebra
-	:tensor
+	:cl-ana.linear-algebra
+	:cl-ana.tensor
 	:iterate)
   (:export :lorentz-vector
 	   :make-lorentz-vector
@@ -39,4 +38,4 @@
            :gamma-from-beta2
            :four-momentum-beta-vector))
 
-(gmath:use-gmath :lorentz)
+(cl-ana.gmath:use-gmath :cl-ana.lorentz)

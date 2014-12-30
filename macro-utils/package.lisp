@@ -18,15 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:macro-utils 
+(defpackage #:cl-ana.macro-utils 
   (:use #:cl
         #:split-sequence
-        #:list-utils
-        #:string-utils
-        #:symbol-utils
-	#:alexandria)
+        #:alexandria
+        #:cl-ana.list-utils
+        #:cl-ana.string-utils
+        #:cl-ana.symbol-utils)
   (:export :inrange
            :case-equal
 	   :cond-setf

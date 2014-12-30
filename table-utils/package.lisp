@@ -19,11 +19,11 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:table-utils
+(defpackage #:cl-ana.table-utils
   (:use :cl
-        :symbol-utils
-        :string-utils
-        :table)
+        :cl-ana.symbol-utils
+        :cl-ana.string-utils
+        :cl-ana.table)
   (:export :table->plists
            :table-row->plist
            :table-copy))

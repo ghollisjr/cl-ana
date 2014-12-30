@@ -59,7 +59,7 @@
 ;;;; this, perhaps using plists to denote the structure of the
 ;;;; plotting objects.
 
-(in-package :plotting)
+(in-package :cl-ana.plotting)
 
 ;;;; I'm using a new strategy with gnuplot sessions: Each page gets
 ;;;; its own session; this way all windows stay interactive.  If the

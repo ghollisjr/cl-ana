@@ -20,7 +20,7 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:memoization 
+(defpackage #:cl-ana.memoization 
   (:use #:cl
         #:alexandria)
   (:export :memolet

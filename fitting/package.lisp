@@ -18,13 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:fitting 
+(defpackage #:cl-ana.fitting 
   (:use :cl
-	:err-prop
-	:map
-        :alexandria)
+        :alexandria
+	:cl-ana.err-prop
+	:cl-ana.map)
   (:export :fit
            :residuals
 	   :get-value-alist
@@ -40,4 +39,4 @@
            :poisson
            :poisson-alist))
 
-(gmath:use-gmath :fitting)
+(cl-ana.gmath:use-gmath :cl-ana.fitting)

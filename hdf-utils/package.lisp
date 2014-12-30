@@ -18,16 +18,15 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:hdf-utils 
+(defpackage #:cl-ana.hdf-utils 
   (:use #:cl
 	#:cffi
-	#:hdf-cffi
         #:alexandria
-        #:macro-utils
-        #:string-utils
-        #:pathname-utils)
+	#:cl-ana.hdf-cffi
+        #:cl-ana.macro-utils
+        #:cl-ana.string-utils
+        #:cl-ana.pathname-utils)
   (:export :with-cleanup          ; general use for HDF5 objects
            :with-open-dataspace   ; opens a dataspace from a dataset
            :with-create-dataspace ; creates a new dataspace

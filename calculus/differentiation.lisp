@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :calculus)
+(in-package :cl-ana.calculus)
 
 (defun diff (fn &key (prec 1d-9))
   "Returns the one-sided numerical derivative of a function."

@@ -18,12 +18,11 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; contiguous-histogram.lisp
 
 ;;;; Implements histograms with binning which is both contiguous and
 ;;;; uniform.
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 (defclass contiguous-histogram (rectangular-histogram)
   ((bin-values

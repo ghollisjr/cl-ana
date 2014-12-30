@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; linear-algebra.lisp
 
-(in-package :linear-algebra)
+(in-package :cl-ana.linear-algebra)
 
 ;;;; Matrices/vectors are simply sequences of sequences/sequences
 ;;;; since the tensor library provides the more general functionality.

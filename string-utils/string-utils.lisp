@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; string-utils.lisp
 
-(in-package :string-utils)
+(in-package :cl-ana.string-utils)
 
 (defun lispify (symbol-or-string)
   "Converts symbol or string into a string and replaces all spaces and

@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:functional-utils 
+(defpackage #:cl-ana.functional-utils 
   (:use :cl)
   (:export :flip
            :splice

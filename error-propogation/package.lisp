@@ -20,8 +20,8 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:error-propogation 
-  (:nicknames #:err-prop)
+(defpackage #:cl-ana.error-propogation 
+  (:nicknames #:cl-ana.err-prop)
   (:use :cl)
   (:export :*err-num-pretty-print* ; for print style
 	   :err-num
@@ -37,4 +37,4 @@
 	   :err-num-*
 	   :err-num-/))
 
-(gmath:use-gmath :error-propogation)
+(cl-ana.gmath:use-gmath :cl-ana.error-propogation)

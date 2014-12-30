@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :quantity)
+
+(in-package :cl-ana.quantity)
 
 (defun convert-units (quantity new-units)
   "Gets the scale of quantity if expressed in new-units.

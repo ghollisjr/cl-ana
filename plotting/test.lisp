@@ -18,15 +18,16 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'plotting)
 
-(require 'fitting)
+(require 'cl-ana.plotting)
+
+(require 'cl-ana.fitting)
 
 (require 'alexandria)
 
-(in-package :plotting)
+(in-package :cl-ana.plotting)
 
-(use-package :fitting)
+(use-package :cl-ana.fitting)
 
 ;; Long example of how to use raw types for structure:
 (defparameter *page*

@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :gsl-cffi)
+
+(in-package :cl-ana.gsl-cffi)
 
 (defconstant +GSL-EOF+ 32
   "End-of-file return value for gsl functions")

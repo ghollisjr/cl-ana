@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 ;; Each bin low edge is mapped to the count of for that bin.  The low
 ;; edge is chosen so that

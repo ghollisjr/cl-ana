@@ -18,13 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; histogram.lisp
 
 ;;;; Histogram interface.  Most of the interesting mathematical
 ;;;; features like summing, multiplying, scaling histograms are done
 ;;;; via the generic math (gmath) library.
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 (defclass histogram ()
   ((ndims
@@ -312,12 +311,12 @@ data as either atom for 1-D or lists for any dimensionality."
                  result)
     (let ((lrbody
            `(let ((,all-centers
-                   (histogram::set->list
-                    (let ((,res (histogram::empty-set)))
-                      (reduce #'histogram::set-insert
+                   (cl-ana.histogram::set->list
+                    (let ((,res (cl-ana.histogram::empty-set)))
+                      (reduce #'cl-ana.histogram::set-insert
                               (mapcar #'cdr (hbv ,a))
                               :initial-value ,res)
-                      (reduce #'histogram::set-insert
+                      (reduce #'cl-ana.histogram::set-insert
                               (mapcar #'cdr (hbv ,b))
                               :initial-value ,res))))
                   (,result (copy-hist ,a t)))
@@ -372,12 +371,12 @@ data as either atom for 1-D or lists for any dimensionality."
 (defmethod protected-div ((a histogram) (b histogram)
                           &key (protected-value 0))
   (let ((all-centers
-         (histogram::set->list
-          (let ((res (histogram::empty-set)))
-            (reduce #'histogram::set-insert
+         (cl-ana.histogram::set->list
+          (let ((res (cl-ana.histogram::empty-set)))
+            (reduce #'cl-ana.histogram::set-insert
                     (mapcar #'cdr (hbv a))
                     :initial-value res)
-            (reduce #'histogram::set-insert
+            (reduce #'cl-ana.histogram::set-insert
                     (mapcar #'cdr (hbv b))
                     :initial-value res))))
         (result (copy-hist a t)))

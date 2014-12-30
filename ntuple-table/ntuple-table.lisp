@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; ntuple-table.lisp
 
-(in-package :ntuple-table)
+(in-package :cl-ana.ntuple-table)
 
 (defclass ntuple-table (typed-table)
   ((ntuple
@@ -86,8 +85,8 @@ limitation of the ntuple file format itself."
 (defmethod table-load-next-row ((table ntuple-table))
   (with-accessors ((ntuple ntuple-table-ntuple))
       table
-    (let ((read-status (gsl-cffi:gsl-ntuple-read ntuple)))
-      (not (equal read-status gsl-cffi:+GSL-EOF+)))))
+    (let ((read-status (cl-ana.gsl-cffi:gsl-ntuple-read ntuple)))
+      (not (equal read-status cl-ana.gsl-cffi:+GSL-EOF+)))))
 
 ;; (defmethod table-get-field ((table ntuple-table) field-symbol)
 ;;   (with-accessors ((row typed-table-row-pointer)

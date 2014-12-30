@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:string-utils 
+(defpackage #:cl-ana.string-utils 
   (:use :cl)
   (:export :mkstr
            :lispify

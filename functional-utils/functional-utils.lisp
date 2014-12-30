@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :functional-utils)
+(in-package :cl-ana.functional-utils)
 
 (defun flip (f)
   "Takes a function of two parameters and creates a new function which

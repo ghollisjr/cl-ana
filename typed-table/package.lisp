@@ -18,17 +18,16 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:typed-table 
+(defpackage #:cl-ana.typed-table 
   (:use #:cl
-	#:list-utils
-	#:string-utils
-        #:symbol-utils
-	#:cffi
-	#:table
-	#:typespec
-	#:alexandria)
+        #:cffi
+        #:alexandria
+	#:cl-ana.list-utils
+	#:cl-ana.string-utils
+        #:cl-ana.symbol-utils
+	#:cl-ana.table
+	#:cl-ana.typespec)
   (:export :typed-table
 	   :table-field-specs
            :typed-table-row-cstruct

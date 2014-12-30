@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; list-utils.lisp
 
-(in-package :list-utils)
+(in-package :cl-ana.list-utils)
 
 (defun range (start end &optional (step 1))
   (labels

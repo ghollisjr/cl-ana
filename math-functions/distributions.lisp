@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :math-functions)
+
+(in-package :cl-ana.math-functions)
 
 (defmath erf (x)
   (:documentation "the error function")

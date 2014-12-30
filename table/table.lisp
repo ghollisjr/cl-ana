@@ -37,7 +37,7 @@
 ;;;; table-get-field function after accessing the appropriate table
 ;;;; from the appropriate row block.
 
-(in-package :table)
+(in-package :cl-ana.table)
 
 (declaim (optimize (speed 2)
                    (safety 1)

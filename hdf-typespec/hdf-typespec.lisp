@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; hdf-typespec.lisp
 
-(in-package :hdf-typespec)
+(in-package :cl-ana.hdf-typespec)
 
 ;; defines the structure as an hdf type if necessary from the typespec.
 (defun-memoized typespec->hdf-type (typespec)

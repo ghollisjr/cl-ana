@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :int-char)
+
+(in-package :cl-ana.int-char)
 
 (defparameter *printable-ascii-codes*
   (list

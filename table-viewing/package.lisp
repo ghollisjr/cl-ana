@@ -18,18 +18,17 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:table-viewing
+(defpackage #:cl-ana.table-viewing
   (:use #:cl
 	#:alexandria
-        #:list-utils
-        #:string-utils
-        #:macro-utils
-        #:table
-        #:histogram
-        #:plotting)
+        #:cl-ana.list-utils
+        #:cl-ana.string-utils
+        #:cl-ana.macro-utils
+        #:cl-ana.table
+        #:cl-ana.histogram
+        #:cl-ana.plotting)
   (:export :table-view
            :table-easy-view))
 
-(gmath:use-gmath :table-viewing)
+(cl-ana.gmath:use-gmath :cl-ana.table-viewing)

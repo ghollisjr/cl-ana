@@ -18,22 +18,21 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:hdf-table 
+(defpackage #:cl-ana.hdf-table 
   (:use #:cl
-	#:list-utils
 	#:cffi
-	#:hdf-utils
-	#:hdf-cffi
-	#:table
-	#:typed-table
-	#:typespec
-	#:hdf-typespec
-	#:string-utils
-	#:functional-utils
-	#:alexandria
-	#:binary-tree)
+        #:alexandria
+        #:cl-ana.list-utils
+	#:cl-ana.hdf-utils
+	#:cl-ana.hdf-cffi
+	#:cl-ana.table
+	#:cl-ana.typed-table
+	#:cl-ana.typespec
+	#:cl-ana.hdf-typespec
+	#:cl-ana.string-utils
+	#:cl-ana.functional-utils
+        #:cl-ana.binary-tree)
   (:export :hdf-table
            :hdf-table-nrows
 	   :open-hdf-table

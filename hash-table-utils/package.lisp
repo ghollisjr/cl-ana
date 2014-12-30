@@ -19,13 +19,10 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:hash-table-utils
+(defpackage #:cl-ana.hash-table-utils
   (:use :cl)
   (:export :hash-table->alist
            :hash-keys
            :hash-values
            :hmap
            :alist->hash-table))
-;; :copy-hash-table))
-;; 
-;; leaving in case alexandria's doesn't do things quite right

@@ -18,9 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'typespec)
 
-(in-package :typespec)
+(require 'cl-ana.typespec)
+
+(in-package :cl-ana.typespec)
 
 (defparameter *ts* '(:compound
                      ("x" . (:array :double 3 3))

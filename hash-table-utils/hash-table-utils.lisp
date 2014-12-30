@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :hash-table-utils)
+(in-package :cl-ana.hash-table-utils)
 
 (defun hash-table->alist (hash-table)
   (loop

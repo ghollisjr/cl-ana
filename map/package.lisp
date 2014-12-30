@@ -20,8 +20,8 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:map 
+(defpackage #:cl-ana.map 
   (:use #:cl
-        #:hash-table-utils)
+        #:cl-ana.hash-table-utils)
   (:export :map->alist
            :map->hash-table))

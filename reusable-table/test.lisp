@@ -18,13 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'reusable-table)
 
-(require 'hdf-table)
+(require 'cl-ana.reusable-table)
 
-(in-package :hdf-table)
+(require 'cl-ana.hdf-table)
 
-(use-package 'reusable-table)
+(in-package :cl-ana.hdf-table)
+
+(use-package 'cl-ana.reusable-table)
 
 (defvar *table*
   (wrap-for-reuse

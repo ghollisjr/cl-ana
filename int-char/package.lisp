@@ -18,6 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:int-char
+(defpackage #:cl-ana.int-char
   (:use :cl)
   (:export :int-char))

@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; hdf-cffi.lisp
 
-(in-package :hdf-cffi)
+(in-package :cl-ana.hdf-cffi)
 
 (define-foreign-library hdf5
   (t (:default "libhdf5")))

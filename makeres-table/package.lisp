@@ -1,17 +1,17 @@
-(defpackage #:makeres-table
+(defpackage #:cl-ana.makeres-table
   (:use :cl
-        :list-utils
-        :macro-utils
-        :table
-        :reusable-table
-        :hdf-utils
-        :csv-table
-        :ntuple-table
-        :hdf-table
-        :hash-table-utils
-        :string-utils
-        :makeres
-        :makeres-macro)
+        :cl-ana.list-utils
+        :cl-ana.macro-utils
+        :cl-ana.table
+        :cl-ana.reusable-table
+        :cl-ana.hdf-utils
+        :cl-ana.csv-table
+        :cl-ana.ntuple-table
+        :cl-ana.hdf-table
+        :cl-ana.hash-table-utils
+        :cl-ana.string-utils
+        :cl-ana.makeres
+        :cl-ana.makeres-macro)
   (:export
    ;; table reduction operators:
    :dotab

@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :package-utils)
+
+(in-package :cl-ana.package-utils)
 
 (defun shadowing-use-package (from-package &optional to-package)
   "shadowing-imports all the exported symbols from gmath into the

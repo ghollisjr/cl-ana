@@ -19,10 +19,10 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:calculus
+(defpackage #:cl-ana.calculus
   (:use :cl)
   (:export :diff
            :newton
            :invert))
 
-(gmath:use-gmath :calculus)
+(cl-ana.gmath:use-gmath :cl-ana.calculus)

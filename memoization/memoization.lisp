@@ -18,7 +18,6 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; memoization.lisp
 
 ;;; Memoized functions remember the previous calls of the function and
 ;;; look-up the return value from the last time the function was
@@ -29,7 +28,7 @@
 ;;; I am still unsure whether or not to expose access to the
 ;;; memoization hash table, at the moment it is not exposed.
 
-(in-package :memoization)
+(in-package :cl-ana.memoization)
 
 (defvar *memoized-map* (make-hash-table :test 'equal)
   "Hash table mapping each memoized function to its value hash

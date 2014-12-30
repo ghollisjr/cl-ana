@@ -18,9 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'ntuple-table)
 
-(in-package :ntuple-table)
+(require 'cl-ana.ntuple-table)
+
+(in-package :cl-ana.ntuple-table)
 
 (defparameter *table*
   (create-ntuple-table "/home/ghollisjr/test.dat"

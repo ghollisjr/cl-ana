@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :binary-tree)
+
+(in-package :cl-ana.binary-tree)
 
 ;;; Binary Tree: (value left-child right-child numvalues)
 

@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :histogram)
+
+(in-package :cl-ana.histogram)
 
 (defun sparse->contiguous (histogram)
   "converts a sparse histogram into a contiguous one.  Note that this

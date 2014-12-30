@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :table-viewing)
+
+(in-package :cl-ana.table-viewing)
 
 (defun table-view (table fields bin-specs &key
                                             (processor #'list)

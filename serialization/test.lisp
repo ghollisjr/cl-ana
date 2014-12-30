@@ -18,6 +18,7 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
+
 (require 'cl-ana)
 
 (in-package :cl-ana)

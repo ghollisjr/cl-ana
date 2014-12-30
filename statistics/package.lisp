@@ -18,11 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:statistics 
+
+(defpackage #:cl-ana.statistics 
   (:use :cl
-        :macro-utils
-        :list-utils
-        :histogram)
+        :cl-ana.macro-utils
+        :cl-ana.list-utils
+        :cl-ana.histogram)
   (:shadow :mean
            :standard-deviation)
   (:export :mean
@@ -41,4 +42,4 @@
            :percentiles
            :qq-plot))
 
-(gmath:use-gmath :statistics)
+(cl-ana.gmath:use-gmath :cl-ana.statistics)

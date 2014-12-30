@@ -18,9 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'csv-table)
 
-(in-package :csv-table)
+(require 'cl-ana.csv-table)
+
+(in-package :cl-ana.csv-table)
 
 (defparameter *table*
   (make-csv-table "/home/ghollisjr/test.csv"

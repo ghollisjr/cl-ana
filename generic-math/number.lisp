@@ -18,11 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; number.lisp
+
+(in-package :cl-ana.generic-math)
 
 ;;;; Implements generic math functions for numbers
-
-(in-package :generic-math)
 
 ;;; I know I could create a macro to automate this redundant code,
 ;;; maybe I will at some point, but I don't want to obfuscate the code

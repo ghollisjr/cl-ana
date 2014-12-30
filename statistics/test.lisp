@@ -18,9 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(require 'statistics)
 
-(in-package :statistics)
+(require 'cl-ana.statistics)
+
+(in-package :cl-ana.statistics)
 
 (print
  (moving-average (list 1f0 2f0 3f0 4f0 5f0 6f0)

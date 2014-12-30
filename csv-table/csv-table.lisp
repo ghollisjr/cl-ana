@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :csv-table)
+(in-package :cl-ana.csv-table)
 
 (defclass csv-table (table)
   ((file

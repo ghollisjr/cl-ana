@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :symbol-utils)
+
+(in-package :cl-ana.symbol-utils)
 
 (defun keywordify (symbol-or-string)
   "Returns the keyword version of a symbol or string."

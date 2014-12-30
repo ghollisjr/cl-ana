@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :table-utils)
+(in-package :cl-ana.table-utils)
 
 (defun table->plists (table &key
                               field-names

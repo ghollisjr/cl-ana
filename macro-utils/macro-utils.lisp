@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; macro-utils.lisp
 
-(in-package :macro-utils)
+(in-package :cl-ana.macro-utils)
 
 ;; with-gensyms provided by Alexandria
 

@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; hdf-table-chain.lisp
 
-(in-package :hdf-table)
+(in-package :cl-ana.hdf-table)
 
 (declaim (optimize (speed 2)
                    (safety 1)

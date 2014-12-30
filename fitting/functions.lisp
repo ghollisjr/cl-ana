@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; functions.lisp
 
-(in-package :fitting)
+(in-package :cl-ana.fitting)
 
 ;;;; Defines various fit functions for use with the least squares
 ;;;; fitting function

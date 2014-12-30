@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 ;; I've realized that histograms are an instance of a more general
 ;; idea: Categorization/Grouping.  The categories are the bin ranges,

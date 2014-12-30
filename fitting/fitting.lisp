@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; fitting.lisp
 
-(in-package :fitting)
+(in-package :cl-ana.fitting)
 
 ;;;; Provides function fit which is a high level interface to the GSLL
 ;;;; nonlinear-least-squares functionality.  Includes numeric

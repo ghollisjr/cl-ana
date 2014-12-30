@@ -19,11 +19,11 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:csv-table 
-  (:use :cl
-	:table
-	:cl-csv
-	:iterate)
+(defpackage #:cl-ana.csv-table 
+  (:use :cl-csv
+        :iterate
+        :cl
+	:cl-ana.table)
   (:export :csv-table
 	   :create-csv-table
 	   :open-csv-table

@@ -25,41 +25,41 @@
   Lisp providing tabular & binned data analysis along with nonlinear
   least squares fitting & visualization."
   :license "GPLv3"
-  :depends-on (#:pathname-utils
-               #:package-utils
-               #:generic-math
-               #:math-functions
-               #:calculus
-               #:binary-tree
+  :depends-on (#:cl-ana.pathname-utils
+               #:cl-ana.package-utils
+               #:cl-ana.generic-math
+               #:cl-ana.math-functions
+               #:cl-ana.calculus
+               #:cl-ana.binary-tree
                ;; Make sure to place tensor after defining all gmath
                ;; generic functions
-               #:tensor
-               #:error-propogation
-               #:quantity
-               #:table
-               #:table-utils
-               #:hdf-table
-               #:ntuple-table
-               #:csv-table
-               #:reusable-table
-               #:linear-algebra
-               #:lorentz
-               #:histogram
-               #:fitting
-               #:file-utils
-               #:statistics
-               #:plotting
-               #:table-viewing
-               #:int-char
-               #:clos-utils
-               #:serialization
-               #:hash-table-utils
-               #:map
+               #:cl-ana.tensor
+               #:cl-ana.error-propogation
+               #:cl-ana.quantity
+               #:cl-ana.table
+               #:cl-ana.table-utils
+               #:cl-ana.hdf-table
+               #:cl-ana.ntuple-table
+               #:cl-ana.csv-table
+               #:cl-ana.reusable-table
+               #:cl-ana.linear-algebra
+               #:cl-ana.lorentz
+               #:cl-ana.histogram
+               #:cl-ana.fitting
+               #:cl-ana.file-utils
+               #:cl-ana.statistics
+               #:cl-ana.plotting
+               #:cl-ana.table-viewing
+               #:cl-ana.int-char
+               #:cl-ana.clos-utils
+               #:cl-ana.serialization
+               #:cl-ana.hash-table-utils
+               #:cl-ana.map
                ;; makeres
-               :makeres
-               :makeres-macro
-               :makeres-table
-               :makeres-graphviz
-               :logres
-               :logres-table)
+               #:cl-ana.makeres
+               #:cl-ana.makeres-macro
+               #:cl-ana.makeres-table
+               #:cl-ana.makeres-graphviz
+               #:cl-ana.logres
+               #:cl-ana.logres-table)
   :components ((:file "package")))

@@ -18,13 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:serialization
+
+(defpackage #:cl-ana.serialization
   (:use :cl
-        :histogram
-        :hdf-utils
-        :macro-utils
-        :typespec
-        :table
-        :hdf-table)
+        :cl-ana.histogram
+        :cl-ana.hdf-utils
+        :cl-ana.macro-utils
+        :cl-ana.typespec
+        :cl-ana.table
+        :cl-ana.hdf-table)
   (:export :write-histogram
            :read-histogram))

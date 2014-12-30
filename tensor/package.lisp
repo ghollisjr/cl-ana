@@ -20,13 +20,13 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:tensor 
+(defpackage #:cl-ana.tensor 
   (:use #:cl
-	#:list-utils
-        #:symbol-utils
         #:alexandria
-        ;;debug
-        #:macro-utils)
+	#:cl-ana.list-utils
+        #:cl-ana.symbol-utils
+        ;; debug
+        #:cl-ana.macro-utils)
   (:export :make-tensor
            :function->tensor
 	   :tensor-ref
@@ -43,4 +43,4 @@
 	   :sequencep
 	   :tensor-contract))
 
-(gmath:use-gmath :tensor)
+(cl-ana.gmath:use-gmath :cl-ana.tensor)

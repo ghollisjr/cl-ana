@@ -30,7 +30,7 @@
 ;;;; It can safely be used with do-table since table-load-next-row
 ;;;; still returns nil when appropriate.
 
-(in-package :reusable-table)
+(in-package :cl-ana.reusable-table)
 
 (defclass reusable-table ()
   ((creation-fn

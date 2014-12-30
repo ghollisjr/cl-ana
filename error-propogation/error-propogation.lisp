@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :err-prop)
+(in-package :cl-ana.err-prop)
 
 (defclass err-num ()
   ((val

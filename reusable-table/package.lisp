@@ -18,11 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:reusable-table 
+(defpackage #:cl-ana.reusable-table 
   (:use :cl
-	:table)
+	:cl-ana.table)
   (:export :wrap-for-reuse
            :reusable-table
            :make-reusable-table

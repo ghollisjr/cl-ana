@@ -20,7 +20,7 @@
 ;;;; ghollisjr@gmail.com
 ;;;; map.lisp
 
-(in-package :map)
+(in-package :cl-ana.map)
 
 ;;;; A map is any object which represents or can be represented by the
 ;;;; mapping from one value to another; a two good examples are alists

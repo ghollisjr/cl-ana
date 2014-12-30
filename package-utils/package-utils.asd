@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(asdf:defsystem #:package-utils
+
+(asdf:defsystem #:cl-ana.package-utils
   :serial t
   :author "Gary Hollis"
   :license "GPLv3"

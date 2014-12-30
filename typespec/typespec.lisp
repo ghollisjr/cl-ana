@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; typespec.lisp
 
-(in-package :typespec)
+(in-package :cl-ana.typespec)
 
 (declaim (optimize (speed 3)
                    (safety 1)

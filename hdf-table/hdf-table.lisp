@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :hdf-table)
+(in-package :cl-ana.hdf-table)
 
 ;;; NOTE: I am not currently closing the H5T types after reading
 ;;; information from them.  I need to extend the memoization library

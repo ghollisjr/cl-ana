@@ -19,9 +19,9 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(require 'hdf-table)
+(require 'cl-ana.hdf-table)
 
-(in-package :hdf-table)
+(in-package :cl-ana.hdf-table)
 
 (defun hdf-type-test ()
   (hdf-type->typespec

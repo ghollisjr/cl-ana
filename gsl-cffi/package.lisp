@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:gsl-cffi 
+(defpackage #:cl-ana.gsl-cffi 
   (:use :cl
 	:cffi)
   (:export :gsl-ntuple-read

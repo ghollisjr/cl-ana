@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:package-utils
+
+(defpackage #:cl-ana.package-utils
   (:use :cl
         :alexandria)
   (:export :shadowing-use-package

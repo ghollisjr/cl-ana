@@ -18,13 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:generic-math 
-  (:nicknames :gmath)
+(defpackage #:cl-ana.generic-math 
+  (:nicknames :cl-ana.gmath)
   (:use :cl
-        :package-utils
-	:list-utils)
+        :cl-ana.package-utils
+	:cl-ana.list-utils)
   (:shadow :incf
 	   :decf
 	   :+

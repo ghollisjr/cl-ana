@@ -18,12 +18,11 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:linear-algebra 
+(defpackage #:cl-ana.linear-algebra 
   (:use #:cl
-	#:tensor
-	#:list-utils)
+	#:cl-ana.tensor
+	#:cl-ana.list-utils)
   (:export :make-vector
 	   :make-matrix
 	   :vector->matrix
@@ -36,4 +35,4 @@
            :theta
            :cross-product))
 
-(gmath:use-gmath :linear-algebra)
+(cl-ana.gmath:use-gmath :cl-ana.linear-algebra)

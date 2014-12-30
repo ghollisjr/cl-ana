@@ -20,15 +20,15 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:hdf-typespec 
+(defpackage #:cl-ana.hdf-typespec 
   (:use :cl
 	:cffi
-	:list-utils
-	:string-utils
-        :symbol-utils
-	:memoization
-	:hdf-cffi
-	:typespec
+	:cl-ana.list-utils
+	:cl-ana.string-utils
+        :cl-ana.symbol-utils
+	:cl-ana.memoization
+	:cl-ana.hdf-cffi
+	:cl-ana.typespec
 	:alexandria)
   (:export :typespec->hdf-type
 	   :hdf-type->typespec))

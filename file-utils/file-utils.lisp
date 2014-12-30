@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :file-utils)
+
+(in-package :cl-ana.file-utils)
 
 (defun read-lines-from-file (file)
   (loop

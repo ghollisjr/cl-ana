@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; plist-table.lisp
 
-(in-package :table)
+(in-package :cl-ana.table)
 
 ;;;; plist-table: A table created in-memory from a list of plists.
 ;;;; Not meant for high-performance computing, but can be useful.

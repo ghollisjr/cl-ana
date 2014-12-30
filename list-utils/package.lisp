@@ -18,13 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:list-utils 
+(defpackage #:cl-ana.list-utils 
   (:use :cl
-        :string-utils
-	:functional-utils
-        :alexandria)
+        :alexandria
+        :cl-ana.string-utils
+	:cl-ana.functional-utils)
   (:export :range
 	   :zip
            :lzip

@@ -18,23 +18,22 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage :histogram 
+(defpackage :cl-ana.histogram 
   (:use #:cl
-        #:clos-utils
-	#:tensor
-        #:binary-tree
-        #:symbol-utils
-        #:string-utils
-	#:list-utils
-        #:hash-table-utils
-	#:macro-utils
-        #:functional-utils
-	#:iter
+        #:iter
 	#:alexandria
-	#:fitting
-	#:map)
+        #:cl-ana.clos-utils
+	#:cl-ana.tensor
+        #:cl-ana.binary-tree
+        #:cl-ana.symbol-utils
+        #:cl-ana.string-utils
+	#:cl-ana.list-utils
+        #:cl-ana.hash-table-utils
+	#:cl-ana.macro-utils
+        #:cl-ana.functional-utils
+        #:cl-ana.fitting
+	#:cl-ana.map)
   (:export :bin ; useful for quickly plotting small datasets
            :histogram
            :rectangular-histogram
@@ -87,4 +86,4 @@
            :discrete-dim-spec
            :dds))
 
-(gmath:use-gmath :histogram)
+(cl-ana.gmath:use-gmath :cl-ana.histogram)

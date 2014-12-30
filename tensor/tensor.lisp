@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; tensor.lisp
 
-(in-package :tensor)
+(in-package :cl-ana.tensor)
 
 ;;;; A tensor is just a recursively structured sequence of sequences
 ;;;; of ....  It's useful for implementing things like contiguous

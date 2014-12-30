@@ -19,9 +19,9 @@
 ;;;; You may contact Gary Hollis via email at
 ;;;; ghollisjr@gmail.com
 
-(require 'makeres-macro)
+(require 'cl-ana.makeres-macro)
 
-(in-package makeres-macro)
+(in-package cl-ana.makeres-macro)
 
 (in-project makeres-macro)
 

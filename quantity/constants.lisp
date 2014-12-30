@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :quantity)
+
+(in-package :cl-ana.quantity)
 
 (defvar +c+
   (* 299792458 :meter (expt :second -1))

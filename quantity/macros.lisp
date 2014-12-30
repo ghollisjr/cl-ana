@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :quantity)
+
+(in-package :cl-ana.quantity)
 
 ;;;; This is in its own file since it needs to be available at compile
 ;;;; time; easiest fix since it was already fairly sizable code

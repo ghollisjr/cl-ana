@@ -20,17 +20,17 @@
 ;;;; ghollisjr@gmail.com
 ;;;; package.lisp
 
-(defpackage #:plotting
+(defpackage #:cl-ana.plotting
   (:use :cl
-        :math-functions
-        :error-propogation
-        :gnuplot-interface
-	:map
-        :string-utils
-        :list-utils
-        :macro-utils
-        :histogram
-        :tensor)
+        :cl-ana.math-functions
+        :cl-ana.error-propogation
+        :cl-ana.gnuplot-interface
+	:cl-ana.map
+        :cl-ana.string-utils
+        :cl-ana.list-utils
+        :cl-ana.macro-utils
+        :cl-ana.histogram
+        :cl-ana.tensor)
   (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
            :restart-gnuplot-sessions
@@ -92,4 +92,4 @@
            :eps-term
            :pdf-term))
 
-(gmath:use-gmath :plotting)
+(cl-ana.gmath:use-gmath :cl-ana.plotting)

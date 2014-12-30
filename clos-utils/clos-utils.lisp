@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :clos-utils)
+
+(in-package :cl-ana.clos-utils)
 
 (defun slot-names (obj)
   "Returns the list of slot symbols for a structure/CLOS class

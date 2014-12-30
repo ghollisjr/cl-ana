@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :statistics)
+
+(in-package :cl-ana.statistics)
 
 (defgeneric mean (data)
   (:documentation "Returns mean (and count) of data")

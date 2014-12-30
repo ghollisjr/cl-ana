@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:file-utils 
+
+(defpackage #:cl-ana.file-utils 
   (:use :cl)
   (:export :read-lines-from-file
            :read-lines-from-pathname

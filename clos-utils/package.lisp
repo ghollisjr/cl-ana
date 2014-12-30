@@ -18,11 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:clos-utils
+
+(defpackage #:cl-ana.clos-utils
   (:use :cl
-        :tensor
-        :list-utils
-        :symbol-utils)
+        :cl-ana.tensor
+        :cl-ana.list-utils
+        :cl-ana.symbol-utils)
   (:export :slot-names
            :slot-keyword-names
            :slot-values

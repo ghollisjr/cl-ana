@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; hdf-utils.lisp
 
-(in-package :hdf-utils)
+(in-package :cl-ana.hdf-utils)
 
 ;;;; Still need to fix the with-open-hdf-file macro to make use of the
 ;;;; open-hdf-file and close-hdf-file functions.

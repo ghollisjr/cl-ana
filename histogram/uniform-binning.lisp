@@ -18,12 +18,11 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; uniform-binning.lisp
 
 ;;;; Provides common functions for contiguous-histogram and
 ;;;; sparse-histogram due to uniform binning
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
  
 (defun get-bin-index (data-list bin-specs)
   "Computes the bin-index-list from the data-list (a data point).

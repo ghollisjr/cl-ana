@@ -1,4 +1,4 @@
-(defpackage #:pathname-utils
+(defpackage #:cl-ana.pathname-utils
   (:use :cl)
   (:export :pathname-absolute-p
            :pathname-relative-p

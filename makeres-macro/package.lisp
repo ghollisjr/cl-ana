@@ -19,10 +19,10 @@
 ;;;; You may contact Gary Hollis via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:makeres-macro
+(defpackage #:cl-ana.makeres-macro
   (:use :cl
-        :list-utils
-        :makeres)
+        :cl-ana.list-utils
+        :cl-ana.makeres)
   (:export :define-res-macro
            :expand-res-macros
            :add-binding-ops

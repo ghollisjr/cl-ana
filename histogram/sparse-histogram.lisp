@@ -18,11 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; sparse-histogram.lisp
 
 ;;;; Implements sparse histogram with uniform binning
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 (defclass sparse-histogram (rectangular-histogram)
   ((bin-value-map

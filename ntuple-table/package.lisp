@@ -18,13 +18,12 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:ntuple-table 
+(defpackage #:cl-ana.ntuple-table 
   (:use :cl
 	:cffi
-	:table
-        :typed-table
-	:typespec)
+	:cl-ana.table
+        :cl-ana.typed-table
+	:cl-ana.typespec)
   (:export :open-ntuple-table
 	   :create-ntuple-table))

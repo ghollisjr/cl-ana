@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :quantity)
+
+(in-package :cl-ana.quantity)
 
 ;; These are common metric units which do not officially belong to the
 ;; S.I. unit system.

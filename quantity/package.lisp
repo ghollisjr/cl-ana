@@ -18,13 +18,14 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:quantity
+
+(defpackage #:cl-ana.quantity
   (:use :cl
         :alexandria
-        :list-utils
-        :macro-utils
-        :symbol-utils
-        :error-propogation)
+        :cl-ana.list-utils
+        :cl-ana.macro-utils
+        :cl-ana.symbol-utils
+        :cl-ana.error-propogation)
   (:export
    ;; Unit:
    :define-unit
@@ -84,4 +85,4 @@
    :+vsound+
    :+T0+))
 
-(gmath:use-gmath :quantity)
+(cl-ana.gmath:use-gmath :cl-ana.quantity)

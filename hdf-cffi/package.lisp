@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; package.lisp
 
-(defpackage #:hdf-cffi 
+(defpackage #:cl-ana.hdf-cffi 
   (:use :cl :cffi)
   (:export
    ;; hdf data types:

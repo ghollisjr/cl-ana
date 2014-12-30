@@ -23,7 +23,7 @@
 ;;;; IMPORTANT NOTES
 ;;;;
 ;;;; To use the symbols from generic-math in your program, just place
-;;;; (gmath:use-gmath <package-designator>) above your code to
+;;;; (cl-ana.gmath:use-gmath <package-designator>) above your code to
 ;;;; shadowing-import gmath functions into the package you specify.
 ;;;; It's the best way I've come up with so far for easily replacing
 ;;;; the cl functions like +, -, ....  My usual routine is to place it
@@ -43,12 +43,12 @@
 ;;;; TODO:
 ;;;; * Implement the inverse trig functions
 
-(in-package :generic-math)
+(in-package :cl-ana.generic-math)
 
 (defun use-gmath (package)
   "shadowing-imports all the exported symbols from gmath into the
   current package"
-  (shadowing-use-package :generic-math package))
+  (shadowing-use-package :cl-ana.generic-math package))
 
 (defvar *gmath-generic-map* (make-hash-table :test 'equal)
   "Hash table mapping generic function symbols to the argument

@@ -18,64 +18,65 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
+
 (defpackage #:cl-ana
   (:use :cl))
 
 (in-package :cl-ana)
 
 (defvar *cl-ana-package-names*
-  (list :pathname-utils
-        :package-utils
-        :generic-math
-        :binary-tree
-        :csv-table
-        :math-functions
-        :calculus
-        :tensor
-        :error-propogation
-        :quantity
-        :file-utils
-        :fitting
-        :functional-utils
-        :gnuplot-interface
-        :gsl-cffi
-        :hdf-cffi
-        :hdf-table
-        :hdf-typespec
-        :hdf-utils
-        :histogram
-        :linear-algebra
-        :list-utils
-        :lorentz
-        :macro-utils
-        :map
-        :hash-table-utils
-        :memoization
-        :ntuple-table
-        :plotting
-        :reusable-table
-        :statistics
-        :string-utils
-        :symbol-utils
-        :symbol-utils
-        :table
-        :table-utils
-        :table-viewing
-        :typed-table
-        :typespec
-        :int-char
-        :clos-utils
-        :serialization
+  (list :cl-ana.pathname-utils
+        :cl-ana.package-utils
+        :cl-ana.generic-math
+        :cl-ana.binary-tree
+        :cl-ana.csv-table
+        :cl-ana.math-functions
+        :cl-ana.calculus
+        :cl-ana.tensor
+        :cl-ana.error-propogation
+        :cl-ana.quantity
+        :cl-ana.file-utils
+        :cl-ana.fitting
+        :cl-ana.functional-utils
+        :cl-ana.gnuplot-interface
+        :cl-ana.gsl-cffi
+        :cl-ana.hdf-cffi
+        :cl-ana.hdf-table
+        :cl-ana.hdf-typespec
+        :cl-ana.hdf-utils
+        :cl-ana.histogram
+        :cl-ana.linear-algebra
+        :cl-ana.list-utils
+        :cl-ana.lorentz
+        :cl-ana.macro-utils
+        :cl-ana.map
+        :cl-ana.hash-table-utils
+        :cl-ana.memoization
+        :cl-ana.ntuple-table
+        :cl-ana.plotting
+        :cl-ana.reusable-table
+        :cl-ana.statistics
+        :cl-ana.string-utils
+        :cl-ana.symbol-utils
+        :cl-ana.symbol-utils
+        :cl-ana.table
+        :cl-ana.table-utils
+        :cl-ana.table-viewing
+        :cl-ana.typed-table
+        :cl-ana.typespec
+        :cl-ana.int-char
+        :cl-ana.clos-utils
+        :cl-ana.serialization
         ;; makeres:
-        :makeres
-        :makeres-macro
-        :makeres-table
-        :makeres-graphviz
-        :logres
-        :logres-table))
+        :cl-ana.makeres
+        :cl-ana.makeres-macro
+        :cl-ana.makeres-table
+        :cl-ana.makeres-graphviz
+        :cl-ana.logres
+        :cl-ana.logres-table))
 
 (loop
    for p in *cl-ana-package-names*
-   do (package-utils:add-package-to-group p :cl-ana))
+   do (cl-ana.package-utils:add-package-to-group p :cl-ana))
 
-(package-utils:use-package-group :cl-ana)
+(cl-ana.package-utils:use-package-group :cl-ana)

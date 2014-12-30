@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :calculus)
+(in-package :cl-ana.calculus)
 
 (defun newton (fn guess &key
                           (value 0)

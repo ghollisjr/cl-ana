@@ -28,7 +28,7 @@
 ;;;; the bin-specs from the plists in the contiguous and sparse
 ;;;; histograms, so this should be placed in this histogram class.
 
-(in-package :histogram)
+(in-package :cl-ana.histogram)
 
 (declaim (optimize (speed 3)))
 

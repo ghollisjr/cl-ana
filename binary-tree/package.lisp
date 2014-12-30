@@ -19,10 +19,10 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:binary-tree 
+(defpackage #:cl-ana.binary-tree 
   (:use #:cl
-        #:macro-utils
-	#:list-utils)
+        #:cl-ana.macro-utils
+	#:cl-ana.list-utils)
   (:export :make-balanced-tree
            :node-leaf-p
 	   :node-value

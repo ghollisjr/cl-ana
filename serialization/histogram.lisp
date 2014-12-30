@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(in-package :serialization)
+
+(in-package :cl-ana.serialization)
 
 (defparameter *histogram-data-path* "data")
 

@@ -18,9 +18,10 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage #:symbol-utils 
+
+(defpackage #:cl-ana.symbol-utils 
   (:use :cl
-        :list-utils)
+        :cl-ana.list-utils)
   (:export :keywordify
            :keysymb
            :keysymbq))

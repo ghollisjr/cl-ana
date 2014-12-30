@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; table-chain.lisp
 
-(in-package :table)
+(in-package :cl-ana.table)
 
 ;;;; table-chain: A read-only chain of tables of any type; initialized
 ;;;; by providing code to evaluate which generates the appropriate

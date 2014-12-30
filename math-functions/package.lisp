@@ -18,7 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-(defpackage :math-functions 
+
+(defpackage :cl-ana.math-functions 
   (:use :cl)
   (:shadow :erf)
   (:shadow :factorial)
@@ -38,4 +39,4 @@
    ;; utils:
    :->double-float))
 
-(gmath:use-gmath :math-functions)
+(cl-ana.gmath:use-gmath :cl-ana.math-functions)

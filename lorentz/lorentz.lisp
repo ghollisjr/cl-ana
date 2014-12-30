@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; lorentz.lisp
 
-(in-package :lorentz)
+(in-package :cl-ana.lorentz)
 
 ;;; This library of lorentz transformation-related utilities assumes
 ;;; dogmatically that

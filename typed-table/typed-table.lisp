@@ -18,9 +18,8 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; typed-table.lisp
 
-(in-package :typed-table)
+(in-package :cl-ana.typed-table)
 
 (declaim (optimize (speed 3)
                    (safety 0)
