@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -330,7 +330,8 @@ to this project."
       (loop
          for res being the hash-keys in tartab
          do (when (and (null (gethash res res->lid))
-                       (not (ignored? res)))
+                       (handler-case (not (ignored? res))
+                         (error nil nil)))
               (setf (gethash res res->lid)
                     (next-log-id))))
       ;; and for parameters:
@@ -351,13 +352,16 @@ to this project."
         (loop
            for res being the hash-keys in res->lid
            for lid being the hash-values in res->lid
-           when (and (not (ignored? res))
-                     (target-stat (gethash res tartab)))
+           when (and (handler-case (not (ignored? res))
+                       (error nil nil))
+                     (handler-case (target-stat (gethash res tartab))
+                       (error nil nil)))
            do (let ((type (target-type (resfn res))))
                 (format index-file
                         "~a ~a ~a~%"
                         res lid type))
-           when (not (target-stat (gethash res tartab)))
+           when (not (handler-case (target-stat (gethash res tartab))
+                       (error nil nil)))
            do (format t "WARNING: ~a stat is null, not saving~%"
                       res))
         ;; parameters start after empty line:
@@ -372,8 +376,10 @@ to this project."
       ;; save all results:
       (loop
          for id being the hash-keys in tartab
-         when (and (not (ignored? id))
-                   (target-stat (gethash id tartab)))
+         when (and (handler-case (not (ignored? id))
+                     (error nil nil))
+                   (handler-case (target-stat (gethash id tartab))
+                     (error nil nil)))
          do (let* ((lid (gethash id res->lid))
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
