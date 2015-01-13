@@ -1,0 +1,22 @@
+logres:
+
+* Work files should be tracked and have optional automatic path
+  management.
+
+* Logging functionality may need to be partially supported by graph
+  transformations so that targets can be saved to disk and cleared
+  from memory to avoid memory bottlenecks on low-memory systems.  It's
+  already taking ~ 1.5 GB for my PhD analysis just to store all the
+  histograms etc. in memory.
+
+* Single function/macro for defining a makeres+logres project along
+  with common settings.
+
+makeres:
+
+* Some way to control when and how transformations are loaded into the
+  pipeline that doesn't require the user to know the exact ordering
+  required.  As it stands, you have to know that e.g. macro
+  transformations are required for table transformations, and that the
+  transformed macros should be expanded prior to table
+  transformations.
