@@ -71,6 +71,17 @@ long."
          fvbind function-value-bind
          mbind map-bind)
 
+;; Polling macro: Polling is fairly common in asynchronous programs,
+;; and due to this having a premade macro comes in handy
+(defmacro poll (test wait &body body)
+  "Repeatedly executes test form; if test returns true, executes body;
+otherwise waits for wait seconds and tries again.  Returns last form
+in body."
+  (alexandria:with-gensyms (tst)
+    `(do ()
+         (,test (progn ,@body))
+       (sleep ,wait))))
+
 (defmacro inrange (xlo op1 x op2 xhi &key (prec 0))
   `(and (if ,xlo
 	    (,op1 (- ,xlo ,prec) ,x)

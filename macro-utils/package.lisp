@@ -42,6 +42,8 @@
            :mvbind
            :mvsetq
            :fvbind
+           ;; Looping construct for polling:
+           :poll
            ;; anaphoric macros:
            :it
            :self
