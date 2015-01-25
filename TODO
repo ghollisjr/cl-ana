@@ -1,5 +1,11 @@
 logres:
 
+* Each target and logged file should come with a timestamp so that
+  verions of targets and files can be compared.  This would be useful
+  for e.g. sending files to another computer and only updating the
+  files which have differing timestamps as well as only saving targets
+  which have changed when saving a project.
+
 * Work files should be tracked and have optional automatic path
   management.
 
@@ -13,6 +19,15 @@ logres:
   with common settings.
 
 makeres:
+
+* Logging functionality may best be provided in the compiled function
+  of compres.  Each target would have as its path its res id.  Each
+  target would get its own directory, and inside a target's directory
+  would be a timestamp file as well as the saved information from the
+  target.  Each kind of target could have its own methods for storage,
+  be it a single binary file or multiple files along with an index
+  file.  Deleting a result could then automatically delete the stored
+  result as well if desired.
 
 * Some way to control when and how transformations are loaded into the
   pipeline that doesn't require the user to know the exact ordering
