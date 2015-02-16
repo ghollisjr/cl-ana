@@ -21,12 +21,15 @@
 
 (in-package :cl-ana.hdf-table)
 
-;;; NOTE: I am not currently closing the H5T types after reading
-;;; information from them.  I need to extend the memoization library
-;;; in order to provide access to the memoed types created by my
-;;; functions so that at the end of whatever is appropriate I can
-;;; close them; mostly for memory usage so it might not even be
-;;; necessary.
+;;; NOTE: HDF5 types are left open until the table using them is
+;;; closed.  Memoized functions will therefore refer to the HDF5 type
+;;; read from a file if the typespec corresponding to it is the first
+;;; instance recorded.  This could in fact be a bug, and most
+;;; definitely is a bug in the case of multithreaded programming.
+;;; Either HDF5 types should never be closed until the process ends,
+;;; or hdf-tables should have independent type management.  The third
+;;; alternative is to duplicate management of types in use by HDF5,
+;;; which seems stupid.
 
 (declaim (optimize (speed 2)
                    (safety 1)
@@ -113,10 +116,7 @@
 		      (mem-aref chunkdims 'hsize-t 0)))
 		  buffer-size))
 	     (row-buffer
-	      ;; (foreign-alloc cstruct
-	      ;;   	     :count
-	      ;;   	     buffer-size)
-              (typespec-foreign-alloc typespec buffer-size)))
+	      (typespec-foreign-alloc typespec buffer-size)))
 	(make-instance 'hdf-table
 		       :field-names (typespec->field-names typespec)
 		       :field-specs (typespec->field-specs typespec)
@@ -234,30 +234,6 @@ the dataset."
     (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
     (h5dclose dataset)
     (foreign-free row-buffer)))
-
-;; (defmethod table-set-field ((table hdf-table) field-symbol value)
-;;   (with-accessors ((row-buffer hdf-table-row-buffer)
-;; 		   (cstruct typed-table-row-cstruct)
-;; 		   (row-buffer-index hdf-table-row-buffer-index))
-;;       table
-;;     (setf
-;;      (foreign-slot-value (mem-aptr row-buffer
-;; 				   cstruct
-;; 				   row-buffer-index)
-;; 			 cstruct
-;; 			 field-symbol)
-;;      value)))
-
-;; (defmethod table-load-next-row :after ((table hdf-table))
-;;   (with-accessors ((row-pointer typed-table-row-pointer)
-;;                    (read-row-index hdf-table-read-row-index)
-;;                    (buffer-size hdf-table-buffer-size)
-;;                    (cstruct typed-table-row-cstruct))
-;;       table
-;;     (setf row-pointer
-;;           (mem-aptr row-pointer
-;;                     cstruct
-;;                     (mod read-row-index buffer-size)))))
 
 (defmethod table-commit-row ((table hdf-table))
   (with-accessors ((row-buffer hdf-table-row-buffer)
