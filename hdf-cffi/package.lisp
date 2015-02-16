@@ -120,6 +120,6 @@
    :h5tget-member-offset
    :h5tequal
    ;; Group functions:
-   h5gcreate2
-   h5gcreate1
-   h5gclose))
+   :h5gcreate2
+   :h5gcreate1
+   :h5gclose))

@@ -154,17 +154,12 @@
             (create-hdf-table
              outfile "/array"
              (list (cons "x"
-                         (list :array :float 4)))))
-           (x-type
-            (typespec->cffi-type
-             (first (table-field-specs table)))))
+                         (list :array :float 4))))))
       (loop
          for i below 30
          do (progn
               (table-push-fields table
                 (x
-                 (convert-to-foreign
-                  (vector (float i) (sqrt (float i)) (float i)
-                          (sqrt (float i)))
-                  x-type)))))
-    (table-close table))))
+                 (vector (float i 0f0) (sqrt (float i 0f0)) (float i 0f0)
+                         (sqrt (float i)))))))
+      (table-close table))))

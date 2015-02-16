@@ -33,6 +33,7 @@
 	       #:cl-ana.typespec
 	       #:cl-ana.hdf-typespec
 	       #:cl-ana.binary-tree
+               #:cl-ana.memoization
 	       #:alexandria)
   :components ((:file "package")
 	       (:file "hdf-table")

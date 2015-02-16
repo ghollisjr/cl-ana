@@ -32,7 +32,8 @@
 	#:cl-ana.hdf-typespec
 	#:cl-ana.string-utils
 	#:cl-ana.functional-utils
-        #:cl-ana.binary-tree)
+        #:cl-ana.binary-tree
+        #:cl-ana.memoization)
   (:export :hdf-table
            :hdf-table-nrows
 	   :open-hdf-table

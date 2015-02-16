@@ -190,6 +190,7 @@ the dataset."
   (with-accessors ((dataset hdf-table-dataset)
 		   (row-buffer-index hdf-table-row-buffer-index)
 		   (hdf-type hdf-table-row-type)
+                   (fields-specs table-field-specs)
 		   (chunk-index hdf-table-chunk-index)
 		   (row-buffer hdf-table-row-buffer)
 		   (buffer-size hdf-table-buffer-size)
@@ -226,8 +227,11 @@ the dataset."
                 (h5dwrite
                  dataset hdf-type memspace
                  dataspace +H5P-DEFAULT+ row-buffer))))))
-    (when (equal access-mode :read)
-      (h5tclose hdf-type))
+    ;; closing hdf-type requires removal from memoized functions:
+    (h5tclose hdf-type)
+    (let ((typespec (cons :compound fields-specs)))
+      (remhash (list typespec) (get-memo-map #'typespec->hdf-type)))
+    (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
     (h5dclose dataset)
     (foreign-free row-buffer)))
 
