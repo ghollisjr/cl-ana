@@ -21,15 +21,15 @@
 
 (in-package :cl-ana.hdf-table)
 
-;;; NOTE: HDF5 types are left open until the table using them is
-;;; closed.  Memoized functions will therefore refer to the HDF5 type
-;;; read from a file if the typespec corresponding to it is the first
-;;; instance recorded.  This could in fact be a bug, and most
-;;; definitely is a bug in the case of multithreaded programming.
-;;; Either HDF5 types should never be closed until the process ends,
-;;; or hdf-tables should have independent type management.  The third
-;;; alternative is to duplicate management of types in use by HDF5,
-;;; which seems stupid.
+;;; NOTE: HDF5 types are left open forever.  I tried to implement a
+;;; system of closing types and re-opening them on a table-by-table
+;;; basis, but it turned out to be a complete hassle, so I'm leaving
+;;; them open forever once opened at the moment.  In the future this
+;;; could be revisited.  It poses only minimal memory overhead since
+;;; I've memoized the typespec functions so that only one HDF5 type is
+;;; used per typespec.  I believe the HDF5 type closing mechanism is
+;;; for safety in situations where it isn't so easy to memoize
+;;; functions.
 
 (declaim (optimize (speed 2)
                    (safety 1)
@@ -227,11 +227,15 @@ the dataset."
                 (h5dwrite
                  dataset hdf-type memspace
                  dataspace +H5P-DEFAULT+ row-buffer))))))
-    ;; closing hdf-type requires removal from memoized functions:
-    (h5tclose hdf-type)
-    (let ((typespec (cons :compound fields-specs)))
-      (remhash (list typespec) (get-memo-map #'typespec->hdf-type)))
-    (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
+    ;; no type closing for now, it's a complete headache and is
+    ;; causing problems with memoization etc.
+    ;;(h5tclose hdf-type)
+    ;; (let ((typespec (cons :compound fields-specs)))
+    ;;   (print 'typespec->hdf-type)
+    ;;   (print (typespec->hdf-type :int))
+    ;;   (remhash (list typespec) (get-memo-map #'typespec->hdf-type)))
+    ;; (print 'hdf-type->typespec)
+    ;; (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
     (h5dclose dataset)
     (foreign-free row-buffer)))
 
