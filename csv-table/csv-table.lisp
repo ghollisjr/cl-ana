@@ -71,7 +71,8 @@
                          :file file
                          :delimeter delimeter
                          :row row
-                         :read-from-string read-from-string)))
+                         :read-from-string read-from-string
+                         :access-mode :read)))
     (setf (csv-table-field-symbols table)
 	  (table-field-symbols table))
     table))
@@ -125,7 +126,8 @@
                                  :field-names field-names
                                  :file file
                                  :delimeter delimeter
-                                 :row row)))
+                                 :row row
+                                 :access-mode :write)))
       (setf (csv-table-field-symbols table)
             (table-field-symbols table))
       (iter (for i upfrom 0)
@@ -148,11 +150,13 @@
                      (field-symbols csv-table-field-symbols)
                      (delimeter csv-table-delimeter))
         table
-      (iter (for i upfrom 0)
-            (for (key value) in-hashtable row)
-            (when (not (= i 0))
-              (format file "~a" delimeter))
-            (format file "~a" value))
+      (loop
+         for i upfrom 0
+         for key in field-symbols
+         do (progn
+              (when (not (= i 0))
+                (format file "~a" delimeter))
+              (format file "~a" (gethash key row))))
       (format file "~%"))))
 
 (defmethod table-close ((table csv-table))
