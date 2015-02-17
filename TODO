@@ -20,6 +20,25 @@ logres:
 
 makeres:
 
+* Add tabletrans operator which allows multiple targets to be defined
+  and computed as a block.  Would greatly assist in allowing
+  e.g. multiple maps over the same computed list, fitting data (since
+  functions themselves cannot be logged but the parameters can,
+  requiring multiple targets per fit).
+
+  Could have a macro defresblock defining a result block.  Would take
+  the ids of the computed results as arguments and would define
+  temporary versions of the targets.  The tabletrans transformations
+  would take care of providing e.g. the ability to refer specifically
+  to which target you want to incrementally compute throughout the
+  block.
+
+  This could actually provide a better platform for implementing the
+  table transformations as well, as the merging of table passes
+  ultimately computes multiple targets at once, meaning that at least
+  some of the work currently done by makeres-table could be moved to
+  this new tabletrans library.
+
 * Logging functionality may best be provided in the compiled function
   of compres.  Each target would have as its path its res id.  Each
   target would get its own directory, and inside a target's directory
