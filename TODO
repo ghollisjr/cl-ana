@@ -54,3 +54,13 @@ makeres:
   transformations are required for table transformations, and that the
   transformed macros should be expanded prior to table
   transformations.
+
+makeres-macro:
+
+* Add ability to define functions and still have dependencies tracked.
+  This should be done simply by defining a new function definition
+  operator, define-res-function, which will store its dependencies in
+  a table.  Then, the makeres-macro tabletrans function will use this
+  information as it code walks, looking for any calls to a
+  res-function in a body and adding dependencies to the affected
+  targets accordingly.
