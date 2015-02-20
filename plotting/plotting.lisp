@@ -792,44 +792,50 @@ denoting the page initargs."
     l))
 
 ;; analytic functions:
-(defmethod line ((s string) &key
-                              (title "" title-given-p)
-                              (style "lines")
-                              line-type
-                              line-width
-                              color
-                              &allow-other-keys)
+(defmethod line ((s string) &rest other-keys
+                 &key
+                   (title "" title-given-p)
+                   (style "lines")
+                   line-type
+                   line-width
+                   color
+                   &allow-other-keys)
   (apply #'make-instance 'analytic-line
          :fn-string s
          :style style
          :color color
          :line-type line-type
          :line-width line-width
-         (if title-given-p
-             (list :title title)
-             (list :title s))))
+         :allow-other-keys t
+         (append (if title-given-p
+                     (list :title title)
+                     (list :title s))
+                 other-keys)))
 
 ;; data:
-(defmethod line ((data-alist list) &key
-                                     (title "data")
-                                     (style "points")
-                                     point-type
-                                     point-size
-                                     line-type
-                                     line-width
-                                     color
-                                     &allow-other-keys)
+(defmethod line ((data-alist list) &rest other-keys
+                 &key
+                   (title "data")
+                   (style "points")
+                   point-type
+                   point-size
+                   line-type
+                   line-width
+                   color
+                   &allow-other-keys)
   "Assumes"
   (when data-alist
-    (make-instance 'data-line
-                   :title title
-                   :data data-alist
-                   :style style
-                   :point-type point-type
-                   :point-size point-size
-                   :line-type line-type
-                   :line-width line-width
-                   :color color)))
+    (apply #'make-instance 'data-line
+           :title title
+           :data data-alist
+           :style style
+           :point-type point-type
+           :point-size point-size
+           :line-type line-type
+           :line-width line-width
+           :color color
+           :allow-other-keys t
+           other-keys)))
 
 (defun sample-function (fn lower-bounds upper-bounds nsamples)
   "Samples a function which takes a single argument according to
@@ -866,19 +872,20 @@ that point."
          (mapcar fn domain))))
 
 ;; functions:
-(defmethod line ((fn function) &key
-                                 (sampling
-                                  (list :low -3d0
-                                        :high 3d0
-                                        :nsamples 100))
-                                 (title "function")
-                                 (style "lines")
-                                 point-type
-                                 point-size
-                                 line-type
-                                 line-width
-                                 color
-                                 &allow-other-keys)
+(defmethod line ((fn function) &rest other-keys
+                 &key
+                   (sampling
+                    (list :low -3d0
+                          :high 3d0
+                          :nsamples 100))
+                   (title "function")
+                   (style "lines")
+                   point-type
+                   point-size
+                   line-type
+                   line-width
+                   color
+                   &allow-other-keys)
   "Samples your function based on the keyword arguments and creates a
   data-line mapping your function to the output values.
 
@@ -909,22 +916,24 @@ of up to two double-float arguments."
            (if nsamples
                nsamples
                100))))
-    (line (sample-function fn
-                           lower-bounds
-                           upper-bounds
-                           nsamples)
-          :title title
-          :style style
-          :point-type point-type
-          :point-size point-size
-          :line-type line-type
-          :line-width line-width
-          :color color)))
+    (apply #'line (sample-function fn
+                                   lower-bounds
+                                   upper-bounds
+                                   nsamples)
+           :title title
+           :style style
+           :point-type point-type
+           :point-size point-size
+           :line-type line-type
+           :line-width line-width
+           :color color
+           other-keys)))
 
 ;; histogram plotting:
 
 ;; still need to allow for error bars
 (defmethod line ((histogram rectangular-histogram)
+                 &rest other-keys
                  &key
                    (title "")
                    (style nil style-supplied-p)
@@ -950,30 +959,34 @@ of up to two double-float arguments."
        (if (not (atom first-independent))
            (error "Must be 1-d independent variable")
            (let ((first-dependent (cdr (first bin-data))))
-             (make-instance 'data-line
-                            :title title
-                            :data bin-data
-                            :fill-style fill-style
-                            :fill-density fill-density
-                            :style
-                            (if style-supplied-p
-                                style
-                                (if (subtypep (type-of first-dependent)
-                                              'err-num)
-                                    "boxerrorbars"
-                                    "boxes"))
-                            :color color))))
+             (apply #'make-instance 'data-line
+                    :title title
+                    :data bin-data
+                    :fill-style fill-style
+                    :fill-density fill-density
+                    :style
+                    (if style-supplied-p
+                        style
+                        (if (subtypep (type-of first-dependent)
+                                      'err-num)
+                            "boxerrorbars"
+                            "boxes"))
+                    :color color
+                    :allow-other-keys t
+                    other-keys))))
       (2
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))
            (error "Must be 2-d independent variable")
-           (make-instance 'data-line
-                          :title title
-                          :data bin-data
-                          :style (if style-supplied-p
-                                     style
-                                     "image")
-                          :color color)))
+           (apply #'make-instance 'data-line
+                  :title title
+                  :data bin-data
+                  :style (if style-supplied-p
+                             style
+                             "image")
+                  :color color
+                  :allow-other-keys t
+                  other-keys)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
 
 ;; (defmethod line ((hist variable-binning-histogram)
