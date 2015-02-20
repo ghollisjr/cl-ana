@@ -234,6 +234,14 @@ layout specified in the page.")
     :initform ()
     :accessor plot-lines
     :documentation "The lines which are part of the plot.")
+   ;; thanks for the formatting emacs
+   (labels
+       :initarg :labels
+       :initform ()
+       :accessor plot-labels
+       :documentation "List of labels to be drawn on the plot.  Use
+       the label function to generate the command strings for each
+       label.")
    (legend
     :initarg :legend
     :initform (legend)
@@ -246,13 +254,16 @@ layout specified in the page.")
   (:documentation "The command used for plotting the plot in gnuplot;
   can be plot, splot, etc."))
 
-(defgeneric plot-axis-commands (plot)
+(defgeneric pre-plot-cmd-settings (plot)
   (:documentation "Returns a list of the commands to send to gnuplot
-  which will set the proper axis labels"))
+  which will control settings needed prior to the drawing command.
+  This includes setting the proper axis labels as well as possibly
+  controlling the view in 3-D plots, etc."))
 
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
                    (lines plot-lines)
+                   (labels plot-labels)
                    (legend plot-legend))
       p
     (let ((lines (remove-if #'null lines)))
@@ -261,8 +272,13 @@ layout specified in the page.")
         (when legend
           (format s "~a~%" legend))
         (loop
-           for a in (plot-axis-commands p)
+           for a in (pre-plot-cmd-settings p)
            do (format s "~a~%" a))
+        (loop
+           for i from 1
+           for label in labels
+           do (format s "set label ~a ~a~%"
+                      i label))
         (format s "~a " (plot-cmd p))
         (loop
            for cons on lines
@@ -338,7 +354,7 @@ layout specified in the page.")
 initargs from key-args."
   (apply #'make-instance 'plot2d :lines lines key-args))
 
-(defmethod plot-axis-commands ((p plot2d))
+(defmethod pre-plot-cmd-settings ((p plot2d))
   (flet ((maybe-make-str (label var &optional noquotes-p)
            (when var
              (list
@@ -394,6 +410,67 @@ initargs from key-args."
 
 (defmethod plot-cmd ((p plot3d))
   "splot")
+
+;; Labels
+(defun label (text
+              &key
+                position
+                coordinate-system ; coordinate system for position,
+                                        ; see gnuplot manual
+                (justification :center) ; :left, :center, or :right
+                rotation ; nil for no rotation, or angle in degrees
+                font
+                font-size ; must set font as well if you want this to
+                                        ; take affect
+                (enhanced-p t) ; set to nil if you don't want enhanced
+                                        ; text
+                (layer :front) ; can be :front or :back, :front means
+                                        ; text is shown on top of graph lines,
+                                        ; :back means graph is shown on top of
+                                        ; text
+                color
+                point-style ; set to a point style if you want a point to be
+                                        ; plotted around the label (controlled by offset)
+                offset) ; set to a a list (dx dy dz) to displace the
+                                        ; point from the text
+  (with-output-to-string (s)
+    (format s "\"~a\" " text)
+    (when position
+      (format s "at ")
+      (when coordinate-system
+        (format s "~a " coordinate-system))
+      (format s "~{~a~^,~} "
+              position))
+    (format s "~a "
+            (case justification
+              (:left "left")
+              (:right "right")
+              (:center "center")))
+    (when rotation
+      (format s "rotate by ~a "
+              ;; needs to be double for gnuplot to understand
+              (->double-float rotation)))
+    (when font
+      (format s "\"~a" font)
+      (when font-size
+        (format s ",~a" (->double-float font-size)))
+      (format s "\" "))
+    (when (not enhanced-p)
+      (format s "noenhanced "))
+    (format s "~a "
+            (case layer
+              (:front "front")
+              (:back "back")))
+    (when color
+      (format s "tc ~s "
+              color))
+    (if point-style
+        (format s "point ~a "
+                point-style)
+        (format s "nopoint "))
+    (when offset
+      (format s "offest ~{~a~^,~}"
+              offset))))
 
 ;; A line is a single function or data set.  Each line may have its
 ;; own individual name/title.  These may be listed together in a key or
@@ -1098,36 +1175,36 @@ gnuplot to distinguish eps from ps)"
   "Generates the type string for a png terminal with options"
   (string-downcase
    (apply #'join-strings
-            (intersperse
-             " "
-             (remove-if-not
-              #'identity
-              (alexandria:flatten
-               (list "pdf"
-                     (if color-p
-                         "color"
-                         "monochrome")
-                     (when size
-                       (list 'size (car size) "," (cdr size)))
-                     (when font-face
-                       (with-output-to-string (s)
-                         (format s "font \"~a" font-face)
-                         (if font-size
-                             (format s ",~a\"" font-size)
-                             (format s "\""))))
-                     (when line-width
-                       (list "linewidth" line-width))
-                     (if (not dashed-supplied-p)
-                         (if color-p
-                             "solid"
-                             "dashed")
-                         (if dashed-p
-                             "dashed"
-                             "solid"))
-                     (when dashed-p
-                       (when dash-length
-                         (list "dl" dash-length)))
-                     (when (not rounded)
-                       "butt")
-                     (when enhanced
-                       "enhanced"))))))))
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "pdf"
+                   (if color-p
+                       "color"
+                       "monochrome")
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (with-output-to-string (s)
+                       (format s "font \"~a" font-face)
+                       (if font-size
+                           (format s ",~a\"" font-size)
+                           (format s "\""))))
+                   (when line-width
+                     (list "linewidth" line-width))
+                   (if (not dashed-supplied-p)
+                       (if color-p
+                           "solid"
+                           "dashed")
+                       (if dashed-p
+                           "dashed"
+                           "solid"))
+                   (when dashed-p
+                     (when dash-length
+                       (list "dl" dash-length)))
+                   (when (not rounded)
+                     "butt")
+                   (when enhanced
+                     "enhanced"))))))))

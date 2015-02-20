@@ -40,6 +40,7 @@
 	   :plot
 	   :plot2d
 	   :plot3d
+           :label
 	   :line
            :data-line
            :analytic-line
