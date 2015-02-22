@@ -274,6 +274,7 @@ layout specified in the page.")
         (loop
            for a in (pre-plot-cmd-settings p)
            do (format s "~a~%" a))
+        (format s "unset label~%")
         (loop
            for i from 1
            for label in labels
