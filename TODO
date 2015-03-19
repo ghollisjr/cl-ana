@@ -1,26 +1,26 @@
 logres:
 
-* Each target and logged file should come with a timestamp so that
-  verions of targets and files can be compared.  This would be useful
+- Each target and logged file should come with a timestamp so that
+  versions of targets and files can be compared.  This would be useful
   for e.g. sending files to another computer and only updating the
   files which have differing timestamps as well as only saving targets
   which have changed when saving a project.
 
-* Work files should be tracked and have optional automatic path
++ Work files should be tracked and have optional automatic path
   management.
 
-* Logging functionality may need to be partially supported by graph
++ Logging functionality may need to be partially supported by graph
   transformations so that targets can be saved to disk and cleared
   from memory to avoid memory bottlenecks on low-memory systems.  It's
   already taking ~ 1.5 GB for my PhD analysis just to store all the
   histograms etc. in memory.
 
-* Single function/macro for defining a makeres+logres project along
++ Single function/macro for defining a makeres+logres project along
   with common settings.
 
 makeres:
 
-* Add tabletrans operator which allows multiple targets to be defined
++ Add tabletrans operator which allows multiple targets to be defined
   and computed as a block.  Would greatly assist in allowing
   e.g. multiple maps over the same computed list, fitting data (since
   functions themselves cannot be logged but the parameters can,
@@ -39,7 +39,7 @@ makeres:
   some of the work currently done by makeres-table could be moved to
   this new tabletrans library.
 
-* Logging functionality may best be provided in the compiled function
++ Logging functionality may best be provided in the compiled function
   of compres.  Each target would have as its path its res id.  Each
   target would get its own directory, and inside a target's directory
   would be a timestamp file as well as the saved information from the
@@ -57,7 +57,7 @@ makeres:
 
 makeres-macro:
 
-* Add ability to define functions and still have dependencies tracked.
++ Add ability to define functions and still have dependencies tracked.
   This should be done simply by defining a new function definition
   operator, define-res-function, which will store its dependencies in
   a table.  Then, the makeres-macro tabletrans function will use this
@@ -67,13 +67,13 @@ makeres-macro:
 
 makeres-table:
 
-* Source table definition with bootstrapping.  At the moment, the user
++ Source table definition with bootstrapping.  At the moment, the user
   is tasked with opening source tables and handling the situation when
   the source material for a table is not present.  There should be an
   operator, perhaps stab, which allows the definition of a source
   table.
 
-* Perhaps renaming the operator tab to ptab.  If the above stab
++ Perhaps renaming the operator tab to ptab.  If the above stab
   operator is implemented, then having stab, ptab, and ltab is more
   symmetrical and potentially easier to remember than having stab,
   tab, and ltab, since physical tables won't be as special once a

@@ -356,10 +356,12 @@ to this project."
                        (error nil nil))
                      (handler-case (target-stat (gethash res tartab))
                        (error nil nil)))
-           do (let ((type (target-type (resfn res))))
+           do (let ((type (target-type (resfn res)))
+                    (timestamp (target-timestamp
+                                (gethash res tartab))))
                 (format index-file
-                        "~a ~a ~a~%"
-                        res lid type))
+                        "~a ~a ~a ~a~%"
+                        res lid type timestamp))
            when (not (handler-case (target-stat (gethash res tartab))
                        (error nil nil)))
            do (format t "WARNING: ~a stat is null, not saving~%"
@@ -465,7 +467,8 @@ to this project."
              (with-input-from-string (s line)
                (let ((id (read s))
                      (lid (read s))
-                     (type (read s)))
+                     (type (read s))
+                     (timestamp (read s nil nil)))
                  (cond
                    ((not (gethash id tartab))
                     (format
@@ -481,7 +484,8 @@ to this project."
                       (setresfn id
                                 (load-target type
                                              (merge-pathnames (mkstr lid)
-                                                              load-path)))))))))
+                                                              load-path))
+                                timestamp)))))))
         ;; parameters:
         (setf (gethash *project-id* *makeres-args*)
               (make-hash-table :test 'eq))

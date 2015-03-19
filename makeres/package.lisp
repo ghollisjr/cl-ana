@@ -35,6 +35,7 @@
    :target-pdeps
    :target-val
    :target-stat
+   :target-timestamp
    :make-target
    :copy-target
    ;; propogation:

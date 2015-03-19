@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -107,297 +107,305 @@
       :initarg :stat
       :initform nil
       :documentation "computation status, nil when needs computing, t
-      otherwise")))
+      otherwise")
+     (timestamp
+      :accessor target-timestamp
+      :initarg :timestamp
+      :initform nil
+      :documentation "Time of most recent computation in seconds"))))
 
-  (defmethod print-object ((tar target) stream)
-    (format stream "~S"
-            (copy-list
-             `(target
-               :id ,(target-id tar)
-               :expr ,(target-expr tar)
-               :deps ,(target-deps tar)
-               :pdeps ,(target-pdeps tar)
-               :val ,(target-val tar)
-               :stat ,(target-stat tar)))))
+(defmethod print-object ((tar target) stream)
+  (format stream "~S"
+          (copy-list
+           `(target
+             :id ,(target-id tar)
+             :expr ,(target-expr tar)
+             :deps ,(target-deps tar)
+             :pdeps ,(target-pdeps tar)
+             :val ,(target-val tar)
+             :stat ,(target-stat tar)))))
 
-  (defun find-dependencies (expr token)
-    "Descends through expr, finding any forms of the form (token x)
+(defun find-dependencies (expr token)
+  "Descends through expr, finding any forms of the form (token x)
 which is then interpreted as a dependency on x (token must be a
 symbol)"
-    (let ((deps
-           (make-hash-table :test 'equal)))
-      (flet ((actual-listp (x)
-               (and (listp x)
-                    (listp (cdr (last x))))))
-        (labels ((rec (ex)
-                   ;; check for
-                   (when (actual-listp ex)
-                     (if (and (length-equal ex 2)
-                              (eq (first ex)
-                                  token))
-                         (setf (gethash (second ex)
-                                        deps)
-                               t)
-                         (mapcar #'rec ex)))))
-          (rec expr)
-          (hash-keys deps)))))
-
-  (defun make-target (id expr &key
-                                val
-                                stat)
-    (let ((deps (find-dependencies expr 'res))
-          (pdeps (find-dependencies expr 'par)))
-      (make-instance 'target
-                     :id id
-                     :expr expr
-                     :deps (remove-if (lambda (d)
-                                        (equal d id))
+  (let ((deps
+         (make-hash-table :test 'equal)))
+    (flet ((actual-listp (x)
+             (and (listp x)
+                  (listp (cdr (last x))))))
+      (labels ((rec (ex)
+                 ;; check for
+                 (when (actual-listp ex)
+                   (if (and (length-equal ex 2)
+                            (eq (first ex)
+                                token))
+                       (setf (gethash (second ex)
                                       deps)
-                     :pdeps pdeps
-                     :val val
-                     :stat stat)))
+                             t)
+                       (mapcar #'rec ex)))))
+        (rec expr)
+        (hash-keys deps)))))
 
-  (defun copy-target (target)
+(defun make-target (id expr &key
+                              val
+                              stat
+                              timestamp)
+  (let ((deps (find-dependencies expr 'res))
+        (pdeps (find-dependencies expr 'par)))
     (make-instance 'target
-                   :id (copy-tree (target-id target))
-                   :expr (copy-tree (target-expr target))
-                   :deps (copy-tree (target-deps target))
-                   :pdeps (copy-tree (target-pdeps target))
-                   :val (copy-tree (target-val target))
-                   :stat (copy-tree (target-stat target))))
+                   :id id
+                   :expr expr
+                   :deps (remove-if (lambda (d)
+                                      (equal d id))
+                                    deps)
+                   :pdeps pdeps
+                   :val val
+                   :stat stat
+                   :timestamp timestamp)))
 
-  (defparameter *makeres-propogate* nil
-    "Set to t if you want dependents of uncomputed results to have
+(defun copy-target (target)
+  (make-instance 'target
+                 :id (copy-tree (target-id target))
+                 :expr (copy-tree (target-expr target))
+                 :deps (copy-tree (target-deps target))
+                 :pdeps (copy-tree (target-pdeps target))
+                 :val (copy-tree (target-val target))
+                 :stat (copy-tree (target-stat target))
+                 :timestamp (target-timestamp target)))
+
+(defparameter *makeres-propogate* nil
+  "Set to t if you want dependents of uncomputed results to have
 their statuses set to nil")
 
-  (defun makeres-set-auto-propogate (stat)
-    "nil stat means don't propogate need-to-recompute to dependents of
+(defun makeres-set-auto-propogate (stat)
+  "nil stat means don't propogate need-to-recompute to dependents of
 results needing computation, non-nil stat means do propogate."
-    (setf *makeres-propogate* stat))
+  (setf *makeres-propogate* stat))
 
-  (defvar *compiled-generators*
-    (make-hash-table :test 'equal)
-    "Maps from project id to a gensym used for the compiled function
+(defvar *compiled-generators*
+  (make-hash-table :test 'equal)
+  "Maps from project id to a gensym used for the compiled function
 name generated by compres.")
 
-  ;; (defvar *symbol-tables*
-  ;;   (make-hash-table :test 'equal)
-  ;;   "Maps from project id to symbol-table for that project")
+;; (defvar *symbol-tables*
+;;   (make-hash-table :test 'equal)
+;;   "Maps from project id to symbol-table for that project")
 
-  (defvar *target-tables*
-    (make-hash-table :test 'equal))
+(defvar *target-tables*
+  (make-hash-table :test 'equal))
 
-  (defvar *fin-target-tables*
-    (make-hash-table :test 'equal))
+(defvar *fin-target-tables*
+  (make-hash-table :test 'equal))
 
-  (defvar *project-id* nil)
+(defvar *project-id* nil)
 
-  (defvar *transformation-table*
-    (make-hash-table :test 'equal))
+(defvar *transformation-table*
+  (make-hash-table :test 'equal))
 
-  (defvar *params-table*
-    (make-hash-table :test 'equal))
+(defvar *params-table*
+  (make-hash-table :test 'equal))
 
-  ;; (defvar *args-tables*
-  ;;   (make-hash-table :test 'equal))
+;; (defvar *args-tables*
+;;   (make-hash-table :test 'equal))
 
-  (defvar *makeres-args*
-    (make-hash-table :test 'equal)
-    "Map from arg symbol to supplied or default value at makeres
+(defvar *makeres-args*
+  (make-hash-table :test 'equal)
+  "Map from arg symbol to supplied or default value at makeres
     execution")
 
-  (defun compres-fname (&optional project-id)
-    "Returns gensym for project used for compres"
-    (symbol-macrolet ((gsym (gethash project-id *compiled-generators*)))
-      (if gsym
-          gsym
-          (setf gsym (gensym)))))
+(defun compres-fname (&optional project-id)
+  "Returns gensym for project used for compres"
+  (symbol-macrolet ((gsym (gethash project-id *compiled-generators*)))
+    (if gsym
+        gsym
+        (setf gsym (gensym)))))
 
-  (defun project ()
-    "Returns current project"
-    *project-id*)
+(defun project ()
+  "Returns current project"
+  *project-id*)
 
-  (defun project-parameters ()
-    (mapcar #'first
-            (gethash (project) *params-table*)))
+(defun project-parameters ()
+  (mapcar #'first
+          (gethash (project) *params-table*)))
 
-  (defun project-targets ()
-    (hash-keys (target-table)))
+(defun project-targets ()
+  (hash-keys (target-table)))
 
-  ;; (defun symbol-table (&optional (project-id *project-id*))
-  ;;   "Returns symboltable identified by id; defaults to current graph"
-  ;;   (gethash project-id *symbol-tables*))
+;; (defun symbol-table (&optional (project-id *project-id*))
+;;   "Returns symboltable identified by id; defaults to current graph"
+;;   (gethash project-id *symbol-tables*))
 
-  (defun target-table (&optional (project-id *project-id*))
-    (gethash project-id *target-tables*))
+(defun target-table (&optional (project-id *project-id*))
+  (gethash project-id *target-tables*))
 
-  (defun copy-target-table (target-table)
-    "Returns a new hash-table object with copies of each target from
+(defun copy-target-table (target-table)
+  "Returns a new hash-table object with copies of each target from
 target-table."
-    (let ((result (make-hash-table :test 'equal)))
-      (loop
-         for id being the hash-keys in target-table
-         for tar being the hash-values in target-table
-         do (setf (gethash id result)
-                  (copy-target tar)))
-      result))
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for id being the hash-keys in target-table
+       for tar being the hash-values in target-table
+       do (setf (gethash id result)
+                (copy-target tar)))
+    result))
 
-  ;; makeres utilities:
-  (defun pipe-functions (fns input)
-    "Evaluates each function in fns given input either from the
+;; makeres utilities:
+(defun pipe-functions (fns input)
+  "Evaluates each function in fns given input either from the
   initial input or from the output of the previous function in the
   list fns"
-    (let ((val (alexandria:copy-hash-table input)))
-      (dolist (f fns)
-        (setf val (funcall f val)))
-      val))
+  (let ((val (alexandria:copy-hash-table input)))
+    (dolist (f fns)
+      (setf val (funcall f val)))
+    val))
 
-  ;; Major function: res-dependencies
-  ;;
-  ;; returns full list of dependencies on a target
-  (defun res-dependents (res-id target-table)
-    "Returns full list of result-dependent targets in target-table"
-    (let* (;; table mapping from id to those targets immediately
-           ;; dependent on id
-           (dependent-table
-            (make-hash-table :test 'equal))
-           (explicit-deps
-            (loop
-               for id being the hash-keys in target-table
-               for tar being the hash-values in target-table
-               when (member res-id (target-deps tar)
-                            :test #'equal)
-               collecting id))
-           (deps nil))
-      ;; fill dependent-table
+;; Major function: res-dependencies
+;;
+;; returns full list of dependencies on a target
+(defun res-dependents (res-id target-table)
+  "Returns full list of result-dependent targets in target-table"
+  (let* (;; table mapping from id to those targets immediately
+         ;; dependent on id
+         (dependent-table
+          (make-hash-table :test 'equal))
+         (explicit-deps
+          (loop
+             for id being the hash-keys in target-table
+             for tar being the hash-values in target-table
+             when (member res-id (target-deps tar)
+                          :test #'equal)
+             collecting id))
+         (deps nil))
+    ;; fill dependent-table
+    (loop
+       for id being the hash-keys in target-table
+       for target being the hash-values in target-table
+       do
+         (loop
+            for d in (target-deps target)
+            do (push id
+                     (gethash d dependent-table))))
+    ;; collect all dependents of explicit-deps and insert into deps
+    (labels ((rec (id)
+               (setf deps
+                     (adjoin id deps
+                             :test #'equal))
+               (mapcar #'rec (gethash id dependent-table))))
+      (mapcar #'rec explicit-deps)
+      deps)))
+
+;; Major function: dep<
+;;
+;; this uses lists for sets, inefficient for large dependency
+;; graphs, so it needs to be updated in the future
+
+(defun dep< (target-table)
+  "Returns comparison function from target-table which returns true
+when the left argument does not depend on the right argument."
+  (let ((depmap (make-hash-table :test 'equal)))
+    (labels ((rec (id)
+               ;; returns full list of dependencies for id
+               (let ((tar (gethash id target-table)))
+                 (when tar
+                   (let ((deps (copy-list (target-deps tar))))
+                     (when deps
+                       (reduce (lambda (ds d)
+                                 (adjoin d ds :test #'equal))
+                               (mapcan #'rec deps)
+                               :initial-value deps)))))))
       (loop
          for id being the hash-keys in target-table
-         for target being the hash-values in target-table
-         do
-           (loop
-              for d in (target-deps target)
-              do (push id
-                       (gethash d dependent-table))))
-      ;; collect all dependents of explicit-deps and insert into deps
-      (labels ((rec (id)
-                 (setf deps
-                       (adjoin id deps
-                               :test #'equal))
-                 (mapcar #'rec (gethash id dependent-table))))
-        (mapcar #'rec explicit-deps)
-        deps)))
+         do (setf (gethash id depmap)
+                  (rec id)))
+      (lambda (x y)
+        (not (member y (gethash x depmap)
+                     :test #'equal))))))
 
-  ;; Major function: dep<
-  ;;
-  ;; this uses lists for sets, inefficient for large dependency
-  ;; graphs, so it needs to be updated in the future
+;; depsort-graph functions:
 
-  (defun dep< (target-table)
-    "Returns comparison function from target-table which returns true
-when the left argument does not depend on the right argument."
-    (let ((depmap (make-hash-table :test 'equal)))
-      (labels ((rec (id)
-                 ;; returns full list of dependencies for id
-                 (let ((tar (gethash id target-table)))
-                   (when tar
-                     (let ((deps (copy-list (target-deps tar))))
-                       (when deps
-                         (reduce (lambda (ds d)
-                                   (adjoin d ds :test #'equal))
-                                 (mapcan #'rec deps)
-                                 :initial-value deps)))))))
-        (loop
-           for id being the hash-keys in target-table
-           do (setf (gethash id depmap)
-                    (rec id)))
-        (lambda (x y)
-          (not (member y (gethash x depmap)
-                       :test #'equal))))))
-
-  ;; depsort-graph functions:
-
-  (defun last-dep (x lst dep<)
-    "Returns last dependency of x found in lst and t; if no
+(defun last-dep (x lst dep<)
+  "Returns last dependency of x found in lst and t; if no
 dependencies are found then returns two nil values"
-    (let ((res
-           (remove-if (lambda (d)
-                        (funcall dep< x d))
-                      lst)))
-      (if res
-          (values (first (last res))
-                  t)
-          (values nil nil))))
+  (let ((res
+         (remove-if (lambda (d)
+                      (funcall dep< x d))
+                    lst)))
+    (if res
+        (values (first (last res))
+                t)
+        (values nil nil))))
 
-  (defun insert-after! (insertion lst token)
-    "Inserts insertion into list immediately following the first
+(defun insert-after! (insertion lst token)
+  "Inserts insertion into list immediately following the first
 element #'equal to token."
-    (if (null lst)
-        (push insertion lst)
-        (if (equal (first lst) token)
-            (setf (cdr lst)
-                  (cons insertion
-                        (cdr lst)))
-            (insert-after! insertion (cdr lst) token))))
+  (if (null lst)
+      (push insertion lst)
+      (if (equal (first lst) token)
+          (setf (cdr lst)
+                (cons insertion
+                      (cdr lst)))
+          (insert-after! insertion (cdr lst) token))))
 
-  (defun depsort (ids dep<)
-    "Sorts a list of values given dependency comparison function dep<;
+(defun depsort (ids dep<)
+  "Sorts a list of values given dependency comparison function dep<;
 special algorithm since sort needs transitive operator while dep< is
 not transitive in general."
-    (let ((result nil))
-      (loop
-         for i in ids
-         do (multiple-value-bind (last-dep any)
-                (last-dep i result dep<)
-              (if any
-                  (insert-after! i result last-dep)
-                  (push i result))))
-      result))
+  (let ((result nil))
+    (loop
+       for i in ids
+       do (multiple-value-bind (last-dep any)
+              (last-dep i result dep<)
+            (if any
+                (insert-after! i result last-dep)
+                (push i result))))
+    result))
 
-  (defun depsort-graph (target-table &optional dep<)
-    "Returns dependency-sorted target ids from target-table, if dep<
+(defun depsort-graph (target-table &optional dep<)
+  "Returns dependency-sorted target ids from target-table, if dep<
 is provided then it is used instead of the dep< computed from the
 target-table."
-    (let ((dep< (if dep<
-                    dep<
-                    (dep< target-table))))
-      (depsort (hash-keys target-table)
-               dep<)))
+  (let ((dep< (if dep<
+                  dep<
+                  (dep< target-table))))
+    (depsort (hash-keys target-table)
+             dep<)))
 
-  ;; Major function: param-dependents
-  ;;
-  ;; finds full list of targets which depend on parameter and returns
-  ;; list of ids
-  (defun param-dependents (parameter target-table)
-    "Returns full list of parameter-dependent targets in target-table"
-    (let* (;; table mapping from id to those targets immediately
-           ;; dependent on id
-           (dependent-table
-            (make-hash-table :test 'equal))
-           (explicit-deps
-            (loop
-               for id being the hash-keys in target-table
-               for tar being the hash-values in target-table
-               when (member parameter (target-pdeps tar)
-                            :test #'equal)
-               collecting id))
-           (deps nil))
-      ;; fill dependent-table
-      (loop
-         for id being the hash-keys in target-table
-         for target being the hash-values in target-table
-         do
-           (loop
-              for d in (target-deps target)
-              do (push id
-                       (gethash d dependent-table))))
-      ;; collect all dependents of explicit-deps and insert into deps
-      (labels ((rec (id)
-                 (setf deps
-                       (adjoin id deps
-                               :test #'equal))
-                 (mapcar #'rec (gethash id dependent-table))))
-        (mapcar #'rec explicit-deps)
-        deps))))
+;; Major function: param-dependents
+;;
+;; finds full list of targets which depend on parameter and returns
+;; list of ids
+(defun param-dependents (parameter target-table)
+  "Returns full list of parameter-dependent targets in target-table"
+  (let* (;; table mapping from id to those targets immediately
+         ;; dependent on id
+         (dependent-table
+          (make-hash-table :test 'equal))
+         (explicit-deps
+          (loop
+             for id being the hash-keys in target-table
+             for tar being the hash-values in target-table
+             when (member parameter (target-pdeps tar)
+                          :test #'equal)
+             collecting id))
+         (deps nil))
+    ;; fill dependent-table
+    (loop
+       for id being the hash-keys in target-table
+       for target being the hash-values in target-table
+       do
+         (loop
+            for d in (target-deps target)
+            do (push id
+                     (gethash d dependent-table))))
+    ;; collect all dependents of explicit-deps and insert into deps
+    (labels ((rec (id)
+               (setf deps
+                     (adjoin id deps
+                             :test #'equal))
+               (mapcar #'rec (gethash id dependent-table))))
+      (mapcar #'rec explicit-deps)
+      deps)))
 
 ;; (defmacro res (id &optional (project-id *project-id*))
 ;;   "Expands to whatever the symbol for id in project identified by
@@ -510,13 +518,19 @@ parameters."
                         (gethash *project-id* *fin-target-tables*))))
      nil))
 
-(defun setresfn (id value)
+(defun setresfn (id value &optional timestamp)
   "Function version of setres"
   ;; *target-tables*:
   (setf (target-stat
          (gethash id
                   (gethash *project-id* *target-tables*)))
         t)
+  (setf (target-timestamp
+         (gethash id
+                  (gethash *project-id* *target-tables*)))
+        (if timestamp
+            timestamp
+            (get-universal-time)))
   (setf (target-val
          (gethash id
                   (gethash *project-id* *target-tables*)))
@@ -528,6 +542,12 @@ parameters."
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
           t)
+    (setf (target-timestamp
+           (gethash id
+                    (gethash *project-id* *fin-target-tables*)))
+          (target-timestamp
+           (gethash id
+                    (gethash *project-id* *target-tables*))))
     (setf (target-val
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
@@ -636,41 +656,11 @@ is given."
                    (let ((tar (gethash id fintab)))
                      `(let ((,val
                              ,(target-expr tar)))
-                        (setf (target-stat
-                               (gethash ',id
-                                        (gethash ',project-id
-                                                 *fin-target-tables*)))
-                              t)
-                        (setf (target-val
-                               (gethash ',id
-                                        (gethash ',project-id
-                                                 *fin-target-tables*)))
-                              ,val)
-                        (when (gethash ',id
-                                       (gethash ',project-id
-                                                *target-tables*))
-                          (setf (target-stat
-                                 (gethash ',id
-                                          (gethash ',project-id
-                                                   *target-tables*)))
-                                t)
-                          (setf
-                           (target-val
-                            (gethash ',id
-                                     (gethash (project)
-                                              *target-tables*)))
-                           ;;(res ,id)
-                           ,val))))))
+                        (setresfn ',id ,val)))))
              (lambda-list (gethash project-id *params-table*))
              (params (mapcar (lambda (x)
                                (first (mklist x)))
                              lambda-list))
-             (tartab (gethash project-id *target-tables*))
-             ;; (argmap (progn
-             ;;           (when (not (gethash project-id *args-tables*))
-             ;;             (setf (gethash project-id *args-tables*)
-             ;;                   (make-hash-table :test 'equal)))
-             ;;           `(gethash ',project-id *args-tables*)))
              (body
               `(progn
                  ;; Save supplied parameter values:
