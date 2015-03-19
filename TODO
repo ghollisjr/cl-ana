@@ -6,8 +6,7 @@ logres:
   files which have differing timestamps as well as only saving targets
   which have changed when saving a project.
 
-+ Work files should be tracked and have optional automatic path
-  management.
++ Work files should have SHA1 sums for checking if up to date
 
 + Logging functionality may need to be partially supported by graph
   transformations so that targets can be saved to disk and cleared

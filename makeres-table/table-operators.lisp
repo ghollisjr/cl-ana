@@ -191,3 +191,15 @@ targets manually (usually more conceptually clear incidentally)."
                                          'declare)))
                               body))))
            ,result)))))
+
+;;;; Special operators
+
+(defmacro defhist (id src expr init)
+  "Defines a histogram reduction of table src with expr inserted into
+the result histogram."
+  (alexandria:with-gensyms (hist)
+    `(defres ,id
+       (dotab (res ,src)
+           ((,hist ,init))
+           ,hist
+         (hins ,hist ,expr)))))

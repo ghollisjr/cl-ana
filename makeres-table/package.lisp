@@ -41,4 +41,6 @@
    :tab?
    :ltab?
    :dotab?
-   :table-reduction-source))
+   :table-reduction-source
+   ;; Special operators:
+   :defhist))
