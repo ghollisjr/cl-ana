@@ -1,3 +1,5 @@
++ Update copyright to be 2013-2015
+
 logres:
 
 - Each target and logged file should come with a timestamp so that
@@ -6,7 +8,12 @@ logres:
   files which have differing timestamps as well as only saving targets
   which have changed when saving a project.
 
-+ Work files should have SHA1 sums for checking if up to date
++ Use SHA1 sums for checking work files
+
+  This is partially completed, but I need to find a way to easily
+  track sha1 sums for files.  At the moment, it's turning into a
+  monolithic monster whereas I would rather have operators provided
+  which automate the management of the sha1 sums.
 
 + Logging functionality may need to be partially supported by graph
   transformations so that targets can be saved to disk and cleared

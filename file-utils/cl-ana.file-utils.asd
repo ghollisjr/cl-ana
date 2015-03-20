@@ -23,6 +23,8 @@
   :description "Various utilities for working with files"
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on ()
+  :depends-on (#:external-program
+               #:split-sequence)
   :components ((:file "package")
-	       (:file "file-utils")))
+	       (:file "read-utils")
+               (:file "stat-utils")))

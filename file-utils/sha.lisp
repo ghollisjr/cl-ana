@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;;
 ;;;; This file is part of cl-ana.
 ;;;;
@@ -19,17 +19,15 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:cl-ana.file-utils
-  (:use :cl
-        :external-program
-        :split-sequence)
-  (:export
-   ;; read-utils
-   :read-lines-from-file
-   :read-lines-from-pathname
-   :read-fields-from-file
-   :read-fields-from-pathname
-   ;; stat-utils
-   :file-last-changed
-   ;; sha
-   :sha1))
+(in-package :cl-ana.file-utils)
+
+(defun sha1 (pathname-or-string)
+  "Returns sha1 sum of file located at pathname-or-string."
+  (with-input-from-string
+      (str
+       (with-output-to-string (s)
+         (run "sha1sum"
+              (list (namestring pathname-or-string))
+              :output s)))
+    (first (split-sequence #\space
+                           (read-line str)))))
