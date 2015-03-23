@@ -519,22 +519,26 @@ parameters."
      nil))
 
 (defun setresfn (id value &optional timestamp)
-  "Function version of setres"
+  "Function version of setres.  Only sets value in target-table if id
+is present.  Creates new target in final target table if one is not
+present."
   ;; *target-tables*:
-  (setf (target-stat
-         (gethash id
-                  (gethash *project-id* *target-tables*)))
-        t)
-  (setf (target-timestamp
-         (gethash id
-                  (gethash *project-id* *target-tables*)))
-        (if timestamp
-            timestamp
-            (get-universal-time)))
-  (setf (target-val
-         (gethash id
-                  (gethash *project-id* *target-tables*)))
-        value)
+  (when (gethash id
+                 (gethash *project-id* *target-tables*))
+    (setf (target-stat
+           (gethash id
+                    (gethash *project-id* *target-tables*)))
+          t)
+    (setf (target-timestamp
+           (gethash id
+                    (gethash *project-id* *target-tables*)))
+          (if timestamp
+              timestamp
+              (get-universal-time)))
+    (setf (target-val
+           (gethash id
+                    (gethash *project-id* *target-tables*)))
+          value))
   ;; *fin-target-tables*:
   (when (gethash id
                  (gethash *project-id* *fin-target-tables*))
@@ -542,12 +546,14 @@ parameters."
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
           t)
-    (setf (target-timestamp
-           (gethash id
-                    (gethash *project-id* *fin-target-tables*)))
-          (target-timestamp
-           (gethash id
-                    (gethash *project-id* *target-tables*))))
+    (when (gethash id
+                   (gethash *project-id* *target-tables*))
+      (setf (target-timestamp
+             (gethash id
+                      (gethash *project-id* *fin-target-tables*)))
+            (target-timestamp
+             (gethash id
+                      (gethash *project-id* *target-tables*)))))
     (setf (target-val
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
