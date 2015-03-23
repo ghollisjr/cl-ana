@@ -424,13 +424,12 @@ to this project."
     (save-sublid-map version-string))
   nil)
 
-;; Use sb-mop:compute-applicable-methods-using-classes (SBCL only),
-;; cl:find-class and a text file storing the class names of each of
-;; the objects saved to keep track of and load results.
-
-;; make sure to call load-last-id in the version directory
 (defun load-project (version &key (work-p t))
   "work-p nil = assume work files already present"
+  ;; unset target statuses
+  (loop
+     for res being the hash-keys in (target-table)
+     do (unsetresfn res))
   ;; reset res->lid
   (setf (gethash (project) *proj->res->lid*)
         (make-hash-table :test 'equal))
