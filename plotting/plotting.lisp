@@ -657,6 +657,9 @@ initargs from key-args."
                  (default nil)
                  ;; if nil, don't show legend at all
                  (show t)
+                 ;; If front-p is non-nil, legend will be drawn in
+                 ;; front of data
+                 front-p
                  ;; can be drawn :outside or :inside the plotting area
                  (mode :inside)
                  ;; tell legend where to draw itself.  A cons pair of
@@ -690,6 +693,9 @@ initargs from key-args."
       (if show
           ;; show legend
           (progn
+            (if front-p
+                (format s " opaque")
+                (format s " noopaque"))
             (format s " ~a"
                     (string-downcase (mkstr mode)))
             (when location
