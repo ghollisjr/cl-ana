@@ -303,7 +303,8 @@ directory."
 can be nil, :error or :supersede with behavior analogous to
 open/with-open-file.  If current-p is t, sets symlink current to point
 to this project."
-  (let* ((project-path (gethash (project) *project-paths*))
+  (let* ((*print-pretty* nil)
+         (project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*)))
     ;; are we in a project?
     (when (null project-path)
@@ -358,10 +359,13 @@ to this project."
                        (error nil nil)))
            do (let ((type (target-type (resfn res)))
                     (timestamp (target-timestamp
-                                (gethash res tartab))))
+                                (gethash res tartab)))
+                    (form (target-expr (gethash res tartab))))
                 (format index-file
-                        "~a ~a ~a ~a~%"
-                        res lid type timestamp))
+                        "~a ~a ~a ~a ~s~%"
+                        res lid type timestamp
+                        (with-output-to-string (s)
+                          (format s "~s" form))))
            when (not (handler-case (target-stat (gethash res tartab))
                        (error nil nil)))
            do (format t "WARNING: ~a stat is null, not saving~%"
@@ -424,7 +428,9 @@ to this project."
     (save-sublid-map version-string))
   nil)
 
-(defun load-project (version &key (work-p t))
+(defun load-project (version &key
+                               (work-p t)
+                               load-changed-targets-p)
   "work-p nil = assume work files already present"
   ;; unset target statuses
   (loop
@@ -433,7 +439,8 @@ to this project."
   ;; reset res->lid
   (setf (gethash (project) *proj->res->lid*)
         (make-hash-table :test 'equal))
-  (let* ((project-path (gethash (project) *project-paths*))
+  (let* ((*print-pretty* nil)
+         (project-path (gethash (project) *project-paths*))
          (tartab (gethash (project) *target-tables*))
          (res->lid (gethash (project) *proj->res->lid*))
          (load-path (ensure-absolute-pathname version)))
@@ -467,7 +474,11 @@ to this project."
                (let ((id (read s))
                      (lid (read s))
                      (type (read s))
-                     (timestamp (read s nil nil)))
+                     ;; These two can be handled for legacy purposes
+                     ;; if not present in index file so they won't
+                     ;; throw errors
+                     (timestamp (read s nil nil))
+                     (form (read s nil nil)))
                  (cond
                    ((not (gethash id tartab))
                     (format
@@ -476,6 +487,16 @@ to this project."
                      id))
                    ((ignored? id)
                     (format t "Warning: result ~a is ignored, skipping~%" id))
+                   ((and (not (string= form
+                                       (with-output-to-string (s)
+                                         (format s "~s"
+                                                 (target-expr (gethash id tartab))))))
+                         (not load-changed-targets-p))
+                    (format
+                     t
+                     "Warning: ~s logged target expression not equal to~%~
+                     expression in target table, skipping.~%"
+                     id))
                    (t
                     (format t "Loading ~a~%" id)
                     (setf (gethash id res->lid) lid)
