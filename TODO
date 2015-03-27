@@ -2,6 +2,12 @@
 
 logres:
 
++ Log target form so that current form can be checked against the one
+  used to compute the result logged.  This removes the need for the
+  user to keep track of which targets have been updated if the results
+  were not saved or if multiple analysis versions are being used.
+  Updates to libraries will still be problematic however.
+
 - Each target and logged file should come with a timestamp so that
   versions of targets and files can be compared.  This would be useful
   for e.g. sending files to another computer and only updating the
