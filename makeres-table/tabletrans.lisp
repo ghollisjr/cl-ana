@@ -54,17 +54,21 @@ this).")
 
 (defun tab? (expr)
   "True if expr is a tab expression"
-  (when expr
+  (when (and expr
+             (listp expr))
     (destructuring-bind (progn &rest forms) expr
-      (let ((tab-op (first (first forms))))
-        (eq tab-op 'tab)))))
+      (when (listp (first forms))
+        (let ((tab-op (first (first forms))))
+          (eq tab-op 'tab))))))
 
 (defun ltab? (expr)
   "True if expr is an ltab expression"
-  (when expr
+  (when (and expr
+             (listp expr))
     (destructuring-bind (progn &rest forms) expr
-      (let ((tab-op (first (first forms))))
-        (eq tab-op 'ltab)))))
+      (when (listp (first forms))
+        (let ((tab-op (first (first forms))))
+          (eq tab-op 'ltab))))))
 
 (defun resform? (expr)
   "Returns true if expr is of the form (res x)"
