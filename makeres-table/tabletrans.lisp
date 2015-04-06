@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -30,11 +30,13 @@ this).")
 
 (defun table-reduction? (expr)
   "True if expr is a dotab, ltab or tab expression"
-  (when expr
+  (when (and expr
+             (listp expr))
     (destructuring-bind (progn &rest forms) expr
-      (let ((tab-op (first (first forms))))
-        (member tab-op (list 'table-pass 'dotab 'ltab 'tab)
-                :test 'eq)))))
+      (when (listp (first forms))
+        (let ((tab-op (first (first forms))))
+          (member tab-op (list 'table-pass 'dotab 'ltab 'tab)
+                  :test 'eq))))))
 
 (defun table-pass? (expr)
   "True if expr is a table-pass expression"
@@ -260,7 +262,7 @@ non-ignored sources."
                              (if (table-reduction? expr)
                                  (destructuring-bind (progn tab-form) expr
                                    (cl-ana.makeres::find-dependencies (cddr tab-form)
-                                                               'res))
+                                                                      'res))
                                  deps)))))))
       (loop
          for id being the hash-keys in target-table
@@ -291,7 +293,7 @@ non-ignored sources."
                              (if (ltab? expr)
                                  (destructuring-bind (progn tab-form) expr
                                    (cl-ana.makeres::find-dependencies (cddr tab-form)
-                                                               'res))
+                                                                      'res))
                                  deps)))))))
       (loop
          for id being the hash-keys in target-table
