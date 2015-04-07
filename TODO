@@ -2,7 +2,14 @@
 
 logres:
 
-+ Log target form so that current form can be checked against the one
++ If logged target form is not equal to the one loaded into the Lisp
+  image, then propogate the need to compute any targets which depend
+  on that target.  At the moment, I think I'm just not loading the
+  target, but in principle if you change the form (and value) of a
+  target but load targets which actually depend on it, then you'll
+  load the wrong values which actually need recomputing as well.
+
+- Log target form so that current form can be checked against the one
   used to compute the result logged.  This removes the need for the
   user to keep track of which targets have been updated if the results
   were not saved or if multiple analysis versions are being used.
