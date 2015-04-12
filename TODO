@@ -1,3 +1,6 @@
++ Single function/macro for defining a makeres+logres project along
+  with common settings.
+
 + Update copyright to be 2013-2015
 
 logres:
@@ -34,12 +37,9 @@ logres:
   already taking ~ 1.5 GB for my PhD analysis just to store all the
   histograms etc. in memory.
 
-+ Single function/macro for defining a makeres+logres project along
-  with common settings.
-
 makeres:
 
-+ Add tabletrans operator which allows multiple targets to be defined
+- Add tabletrans operator which allows multiple targets to be defined
   and computed as a block.  Would greatly assist in allowing
   e.g. multiple maps over the same computed list, fitting data (since
   functions themselves cannot be logged but the parameters can,
@@ -52,11 +52,11 @@ makeres:
   to which target you want to incrementally compute throughout the
   block.
 
-  This could actually provide a better platform for implementing the
-  table transformations as well, as the merging of table passes
-  ultimately computes multiple targets at once, meaning that at least
-  some of the work currently done by makeres-table could be moved to
-  this new tabletrans library.
+  (COULD STILL DO THIS) This could actually provide a better platform
+  for implementing the table transformations as well, as the merging
+  of table passes ultimately computes multiple targets at once,
+  meaning that at least some of the work currently done by
+  makeres-table could be moved to this new tabletrans library.
 
 + Logging functionality may best be provided in the compiled function
   of compres.  Each target would have as its path its res id.  Each
