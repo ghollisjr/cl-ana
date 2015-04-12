@@ -2,7 +2,7 @@
 
 logres:
 
-+ If logged target form is not equal to the one loaded into the Lisp
+- If logged target form is not equal to the one loaded into the Lisp
   image, then propogate the need to compute any targets which depend
   on that target.  At the moment, I think I'm just not loading the
   target, but in principle if you change the form (and value) of a
