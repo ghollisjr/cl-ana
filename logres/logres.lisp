@@ -486,7 +486,12 @@ to this project."
                      "Warning: result ~a not present in target table, skipping~%"
                      id))
                    ((ignored? id)
-                    (format t "Warning: result ~a is ignored, skipping~%" id))
+                    (format t "Warning: result ~a is ignored, skipping~%" id)
+                    ;; Unset dependencies of this target, as otherwise
+                    ;; there may be inconsistent values
+                    (loop
+                       for r in (res-dependents id (target-table))
+                       do (unsetresfn r)))
                    ((and (not (string= form
                                        (with-output-to-string (s)
                                          (format s "~s"
