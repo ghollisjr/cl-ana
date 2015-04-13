@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -19,7 +19,7 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :cl-ana.logres)
+(in-package :cl-ana.makeres)
 
 (defmethod save-target (lid (vector array) path)
   (let ((savedir

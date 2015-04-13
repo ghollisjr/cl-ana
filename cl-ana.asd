@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -61,6 +61,6 @@
                #:cl-ana.makeres-block
                #:cl-ana.makeres-table
                #:cl-ana.makeres-graphviz
-               #:cl-ana.logres
+               ;; #:cl-ana.logres
                #:cl-ana.logres-table)
   :components ((:file "package")))

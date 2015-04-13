@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -19,12 +19,21 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :cl-ana.logres)
+(require 'cl-ana.makeres)
 
-(defmethod save-object (id (fn function) path)
-  (format t "Warning: cannot save functions~%")
-  nil)
+(defpackage #:cl-ana.function-test
+  (:use :cl
+        :makeres))
 
-(defmethod load-object ((fn (eql 'function)) path)
-  (format t "Warning: cannot load functions~%")
-  nil)
+(cl-ana.package-utils:use-package-group :cl-ana :cl-ana.function-test)
+
+(in-package :cl-ana.function-test)
+
+(in-project function-test)
+
+(set-project-path "function-test/")
+
+(logres-ignore-by #'functionp)
+
+(defres f
+  (lambda (x) (print x)))

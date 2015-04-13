@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -19,21 +19,36 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :cl-ana.logres)
+(require 'cl-ana.makeres)
 
-;; Default behavior for tables: do nothing, they're usually stored via
-;; files which should go in the work/ directory.
+(in-package :cl-ana.makeres)
 
-(defmethod save-target (id (tab table) path)
-  nil)
+(in-project logres-test)
 
-(defmethod load-target ((type (eql 'table)) path)
-  nil)
+(set-project-path "~/logres-test/")
 
-;; reusable-table technically not a table:
+(defres source
+  (list (list :x 1)
+        (list :x 2)
+        (list :x 3)))
 
-(defmethod save-target (id (tab reusable-table) path)
-  nil)
+(defres vector
+  (vector 1 2 3 4 5))
 
-(defmethod load-target ((type (eql 'reusable-table)) path)
-  nil)
+(defres (mean x)
+  (/ (sum (mapcar (lambda (x)
+                    (getf x :x))
+                  (res source)))
+     (length (res source))))
+
+(defres hash-table
+  (let ((hash-table (make-hash-table :test 'equal)))
+    (setf (gethash 'x hash-table)
+          'x)
+    hash-table))
+
+(defres nested
+  (let ((ht (make-hash-table :test 'equal)))
+    (setf (gethash 'hash-table ht)
+          (res hash-table))
+    ht))

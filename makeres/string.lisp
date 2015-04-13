@@ -1,49 +1,29 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
-;;;;
+;;;; Copyright 2013-2015 Gary Hollis
+;;;; 
 ;;;; This file is part of cl-ana.
-;;;;
+;;;; 
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;;
+;;;; 
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;;
+;;;; 
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(defpackage #:cl-ana.logres
-  (:use :cl
-        :external-program
-        :cl-ana.hdf-utils
-        :cl-ana.map
-        :cl-ana.functional-utils
-        :cl-ana.file-utils
-        :cl-ana.string-utils
-        :cl-ana.serialization
-        :cl-ana.histogram
-        :cl-ana.pathname-utils
-        :cl-ana.table
-        :cl-ana.reusable-table
-        :cl-ana.makeres)
-  (:export :load-object
-           :save-object
-           :project-path
-           :set-project-path
-           :save-project
-           :load-project
-           :checkout-version
-           :logres-ignore
-           :logres-ignorefn
-           :logres-ignore-by
-           :logres-track
-           :logres-trackfn
-           :logres-track-by
-           :function-target?))
+(in-package :cl-ana.makeres)
+
+(defmethod save-target (lid (str string) path)
+  (with-open-file (file path
+                        :direction :output
+                        :if-exists :supersede
+                        :if-does-not-exist :create)
+    (format file "~s~%" str)))

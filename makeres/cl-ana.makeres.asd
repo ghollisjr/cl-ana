@@ -1,14 +1,14 @@
-;;;; makeres is a Common Lisp make-like tool for computations.
-;;;; Copyright 2014 Gary Hollis
+;;;; cl-ana is a Common Lisp data analysis library.
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
-;;;; This file is part of makeres.
+;;;; This file is part of cl-ana.
 ;;;; 
-;;;; makeres is free software: you can redistribute it and/or modify it
+;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
 ;;;; 
-;;;; makeres is distributed in the hope that it will be useful, but
+;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
@@ -31,7 +31,27 @@
                #:cl-ana.list-utils
                #:cl-ana.symbol-utils
                #:cl-ana.map
-               #:cl-ana.hash-table-utils)
+               #:cl-ana.hash-table-utils
+               ;; logres:
+               #:external-program
+               #:cl-ana.hdf-utils
+               #:cl-ana.serialization
+               #:cl-ana.string-utils
+               #:cl-ana.functional-utils
+               #:cl-ana.file-utils
+               #:cl-ana.histogram
+               #:cl-ana.pathname-utils
+               #:cl-ana.table
+               #:cl-ana.reusable-table)
   :components ((:file "package")
                (:file "makeres")
-               (:file "lrestrans")))
+               (:file "lrestrans")
+               ;; logres:
+               (:file "logres")
+               (:file "histogram")
+               (:file "table")
+               (:file "function")
+               (:file "hash-table")
+               (:file "cons")
+               (:file "array")
+               (:file "string")))

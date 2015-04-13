@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -21,10 +21,20 @@
 
 (defpackage #:cl-ana.makeres
   (:use :cl
+        :external-program
+        :cl-ana.hdf-utils
         :cl-ana.macro-utils
         :cl-ana.list-utils
         :cl-ana.symbol-utils
         :cl-ana.map
+        :cl-ana.functional-utils
+        :cl-ana.file-utils
+        :cl-ana.string-utils
+        :cl-ana.serialization
+        :cl-ana.histogram
+        :cl-ana.pathname-utils
+        :cl-ana.table
+        :cl-ana.reusable-table
         :cl-ana.hash-table-utils)
   (:export
    ;; target
@@ -89,6 +99,21 @@
    :fin-target-ids
    ;; INCLUDED TRANSFORMATIONS:
    :lrestrans ; allows logical results
-   :lres))
+   :lres
+   ;; logres:
+   :load-object
+   :save-object
+   :project-path
+   :set-project-path
+   :save-project
+   :load-project
+   :checkout-version
+   :logres-ignore
+   :logres-ignorefn
+   :logres-ignore-by
+   :logres-track
+   :logres-trackfn
+   :logres-track-by
+   :function-target?))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)
