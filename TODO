@@ -1,3 +1,7 @@
++ work-path function which returns paths relative to the current
+  working directory, ensure-directories-exist being called to define
+  subdirectories automatically
+
 + Single function/macro for defining a makeres+logres project along
   with common settings.
 
