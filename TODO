@@ -1,4 +1,9 @@
-+ work-path function which returns paths relative to the current
++ Conduct detailed benchmarks of Lisp performance vs. C++ with ROOT or
+  HDF5 for processing datasets of varying size and structure, varying
+  number of histograms to fill, etc., both for makeres generated code
+  and for fully optimized Lisp.
+
+- work-path function which returns paths relative to the current
   working directory, ensure-directories-exist being called to define
   subdirectories automatically
 

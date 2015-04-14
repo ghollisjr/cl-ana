@@ -768,7 +768,7 @@ from pass up to src."
              (nrows-var (gsym 'table-pass))
              (print-pass-targets
               (when *print-progress*
-                `((progn
+                `((let ((*print-pretty* nil))
                     (format t "Pass over ~a to compute:~%" ',src)
                     ,@(loop
                          for r in pass
