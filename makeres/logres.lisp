@@ -215,20 +215,6 @@ project"
 (defun reset-log-id ()
   (setf *last-id* -1))
 
-(defun logres-work-path (res-id)
-  "Gets the path where result res-id should be stored in working
-  directory."
-  (let* ((res->lid (gethash (project) *proj->res->lid*))
-         (lid (gethash res-id res->lid)))
-    (when (not lid)
-      (setf lid (next-log-id))
-      (setf (gethash res-id res->lid) lid))
-    (make-pathname :directory
-                   (list :absolute
-                         (namestring (gethash (project) *project-paths*))
-                         "work")
-                   :name (mkstr lid))))
-
 (defun directory-pathname-p (pathname-or-string)
   "Returns t iff pathname-or-string refers to a directory"
   (string= (file-namestring (pathname pathname-or-string))
@@ -538,6 +524,37 @@ to this project."
   ;; load sublid-map:
   (load-sublid-map version)
   nil)
+
+;;;; Utility functions:
+
+(defun work-path (path-or-format-recipe &rest args)
+  "Returns namestring for a path in the project work directory.
+path-or-format-recipe can be a pathname directly, in which case the
+rest of the arguments are unused.  Or, it can be a format string which
+when format is supplied with both the recipe and the rest of the
+arguments should return a namestring for a valid pathname.  In either
+case, ensure-directories-exist will be called to ensure that the path
+is ready for use.
+
+If for whatever reason work-path is given an absolute pathname, it
+will be returned as-is.  If the result of a format processing a format
+string and the rest of the arguments is an absolute pathname, this
+will be returned."
+  (let ((namestring
+         (namestring
+          (cond
+            ((stringp path-or-format-recipe)
+             (work-path
+              (pathname (apply #'format nil path-or-format-recipe args))))
+            ((pathnamep path-or-format-recipe)
+             (if (pathname-absolute-p path-or-format-recipe)
+                 path-or-format-recipe
+                 (merge-pathnames path-or-format-recipe
+                                  (merge-pathnames "work/"
+                                                   (pathname (project-path))))))
+            (t (error "work-path accepts strings or pathnames only for first argument"))))))
+    (ensure-directories-exist namestring)
+    namestring))
 
 ;;;; At the moment, this function appears unnecessary due to the
 ;;;; ability to restart a session, load & save a project to

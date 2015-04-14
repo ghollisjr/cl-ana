@@ -114,6 +114,7 @@
    :logres-track
    :logres-trackfn
    :logres-track-by
-   :function-target?))
+   :function-target?
+   :work-path))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)
