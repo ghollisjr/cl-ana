@@ -224,3 +224,21 @@ be in bounds, so be careful."
     (cons init-mean
           (mapcar acc
                   (subseq data subset-length)))))
+
+(defun determination-coefficient (data function)
+  "Calculates R^2, or the coefficient of determination, for the
+function against the data.  data should have type with map->alist
+defined."
+  (let ((alist (map->alist data)))
+    (- 1
+       (/ (sum (expt (mapcar (lambda (cons)
+                               (- (funcall function (car cons))
+                                  (cdr cons)))
+                             alist)
+                     2))
+          (let* ((ys (mapcar #'cdr alist))
+                 (mean (mean ys)))
+            (sum (expt (mapcar (lambda (x)
+                                 (- x mean))
+                               ys)
+                       2)))))))

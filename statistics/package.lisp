@@ -22,6 +22,7 @@
 (defpackage #:cl-ana.statistics 
   (:use :cl
         :cl-ana.macro-utils
+        :cl-ana.map
         :cl-ana.list-utils
         :cl-ana.histogram)
   (:shadow :mean
@@ -40,6 +41,7 @@
            :moving-average
            :quantiles
            :percentiles
-           :qq-plot))
+           :qq-plot
+           :determination-coefficient))
 
 (cl-ana.gmath:use-gmath :cl-ana.statistics)

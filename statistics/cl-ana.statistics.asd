@@ -28,6 +28,7 @@
   :license "GPLv3"
   :depends-on (#:cl-ana.generic-math
                #:cl-ana.macro-utils
+               #:cl-ana.map
                #:cl-ana.list-utils
                #:cl-ana.histogram)
   :components ((:file "package")
