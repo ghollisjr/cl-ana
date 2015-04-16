@@ -1,7 +1,23 @@
-+ Conduct detailed benchmarks of Lisp performance vs. C++ with ROOT or
++ Create raw-hdf-table and raw-hdf-table-chain which remove the
+  automatic type conversion from HDF5 types to Lisp, and require the
+  user to use foreign object interfaces from e.g. CFFI to analyze
+  data.  This seems to be necessary for large datasets since, as per
+  the results from the benchmarks below, ROOT with C++ is 2 orders of
+  magnitude faster than the current Lisp implementation.
+
+- Conduct detailed benchmarks of Lisp performance vs. C++ with ROOT or
   HDF5 for processing datasets of varying size and structure, varying
   number of histograms to fill, etc., both for makeres generated code
   and for fully optimized Lisp.
+
+  Tentative results are that ROOT with C++ runs 2 orders of magnitude
+  faster than either the macro or compiled benchmarks in Lisp which
+  use the low level libraries, and type declaration doesn't appear to
+  aid much at all.
+
+  From these it could be deduced that the type conversion is what
+  takes so much time, so that raw access to foreign objects could be
+  required.
 
 - work-path function which returns paths relative to the current
   working directory, ensure-directories-exist being called to define

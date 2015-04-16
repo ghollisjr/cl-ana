@@ -37,4 +37,7 @@
 	       #:alexandria)
   :components ((:file "package")
 	       (:file "hdf-table")
-	       (:file "hdf-table-chain")))
+	       (:file "hdf-table-chain")
+               ;; (:file "raw-hdf-table")
+               ;; (:file "raw-hdf-table-chain")
+               ))

@@ -20,3 +20,14 @@ Whenever you are done with an hdf-table (or chain), you should always
 call table-close on the table object.  This is necessary since I'm
 storing the dataset object inside the hdf-table (and since CLOS
 doesn't handle object destructors).
+
+--------------------------------------------------
+
+There are two kinds of hdf-table objects:
+
+1. Type conversion included (hdf-table, hdf-table-chain)
+2. Type conversion not included (raw-hdf-table, raw-hdf-table-chain)
+
+Type conversion is expensive but nice.  For small datasets, type
+conversion can save time writing the code, but for large datasets type
+conversion can cost huge amounts of time.
