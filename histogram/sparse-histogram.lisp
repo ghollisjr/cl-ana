@@ -160,7 +160,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
                                     (first x)
                                     x))
                               unique-sorted-index-specs))
-                     (new-ndims (- ndims (length unique-sorted-indices)))
+                     (new-ndims (cl:- ndims (length unique-sorted-indices)))
                      (new-dim-names (except-at dim-names unique-sorted-indices
                                                :uniquely-sorted t))
                      (new-bin-specs (except-at bin-specs unique-sorted-indices
@@ -187,7 +187,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 			     weight
 			     (hist-default-increment hist))))
       (cond-setf (hist-point-ref hist point)
-		 (+ (hist-point-ref hist point)
+		 (cl:+ (hist-point-ref hist point)
 		    weight-factor)
 		 :place)
       hist)))
@@ -271,14 +271,14 @@ and third elements respectively."
               (when (and (<= low-bound this-axis)
                          (< this-axis high-bound))
                 (setf (gethash (except-nth key axis) result)
-                      (+ (gethash (except-nth key axis) result empty-bin-value)
+                      (cl:+ (gethash (except-nth key axis) result empty-bin-value)
                          val))))))
 	;; handle the unbounded case
 	(let ((axis index-spec))
 	  (iter
             (for (key val) in-hashtable value-map)
             (setf (gethash (except-nth key axis) result)
-                  (+ (gethash (except-nth key axis) result empty-bin-value)
+                  (cl:+ (gethash (except-nth key axis) result empty-bin-value)
                      val)))))
     result))
 

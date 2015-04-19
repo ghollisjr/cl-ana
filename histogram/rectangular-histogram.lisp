@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -89,7 +89,7 @@ calling this function; it is unchecked in this respect for speed."
   (labels
       ((get-bin-index-worker (data-list bin-specs &optional result)
 	 (if data-list ; I'm intentionally ignoring length differences
-		       ; between data-list and bin-specs
+                                        ; between data-list and bin-specs
 	     (let* ((datum (first data-list))
 		    (bin-spec (first bin-specs))
                     (nbins (the fixnum (first bin-spec)))
@@ -110,18 +110,19 @@ given the bin-spec for a single axis/dimension."
            (real value))
   (destructuring-bind (nbins binlo binhi) bin-spec
     (declare (fixnum nbins))
-    (let ((delta (cl:/ (- binhi binlo) nbins)))
-      (the fixnum (floor (- value binlo) delta)))))
+    (let ((delta (cl:/ (cl:- binhi binlo) nbins)))
+      (the fixnum (floor (cl:- value binlo) delta)))))
 
 (defun get-bin-center-worker (bin-spec index)
   (let* ((nbins (first bin-spec))
 	 (binlo (second bin-spec))
 	 (binhi (third bin-spec))
-	 (delta (/ (- binhi binlo) nbins)))
-    (+ binlo
-       (/ delta 2)
-       (* delta
-	  index))))
+	 (delta (cl:/ (cl:- binhi binlo) nbins)))
+    (declare (fixnum nbins))
+    (cl:+ binlo
+          (cl:/ delta 2)
+          (cl:* delta
+                index))))
 
 (defun get-bin-center (bin-specs bin-index)
   (mapcar #'get-bin-center-worker bin-specs bin-index))
@@ -143,7 +144,7 @@ dimension in the histogram."
   (mapcar (lambda (lst)
             (destructuring-bind (&key low high nbins &allow-other-keys)
                 lst
-              (/ (- high low) nbins)))
+              (cl:/ (cl:- high low) nbins)))
           (hist-dim-specs hist)))
 
 ;; abbrevations:
@@ -164,14 +165,14 @@ dimension in the histogram."
 (defun discrete-dim-spec (&key low high (delta 1d0))
   "Returns dim-spec for discrete/integral data, e.g. digital event
 counter readouts."
-  (let* ((newlow (- low
-                    (* delta 0.5)))
-         (newnbins (1+ (floor (- high low)
+  (let* ((newlow (cl:- low
+                       (cl:* delta 0.5)))
+         (newnbins (1+ (floor (cl:- high low)
                               delta)))
-         (newhigh (+ low
-                     (* (1- newnbins)
-                        delta)
-                     (* delta 0.5))))
+         (newhigh (cl:+ low
+                        (cl:* (1- newnbins)
+                              delta)
+                        (cl:* delta 0.5))))
     (list :low newlow
           :high newhigh
           :nbins newnbins)))
