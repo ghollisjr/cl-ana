@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2015 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
