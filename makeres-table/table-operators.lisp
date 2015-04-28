@@ -194,12 +194,18 @@ targets manually (usually more conceptually clear incidentally)."
 
 ;;;; Special operators
 
-(defmacro defhist (id src expr init)
+(defmacro defhist (id src expr init
+                   &key (test nil test-supplied-p))
   "Defines a histogram reduction of table src with expr inserted into
-the result histogram."
+the result histogram.  test is a form which, when evaluated in the
+table pass body should return non-nil for events to be inserted into
+the histogram."
   (alexandria:with-gensyms (hist)
     `(defres ,id
        (dotab (res ,src)
            ((,hist ,init))
            ,hist
-         (hins ,hist ,expr)))))
+         ,(if test-supplied-p
+              `(when ,test
+                 (hins ,hist ,expr))
+              `(hins ,hist ,expr))))))

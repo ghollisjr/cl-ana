@@ -19,7 +19,9 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(in-package :cl-ana.makeres-table)
+(require 'cl-ana)
+
+(in-package :cl-ana)
 
 ;; NOTE: tabletrans is an example of a graph transformation which
 ;; needs to have makeres run even when the only thing updated is the
@@ -29,7 +31,7 @@
 
 (in-project tabletrans-simple-test)
 
-(settrans (pass-merge))
+(settrans (list #'macrotrans #'tabletrans))
 
 (defpars
     ((nrows 5)))
@@ -45,7 +47,7 @@
                collecting i)))))
 
 (deflfields table
-    (y (* 2 (field x))))
+    ((y (* 2 (field x)))))
 
 (defres test
   (dotab (res table)

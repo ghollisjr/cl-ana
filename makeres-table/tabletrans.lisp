@@ -959,9 +959,7 @@ true when given the key and value from ht."
                   ;; necessary, but I'm leaving it in until further
                   ;; testing confirms it's unnecessary
                   (set-difference
-                   (ultimate-source-tables
-                    graph
-                    (append processed-srcs))
+                   (ultimate-source-tables graph processed-srcs)
                    processed-srcs)))
              (when srcs
                (dolist (src srcs)
