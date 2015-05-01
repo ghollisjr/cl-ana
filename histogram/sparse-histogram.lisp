@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -74,9 +74,9 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 (defun make-shist (dim-spec-plists &key empty-bin-value default-increment)
   "Abbreviation for make-sparse-hist"
   #k(make-sparse-hist dim-spec-plists
-                          &when-keys
-                          empty-bin-value
-                          default-increment))
+                      &when-keys
+                      empty-bin-value
+                      default-increment))
 
 (defmethod empty-copy ((h sparse-histogram))
   (with-slots (empty-bin-value
@@ -187,7 +187,7 @@ dimension named \"x\" with 10 bins, low bin edge 50 and high bin edge
 			     weight
 			     (hist-default-increment hist))))
       (cond-setf (hist-point-ref hist point)
-		 (cl:+ (hist-point-ref hist point)
+		 (+ (hist-point-ref hist point)
 		    weight-factor)
 		 :place)
       hist)))
@@ -272,14 +272,14 @@ and third elements respectively."
                          (< this-axis high-bound))
                 (setf (gethash (except-nth key axis) result)
                       (cl:+ (gethash (except-nth key axis) result empty-bin-value)
-                         val))))))
+                            val))))))
 	;; handle the unbounded case
 	(let ((axis index-spec))
 	  (iter
             (for (key val) in-hashtable value-map)
             (setf (gethash (except-nth key axis) result)
                   (cl:+ (gethash (except-nth key axis) result empty-bin-value)
-                     val)))))
+                        val)))))
     result))
 
 (defmethod hist-reorder-dimensions ((histogram sparse-histogram) dim-indices)

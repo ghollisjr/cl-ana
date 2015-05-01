@@ -23,6 +23,7 @@
   (:use :cl
         :cl-ana.histogram
         :cl-ana.hdf-utils
+        :cl-ana.error-propogation
         :cl-ana.macro-utils
         :cl-ana.typespec
         :cl-ana.table

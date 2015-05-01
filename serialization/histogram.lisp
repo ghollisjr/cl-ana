@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -29,11 +29,8 @@
   (float x 0d0))
 
 (defun write-histogram (histogram file hdf-path)
-  "Writes histogram to file assuming it contains double-float data as
-bin centers and integers/fixnums as bin count values; this may be
-fixed in the future to allow for things like err-num bin values; in
-the mean time one can create two histograms, one with the bin count
-and the other with the error bars as the bin values.
+  "Writes histogram to file.  Supports histogram count values with
+errors as well as simple numerical values.
 
 Note that this function assumes that either all the dimensions have
 names or none of them do."
@@ -43,19 +40,32 @@ names or none of them do."
                         hdf-path
                         "/"
                         path)))
-    (let* ((data-names-specs
+    (let* ((raw-data (hist-bin-values histogram))
+           (errors? (typep (first (first raw-data))
+                           'err-num))
+           (data (if (not errors?)
+                     raw-data
+                     (mapcar (lambda (datum)
+                               (destructuring-bind (count &rest xs) datum
+                                 (list* (err-num-value count)
+                                        (err-num-error count)
+                                        xs)))
+                             raw-data)))
+           (data-names-specs
             ;; had to change this to double-float to allow for
             ;; normalized histograms etc.
-            (cons (cons "count" :double)
-                  (loop
-                     for i from 0
-                     for n in (hist-dim-names histogram)
-                     collect (cons (if n
-                                       n
-                                       (with-output-to-string (s)
-                                         (format s "x~a" i)))
-                                   :double))))
-           (data (hist-bin-values histogram))
+            (append (if errors?
+                        (list (cons "count" :double)
+                              (cons "count-error" :double))
+                        (list (cons "count" :double)))
+                    (loop
+                       for i from 0
+                       for n in (hist-dim-names histogram)
+                       collect (cons (if n
+                                         n
+                                         (with-output-to-string (s)
+                                           (format s "x~a" i)))
+                                     :double))))
            (data-table-path
             (subpath *histogram-data-path*))
            (data-table (create-hdf-table
@@ -155,12 +165,18 @@ sparse-histogram respectively."
             (open-hdf-table file
                             (subpath *histogram-data-path*)))
            (data-table-field-names
-            (table-field-names data-table))
-           (names-specs nil))
-      (table-reduce data-table
-                    data-table-field-names
-                    (lambda (state count &rest xs)
-                      (hist-insert histogram xs count)))
+            (table-field-names data-table)))
+      (if (equal (second data-table-field-names)
+                 "count-error")
+          (table-reduce data-table
+                        data-table-field-names
+                        (lambda (state count count-error &rest xs)
+                          (hist-insert histogram xs
+                                       (+- count count-error))))
+          (table-reduce data-table
+                        data-table-field-names
+                        (lambda (state count &rest xs)
+                          (hist-insert histogram xs count))))
       (table-close bin-spec-table)
       (table-close data-table)
       histogram)))
