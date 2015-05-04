@@ -1,9 +1,23 @@
-+ Create raw-hdf-table and raw-hdf-table-chain which remove the
++ Fix read-histogram so that output from C/C++ code which does not use
+  structs can still be used.
+
+  At the moment, structs are used and the offets from a C struct
+  placed in the HDF5 type since type conversion for compound types is
+  built on top of CFFI's defcstruct.
+
+  The only other options would be to include offset information in a
+  compound typespec and then update the HDF5 -> typespec functions as
+  well as any which process typespecs.
+
+% Create raw-hdf-table and raw-hdf-table-chain which remove the
   automatic type conversion from HDF5 types to Lisp, and require the
   user to use foreign object interfaces from e.g. CFFI to analyze
   data.  This seems to be necessary for large datasets since, as per
   the results from the benchmarks below, ROOT with C++ is 2 orders of
   magnitude faster than the current Lisp implementation.
+
+  The raw versions are pending for deletion due to new benchmark
+  results; type conversion isn't the bottleneck.
 
 - Conduct detailed benchmarks of Lisp performance vs. C++ with ROOT or
   HDF5 for processing datasets of varying size and structure, varying

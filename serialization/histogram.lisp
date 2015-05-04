@@ -127,6 +127,123 @@ names or none of them do."
                 (high (->double-float (getf plist :high))))))
       (table-close bin-spec-table))))
 
+;; new version which uses raw HDF5 functions
+(defun new-read-histogram (file hdf-path &optional (type :sparse))
+  "Reads a histogram from an hdf-table with file and path.
+
+type can be either :contiguous or :sparse for contiguous-histogram and
+sparse-histogram respectively."
+  (flet ((subpath (path)
+           (concatenate 'string
+                        hdf-path
+                        "/"
+                        path)))
+    (let* ((binspec-path
+            (subpath *histogram-bin-spec-path*))
+           (binspec-dataset
+            (h5dopen2 file binspec-path +H5P-DEFAULT+))
+           (binspec-datatype
+            (h5dget-type binspec-dataset))
+           (binspec-dataspace
+            (h5dget-space binspec-dataset))
+           (data-path
+            (subpath *histogram-data-path*))
+           (data-dataset
+            (h5dopen2 file data-path +H5P-DEFAULT+))
+           (data-datatype
+            (h5dget-type data-dataset))
+           (data-dataspace
+            (h5dget-space data-dataset))
+
+           binspec-chunk-size
+           nrows
+           ndims
+
+           binspec-row-size
+           binspec-buffer-size
+           binspecs
+
+           memspace)
+      (with-foreign-objects ((binspec-dataset-dims 'hsize-t)
+                             (binspec-chunk-dims 'hsize-t)
+                             (binspec-name-dims 'hsize-t)
+                             (data-dataset-dims 'hsize-t)
+                             (data-chunk-dims 'hsize-t)
+                             (memspace-dims 'hsize-t)
+                             (memspace-maxdims 'hsize-t))
+        (let ((create-plist
+               (h5dget-create-plist binspec-dataset)))
+          (h5pget-chunk create-plist 1 binspec-chunk-dims))
+        (setf binspec-chunk-size
+              (mem-aref binspec-chunk-dims 'hsize-t))
+        (h5sget-simple-extent-dims binspec-dataspace
+                                   binspec-dataset-dims
+                                   0)
+        (setf ndims
+              (mem-aref binspec-dataset-dims 'hsize-t))
+        (h5tget-array-dims2 (h5tget-member-type binspec-datatype
+                                                0)
+                            binspec-name-dims)
+
+        (setf binspec-row-size
+              (h5tget-size binspec-datatype))
+        (setf binspec-buffer-size
+              (* binspec-chunk-size binspec-row-size))
+        (with-foreign-object (buffer :char binspec-buffer-size)
+          (loop
+             for chunk-index from 0
+             while (< (* chunk-index binspec-buffer-size)
+                      ndims)
+             do
+               (let ((remaining-rows
+                      (- ndims
+                         (* chunk-index binspec-chunk-size))))
+                 (if (< remaining-rows binspec-chunk-size)
+                     (setf (mem-aref memspace-dims 'hsize-t 0)
+                           remaining-rows)
+                     (setf (mem-aref memspace-dims 'hsize-t 0)
+                           binspec-chunk-size)))
+               (setf (mem-aref memspace-maxdims 'hsize-t)
+                     (mem-aref memspace-dims 'hsize-t))
+               (with-foreign-objects ((start 'hsize-t)
+                                      (stride 'hsize-t)
+                                      (cnt 'hsize-t)
+                                      (blck 'hsize-t))
+                 (setf (mem-aref start 'hsize-t)
+                       (* chunk-index
+                          binspec-chunk-size))
+                 (setf (mem-aref stride 'hsize-t)
+                       1)
+                 (setf (mem-aref cnt 'hsize-t)
+                       1)
+                 (setf (mem-aref blck 'hsize-t)
+                       (mem-aref memspace-dims 'hsize-t))
+                 (h5sselect-hyperslab binspec-dataspace
+                                      :H5S-SELECT-SET
+                                      start
+                                      stride
+                                      cnt
+                                      blck)
+                 (setf memspace
+                       (h5screate-simple 1 memspace-dims memspace-maxdims))
+                 (h5dread binspec-dataset
+                          binspec-datatype
+                          memspace
+                          binspec-dataspace
+                          +H5P-DEFAULT+
+                          buffer)
+                 (loop
+                    for i from 0 below (mem-aref memspace-dims 'hsize-t)
+                    do (let ((buffer-index
+                              (+ (* i binspec-row-size)
+                                 (* binspec-chunk-size chunk-index))))
+
+
+                         )))))
+                      
+          
+           ))))
+
 (defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
 
