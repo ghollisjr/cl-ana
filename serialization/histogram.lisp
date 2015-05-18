@@ -242,7 +242,7 @@ sparse-histogram respectively."
                          )))))
                       
           
-           ))))
+        ))))
 
 (defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
