@@ -1,3 +1,22 @@
++ Renovate logres so that results can be loaded/saved dynamically.
+
+  There are two broad approaches:
+
+  1. Find a naming/organization scheme on disk which is static;
+     i.e. each target is algorithmically given a name which is unique
+     to that target ID form, and each target handles its own contents
+     by storing itself as either a directory or a file.
+
+  2. Keep flat storage strategy, but implement condensing algorithm
+     which renames the files such that the minimum maximum value is
+     used; at the moment, naively keeping flat storage would result in
+     ever growing index numbers due to old targets being removed while
+     new targets keep acquiring larger index values.
+
+  I'm leaning towards 1 due to being conceptually easier to work with
+  and not all that difficult to implement.  The downside to 1 is that
+  old result logs will either need to be converted or recomputed.
+
 + Fix read-histogram so that output from C/C++ code which does not use
   structs can still be used.
 
@@ -16,7 +35,7 @@
   the results from the benchmarks below, ROOT with C++ is 2 orders of
   magnitude faster than the current Lisp implementation.
 
-  The raw versions are pending for deletion due to new benchmark
+  NOTE: The raw versions are pending for deletion due to new benchmark
   results; type conversion isn't the bottleneck.
 
 - Conduct detailed benchmarks of Lisp performance vs. C++ with ROOT or
@@ -24,14 +43,17 @@
   number of histograms to fill, etc., both for makeres generated code
   and for fully optimized Lisp.
 
-  Tentative results are that ROOT with C++ runs 2 orders of magnitude
+  Tentative results: that ROOT with C++ runs 2 orders of magnitude
   faster than either the macro or compiled benchmarks in Lisp which
   use the low level libraries, and type declaration doesn't appear to
   aid much at all.
 
-  From these it could be deduced that the type conversion is what
-  takes so much time, so that raw access to foreign objects could be
-  required.
+  Final results: C++ with ROOT is two orders of magnitude faster than
+  cl-ana functionality (additional type declarations don't have any
+  effect), but less than a factor of 2 away from raw HDF5 CFFI
+  function calls from within Lisp.  cl-ana histograms are a
+  significant bottleneck even with type declarations.  C++ with HDF5
+  and naive histograms is even faster than ROOT.
 
 - work-path function which returns paths relative to the current
   working directory, ensure-directories-exist being called to define
