@@ -45,6 +45,16 @@ this).")
       (let ((tab-op (first (first forms))))
         (eq tab-op 'table-pass)))))
 
+(defun srctab? (expr)
+  "True if expr is a srctab expression"
+  (when (and expr
+             (listp expr)
+             (listp (second expr)))
+    (destructuring-bind (progn &rest forms) expr
+      (let ((tab-op (first (first forms))))
+        (eq tab-op 'srctab)))))
+        
+
 (defun dotab? (expr)
   "True if expr is a dotab expression"
   (when expr

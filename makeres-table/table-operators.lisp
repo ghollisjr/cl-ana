@@ -62,6 +62,11 @@ op can be :add or :set, resulting in adding lfields or setting lfields
 respectively."
   `(deflfieldsfn ',table-id ',lfields :op ,op))
 
+;; Source tables:
+(defmacro srctab (opener &optional bootstrap)
+  "Operator for denoting a source table.  Necessary for logging."
+  `(funcall ,opener :read))
+
 ;; General table reduction:
 (defmacro dotab (source-table init-bindings return &body body)
   "Operator used for denoting a loop over a table.

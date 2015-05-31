@@ -22,6 +22,7 @@
 (defpackage #:cl-ana.makeres
   (:use :cl
         :external-program
+        :cl-ana.error-propogation
         :cl-ana.hdf-utils
         :cl-ana.macro-utils
         :cl-ana.list-utils
@@ -81,6 +82,7 @@
    :par
    :parfn
    ;; project macros
+   :defproject
    :in-project
    :defpars
    :undefpars
@@ -101,8 +103,14 @@
    :lrestrans ; allows logical results
    :lres
    ;; logres:
+   :save-target
+   :load-target
+   :unload-target
+   :define-save-target-method
+   :define-load-target-method
    :load-object
    :save-object
+   :cleanup
    :project-path
    :set-project-path
    :save-project
@@ -115,6 +123,20 @@
    :logres-trackfn
    :logres-track-by
    :function-target?
-   :work-path))
+
+   :current-path
+   :target-path
+   :work-path
+
+   ;;; Snapshot Control:
+   :save-snapshot
+   :load-snapshot
+
+   ;;; Caching:
+   :defcache
+   :init-logged-stats
+   ;; Strategies:
+   :open-cache
+   :singleton-cache))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)

@@ -21,7 +21,11 @@
 
 (in-package :cl-ana.makeres)
 
-(defmethod save-object (id (fn function) path)
+(define-save-target-method function id
+  (functionp (target-val (gethash id (target-table))))
+  nil)
+
+(defmethod save-object ((fn function) path)
   (format t "Warning: cannot save functions~%")
   nil)
 

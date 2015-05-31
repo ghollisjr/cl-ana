@@ -34,7 +34,162 @@
 ;;;; you wish (I like to use lists which denote the chain of
 ;;;; tables/filters/etc along with a reduction id).
 
-(defgeneric load-target (type path)
+(defvar *load-function-map*
+  (make-hash-table)
+  "Map from method-symbol to cons pair of target id test function and
+  load method")
+
+(defvar *save-function-map*
+  (make-hash-table)
+  "Map from method-symbol to cons pair of target id test function and
+  save method")
+
+(defmacro define-save-target-method (method-symbol id test &body save-body)
+  (alexandria:with-gensyms (test-fn save-fn)
+    `(let ((,test-fn (lambda (,id)
+                       ,test))
+           (,save-fn (lambda (,id)
+                       ,@save-body)))
+       (setf (gethash ',method-symbol *save-function-map*)
+             (cons ,test-fn ,save-fn)))))
+
+(defmacro define-load-target-method (method-symbol id test &body load-body)
+  (alexandria:with-gensyms (test-fn load-fn)
+    `(let ((,test-fn (lambda (,id)
+                       ,test))
+           (,load-fn (lambda (,id)
+                       ,@load-body)))
+       (setf (gethash ',method-symbol *load-function-map*)
+             (cons ,test-fn ,load-fn)))))
+
+(defun load-target (id)
+  "Loads a target given the target id."
+  (cond
+    ((not (gethash id
+                   (target-table)))
+     (format t "Warning: ~s not found in target table~%"
+             id)
+     nil)
+    ((ignored? id)
+     nil)
+    (;; Specific method found:
+     (loop
+        for sym being the hash-keys in *load-function-map*
+        for (test . load) being the hash-values in *load-function-map*
+        when (and (funcall test id)
+                  (probe-file (target-path id)))
+        do
+          (funcall load id)
+          (setf (target-load-stat (gethash id (target-table)))
+                t)
+          (return nil)
+        finally (return t))
+     ;; Default execution when no specific method found:
+     (flet ((read-from-path (path)
+              (with-open-file (file path
+                                    :direction :input)
+                (read file))))
+       (let ((type (read-from-path (target-path id "type")))
+             (form (read-from-path (target-path id "form")))
+             (timestamp (read-from-path (target-path id "timestamp"))))
+         (if (not (logged-form-equal id))
+             (format t
+                     "Warning: ~s logged target expression not equal to~%~
+                       expression in target table, skipping.~%"
+                     id)
+             (progn
+               (setf (target-val (gethash id (target-table)))
+                     (load-object type (target-path id "data")))
+               (setf (target-load-stat (gethash id (target-table)))
+                     t)
+               (setf (target-timestamp (gethash id (target-table)))
+                     timestamp))))))
+    (t nil)))
+
+(defun save-target (id)
+  "Saves a target given the target id.  When destruct-on-save? is T
+  for result value, reloads the result value after saving."
+  (cond
+    ((not (gethash id
+                   (target-table)))
+     (format t "Warning: ~s not found in target table~%"
+             id)
+     nil)
+    ((ignored? id)
+     nil)
+    (;; Specific method found:
+     (loop
+        for sym being the hash-keys in *save-function-map*
+        for (test . save) being the hash-values in *save-function-map*
+        when (funcall test id)
+        do
+        ;; delete save-path recursively
+          (when (probe-file (target-path id))
+            #+sbcl
+            (sb-ext:delete-directory (target-path id)
+                                     :recursive t))
+          (ensure-directories-exist (target-path id))
+          (let ((destruct-on-save?
+                 (destruct-on-save?
+                  (target-val (gethash id (target-table))))))
+
+            (flet ((write-to-path (object path)
+                     (with-open-file (file path
+                                           :direction :output
+                                           :if-does-not-exist :create
+                                           :if-exists :supersede)
+                       (format file "~s~%" object))))
+              (let ((tar (gethash id (target-table))))
+                (write-to-path (target-type (target-val tar))
+                               (target-path id "type"))
+                (with-open-file (form-file (target-path id "form")
+                                           :direction :output
+                                           :if-does-not-exist :create
+                                           :if-exists :supersede)
+                  (format form-file "~s~%"
+                          (with-output-to-string (s)
+                            (format s "~s" (target-expr tar)))))
+                (write-to-path (target-timestamp tar)
+                               (target-path id "timestamp"))
+                (funcall save id)))
+            (when destruct-on-save?
+              (load-target id)))
+          (return nil)
+        finally (return t))
+     ;; delete save-path recursively
+     (when (probe-file (target-path id))
+       #+sbcl
+       (sb-ext:delete-directory (target-path id)
+                                :recursive t))
+     (ensure-directories-exist (target-path id))
+     (let ((destruct-on-save?
+            (destruct-on-save? (target-val (gethash id (target-table))))))
+       (flet ((write-to-path (object path)
+                (with-open-file (file path
+                                      :direction :output
+                                      :if-does-not-exist :create
+                                      :if-exists :supersede)
+                  (format file "~s~%" object))))
+         (let ((tar (gethash id (target-table))))
+           (write-to-path (target-type (target-val tar))
+                          (target-path id "type"))
+           (with-open-file (form-file (target-path id "form")
+                                      :direction :output
+                                      :if-does-not-exist :create
+                                      :if-exists :supersede)
+             (format form-file "~s~%"
+                     (with-output-to-string (s)
+                       (format s "~s" (target-expr tar)))))
+           (write-to-path (target-timestamp tar)
+                          (target-path id "timestamp"))
+           (save-object (target-val tar)
+                        (target-path id "data"))))
+       (when destruct-on-save?
+         (load-target id))))
+    (t nil))
+  nil)
+
+(defgeneric load-object (type path)
   (:documentation "Generic function which loads an object from a file
   located at path of type type")
   (:method (type path)
@@ -43,15 +198,27 @@
                           :if-does-not-exist :error)
       (read file))))
 
-(defgeneric save-target (lid object path)
+(defgeneric save-object (object path)
   (:documentation "Generic function which saves an object to a file
   located at path")
-  (:method (lid obj path)
+  (:method (obj path)
     (with-open-file (file path
                           :direction :output
                           :if-exists :supersede
                           :if-does-not-exist :create)
       (format file "~s~%" obj))))
+
+(defgeneric cleanup (object)
+  (:documentation "Clears any resources needing manual intervention
+  for object.  Examples would include files and tables")
+  (:method (object)
+    nil))
+
+(defgeneric destruct-on-save? (object)
+  (:documentation "Returns true if target needs re-opening after
+  saving (e.g. tables, files)")
+  (:method (object)
+    nil))
 
 (defun target-type (object)
   "Returns type of object with exception for vectors/arrays"
@@ -189,17 +356,49 @@ the necessary subdirectories are present."
     (setf (gethash (project) *project-paths*)
           (merge-pathnames pathname))
     (ensure-directories-exist
-     (merge-pathnames "work/"
-                      (gethash (project) *project-paths*)))
-    (ensure-directories-exist
-     (merge-pathnames "versions/"
-                      (gethash (project) *project-paths*)))
+     (current-path))
     ;; initialize project vars:
     (setf (gethash (project) *proj->res->lid*)
           (make-hash-table :test 'equal))
     ;; and sublid map:
     (setf (gethash (project) *proj->lid->sublids*)
           (make-hash-table :test 'equal))))
+
+(defun load-project ()
+  "Searches for log directory for each target in the target-table,
+setting the target-stat to t for any targets which are found in the
+log."
+  (loop
+     for id being the hash-keys in (target-table)
+     for tar being the hash-values in (target-table)
+     do
+       (cond
+         ((ignored? id)
+          (when (probe-file (target-path id))
+            (format t
+                    "Warning: ~s is ignored, but log present; skipping.~%"
+                    id)))
+         ((and (probe-file (target-path id))
+               (not (logged-form-equal id)))
+          (format t "Warning: ~s logged target expression not equal to~%~
+                    expression in target table, skipping.~%"
+                  id))
+         ((probe-file (target-path id))
+          (setf (target-stat tar) t))
+         (t nil))))
+
+;; utility for use in load-project and others
+(defun logged-form-equal (id)
+  "Checks to see if logged expression for id is the same as the one
+loaded into the Lisp image"
+  (when (probe-file (target-path id "form"))
+    (with-open-file (form-file (target-path id "form")
+                               :direction :input)
+      (let ((form (read form-file)))
+        (string= form
+                 (with-output-to-string (s)
+                   (format s "~s"
+                           (target-expr (gethash id (target-table))))))))))
 
 (defun project-path ()
   "Returns path for current project, nil when not set or in nil
@@ -376,7 +575,7 @@ to this project."
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
               (format t "Saving ~a~%" id)
-              (save-target lid
+              (save-object lid
                            (resfn id)
                            path)))
       ;; and for parameters
@@ -392,7 +591,7 @@ to this project."
                                                     *proj->par->lid*)
          do (let ((pval (parfn pid)))
               (format t "Saving parameter ~a~%" pid)
-              (save-target plid
+              (save-object plid
                            pval
                            (merge-pathnames (mkstr plid)
                                             save-path))))
@@ -414,118 +613,149 @@ to this project."
     (save-sublid-map version-string))
   nil)
 
-(defun load-project (version &key
-                               (work-p t)
-                               load-changed-targets-p)
-  "work-p nil = assume work files already present"
-  ;; unset target statuses
-  (loop
-     for res being the hash-keys in (target-table)
-     do (unsetresfn res))
-  ;; reset res->lid
-  (setf (gethash (project) *proj->res->lid*)
-        (make-hash-table :test 'equal))
-  (let* ((*print-pretty* nil)
-         (project-path (gethash (project) *project-paths*))
-         (tartab (gethash (project) *target-tables*))
-         (res->lid (gethash (project) *proj->res->lid*))
-         (load-path (ensure-absolute-pathname version)))
-    ;; load *last-id*:
-    (load-last-id load-path)
-    ;; load working files:
-    (when work-p
-      (format t "Loading work/ files~%")
-      (let ((work-from-path (merge-pathnames "work/"
-                                             load-path))
-            (work-to-path (merge-pathnames "work/"
-                                           project-path)))
-        (when (probe-file work-to-path)
-          #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
-        (run "cp"
-             (list "-r"
-                   (namestring work-from-path)
-                   (namestring work-to-path)))))
-    ;; load results:
-    (let ((index-lines
-           (read-lines-from-pathname
-            (merge-pathnames "index"
-                             load-path))))
-      (destructuring-bind (res-lines par-lines)
-          (split-sequence:split-sequence "" index-lines
-                                         :test #'equal)
-        (loop
-           for line in res-lines
-           do
-             (with-input-from-string (s line)
-               (let ((id (read s))
-                     (lid (read s))
-                     (type (read s))
-                     ;; These two can be handled for legacy purposes
-                     ;; if not present in index file so they won't
-                     ;; throw errors
-                     (timestamp (read s nil nil))
-                     (form (read s nil nil)))
-                 (cond
-                   ((not (gethash id tartab))
-                    (format
-                     t
-                     "Warning: result ~a not present in target table, skipping~%"
-                     id))
-                   ((ignored? id)
-                    (format t "Warning: result ~a is ignored, skipping~%" id)
-                    ;; Unset dependencies of this target, as otherwise
-                    ;; there may be inconsistent values
-                    (loop
-                       for r in (res-dependents id (target-table))
-                       do (unsetresfn r)))
-                   ((and (not (string= form
-                                       (with-output-to-string (s)
-                                         (format s "~s"
-                                                 (target-expr (gethash id tartab))))))
-                         (not load-changed-targets-p))
-                    (format
-                     t
-                     "Warning: ~s logged target expression not equal to~%~
-                     expression in target table, skipping.~%"
-                     id))
-                   (t
-                    (format t "Loading ~a~%" id)
-                    (setf (gethash id res->lid) lid)
-                    (when (not (ignored? id))
-                      (setresfn id
-                                (load-target type
-                                             (merge-pathnames (mkstr lid)
-                                                              load-path))
-                                timestamp)))))))
-        ;; parameters:
-        (setf (gethash *project-id* *makeres-args*)
-              (make-hash-table :test 'eq))
-        (loop
-           for line in par-lines
-           do
-             (with-input-from-string (s line)
-               (let ((id (read s))
-                     (lid (read s))
-                     (type (read s)))
-                 (if (member id (gethash *project-id* *params-table*)
-                             :key #'car)
-                     (progn
-                       (format t "Loading parameter ~a~%" id)
-                       (setf (gethash id
-                                      (gethash *project-id*
-                                               *makeres-args*))
-                             (load-target type
-                                          (merge-pathnames (mkstr lid)
-                                                           load-path))))
-                     (format
-                      t
-                      "WARNING: Parameter ~a not in project, skipping~%"
-                      id))))))))
-  ;; load sublid-map:
-  (load-sublid-map version)
-  nil)
+;; (defun load-project (version &key
+;;                                (work-p t)
+;;                                load-changed-targets-p)
+;;   "work-p nil = assume work files already present"
+;;   ;; unset target statuses
+;;   (loop
+;;      for res being the hash-keys in (target-table)
+;;      do (unsetresfn res))
+;;   ;; reset res->lid
+;;   (setf (gethash (project) *proj->res->lid*)
+;;         (make-hash-table :test 'equal))
+;;   (let* ((*print-pretty* nil)
+;;          (project-path (gethash (project) *project-paths*))
+;;          (tartab (gethash (project) *target-tables*))
+;;          (res->lid (gethash (project) *proj->res->lid*))
+;;          (load-path (ensure-absolute-pathname version)))
+;;     ;; load *last-id*:
+;;     (load-last-id load-path)
+;;     ;; load working files:
+;;     (when work-p
+;;       (format t "Loading work/ files~%")
+;;       (let ((work-from-path (merge-pathnames "work/"
+;;                                              load-path))
+;;             (work-to-path (merge-pathnames "work/"
+;;                                            project-path)))
+;;         (when (probe-file work-to-path)
+;;           #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
+;;         (run "cp"
+;;              (list "-r"
+;;                    (namestring work-from-path)
+;;                    (namestring work-to-path)))))
+;;     ;; load results:
+;;     (let ((index-lines
+;;            (read-lines-from-pathname
+;;             (merge-pathnames "index"
+;;                              load-path))))
+;;       (destructuring-bind (res-lines par-lines)
+;;           (split-sequence:split-sequence "" index-lines
+;;                                          :test #'equal)
+;;         (loop
+;;            for line in res-lines
+;;            do
+;;              (with-input-from-string (s line)
+;;                (let ((id (read s))
+;;                      (lid (read s))
+;;                      (type (read s))
+;;                      ;; These two can be handled for legacy purposes
+;;                      ;; if not present in index file so they won't
+;;                      ;; throw errors
+;;                      (timestamp (read s nil nil))
+;;                      (form (read s nil nil)))
+;;                  (cond
+;;                    ((not (gethash id tartab))
+;;                     (format
+;;                      t
+;;                      "Warning: result ~a not present in target table, skipping~%"
+;;                      id))
+;;                    ((ignored? id)
+;;                     (format t "Warning: result ~a is ignored, skipping~%" id)
+;;                     ;; Unset dependencies of this target, as otherwise
+;;                     ;; there may be inconsistent values
+;;                     (loop
+;;                        for r in (res-dependents id (target-table))
+;;                        do (unsetresfn r)))
+;;                    ((and (not (string= form
+;;                                        (with-output-to-string (s)
+;;                                          (format s "~s"
+;;                                                  (target-expr (gethash id tartab))))))
+;;                          (not load-changed-targets-p))
+;;                     (format
+;;                      t
+;;                      "Warning: ~s logged target expression not equal to~%~
+;;                      expression in target table, skipping.~%"
+;;                      id))
+;;                    (t
+;;                     (format t "Loading ~a~%" id)
+;;                     (setf (gethash id res->lid) lid)
+;;                     (when (not (ignored? id))
+;;                       (setresfn id
+;;                                 (load-object type
+;;                                              (merge-pathnames (mkstr lid)
+;;                                                               load-path))
+;;                                 timestamp)))))))
+;;         ;; parameters:
+;;         (setf (gethash *project-id* *makeres-args*)
+;;               (make-hash-table :test 'eq))
+;;         (loop
+;;            for line in par-lines
+;;            do
+;;              (with-input-from-string (s line)
+;;                (let ((id (read s))
+;;                      (lid (read s))
+;;                      (type (read s)))
+;;                  (if (member id (gethash *project-id* *params-table*)
+;;                              :key #'car)
+;;                      (progn
+;;                        (format t "Loading parameter ~a~%" id)
+;;                        (setf (gethash id
+;;                                       (gethash *project-id*
+;;                                                *makeres-args*))
+;;                              (load-object type
+;;                                           (merge-pathnames (mkstr lid)
+;;                                                            load-path))))
+;;                      (format
+;;                       t
+;;                       "WARNING: Parameter ~a not in project, skipping~%"
+;;                       id))))))))
+;;   ;; load sublid-map:
+;;   (load-sublid-map version)
+;;   nil)
 
 ;;;; Utility functions:
+
+(defun current-path ()
+  "Returns the path to the current log"
+  (merge-pathnames (make-pathname :directory '(:relative "current"))
+                   (project-path)))
+
+(defun target-path (id &optional subpath)
+  "Returns the path to the current log location for given target, or
+optionally a subpath formed by concatenating subpath to the target's
+log directory."
+  (let ((id-path
+         (format nil "~s" id)))
+    (when (pathname-directory id-path)
+      (error "ID ~s yields illegal pathname" id))
+    (setf id-path
+          (make-pathname :directory (list :relative id-path)))
+    (when (and subpath
+               (pathname-directory subpath))
+      (error "subpath ~s yields illegal path" subpath))
+    (let* ((id+sub-path
+            (if subpath
+                (merge-pathnames subpath
+                                 (namestring id-path))
+                (namestring id-path)))
+           (result
+            (merge-pathnames
+             (merge-pathnames id+sub-path
+                              (make-pathname
+                               :directory '(:relative "targets")))
+             (current-path))))
+      (namestring result))))
 
 (defun work-path (path-or-format-recipe &rest args)
   "Returns namestring for a path in the project work directory.
@@ -551,10 +781,79 @@ will be returned."
                  path-or-format-recipe
                  (merge-pathnames path-or-format-recipe
                                   (merge-pathnames "work/"
-                                                   (pathname (project-path))))))
+                                                   (pathname (current-path))))))
             (t (error "work-path accepts strings or pathnames only for first argument"))))))
     (ensure-directories-exist namestring)
     namestring))
+
+;;;; Snapshot control:
+
+(defun save-snapshot (name)
+  "Saves a copy of the current analysis under (project-path)/name"
+  (let ((destpath (merge-pathnames name
+                                   (project-path))))
+    (when (not (equal (pathname-directory destpath)
+                      (pathname-directory (project-path))))
+      (error "Snapshot path points outside project path"))
+    (setf destpath
+          (merge-pathnames (make-pathname :directory (list :relative name))
+                           (project-path)))
+    (when (equal (pathname destpath)
+                 (current-path))
+      (error "Snapshot cannot be named \"current\""))
+    (when (probe-file destpath)
+      (sb-ext:delete-directory destpath :recursive t))
+    (run "cp" (list "-r"
+                    (current-path)
+                    destpath))
+    nil))
+
+(defun load-snapshot (name backup
+                      &key (makeres-p t))
+  "Loads snapshot given by name and either copies current to backup if
+backup is a valid path, throws an error for invalid backup path, or
+does not backup if backup is NIL."
+  (let ((sourcepath (merge-pathnames name
+                                     (project-path))))
+    (when (not (equal (pathname-directory sourcepath)
+                      (pathname-directory (project-path))))
+      (error "Snapshot path points outside project path"))
+    (setf sourcepath
+          (merge-pathnames (make-pathname :directory (list :relative name))
+                           (project-path)))
+    (when (equal (pathname sourcepath)
+                 (current-path))
+      (return-from load-snapshot nil))
+    ;; make backup of current
+    (when backup
+      (let ((backuppath (merge-pathnames backup
+                                         (project-path))))
+        (when (not (equal (pathname-directory backuppath)
+                          (pathname-directory (project-path))))
+          (error "Backup path points outside project path"))
+        (setf backuppath (merge-pathnames (make-pathname
+                                           :directory (list :relative backup))
+                                          (project-path)))
+        (when (probe-file backuppath)
+          (sb-ext:delete-directory backuppath :recursive t))
+        (run "cp" (list "-r"
+                        (current-path)
+                        backuppath))))
+    (sb-ext:delete-directory (current-path) :recursive t)
+    (run "cp" (list "-r"
+                    sourcepath
+                    (current-path)))
+    (loop
+       for id being the hash-keys in (target-table)
+       do
+         (setf (target-stat (gethash id (target-table)))
+               nil)
+         ;;(cleanup (resfn id))
+         (unload-target id))
+    (load-project)
+    (when makeres-p
+      (makeres)))
+  nil)
 
 ;;;; At the moment, this function appears unnecessary due to the
 ;;;; ability to restart a session, load & save a project to

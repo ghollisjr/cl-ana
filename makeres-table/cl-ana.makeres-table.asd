@@ -41,4 +41,5 @@
                (:file "smart-gensym")
                (:file "table-operators")
                (:file "tabletrans")
-               (:file "openers")))
+               (:file "openers")
+               (:file "logging")))

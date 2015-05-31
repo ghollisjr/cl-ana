@@ -21,7 +21,7 @@
 
 (in-package :cl-ana.makeres)
 
-(defmethod save-target (lid (str string) path)
+(defmethod save-object ((str string) path)
   (with-open-file (file path
                         :direction :output
                         :if-exists :supersede

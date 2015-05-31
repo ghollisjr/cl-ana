@@ -14,6 +14,7 @@
         :cl-ana.makeres-macro)
   (:export
    ;; table reduction operators:
+   :srctab
    :dotab
    :ltab
    :tab

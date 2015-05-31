@@ -1,2 +1,3 @@
 .emacs_backups/
 *.fasl
+makeres-test/

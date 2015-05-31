@@ -1,3 +1,137 @@
+- Parameters to makeres have been deprecated; they are unnecessary due
+  to targets being so easy to work with and change, so parameters
+  provide no real alternative functionality.
+
+- Fix target-path function, at the moment it does not return correct
+  paths.  current-path seems to be ok
+
+- Allowed target IDs should be restricted due to using the target ID
+  as part of the log path.  For example, if a target ID of ../test
+  were allowed, then this target's path would be in the parent
+  directory of the current log.
+
++ Caching
+
+  + table.lisp in makeres.lisp needs to be moved into makeres-table,
+    and logres-table should be merged with makeres-table, having all
+    of logres-table's functionality implemented via save-target and
+    load-target.
+
+  + makeres-table needs to additionally provide operators for denoting
+    source tables and possibly even bootstrap table generation
+    targets.  Source table operators are at least necessary for being
+    able to open and close source table targets as needed.  In the
+    previous treatment, tables were not logged automatically and only
+    those which stemmed from tab forms were handled by logres-table,
+    meaning that source table targets did not have logs.  Since the
+    new approach is to log tables as well, even if the only
+    information is how to open the table, source operators may be
+    necessary.
+
+    Alternatively, simply re-evaluating a table creation form which
+    does not originate from a tab operator could be the simplest way
+    to handle re-opening tables which were inadvertently closed by
+    save-object.
+
+  - Additionally, saving tables should amount to simply closing them,
+    but this renders the preceeding table object obsolete, whereas for
+    other in-memory objects they are still available after saving.
+    Therefore, a mechanism for handling this distinction should be
+    available.  Best approach seems to be a separate function,
+    e.g. destruct-on-save?, which returns true for targets which need
+    to be re-opened from disk after saving.
+
+  * New model of versioning: Each project always has a version named
+    current which stores whatever the current working version of
+    results may be.  Snapshots can be created of this working version,
+    but this current copy is directly modified.
+
+  * makeres-propogate! will still need to be manually called to allow
+    general recomputation.  load-project and save-project will no
+    longer be useful since there will always be a version of the
+    project on disk (current).  Any initialization, such as creation
+    of project directory, should be done on project initialization.
+    At the moment, it is handled by set-project-path, but there should
+    be a single command to create a project and select any
+    transformations, project path, etc.
+
+  - Targets will always be saved to disk immediately after computation
+    when possible.
+
+  - Project will always use logged results from current version,
+    selecting other versions will simply overwrite the contents of the
+    current version.  Therefore functions for easily taking snapshots
+    of current and renaming them should be available, and directly
+    overwriting current without first making a snapshot should be
+    strongly discouraged.
+
+  - Initial state should be to check available targets from current
+    version and toggle the target-stat appropriately for each logged
+    target.  A single call to makeres would then calculate any targets
+    not available in the log, dynamically loading any necessary
+    targets from disk into memory and making use of the caching
+    algorithms selected.
+
+  - A function which sets all target-stat to NIL should be available
+    so that computation from scratch can be done easily.
+
+    This is exactly what clrres does.
+
+  - Targets should be logged in their own directory, and the target
+    directory should contain various information files describing
+    e.g. the type, the form as given to defres, the timestamp, etc.
+    The actual data should be written inside this directory, and each
+    method of save-target or save-object should control how exactly
+    this is done.  It could also be adviseable that any contents go
+    directly inside a data/ directory to make meta information easy to
+    distinguish from the data.
+
+  + Table targets will need to be closed prior to modifying current
+    (e.g. loading a snapshot), so there should be a generic function
+    cleanup for an object which closes any resources needing manual
+    intervention, like tables, files, etc.
+
+    Table methods defined, files still need method however
+
+  + Temporary targets, i.e. those which only exist in
+    fin-target-tables, should never be logged and therefore should
+    have separate caching management.  Preferably, they should be
+    deleted as soon as all their immediate dependents have been
+    calculated.  To aid in this, there should be functions called in
+    the execution of the compiled makeres function on the calculation
+    of each target which would remove that target from the list of
+    immediate dependents still needing computation from any temporary
+    targets, and once a temporary target has no more immediate
+    dependents pending computation, that temporary target is removed
+    from memory.
+
+    As written now, the temporary targets are not logged but still
+    take up space in the *fin-target-table* variable until the next
+    call to makeres.  The memory overhead is minimal so I may wait a
+    while before implementing the proposed temporary caching
+    management tools.
+
+  - (DEPRECATED) Parameters should be logged upon each call to
+    makeres.  Parameters should be placed in a parameters/ directory,
+    and their string forms (they're all keyword parameters) should
+    serve as their subpaths.
+
+  - Targets should be allowed to be ignored from logging, so cacheres,
+    save-target and load-target should be aware of ignored targets.
+
+  * ensure-table-binding-ops and ensure-table-op-expanders may not be
+    necessary to call on project creation when using tabletrans, need
+    to check this once other functionality is complete
+
+  + makeres-graphviz needs to have project->png function which
+    generates the project graph as a PNG picture using a default path
+    or a user-selected path.
+
+  + undefres needs to delete logs of undefined targets
+
+  + need function to prune log in order to remove logs of non-existent
+    targets
+
 + Add restarts to compres-generated functions which allow for retrying
   a result, skipping a result, aborting, or halt & store results in
   the target-table.

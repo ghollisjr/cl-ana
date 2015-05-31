@@ -27,6 +27,7 @@
   :license "GPLv3"
   :depends-on (#:alexandria
                #:cl-ana.generic-math
+               #:cl-ana.error-propogation
                #:cl-ana.macro-utils
                #:cl-ana.list-utils
                #:cl-ana.symbol-utils
@@ -49,9 +50,9 @@
                ;; logres:
                (:file "logres")
                (:file "histogram")
-               (:file "table")
                (:file "function")
                (:file "hash-table")
                (:file "cons")
                (:file "array")
-               (:file "string")))
+               (:file "string")
+               (:file "err-num")))
