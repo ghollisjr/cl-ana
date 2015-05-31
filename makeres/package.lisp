@@ -137,6 +137,7 @@
    :init-logged-stats
    ;; Strategies:
    :open-cache
-   :singleton-cache))
+   :singleton-cache
+   :fixed-cache))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)

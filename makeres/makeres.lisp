@@ -464,6 +464,24 @@ Minimal memory use, maximal strain on hard drive."
          do (unload-target id))
       (load-target id))))
 
+(defun fixed-cache (size)
+  "Returns a caching function which limits the number of in-memory
+targets to size."
+  (let ((cache (make-array size :initial-element nil))
+        (i 0))
+    (lambda (id)
+      (let* ((tar (gethash id (target-table)))
+             (load-stat (target-load-stat tar)))
+        (when (not load-stat)
+          ;; this technically excludes NIL from being a target id
+          (when (aref cache i)
+            (unload-target (aref cache i)))
+          (load-target id)
+          (setf (aref cache i) id)
+          (setf i
+                (mod (+ i 1)
+                     size)))))))
+
 ;; Caching utility functions:
 
 (defun unload-target (id)
