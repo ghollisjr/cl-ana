@@ -1,3 +1,7 @@
++ Check to see if logres-table is needed at all, its functionality
+  seems to have been replaced by the new caching system's treatment of
+  tables.
+
 - Parameters to makeres have been deprecated; they are unnecessary due
   to targets being so easy to work with and change, so parameters
   provide no real alternative functionality.
