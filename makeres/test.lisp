@@ -8,7 +8,7 @@
   #'singleton-cache)
 
 (defres a
-  (list 1 2 3))
+  (list 1 2 3 4))
 
 (defres (a sum)
   (sum (res a)))

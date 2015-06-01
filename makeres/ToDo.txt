@@ -1,6 +1,15 @@
-+ Check to see if logres-table is needed at all, its functionality
++ Reorganize file structure into something that makes more sense.  At
+  the moment, there are two files makeres.lisp and logres.lisp which
+  contain various components of the now very much interconnect system.
+  A single file may be more appropriate, or, due to the already large
+  file sizes of both of them, further separation into components may
+  be more reasonable.
+
+- Check to see if logres-table is needed at all, its functionality
   seems to have been replaced by the new caching system's treatment of
   tables.
+
+  logres-table removed
 
 - Parameters to makeres have been deprecated; they are unnecessary due
   to targets being so easy to work with and change, so parameters
@@ -16,12 +25,42 @@
 
 + Caching
 
-  + table.lisp in makeres.lisp needs to be moved into makeres-table,
+  - Loading targets whose forms do not match could cause problems,
+    potentially effecting targets whose forms have not changed.
+    Update load-project so that it propogates nil stats through
+    dependents of out of date logged targets.
+
+  - Table targets will need to be closed prior to modifying current
+    (e.g. loading a snapshot), so there should be a generic function
+    cleanup for an object which closes any resources needing manual
+    intervention, like tables, files, etc.
+
+    Table methods defined, files still need method however
+
+  + Temporary targets, i.e. those which only exist in
+    fin-target-tables, should never be logged and therefore should
+    have separate caching management.  Preferably, they should be
+    deleted as soon as all their immediate dependents have been
+    calculated.  To aid in this, there should be functions called in
+    the execution of the compiled makeres function on the calculation
+    of each target which would remove that target from the list of
+    immediate dependents still needing computation from any temporary
+    targets, and once a temporary target has no more immediate
+    dependents pending computation, that temporary target is removed
+    from memory.
+
+    As written now, the temporary targets are not logged but still
+    take up space in the *fin-target-table* variable until the next
+    call to makeres.  The memory overhead is minimal so I may wait a
+    while before implementing the proposed temporary caching
+    management tools.
+
+  - table.lisp in makeres.lisp needs to be moved into makeres-table,
     and logres-table should be merged with makeres-table, having all
     of logres-table's functionality implemented via save-target and
     load-target.
 
-  + makeres-table needs to additionally provide operators for denoting
+  - makeres-table needs to additionally provide operators for denoting
     source tables and possibly even bootstrap table generation
     targets.  Source table operators are at least necessary for being
     able to open and close source table targets as needed.  In the
@@ -90,31 +129,6 @@
     directly inside a data/ directory to make meta information easy to
     distinguish from the data.
 
-  + Table targets will need to be closed prior to modifying current
-    (e.g. loading a snapshot), so there should be a generic function
-    cleanup for an object which closes any resources needing manual
-    intervention, like tables, files, etc.
-
-    Table methods defined, files still need method however
-
-  + Temporary targets, i.e. those which only exist in
-    fin-target-tables, should never be logged and therefore should
-    have separate caching management.  Preferably, they should be
-    deleted as soon as all their immediate dependents have been
-    calculated.  To aid in this, there should be functions called in
-    the execution of the compiled makeres function on the calculation
-    of each target which would remove that target from the list of
-    immediate dependents still needing computation from any temporary
-    targets, and once a temporary target has no more immediate
-    dependents pending computation, that temporary target is removed
-    from memory.
-
-    As written now, the temporary targets are not logged but still
-    take up space in the *fin-target-table* variable until the next
-    call to makeres.  The memory overhead is minimal so I may wait a
-    while before implementing the proposed temporary caching
-    management tools.
-
   - (DEPRECATED) Parameters should be logged upon each call to
     makeres.  Parameters should be placed in a parameters/ directory,
     and their string forms (they're all keyword parameters) should
@@ -140,10 +154,13 @@
   a result, skipping a result, aborting, or halt & store results in
   the target-table.
 
-+ Allow users to specify an update strategy for re-specifying targets
+% Allow users to specify an update strategy for re-specifying targets
   (i.e. executing defres).  For now I've set the default to keeping
   the old value in place but setting the status to nil ("needs to be
   computed")
+
+  This seems less reasonable the more I've used the analysis system,
+  the current behavior is fine.
 
 - Test various graph transformations
 
@@ -157,7 +174,7 @@
   be applied to all the results which depend on first pass values, so
   that second pass values happen in a single second pass, and so on.
 
-+ Unify makeres and logres into a single framework which would allow
+- Unify makeres and logres into a single framework which would allow
   for target-wise loading/saving as well as batch load and save.  At
   present, the entire project gets loaded into memory, which I believe
   causes issues with my laptop (only has 2 GB memory).  It would be
@@ -167,13 +184,18 @@
   if a result is loaded first, then either loads and returns or simply
   returns a result.
 
-+ Edit projects in-place.  This is necessary if we allow single target
+- Edit projects in-place.  This is necessary if we allow single target
   load/save independently.  Make it easy to backup a project though
   for safety.  Version control is most likely infeasible due to the
   size of results.
 
-+ Don't delete work directory every time we load/save, just delete
+% Don't delete work directory every time we load/save, just delete
   content.
+
+  Due to the new model, unless a snapshot is loaded, the work
+  directory is not deleted, and the permissions of the work directory
+  will be copied into and from snapshots, so this should fix the
+  issues I had with e.g. linking webpages into the work direcory.
 
 - Handle non-present parameters and targets by printing a warning
   instead of failing

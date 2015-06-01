@@ -368,24 +368,36 @@ the necessary subdirectories are present."
   "Searches for log directory for each target in the target-table,
 setting the target-stat to t for any targets which are found in the
 log."
-  (loop
-     for id being the hash-keys in (target-table)
-     for tar being the hash-values in (target-table)
-     do
-       (cond
-         ((ignored? id)
-          (when (probe-file (target-path id))
-            (format t
-                    "Warning: ~s is ignored, but log present; skipping.~%"
-                    id)))
-         ((and (probe-file (target-path id))
-               (not (logged-form-equal id)))
-          (format t "Warning: ~s logged target expression not equal to~%~
-                    expression in target table, skipping.~%"
-                  id))
-         ((probe-file (target-path id))
-          (setf (target-stat tar) t))
-         (t nil))))
+  (let ((unset (make-hash-table :test 'equal)))
+    (loop
+       for id being the hash-keys in (target-table)
+       for tar being the hash-values in (target-table)
+       do
+         (cond
+           ((ignored? id)
+            (when (probe-file (target-path id))
+              (format t
+                      "Warning: ~s is ignored, but log present; skipping.~%"
+                      id)))
+           ((and (probe-file (target-path id))
+                 (not (logged-form-equal id)))
+            (format t "Warning: ~s logged target expression not equal to~%~
+                    expression in target table, unsetting dependents.~%"
+                    id)
+            (unsetresfn id)
+            (loop
+               for r in (res-dependents id (target-table))
+               do (setf (gethash r unset)
+                        t))
+            nil)
+           ((and (probe-file (target-path id))
+                 (not (gethash id unset)))
+            (setf (target-stat tar) t))
+           (t nil)))
+    (loop
+       for r being the hash-keys in unset
+       do (unsetresfn r))
+    nil))
 
 ;; utility for use in load-project and others
 (defun logged-form-equal (id)
