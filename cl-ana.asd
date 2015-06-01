@@ -61,7 +61,5 @@
                #:cl-ana.makeres-block
                #:cl-ana.makeres-progress
                #:cl-ana.makeres-table
-               #:cl-ana.makeres-graphviz
-               ;; #:cl-ana.logres
-               #:cl-ana.logres-table)
+               #:cl-ana.makeres-graphviz)
   :components ((:file "package")))

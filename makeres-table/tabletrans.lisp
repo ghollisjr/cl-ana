@@ -38,6 +38,14 @@ this).")
           (member tab-op (list 'table-pass 'dotab 'ltab 'tab)
                   :test 'eq))))))
 
+(defun table-target? (id)
+  (let ((tar (gethash id (target-table))))
+    (and (target-stat tar)
+         (or (tab? (target-expr tar))
+             (ltab? (target-expr tar))
+             (typep (target-val tar) 'table)
+             (typep (target-val tar) 'reusable-table)))))
+
 (defun table-pass? (expr)
   "True if expr is a table-pass expression"
   (when expr

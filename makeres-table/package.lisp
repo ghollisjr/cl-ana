@@ -44,4 +44,6 @@
    :dotab?
    :table-reduction-source
    ;; Special operators:
-   :defhist))
+   :defhist
+   ;; Utilities:
+   :table-target?))

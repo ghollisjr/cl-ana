@@ -1,4 +1,6 @@
-+ Renovate logres so that results can be loaded/saved dynamically.
+* See makeres/ToDo.txt for makeres specific tasks
+
+- Renovate logres so that results can be loaded/saved dynamically.
 
   There are two broad approaches:
 
@@ -16,6 +18,9 @@
   I'm leaning towards 1 due to being conceptually easier to work with
   and not all that difficult to implement.  The downside to 1 is that
   old result logs will either need to be converted or recomputed.
+
+  Went with 1, used the target id as the pathname relative to the
+  version path.
 
 + Fix read-histogram so that output from C/C++ code which does not use
   structs can still be used.
@@ -59,7 +64,7 @@
   working directory, ensure-directories-exist being called to define
   subdirectories automatically
 
-+ Single function/macro for defining a makeres+logres project along
+- Single function/macro for defining a makeres+logres project along
   with common settings.
 
 + Update copyright to be 2013-2015
