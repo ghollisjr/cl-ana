@@ -7,3 +7,8 @@
   function, as it would need to assume e.g. the location of the
   pathname argument.  It's still possible to do, just requires extra
   rules.
+
++ Found bug in csv-tables: Whenever a CSV physical table reduction is
+  computed, the resulting CSV file has content.  However, after
+  loading the CSV table with load-project and calling makeres, at some
+  point the logged CSV table's file is emptied.

@@ -61,7 +61,7 @@ this).")
     (destructuring-bind (progn &rest forms) expr
       (let ((tab-op (first (first forms))))
         (eq tab-op 'srctab)))))
-        
+
 
 (defun dotab? (expr)
   "True if expr is a dotab expression"
@@ -529,14 +529,33 @@ from pass up to src."
            (context-tree
             (table-reduction-context-tree graph src pass))
            ;; set of reductions generated:
+           (nodes
+            (remove src
+                    (list->set
+                     (labels
+                         ((rec (n)
+                            (cons (node-id n)
+                                  (append
+                                    (node-content n)
+                                    (mapcan #'rec
+                                            (node-children n))))))
+                       (rec context-tree)))))
            (reductions
             (remove src
                     (list->set
-                     (labels ((rec (n)
-                                (cons (node-id n)
-                                      (append
-                                       (node-content n)
-                                       (mapcan #'rec (node-children n))))))
+                     (labels
+                         ((rec (n)
+                            (let ((subcontent
+                                   (append
+                                    (node-content n)
+                                    (mapcan #'rec
+                                            (node-children n)))))
+                              (if (tab? (target-expr
+                                         (gethash (node-id n)
+                                                  graph)))
+                                  subcontent
+                                  (cons (node-id n)
+                                        subcontent)))))
                        (rec context-tree)))))
            ;; map from reduction id to map from init binding variable
            ;; to gsym
@@ -557,7 +576,7 @@ from pass up to src."
                    `(setf (gethash ,k ,place)
                           (make-hash-table :test 'equal))))
         (loop
-           for r in reductions
+           for r in nodes
            do (progn
                 (setht reduction->initsym->gsym r)
                 (setht reduction->initsym->expr r)
@@ -567,7 +586,7 @@ from pass up to src."
       ;; reduction->initsym->expr) as well as map from reduction to
       ;; return form
       (loop
-         for r in reductions
+         for r in nodes
          do (let ((initsym->gsym
                    (gethash r reduction->initsym->gsym))
                   (initsym->expr
