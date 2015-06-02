@@ -1,0 +1,9 @@
++ Automatically assign file names for physical table results.  This is
+  possible at least for some table types, although it would require
+  changing the save-target or load-target functions and tabletrans
+  would need to assign file names.
+
+  This would however break the generality of the table opener
+  function, as it would need to assume e.g. the location of the
+  pathname argument.  It's still possible to do, just requires extra
+  rules.
