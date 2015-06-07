@@ -86,8 +86,8 @@
                                   (cons "y" :float)))))
       ;;(print (typed-table-type-map table))
       (dotimes (i 1000000)
-	(table-set-field table :x i)
-	(table-set-field table :y (sqrt i))
+	(table-set-field table :|x| i)
+	(table-set-field table :|y| (sqrt i))
 	(table-commit-row table))
       (table-close table))))
 
@@ -98,8 +98,9 @@
   (let ((sum 0))
     (do-table (row-index *table*)
         ("x" "y")
-      (incf sum x)
-      (incf sum y))))
+      (incf sum |x|)
+      (incf sum |y|))
+    (print sum)))
 
 (defun hdf-table-test ()
   (with-open-hdf-file (outfile "/home/ghollisjr/hdfwork/outfile.h5"

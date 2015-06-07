@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -49,8 +49,7 @@
     :initarg :field-names
     :initform ()
     :accessor table-field-names
-    :documentation "List of field names.  Make sure names do not
-    clash when lispified.")
+    :documentation "List of field names.")
    (access-mode
     :initarg :access-mode
     :initform nil
@@ -64,9 +63,8 @@
   (table-access-mode table))
 
 (defun table-field-symbols (table)
-  (let* ((field-names (table-field-names table))
-	 (lispified-names (mapcar #'lispify field-names)))
-    (mapcar (compose #'keywordify #'intern) lispified-names)))
+  (mapcar (compose #'keywordify #'intern)
+          (table-field-names table)))
 
 (defgeneric table-load-next-row (table)
   (:documentation "Loads the next row into the current row buffer.
@@ -150,7 +148,6 @@ can use the state argument to collect a list of values for example."
   (let ((field-symbols
          (mapcar (compose #'keywordify
                           #'intern
-                          #'lispify
                           #'string)
                  fields)))
     (flet ((get-fields ()
@@ -202,7 +199,7 @@ beginning of the loop body; otherwise this is not supported."
           (mapcar (lambda (x)
                     (if (listp x)
                         (first x)
-                        (intern (lispify x))))
+                        (intern x)))
                   field-selections)))
     (multiple-value-bind (rowt rowv)
         (if (listp rowvar)
@@ -214,7 +211,6 @@ beginning of the loop body; otherwise this is not supported."
           ;; explicit fields
           (let ((field-keyword-symbols
                  (mapcar (compose #'keywordify
-                                  #'lispify
                                   #'string)
                          selected-field-names)))
             (with-gensyms (load-row tab)
@@ -255,9 +251,11 @@ beginning of the loop body; otherwise this is not supported."
                                (1+ ,rowv))
                              :initial-value 0)))))))
 
+;; DEFUNCT & DEPRECATED
+;;
 ;; This is kept for comparison with the non-olet version
 (defmacro do-table-old ((rowvar table) field-selections
-                    &body body)
+                        &body body)
   "Macro for iterating over a table.
 
 rowvar is a symbol which will be bound to the row number inside the

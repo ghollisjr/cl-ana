@@ -43,7 +43,7 @@
 		(specs (typespec-compound-field-specs typespec))
 		(hdf-types (mapcar #'typespec->hdf-type specs))
 		(slot-symbols
-                 (mapcar (compose #'keywordify #'intern #'lispify)
+                 (mapcar (compose #'keywordify #'intern #'string)
                          names))
 		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))

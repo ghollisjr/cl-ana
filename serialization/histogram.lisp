@@ -120,11 +120,11 @@ names or none of them do."
          for plist in hist-dim-specs
          do (progn
               (table-push-fields bin-spec-table
-                (name (getf plist :name))
-                (name-length (length (getf plist :name)))
-                (nbins (getf plist :nbins))
-                (low (->double-float (getf plist :low)))
-                (high (->double-float (getf plist :high))))))
+                (|name| (getf plist :name))
+                (|name-length| (length (getf plist :name)))
+                (|nbins| (getf plist :nbins))
+                (|low| (->double-float (getf plist :low)))
+                (|high| (->double-float (getf plist :high))))))
       (table-close bin-spec-table))))
 
 ;; new version which uses raw HDF5 functions

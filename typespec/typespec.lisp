@@ -83,7 +83,7 @@
 			   (typespec-array-size cstruct)
                            1)))
            ;;(reduce #'* (fourth cstruct))))) ; array type
-	   (list (keywordify (intern (lispify name)))
+	   (list (keywordify (intern (string name)))
 		 type
 		 :count count))))
     (if (listp typespec)
@@ -278,7 +278,7 @@ lisp object containing the converted values."
          (loop
             for (field-name . field-spec)
             in (typespec-compound-field-alist typespec)
-            collecting (keywordify (lispify field-name))
+            collecting (keywordify (string field-name))
             into field-symbols
             collecting (typespec->c-to-lisp field-spec)
             into field-getters

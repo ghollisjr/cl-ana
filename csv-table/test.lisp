@@ -24,14 +24,18 @@
 (in-package :cl-ana.csv-table)
 
 (defparameter *table*
-  (make-csv-table "/home/ghollisjr/test.csv"
+  (create-csv-table "/home/ghollisjr/test.csv"
 		  (list "x" "y")))
 
-(table-set-field *table* :x 3)
-(table-set-field *table* :y 4)
+(table-push-fields *table*
+  ("x" 1)
+  ("y" 2))
+
+(table-set-field *table* :|x| 3)
+(table-set-field *table* :|y| 4)
 (table-commit-row *table*)
-(table-set-field *table* :x 5)
-(table-set-field *table* :y 6)
+(table-set-field *table* :|x| 5)
+(table-set-field *table* :|y| 6)
 (table-commit-row *table*)
 (table-close *table*)
 
@@ -41,7 +45,7 @@
 (do-table (row-index *table*)
     ("x"
      "y")
-  (print x)
-  (print y))
+  (print |x|)
+  (print |y|))
 
 (table-close *table*)
