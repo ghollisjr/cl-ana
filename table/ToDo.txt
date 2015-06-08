@@ -1,10 +1,3 @@
-* BUG: I use keyword arguments in table-get-field and table-set-field,
-  but I technically need to allow strings as well and just interpret
-  symbols as lower-case strings.  This is for the same reason as I
-  used strings to begin with: input tables sometimes have fields named
-  with a mix of lower and upper case characters, so I need to handle
-  these correctly.
-
 * Could possibly offload smart computation due to olet in do-table
   macro into table-get-field.  olet may still be useful for letting
   the compiler know that some fields would not be needed, but

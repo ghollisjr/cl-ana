@@ -1,12 +1,12 @@
 + Update documentation on tables due to changing the functionality of
   table field names
 
-+ Extend tables so that field names are general keyword symbols
+- Extend tables so that field names are general keyword symbols
 
   - hdf-tables and csv-tables are working with general keyword symbols
     as well as serialization of histograms.
 
-  + ntuple-table and plist-table may need modification still
+  - ntuple-table and plist-table may need modification still
 
 + Allow any HDF5 compound type to be used with hdf-tables, not just
   those which are created from structures.  The field offsets are

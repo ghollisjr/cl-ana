@@ -29,6 +29,7 @@
    :tabletrans
    ;; openers:
    :hdf-opener
+   :hdf-chain-opener
    :ntuple-opener
    :csv-opener
    :plist-opener

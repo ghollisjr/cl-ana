@@ -22,3 +22,16 @@
 (require 'cl-ana)
 
 (in-package :cl-ana)
+
+(defparameter *plist-table*
+  (open-plist-table
+   (loop
+      for i below 10
+      collecting (list :|x| i
+                       :x (* i 2)))))
+
+(do-table (ri *plist-table*)
+    ("x"
+     "X")
+  (print |x|)
+  (print X))
