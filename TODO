@@ -1,3 +1,19 @@
++ makeres-table may have more problems.
+
+  * On one occasion, after a computation failed, the source table was
+    not logged although some of the reductions were logged.  This led
+    to circular dependencies and compres would exhaust the stack.  The
+    solution was to call setresfn on the source table ID using any
+    table and then call save-target.  Once all the source tables were
+    logged, the dependencies worked correctly and computation
+    continued.
+
+  * Also, when working on my phd analysis, after a computation fails
+    and I correct the bug, some reductions which presumably should
+    have been calculated already need recomputing.  This and the above
+    potential bug may have the same source, I suspect some issues with
+    the order of calls to setresfn, or maybe in setresfn itself.
+
 + Update documentation on tables due to changing the functionality of
   table field names
 
