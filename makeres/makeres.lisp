@@ -553,18 +553,19 @@ arguments are evaluated."
 (defmacro in-project (project-id)
   "Selects graph identified by graph-id for use.  Graph does not need
 initialization, will be initialized automatically if necessary."
-  `(progn
-     ;; select graph
-     (setf *project-id* ',project-id)
-     ;; initialize target table
-     (when (not (gethash ',project-id *target-tables*))
-       (setf (gethash ',project-id *target-tables*)
-             (make-hash-table :test 'equal)))
-     ;; initialize final target table
-     (when (not (gethash ',project-id *fin-target-tables*))
-       (setf (gethash ',project-id *fin-target-tables*)
-             (make-hash-table :test 'equal)))
-     ',project-id))
+  `(in-project-fn ',project-id))
+
+(defun in-project-fn (project-id)
+  (setf *project-id* project-id)
+  ;; initialize target table
+  (when (not (gethash project-id *target-tables*))
+    (setf (gethash project-id *target-tables*)
+          (make-hash-table :test 'equal)))
+  ;; initialize final target table
+  (when (not (gethash project-id *fin-target-tables*))
+    (setf (gethash project-id *fin-target-tables*)
+          (make-hash-table :test 'equal)))
+  project-id)
 
 (defmacro defpars (params)
   "Adds parameters to project, updating default values for existing

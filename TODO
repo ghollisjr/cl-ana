@@ -1,3 +1,8 @@
+- Bug in in-project: Calling in-project repeatedly on the same project
+  id actually erases the target definitions.
+
+  Fixed by creating function in-project-fn
+
 + makeres-table may have more problems.
 
   * On one occasion, after a computation failed, the source table was
