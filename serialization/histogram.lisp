@@ -163,7 +163,13 @@ sparse-histogram respectively."
            binspec-buffer-size
            binspecs
 
-           memspace)
+           data-chunk-size
+           data-row-size
+           data-buffer-size
+
+           memspace
+
+           hist)
       (with-foreign-objects ((binspec-dataset-dims 'hsize-t)
                              (binspec-chunk-dims 'hsize-t)
                              (binspec-name-dims 'hsize-t)
@@ -178,7 +184,7 @@ sparse-histogram respectively."
               (mem-aref binspec-chunk-dims 'hsize-t))
         (h5sget-simple-extent-dims binspec-dataspace
                                    binspec-dataset-dims
-                                   0)
+                                   (null-pointer))
         (setf ndims
               (mem-aref binspec-dataset-dims 'hsize-t))
         (h5tget-array-dims2 (h5tget-member-type binspec-datatype
@@ -234,15 +240,74 @@ sparse-histogram respectively."
                           buffer)
                  (loop
                     for i from 0 below (mem-aref memspace-dims 'hsize-t)
-                    do (let ((buffer-index
-                              (+ (* i binspec-row-size)
-                                 (* binspec-chunk-size chunk-index))))
+                    do (let* ((buffer-index
+                               (+ (* i binspec-row-size)
+                                  (* binspec-chunk-size chunk-index)))
+                              (name-length
+                               (mem-aref
+                                (mem-aptr buffer :char
+                                          (+ (h5tget-member-offset binspec-datatype
+                                                                   1)
+                                             buffer-index))
+                                :int))
+                              (name
+                               (let ((result
+                                      (make-string name-length)))
+                                 (loop
+                                    for j below name-length
+                                    do
+                                      (setf (aref result j)
+                                            (int-char
+                                             (mem-aref
+                                              buffer :char
+                                              (+ (h5tget-member-offset
+                                                  binspec-datatype 0)
+                                                 buffer-index
+                                                 j)))))
+                                 result))
+                              (nbins
+                               (mem-aref
+                                (mem-aptr buffer :char
+                                          (+ (h5tget-member-offset
+                                              binspec-datatype 2)
+                                             buffer-index))
+                                :int))
+                              (low
+                               (mem-aref
+                                (mem-aptr buffer :char
+                                          (+ (h5tget-member-offset
+                                              binspec-datatype 3)
+                                             buffer-index))
+                                :double))
+                              (high
+                               (mem-aref
+                                (mem-aptr buffer :char
+                                          (+ (h5tget-member-offset
+                                              binspec-datatype 4)
+                                             buffer-index))
+                                :double)))
+                         (push (list :name name
+                                     :nbins nbins
+                                     :low low
+                                     :high high)
+                               binspecs)))
+                 (setf binspecs
+                       (nreverse binspecs))
+
+                 (setf hist
+                       (make-sparse-hist binspecs))
+                 )))
+        (let ((create-plist
+               ))
+          )
+        )
+      )))
 
 
-                         )))))
-                      
-          
-        ))))
+;;;; This version will work again (with possible modification to
+;;;; function arguments) once the hdf-table library supports arbitrary
+;;;; compound type structures and not just those produced by the C
+;;;; compiler.
 
 (defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.

@@ -27,6 +27,7 @@
   :license "GPLv3"
   :depends-on (#:cl-ana.typespec
                #:cl-ana.histogram
+               #:cl-ana.int-char
                #:cl-ana.error-propogation
                #:cl-ana.macro-utils
                #:cl-ana.hdf-utils
