@@ -128,7 +128,7 @@ names or none of them do."
       (table-close bin-spec-table))))
 
 ;; new version which uses raw HDF5 functions
-(defun new-read-histogram (file hdf-path &optional (type :sparse))
+(defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
 
 type can be either :contiguous or :sparse for contiguous-histogram and
@@ -168,6 +168,8 @@ sparse-histogram respectively."
            data-buffer-size
 
            memspace
+
+           n-count-vars
 
            hist)
       (with-foreign-objects ((binspec-dataset-dims 'hsize-t)
@@ -295,13 +297,101 @@ sparse-histogram respectively."
                        (nreverse binspecs))
 
                  (setf hist
-                       (make-sparse-hist binspecs))
-                 )))
+                       (if (eq type :sparse)
+                           (make-sparse-hist binspecs)
+                           (make-contiguous-hist binspecs))))))
         (let ((create-plist
-               ))
-          )
-        )
-      )))
+               (h5dget-create-plist data-dataset)))
+          (h5pget-chunk create-plist 1 data-chunk-dims))
+        (setf data-chunk-size
+              (mem-aref data-chunk-dims 'hsize-t))
+        (h5sget-simple-extent-dims data-dataspace
+                                   data-dataset-dims
+                                   (null-pointer))
+        (setf nrows
+              (mem-aref data-dataset-dims
+                        'hsize-t))
+        (let ((second-field-name
+               (h5tget-member-name data-datatype 1)))
+          (if (equal second-field-name
+                     "count-error")
+              (setf n-count-vars 2)
+              (setf n-count-vars 1)))
+        (setf data-row-size
+              (h5tget-size data-datatype))
+
+        (setf data-buffer-size
+              (* data-row-size
+                 data-chunk-size))
+        (with-foreign-object (buffer :char data-buffer-size)
+          (loop
+             for chunk-index from 0
+             while (< (* chunk-index data-buffer-size)
+                      nrows)
+             do
+               (let* ((chunk-size
+                       data-chunk-size)
+                      (remaining-rows
+                       (- nrows
+                          (* chunk-index chunk-size))))
+                 (if (< remaining-rows chunk-size)
+                     (setf (mem-aref memspace-dims 'hsize-t)
+                           remaining-rows)
+                     (setf (mem-aref memspace-dims 'hsize-t)
+                           chunk-size))
+                 (setf (mem-aref memspace-maxdims 'hsize-t)
+                       (mem-aref memspace-dims 'hsize-t))
+                 (with-foreign-objects ((start 'hsize-t)
+                                        (stride 'hsize-t)
+                                        (cnt 'hsize-t)
+                                        (blck 'hsize-t))
+                   (setf (mem-aref start 'hsize-t)
+                         (* chunk-index
+                            chunk-size))
+                   (setf (mem-aref stride 'hsize-t)
+                         1)
+                   (setf (mem-aref cnt 'hsize-t)
+                         1)
+                   (setf (mem-aref blck 'hsize-t)
+                         (mem-aref memspace-dims 'hsize-t))
+                   (h5sselect-hyperslab data-dataspace
+                                        :H5S-SELECT-SET
+                                        start
+                                        stride
+                                        cnt
+                                        blck)
+                   (setf memspace
+                         (h5screate-simple 1
+                                           memspace-dims
+                                           memspace-maxdims))
+                   (loop
+                      for i below (mem-aref memspace-dims 'hsize-t)
+                      do
+                        (let* ((buffer-index
+                                (+ (* i data-row-size)
+                                   (* chunk-size chunk-index)))
+                               (count
+                                (mem-aptr (mem-aptr buffer
+                                                    :char
+                                                    buffer-index)
+                                          :double))
+                               (xs
+                                (mem-aptr (mem-aptr buffer
+                                                    :char
+                                                    buffer-index)
+                                          :double
+                                          n-count-vars)))
+                          (hins hist
+                                (loop
+                                   for x-index from 0 below ndims
+                                   collecting
+                                     (mem-aref xs :double
+                                               x-index))
+                                (if (= n-count-vars 2)
+                                    (+- (mem-aref count :double)
+                                        (mem-aref count :double 1))
+                                    (mem-aref count :double))))))))))
+      hist)))
 
 
 ;;;; This version will work again (with possible modification to
@@ -309,7 +399,7 @@ sparse-histogram respectively."
 ;;;; compound type structures and not just those produced by the C
 ;;;; compiler.
 
-(defun read-histogram (file hdf-path &optional (type :sparse))
+(defun old-read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
 
 type can be either :contiguous or :sparse for contiguous-histogram and
