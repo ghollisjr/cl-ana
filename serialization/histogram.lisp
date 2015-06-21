@@ -364,6 +364,12 @@ sparse-histogram respectively."
                          (h5screate-simple 1
                                            memspace-dims
                                            memspace-maxdims))
+                   (h5dread data-dataset
+                            data-datatype
+                            memspace
+                            data-dataspace
+                            +H5P-DEFAULT+
+                            buffer)
                    (loop
                       for i below (mem-aref memspace-dims 'hsize-t)
                       do
@@ -371,10 +377,9 @@ sparse-histogram respectively."
                                 (+ (* i data-row-size)
                                    (* chunk-size chunk-index)))
                                (count
-                                (mem-aptr (mem-aptr buffer
-                                                    :char
-                                                    buffer-index)
-                                          :double))
+                                (mem-aptr buffer
+                                          :char
+                                          buffer-index))
                                (xs
                                 (mem-aptr (mem-aptr buffer
                                                     :char
