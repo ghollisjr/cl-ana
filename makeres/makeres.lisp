@@ -968,3 +968,16 @@ list args"
 ;; Could create print representation of targets, that way there could
 ;; just be targets and fin-targets as functions which would return all
 ;; project targets and final target table targets.
+
+;; Inspects target table to see if there are spurious references to
+;; targets
+
+(defun checkres ()
+  (loop
+     for id being the hash-keys in (target-table)
+     for tar being the hash-values in (target-table)
+     do (loop
+           for dep in (target-deps tar)
+           do (when (not (gethash dep (target-table)))
+                (format t "~s: ~s not present in target-table~%"
+                        id dep)))))

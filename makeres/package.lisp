@@ -138,6 +138,9 @@
    ;; Strategies:
    :open-cache
    :singleton-cache
-   :fixed-cache))
+   :fixed-cache
+
+   ;; Utilities:
+   :checkres))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)
