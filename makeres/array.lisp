@@ -49,7 +49,7 @@
 (defmethod load-object ((type (eql 'array)) path)
   (let* ((loaddir
           (make-pathname
-           :directory path))
+           :directory (namestring path)))
          (indexpath (merge-pathnames "index" loaddir)))
     (let ((index-list nil))
       (with-open-file (file indexpath
