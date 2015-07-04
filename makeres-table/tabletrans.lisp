@@ -476,14 +476,14 @@ themselves as context."
 
 ;; some shitty code walking
 (defun find-push-fields (form)
-  "Returns the list of all arguments given to all instances of
+  "Returns the list of all argument lists given to all instances of
 push-fields in the form which are not within a macrolet definition."
   (when (and form
              (listp form))
     (cond
       ((eq (first form)
            'push-fields)
-       (copy-list (rest form)))
+       (list (copy-list (rest form))))
       ((eq (first form)
            'macrolet)
        (mapcan #'find-push-fields (rest (rest form))))
@@ -491,25 +491,26 @@ push-fields in the form which are not within a macrolet definition."
        (append (find-push-fields (car form))
                (find-push-fields (cdr form)))))))
 
-(defun replace-push-fields (form replacement)
+(defun replace-push-fields (form replacements)
   "Replaces push-fields within form with replacement as long as it's
 not inside a macrolet definition"
-  (labels ((rec (frm)
-             (if (and frm
-                      (listp frm))
-                 (cond
-                   ((eq (first frm)
-                        'push-fields)
-                    replacement)
-                   ((eq (first frm)
-                        'macrolet)
-                    `(macrolet ,(second frm)
-                       ,@(mapcar #'rec (rest (rest frm)))))
-                   (t
-                    (cons (rec (first frm))
-                          (rec (rest frm)))))
-                 frm)))
-    (rec form)))
+  (let ((replacements (copy-tree replacements)))
+    (labels ((rec (frm)
+               (if (and frm
+                        (listp frm))
+                   (cond
+                     ((eq (first frm)
+                          'push-fields)
+                      (pop replacements))
+                     ((eq (first frm)
+                          'macrolet)
+                      `(macrolet ,(second frm)
+                         ,@(mapcar #'rec (rest (rest frm)))))
+                     (t
+                      (cons (rec (first frm))
+                            (rec (rest frm)))))
+                   frm)))
+      (rec form))))
 
 ;; must be given complete target graph, not just the null-stat targets
 (defun make-pass-target-expr (graph src pass)
@@ -536,9 +537,9 @@ from pass up to src."
                          ((rec (n)
                             (cons (node-id n)
                                   (append
-                                    (node-content n)
-                                    (mapcan #'rec
-                                            (node-children n))))))
+                                   (node-content n)
+                                   (mapcan #'rec
+                                           (node-children n))))))
                        (rec context-tree)))))
            (reductions
             (remove src
@@ -672,26 +673,39 @@ from pass up to src."
                   ((rec (node)
                      (let* ((c (node-id node))
                             (expr (target-expr (gethash c graph)))
-                            (push-field-bindings
+                            ;; push-field-bindings is a list of the
+                            ;; different bindings as found via
+                            ;; find-push-fields in the table pass body
+                            (push-field-bindings-list
                              (cond
                                ((tab? expr)
                                 (find-push-fields (gethash c tab-expanded-expr)))
                                ((ltab? expr)
-                                (find-push-fields (table-reduction-body expr)))))
-                            (push-field-syms
-                             (cars push-field-bindings))
-                            (push-field-gsyms
+                                (find-push-fields (table-reduction-body expr)))
+                               ;; Source table special case:
+                               (t (list nil))))
+                            (push-field-syms-list
+                             (mapcar #'cars push-field-bindings-list))
+                            (push-field-gsyms-list
                              (loop
-                                for b in push-field-syms
-                                collecting (gsym 'tabletrans)))
-                            (push-field->gsym
-                             (let ((ht (make-hash-table :test 'eq)))
-                               (loop
-                                  for sym in push-field-syms
-                                  for gsym in push-field-gsyms
-                                  do (setf (gethash sym ht)
-                                           gsym))
-                               ht))
+                                for bs in push-field-syms-list
+                                collecting
+                                  (loop
+                                     for b in bs
+                                     collecting (gsym 'tabletrans))))
+                            ;; list of maps, one per push-fields form
+                            (push-field->gsym-list
+                             (loop
+                                for push-field-syms in push-field-syms-list
+                                for push-field-gsyms in push-field-gsyms-list
+                                collecting
+                                  (let ((ht (make-hash-table :test 'eq)))
+                                    (loop
+                                       for sym in push-field-syms
+                                       for gsym in push-field-gsyms
+                                       do (setf (gethash sym ht)
+                                                gsym))
+                                    ht)))
                             (lfields
                              (let ((tab->lfields
                                     (gethash (project) *proj->tab->lfields*)))
@@ -713,81 +727,122 @@ from pass up to src."
                                ht))
                             (lfield-bindings
                              (when lfields
-                               (mapcar
-                                (lambda (binding)
-                                  (cons
-                                   (first binding)
-                                   (sublis
-                                    (append
-                                     (loop
-                                        for lfield in lfield-syms
-                                        when (not (eq (first binding)
-                                                      lfield))
-                                        collecting
-                                          (cons `(field ,lfield)
-                                                (gethash lfield lfield->gsym)))
-                                     (loop
-                                        for push-field in push-field-syms
-                                        collecting
-                                          (cons `(field ,push-field)
-                                                (gethash push-field
-                                                         push-field->gsym))))
-                                    (mapcar #'expand-res-macros
-                                            (rest binding))
-                                    :test #'equal)))
-                                lfields)))
-                            (olet-field-bindings
-                             (append push-field-bindings lfield-bindings))
-                            (olet-field-gsyms
-                             (append
-                              push-field-gsyms
-                              lfield-gsyms))
+                               (loop
+                                  for push-field-syms in push-field-syms-list
+                                  for push-field->gsym in push-field->gsym-list
+                                  collecting
+                                    (mapcar
+                                     (lambda (binding)
+                                       (cons
+                                        (first binding)
+                                        (sublis
+                                         (append
+                                          (loop
+                                             for lfield in lfield-syms
+                                             when (not (eq (first binding)
+                                                           lfield))
+                                             collecting
+                                               (cons `(field ,lfield)
+                                                     (gethash lfield lfield->gsym)))
+                                          (loop
+                                             for push-field in push-field-syms
+                                             collecting
+                                               (cons `(field ,push-field)
+                                                     (gethash push-field
+                                                              push-field->gsym))))
+                                         (mapcar #'expand-res-macros
+                                                 (rest binding))
+                                         :test #'equal)))
+                                     lfields))))
+                            (olet-field-bindings-list
+                             (loop
+                                for push-field-bindings in push-field-bindings-list
+                                collecting (append push-field-bindings lfield-bindings)))
+                            (olet-field-gsyms-list
+                             (loop
+                                for push-field-gsyms in push-field-gsyms-list
+                                collecting
+                                  (append
+                                   push-field-gsyms
+                                   lfield-gsyms)))
                             (children-exprs
                              (when (node-children node)
                                (mapcar #'rec
                                        (node-children node))))
-                            (sub-body
-                             ;; create push-fields and lfields bindings:
-                             `(olet ,(loop
-                                        for (field form) in olet-field-bindings
-                                        for gsym in olet-field-gsyms
-                                        collect `(,gsym ,form))
-                                ;; replace (field x) with x for x for every
-                                ;; x in the push-field-bindings
-                                ,@(sublis
-                                   (loop
-                                      for gsym in olet-field-gsyms
-                                      for (field form) in olet-field-bindings
-                                      collect (cons `(field ,field) gsym))
-                                   (append
-                                    (mapcar
-                                     (lambda (id)
-                                       `(symbol-macrolet
-                                            ,(let ((initsym->gsym
-                                                    (gethash
-                                                     id
-                                                     reduction->initsym->gsym)))
-                                                  (when initsym->gsym
-                                                    (loop
-                                                       for s being the hash-keys
-                                                       in initsym->gsym
-                                                       for gsym being the hash-values
-                                                       in initsym->gsym
-                                                       collecting (list s gsym))))
-                                          ,@(let
-                                             ((expr (target-expr
-                                                     (gethash id graph))))
-                                             (if
-                                              (tab? expr)
-                                              `((push-fields
-                                                 ,@(find-push-fields
-                                                    (table-reduction-body
-                                                     (gethash id tab-expanded-expr)))))
-                                              (table-reduction-body expr)))))
-                                     (progn
-                                       (node-content node)))
-                                    children-exprs)
-                                   :test #'equal))))
+                            (content-tab->push-field-vector
+                             (let ((result (make-hash-table :test 'equal)))
+                               (loop
+                                  for content in (node-content node)
+                                  ;; when (tab? (target-expr
+                                  ;;             (gethash content graph)))
+                                  do
+                                    (setf (gethash content result)
+                                          (map
+                                           'vector
+                                           #'identity
+                                           (loop
+                                              for push-field->gsym
+                                              in push-field->gsym-list
+                                              for push-fields
+                                              in
+                                                (find-push-fields
+                                                 (table-reduction-body
+                                                  (gethash content tab-expanded-expr)))
+                                              collecting
+                                                (loop
+                                                   for (field binding)
+                                                   in push-fields
+                                                   collecting
+                                                     (list field
+                                                           (gethash field
+                                                                    push-field->gsym)))))))
+                               result))
+                            (sub-bodies
+                             (loop
+                                for olet-field-bindings in olet-field-bindings-list
+                                for olet-field-gsyms in olet-field-gsyms-list
+                                for content-index from 0
+                                collect
+                                ;; create push-fields and lfields bindings:
+                                  `(olet ,(loop
+                                             for (field form) in olet-field-bindings
+                                             for gsym in olet-field-gsyms
+                                             collect `(,gsym ,form))
+                                     ;; replace (field x) with x for x for every
+                                     ;; x in the push-field-bindings
+                                     ,@(sublis
+                                        (loop
+                                           for gsym in olet-field-gsyms
+                                           for (field form) in olet-field-bindings
+                                           collect (cons `(field ,field) gsym))
+                                        (append
+                                         (mapcar
+                                          (lambda (id)
+                                            `(symbol-macrolet
+                                                 ,(let ((initsym->gsym
+                                                         (gethash
+                                                          id
+                                                          reduction->initsym->gsym)))
+                                                       (when initsym->gsym
+                                                         (loop
+                                                            for s being the hash-keys
+                                                            in initsym->gsym
+                                                            for gsym being the hash-values
+                                                            in initsym->gsym
+                                                            collecting (list s gsym))))
+                                               ,@(let
+                                                  ((expr (target-expr
+                                                          (gethash id graph))))
+                                                  (if
+                                                   (tab? expr)
+                                                   `((push-fields
+                                                      ,@(aref
+                                                         (gethash id content-tab->push-field-vector)
+                                                         content-index)))
+                                                   (table-reduction-body expr)))))
+                                          (node-content node))
+                                         children-exprs)
+                                        :test #'equal)))))
                        (if (and (not (equal c src))
                                 (table-reduction? expr))
                            (let ((result
@@ -797,9 +852,9 @@ from pass up to src."
                                          (if (tab? expr)
                                              (gethash c tab-expanded-expr)
                                              expr)))
-                                   sub-body)))
+                                   sub-bodies)))
                              result)
-                           sub-body))))
+                           (first sub-bodies)))))
                 (rec context-tree)))
              (row-var (gsym 'table-pass))
              (nrows-var (gsym 'table-pass))

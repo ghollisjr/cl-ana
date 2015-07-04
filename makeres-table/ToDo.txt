@@ -1,3 +1,15 @@
++ Major bug: Load tests/push-fields.lisp, run (makeres), (clrres) and
+  then (makeres).  There is an unhandled memory fault in a call to
+  table-load-next-row on the (src) reusable-table.
+
+- Major bug: Current tabletrans does not allow separate push-fields
+  forms in the reduction body.  Each push-fields form should be
+  allowed to have independent variable bindings, but as written a
+  single binding is assumed.
+
+  Tested with tests/push-fields.lisp, will test with actual analysis
+  code as well
+
 + Automatically assign file names for physical table results.  This is
   possible at least for some table types, although it would require
   changing the save-target or load-target functions and tabletrans
