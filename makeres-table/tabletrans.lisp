@@ -678,7 +678,8 @@ from pass up to src."
                             ;; find-push-fields in the table pass body
                             (push-field-bindings-list
                              (cond
-                               ((tab? expr)
+                               ((and (tab? expr)
+                                     (not (equal c src)))
                                 (find-push-fields (gethash c tab-expanded-expr)))
                                ((ltab? expr)
                                 (find-push-fields (table-reduction-body expr)))
@@ -730,7 +731,7 @@ from pass up to src."
                                (loop
                                   for push-field-syms in push-field-syms-list
                                   for push-field->gsym in push-field->gsym-list
-                                  collecting
+                                  appending
                                     (mapcar
                                      (lambda (binding)
                                        (cons
@@ -773,8 +774,6 @@ from pass up to src."
                              (let ((result (make-hash-table :test 'equal)))
                                (loop
                                   for content in (node-content node)
-                                  ;; when (tab? (target-expr
-                                  ;;             (gethash content graph)))
                                   do
                                     (setf (gethash content result)
                                           (map
