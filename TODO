@@ -1,3 +1,17 @@
++ Potentially useful makeres transformation: Operators which allow
+  branching.  Example: Creating histograms with different binnings.
+  The branching operator could allow specification of a list of
+  different branch values and an operator which would refer to the
+  particular branch value in a branch instance, but the code would
+  remain the same otherwise.  The branch operator would return a hash
+  table mapping from the branch value to the corresponding computed
+  result.  The branch transformation could create a result target for
+  each branch so that e.g. table transformations would still work
+  properly.  There could be a function #'branch (potentially private
+  to the transformation package) which would take an id symbol and
+  return the branch value for that particular branch instance.  That,
+  or have a system of hash-tables.
+
 - Bug in in-project: Calling in-project repeatedly on the same project
   id actually erases the target definitions.
 
