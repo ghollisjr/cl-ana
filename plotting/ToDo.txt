@@ -1,3 +1,8 @@
++ Add new functions to package.lisp, many new functions but I haven't
+  added them to the package
+
++ Split plotting into multiple files
+
 + Support variable binning for 2d histograms.  Requires using pm3d, so
   need to add 3d plotting functionality and functions to convert 2d
   lines into 3d lines for easily superimposing other lines on a 2d

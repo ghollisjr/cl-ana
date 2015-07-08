@@ -58,6 +58,8 @@
            :page-plots
            :page-layout
            :page-type
+           :page-terminal
+           :page-output
            :page-add-plot
            ;; plot functions
            :plot-lines
@@ -91,6 +93,7 @@
            :jpeg-term
            :ps-term
            :eps-term
-           :pdf-term))
+           :pdf-term
+           :epslatex-term))
 
 (cl-ana.gmath:use-gmath :cl-ana.plotting)

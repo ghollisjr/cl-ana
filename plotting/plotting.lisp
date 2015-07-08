@@ -1228,3 +1228,82 @@ gnuplot to distinguish eps from ps)"
                      "butt")
                    (when enhanced
                      "enhanced"))))))))
+
+;; epslatex terminal
+(defun epslatex-term (&key
+                        standalone-p
+                        oldstyle-p
+                        level1-p
+                        (color-p t)
+                        (size (cons "5" "3"))
+                        (font-face "phv")
+                        font-size
+                        line-width
+                        (dashed-p nil dashed-supplied-p)
+                        dash-length
+                        (rounded t)
+                        palfuncparam-samples
+                        palfuncparam-maxdeviation
+                        ;; To supply noheader, give nil header
+                        ;; argument
+                        (header nil header-supplied-p)
+                        blacktext-p)
+  "Generates the type string for a png terminal with options"
+  (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "epslatex"
+                   (if standalone-p
+                       "standalone"
+                       "input")
+                   (if oldstyle-p
+                       "oldstyle"
+                       "newstyle")
+                   (if level1-p
+                       "level1"
+                       "leveldefault")
+                   (if color-p
+                       "color"
+                       "monochrome")
+                   (when size
+                     (list "size" (car size) "," (cdr size)))
+                   (when font-face
+                     (with-output-to-string (s)
+                       (format s "font \"~a" font-face)
+                       (if font-size
+                           (format s ",~a\"" font-size)
+                           (format s "\""))))
+                   (when line-width
+                     (list "linewidth" line-width))
+                   (if (not dashed-supplied-p)
+                       (if color-p
+                           "solid"
+                           "dashed")
+                       (if dashed-p
+                           "dashed"
+                           "solid"))
+                   (when dashed-p
+                     (when dash-length
+                       (list "dl" dash-length)))
+                   (when (not rounded)
+                     "butt")
+                   (when palfuncparam-samples
+                     (if palfuncparam-maxdeviation
+                         (format nil
+                                 "palfuncparam ~a,~a"
+                                 palfuncparam-samples
+                                 palfuncparam-maxdeviation)
+                         (format nil
+                                 "palfuncparam ~a"
+                                 palfuncparam-samples)))
+                   (when header-supplied-p
+                     (if header
+                         (format nil "header ~s"
+                                 header)
+                         (format nil "noheader")))
+                   (if blacktext-p
+                       "blacktext"
+                       "colortext")))))))
