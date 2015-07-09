@@ -118,12 +118,48 @@ form (source &rest co-branches)"
 ;;;; 3. Modify targets of final result targets to simply collect
 ;;;;    hash-tables of the resulting passes
 
+(defun branch-replace (value tree branch-ids)
+  "Replaces (branch) or (branch branch-id) forms with
+`',value.  (branch) is replaced up to context of outermost
+branch, (branch branch-id) is replaced to all levels"
+  (labels ((rec (tree)
+             (cond
+               ((null tree) nil)
+               ((equal tree '(branch))
+                `',value)
+               ((atom tree)
+                tree)
+               ((eq (first tree) 'branch)
+                tree)
+               (t (mapcar #'rec
+                          tree)))))
+    (sublis (loop
+               for id in branch-ids
+               collecting `((branch ,id) . ',value))
+            (rec tree)
+            :test #'equal)))
+
 (defun branchtrans (graph)
   (let* ((result
           (cl-ana.makeres:copy-target-table graph))
          (branch-chains
           (branch-chains graph))
          (source-branch-ids (mapcar #'first branch-chains))
+         (source->branch-ids
+          (let ((ht (make-hash-table :test 'equal)))
+            (loop
+               for chain in branch-chains
+               do (let ((source (first chain)))
+                    (loop
+                       for id in chain
+                       do
+                         (push `(res ,id)
+                               (gethash source ht)))
+                    (push (branch-list
+                           (target-expr
+                            (gethash source graph)))
+                          (gethash source ht))))
+            ht))
          (source->branch-list
           (let ((id->list (make-hash-table :test 'equal)))
             (loop
@@ -139,6 +175,7 @@ form (source &rest co-branches)"
           (loop
              for chain in branch-chains
              do (let* ((source (first chain))
+                       (branch-ids (gethash source source->branch-ids))
                        (branch-list
                         (gethash source source->branch-list))
                        (id->branch->gsym
@@ -176,19 +213,20 @@ form (source &rest co-branches)"
                                                 (gethash id
                                                          id->branch->gsym)))
                                       (body
-                                       (sublis
-                                        (append (list (cons '(branch)
-                                                            `',branch))
-                                                (loop
-                                                   for chain-id in chain
-                                                   collecting
-                                                     (cons
-                                                      `(res ,chain-id)
-                                                      `(res ,(gethash branch
-                                                                      (gethash chain-id
-                                                                               id->branch->gsym))))))
-                                        expr
-                                        :test #'equal)))
+                                       (branch-replace
+                                        branch
+                                        (sublis
+                                         (loop
+                                            for chain-id in chain
+                                            collecting
+                                              (cons
+                                               `(res ,chain-id)
+                                               `(res ,(gethash branch
+                                                               (gethash chain-id
+                                                                        id->branch->gsym)))))
+                                         expr
+                                         :test #'equal)
+                                        branch-ids)))
                                   (setf (gethash gsym result)
                                         (make-target gsym
                                                      body))))

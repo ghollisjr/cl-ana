@@ -32,3 +32,9 @@
 (defres exp-double-y
   (branch (res double-y)
     (exp (res double-y))))
+
+;; double branching:
+(defres nils
+  (branch *xs*
+    (branch *ys*
+      nil)))
