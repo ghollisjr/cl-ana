@@ -1,6 +1,6 @@
 (require 'cl-ana)
 
-(in-package :cl-ana.makeres-branch)
+(in-package :cl-ana)
 
 (defproject branch
     "/home/ghollisjr/test/makeres-branch/"
@@ -20,3 +20,15 @@
 (defres double-y
   (branch *ys*
     (* (branch) 2)))
+
+(defres exp-double-x
+  (branch (res double-x)
+    (exp (res double-x))))
+
+(defres sin-exp-double-x
+  (branch (res exp-double-x)
+    (sin (res exp-double-x))))
+
+(defres exp-double-y
+  (branch (res double-y)
+    (exp (res double-y))))
