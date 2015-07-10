@@ -37,6 +37,7 @@ branch-list must be either 1. A form which can be evaluated in the
   (destructuring-bind (progn &rest forms)
       expr
     (and (single forms)
+         (listp (first forms))
          (eq (first (first forms)) 'branch))))
 
 (defun branch-list (expr)
@@ -131,8 +132,10 @@ branch, (branch branch-id) is replaced to all levels"
                 tree)
                ((eq (first tree) 'branch)
                 tree)
-               (t (mapcar #'rec
-                          tree)))))
+               ((atom (cdr (last tree)))
+                (cons (rec (car tree))
+                      (rec (cdr tree))))
+               (t (mapcar #'rec tree)))))
     (sublis (loop
                for id in branch-ids
                collecting `((branch ,id) . ',value))
