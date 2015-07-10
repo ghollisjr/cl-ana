@@ -1,4 +1,9 @@
-+ Potentially useful makeres transformation: Operators which allow
++ Provide some mechanism for treating makeres target-table
+  transformations as plugins so that initialization and possibly even
+  transformation ordering in the pipeline can be automated so users
+  don't have to manage minutia.
+
+- Potentially useful makeres transformation: Operators which allow
   branching.  Example: Creating histograms with different binnings.
   The branching operator could allow specification of a list of
   different branch values and an operator which would refer to the
