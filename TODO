@@ -1,3 +1,13 @@
++ Possibly change makeres-branch so that the branch source is actually
+  the list form providing the branching.  At the moment, the algorithm
+  assumes that there will be a single target which branches on a list
+  of possibilities, and that this target must be referred to somewhere
+  along a chain of branching sources.  However, what would be better
+  would be to have parallel branches be able to access each other's
+  targets during the branching, so this would require that the source
+  be allowed to be the branch list form itself, or at least have this
+  behavior emulated.
+
 + Provide some mechanism for treating makeres target-table
   transformations as plugins so that initialization and possibly even
   transformation ordering in the pipeline can be automated so users
