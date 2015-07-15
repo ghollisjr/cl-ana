@@ -26,6 +26,7 @@
   results in Common Lisp"
   :license "GPLv3"
   :depends-on (#:alexandria
+               #:cl-fad
                #:cl-ana.generic-math
                #:cl-ana.error-propogation
                #:cl-ana.macro-utils

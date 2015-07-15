@@ -21,48 +21,78 @@
 
 (in-package :cl-ana.makeres)
 
+(defun printable-cons (obj)
+  "Returns T if obj is a cons structure which can be printed"
+  #+sbcl
+  (let ((standard-method
+         (first
+          (sb-mop:compute-applicable-methods #'save-object
+                                             (list nil "")))))
+    (or (equal (first
+                (sb-mop:compute-applicable-methods
+                 #'save-object (list obj "")))
+               standard-method)
+        (and (consp obj)
+             (printable-cons (car obj))
+             (printable-cons (cdr obj)))))
+  ;; Default is no printable objects
+  #-(or sbcl)
+  nil)
+
 (defmethod save-object ((cell cons) path)
-  (let* ((savedir
-          (make-pathname
-           :directory (namestring path)))
-         (indexpath (merge-pathnames "index" savedir)))
-    (ensure-directories-exist savedir)
-    (let ((car-type (target-type (car cell)))
-          (cdr-type (target-type (cdr cell))))
-      (with-open-file (file indexpath
+  (if (printable-cons cell)
+      (with-open-file (file path
                             :direction :output
-                            :if-exists :supersede
-                            :if-does-not-exist :create)
-        (format file "~a~%"
-                (cons car-type
-                      cdr-type)))
-      (save-object (car cell)
-                   (merge-pathnames "car"
-                                    savedir))
-      (save-object (cdr cell)
-                   (merge-pathnames "cdr"
-                                    savedir)))))
+                            :if-does-not-exist :create
+                            :if-exists :supersede)
+        (format file "~s~%" cell))
+      (let* ((savedir
+              (make-pathname
+               :directory (namestring path)))
+             (indexpath (merge-pathnames "index" savedir)))
+        (ensure-directories-exist savedir)
+        (let ((car-type (target-type (car cell)))
+              (cdr-type (target-type (cdr cell))))
+          (with-open-file (file indexpath
+                                :direction :output
+                                :if-exists :supersede
+                                :if-does-not-exist :create)
+            (format file "~a~%"
+                    (cons car-type
+                          cdr-type)))
+          (save-object (car cell)
+                       (merge-pathnames "car"
+                                        savedir))
+          (save-object (cdr cell)
+                       (merge-pathnames "cdr"
+                                        savedir))))))
 
 (defmethod load-object ((type (eql 'cons)) path)
-  (let* ((loaddir
-          (make-pathname
-           :directory (namestring path)))
-         (indexpath (merge-pathnames "index" loaddir)))
-    (let ((index-cons nil))
-      (with-open-file (file indexpath
-                            :direction :input
-                            :if-does-not-exist :error)
-        (setf index-cons (read file)))
-      ;; (print index-cons)
-      (destructuring-bind (car-type . cdr-type)
-          index-cons
-        ;; (print car-type)
-        ;; (print cdr-type)
-        (cons (load-object car-type
-                           (merge-pathnames
-                            "car"
-                            loaddir))
-              (load-object cdr-type
-                           (merge-pathnames
-                            "cdr"
-                            loaddir)))))))
+  (if (cl-fad:directory-exists-p path)
+      ;; general method
+      (let* ((loaddir
+              (make-pathname
+               :directory (namestring path)))
+             (indexpath (merge-pathnames "index" loaddir)))
+        (let ((index-cons nil))
+          (with-open-file (file indexpath
+                                :direction :input
+                                :if-does-not-exist :error)
+            (setf index-cons (read file)))
+          ;; (print index-cons)
+          (destructuring-bind (car-type . cdr-type)
+              index-cons
+            ;; (print car-type)
+            ;; (print cdr-type)
+            (cons (load-object car-type
+                               (merge-pathnames
+                                "car"
+                                loaddir))
+                  (load-object cdr-type
+                               (merge-pathnames
+                                "cdr"
+                                loaddir))))))
+      ;; special case for printable cons structures
+      (with-open-file (file path
+                            :direction :input)
+        (read file))))
