@@ -2,9 +2,10 @@
 
 (in-package :cl-ana)
 
-(in-project makeres-block-test)
-
-(settrans (list #'blocktrans) :op :set)
+(defproject makeres-block-test
+    "/home/ghollisjr/test/makeres-block/test"
+  (list #'blocktrans)
+  (fixed-cache 5))
 
 (defres a
   (list 1 2 3))
