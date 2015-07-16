@@ -1,3 +1,6 @@
++ Update save-snapshot so that it does not assume the cp program
+  exists; this poses difficulty using cl-ana on Windows
+
 + Reorganize file structure into something that makes more sense.  At
   the moment, there are two files makeres.lisp and logres.lisp which
   contain various components of the now very much interconnect system.
