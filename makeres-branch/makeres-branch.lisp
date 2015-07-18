@@ -173,7 +173,11 @@ branch, (branch branch-id) is replaced to all levels"
                           (target-expr
                            (gethash id graph))))))
             id->list)))
-    (if branch-chains
+    (if (some (lambda (chain)
+                (some (lambda (id)
+                        (not (target-stat (gethash id graph))))
+                      chain))
+              branch-chains)
         (progn
           (loop
              for chain in branch-chains
@@ -185,6 +189,7 @@ branch, (branch branch-id) is replaced to all levels"
                         (let ((ht (make-hash-table :test 'equal)))
                           (loop
                              for id in chain
+                             when (not (target-stat (gethash id graph)))
                              do
                                (let* ((raw-expr
                                        (target-expr
@@ -200,6 +205,7 @@ branch, (branch branch-id) is replaced to all levels"
                           ht)))
                   (loop
                      for id in chain
+                     when (not (target-stat (gethash id graph)))
                      do (let* ((raw-expr
                                 (target-expr
                                  (gethash id graph)))
@@ -224,9 +230,12 @@ branch, (branch branch-id) is replaced to all levels"
                                             collecting
                                               (cons
                                                `(res ,chain-id)
-                                               `(res ,(gethash branch
-                                                               (gethash chain-id
-                                                                        id->branch->gsym)))))
+                                               (if (target-stat (gethash chain-id graph))
+                                                   `(gethash ,branch
+                                                             (res ,chain-id))
+                                                   `(res ,(gethash branch
+                                                                   (gethash chain-id
+                                                                            id->branch->gsym))))))
                                          expr
                                          :test #'equal)
                                         branch-ids)))

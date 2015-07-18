@@ -1,3 +1,8 @@
+- branchtrans appears broken; no matter what the target-stat is, each
+  branch target keeps getting recomputed.
+
+  Needed to treat already computed branch targets differently
+
 + Possibly change makeres-branch so that the branch source is actually
   the list form providing the branching.  At the moment, the algorithm
   assumes that there will be a single target which branches on a list
