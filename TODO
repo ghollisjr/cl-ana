@@ -1,3 +1,8 @@
++ Add some method to check if an object can be printed so that
+  save-object can more efficiently handle output to file for
+  e.g. sequences.  Partially implemented in cons example, but this
+  strategy does not scale well when adding many types.
+
 - branchtrans appears broken; no matter what the target-stat is, each
   branch target keeps getting recomputed.
 
