@@ -29,7 +29,7 @@
   "Executes makeres-propogate! and makeres with arguments in
 current slime buffer."
   (interactive)
-  (slime-command "(makeres-propogate!)\n(makeres)"))
+  (slime-command "(makeres-propogate!) (makeres)"))
 
 (add-hook 'lisp-mode-hook
           '(lambda ()
@@ -67,7 +67,7 @@ current slime buffer."
 
 (defun load-project (&rest args)
   (interactive)
-  (slime-command "(load-project)\n(makeres)"))
+  (slime-command "(load-project) (makeres)"))
 
 (add-hook 'lisp-mode-hook
           '(lambda ()
