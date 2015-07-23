@@ -46,5 +46,7 @@
    :table-reduction-source
    ;; Special operators:
    :defhist
+   ;; Copy utils:
+   :copy-lfields
    ;; Utilities:
    :table-target?))

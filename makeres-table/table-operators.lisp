@@ -212,3 +212,17 @@ the histogram."
               `(when ,test
                  (hins ,hist ,expr))
               `(hins ,hist ,expr))))))
+
+;;;; Copy utils:
+(defun copy-lfields (source dest &optional lfields)
+  "Copies logical fields from source to dest"
+  (let ((source-lfields
+         (gethash source
+                  (gethash (project) *proj->tab->lfields*))))
+    (eval `(deflfields ,dest
+               ,(if (null lfields)
+                    source-lfields
+                    (loop
+                       for f in source-lfields
+                       when (member (car f) lfields :test #'eq)
+                       collect f))))))
