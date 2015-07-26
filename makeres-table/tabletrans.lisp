@@ -261,7 +261,7 @@ non-ignored sources."
                         (adjoin src
                                 srcs
                                 :test #'equal)))))))
-    (set-difference srcs reds)))
+    (set-difference srcs reds :test #'equal)))
 
 (defun removed-source-dep< (target-table)
   (let ((depmap (make-hash-table :test 'equal)))
@@ -1060,7 +1060,7 @@ true when given the key and value from ht."
                          (alexandria:flatten
                           (mapcar #'butlast
                                   (mapcar #'rest
-                                          (ltab-chains (target-table)
+                                          (ltab-chains target-table
                                                        src)))))))
                    (setf processed-srcs
                          (list->set

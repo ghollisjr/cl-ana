@@ -19,19 +19,19 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(require 'cl-ana.makeres-table)
+(require 'cl-ana)
 
-(in-package :cl-ana.makeres-table)
+(in-package :cl-ana)
 
-(in-project tabletrans-test)
-
-(settrans (tabletrans) :op :set)
+(defproject tabletrans-test
+    "/home/ghollisjr/test/makeres-table/tabletrans-test"
+  (list #'macrotrans #'tabletrans)
+  (fixed-cache 5))
 
 (defres source
-  (wrap-for-reuse
-   (open-plist-table '((:x 1)
-                       (:x 2)
-                       (:x 3)))))
+  (srctab (plist-opener '((:x 1)
+                          (:x 2)
+                          (:x 3)))))
 
 (defres filtered
   (ltab (res source)
@@ -42,6 +42,12 @@
       (push-fields
        ;; new field y, x is still accessible, unshadowed
        (y (* 2 (field x)))))))
+
+(defres (filtered sum)
+  (dotab (res filtered)
+      ((sum 0))
+      sum
+    (incf sum (field y))))
 
 (defres filtered2
   (ltab (res source)
@@ -57,9 +63,9 @@
   (tab (res filtered)
       ()
       (hdf-opener "/home/ghollisjr/canon.h5"
-                  '(("x" . :int)
-                    ("y" . :float)
-                    ("z" . :float)))
+                  '(("X" . :int)
+                    ("Y" . :float)
+                    ("Z" . :float)))
     (push-fields (x (field x))
                  (y (sqrt (field y)))
                  (z (float
@@ -102,7 +108,7 @@
   (tab (res filtered2)
       ()
       (hdf-opener "/home/ghollisjr/other.h5"
-                  '(("x" . :int)))
+                  '(("X" . :int)))
     (push-fields
      (x (field y)))))
 

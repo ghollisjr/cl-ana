@@ -154,9 +154,13 @@ nil for writing."
 
 ;; plist-table:
 
-(defun plist-opener (field-names)
-  (let ((table nil)
-        (plists nil))
+(defun plist-opener (plists)
+  (let* ((plists plists)
+         (table (wrap-for-reuse
+                 (open-plist-table plists)))
+         (field-names
+          (mapcar #'first
+                  (group (first plists) 2))))
     (lambda (op)
       (case op
         (:read
