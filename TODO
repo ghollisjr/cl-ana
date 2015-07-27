@@ -1,3 +1,8 @@
+- CRITICAL BUG: read-histogram is broken.
+
+  * read-histogram cannot read histograms saved via write-histogram,
+    while old-read-histogram still can.
+
 + Add some method to check if an object can be printed so that
   save-object can more efficiently handle output to file for
   e.g. sequences.  Partially implemented in cons example, but this

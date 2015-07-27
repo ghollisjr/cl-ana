@@ -322,82 +322,76 @@ sparse-histogram respectively."
 
         (setf data-buffer-size
               (* data-row-size
-                 data-chunk-size))
+                 (mem-aref data-dataset-dims 'hsize-t)))
         (with-foreign-object (buffer :char data-buffer-size)
-          (loop
-             for chunk-index from 0
-             while (< (* chunk-index data-buffer-size)
-                      nrows)
-             do
-               (let* ((chunk-size
-                       data-chunk-size)
-                      (remaining-rows
-                       (- nrows
-                          (* chunk-index chunk-size))))
-                 (if (< remaining-rows chunk-size)
-                     (setf (mem-aref memspace-dims 'hsize-t)
-                           remaining-rows)
-                     (setf (mem-aref memspace-dims 'hsize-t)
-                           chunk-size))
-                 (setf (mem-aref memspace-maxdims 'hsize-t)
-                       (mem-aref memspace-dims 'hsize-t))
-                 (with-foreign-objects ((start 'hsize-t)
-                                        (stride 'hsize-t)
-                                        (cnt 'hsize-t)
-                                        (blck 'hsize-t))
-                   (setf (mem-aref start 'hsize-t)
-                         (* chunk-index
-                            chunk-size))
-                   (setf (mem-aref stride 'hsize-t)
-                         1)
-                   (setf (mem-aref cnt 'hsize-t)
-                         1)
-                   (setf (mem-aref blck 'hsize-t)
-                         (mem-aref memspace-dims 'hsize-t))
-                   (h5sselect-hyperslab data-dataspace
-                                        :H5S-SELECT-SET
-                                        start
-                                        stride
-                                        cnt
-                                        blck)
-                   (setf memspace
-                         (h5screate-simple 1
-                                           memspace-dims
-                                           memspace-maxdims))
-                   (h5dread data-dataset
-                            data-datatype
-                            memspace
-                            data-dataspace
-                            +H5P-DEFAULT+
-                            buffer)
-                   (loop
-                      for i below (mem-aref memspace-dims 'hsize-t)
-                      do
-                        (let* ((buffer-index
-                                (+ (* i data-row-size)
-                                   (* chunk-size chunk-index)))
-                               (count
-                                (mem-aptr buffer
-                                          :char
-                                          buffer-index))
-                               (xs
-                                (mem-aptr (mem-aptr buffer
-                                                    :char
-                                                    buffer-index)
-                                          :double
-                                          n-count-vars)))
-                          (hins hist
-                                (loop
-                                   for x-index from 0 below ndims
-                                   collecting
-                                     (mem-aref xs :double
-                                               x-index))
-                                (if (= n-count-vars 2)
-                                    (+- (mem-aref count :double)
-                                        (mem-aref count :double 1))
-                                    (mem-aref count :double))))))))))
+          (setf (mem-aref memspace-dims 'hsize-t)
+                (mem-aref data-dataset-dims 'hsize-t))
+          (setf (mem-aref memspace-maxdims 'hsize-t)
+                (mem-aref memspace-dims 'hsize-t))
+          (with-foreign-objects ((start 'hsize-t)
+                                 (stride 'hsize-t)
+                                 (cnt 'hsize-t)
+                                 (blck 'hsize-t))
+            (setf (mem-aref start 'hsize-t)
+                  0)
+            (setf (mem-aref stride 'hsize-t)
+                  1)
+            (setf (mem-aref cnt 'hsize-t)
+                  1)
+            (setf (mem-aref blck 'hsize-t)
+                  (mem-aref memspace-dims 'hsize-t))
+            (h5sselect-hyperslab data-dataspace
+                                 :H5S-SELECT-SET
+                                 start
+                                 stride
+                                 cnt
+                                 blck)
+            (setf memspace
+                  (h5screate-simple 1
+                                    memspace-dims
+                                    memspace-maxdims))
+            (h5dread data-dataset
+                     data-datatype
+                     memspace
+                     data-dataspace
+                     +H5P-DEFAULT+
+                     buffer)
+            (loop
+               for i below (mem-aref memspace-dims 'hsize-t)
+               do
+                 (let* ((buffer-index
+                         (* i data-row-size))
+                        (count
+                         (case n-count-vars
+                           (1 (mem-aref
+                               (mem-aptr buffer
+                                         :char
+                                         (+ buffer-index
+                                            (h5tget-member-offset
+                                             data-datatype 0)))
+                               :double))
+                           (2 (+- (mem-aref
+                                   (mem-aptr
+                                    buffer
+                                    :char
+                                    (+ buffer-index
+                                       (h5tget-member-offset data-datatype 1)))
+                                   :double)))))
+                        (xs
+                         (loop
+                            for dim from 0 below ndims
+                            collecting
+                              (mem-aref (mem-aptr buffer
+                                                  :char
+                                                  (+ buffer-index
+                                                     (h5tget-member-offset
+                                                      data-datatype
+                                                      (+ n-count-vars dim))))
+                                        :double))))
+                   (hins hist
+                         xs
+                         count))))))
       hist)))
-
 
 ;;;; This version will work again (with possible modification to
 ;;;; function arguments) once the hdf-table library supports arbitrary
