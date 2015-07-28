@@ -1,3 +1,12 @@
+- Fix err-num save-object
+
+  Bug caused confusing behavior due to only being present in a large
+  project I was working on.  Turns out that the new save-object and
+  load-object methods for lists were writing err-nums to file in a way
+  that they would not be read correctly since there was no special
+  method for saving err-nums.  Added a save-object method for err-nums
+  to fix.
+
 - CRITICAL BUG: read-histogram is broken.
 
   * read-histogram cannot read histograms saved via write-histogram,
