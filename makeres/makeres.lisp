@@ -981,3 +981,31 @@ list args"
            do (when (not (gethash dep (target-table)))
                 (format t "~s: ~s not present in target-table~%"
                         id dep)))))
+
+;; Deletes target logs for targets which are not present in the
+;; target-table.
+
+(defun pruneres (&optional delete-p)
+  (let* ((logged-paths
+          (mapcar #'pathname
+                  (directory
+                   (merge-pathnames "**"
+                                    (merge-pathnames "targets/"
+                                                     (current-path))))))
+         (logged-id-strings
+          (mapcar (lambda (pn)
+                    (read-from-string
+                     (first (last (pathname-directory pn)))))
+                  logged-paths)))
+    (loop
+       for logged-id in logged-id-strings
+       for logged-path in logged-paths
+       do (when (not (gethash logged-id (target-table)))
+            (if delete-p
+                (progn
+                  (format t "Deleting ~a...~%"
+                          logged-id)
+                  (sb-ext:delete-directory logged-path
+                                           :recursive t))
+                (format t "~a not in target table~%"
+                        logged-id))))))

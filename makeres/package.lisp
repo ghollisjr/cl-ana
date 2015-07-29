@@ -141,6 +141,7 @@
    :fixed-cache
 
    ;; Utilities:
-   :checkres))
+   :checkres
+   :pruneres))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)
