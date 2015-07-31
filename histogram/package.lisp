@@ -84,6 +84,10 @@
            :hbw
            ;; For generating discrete dim-specs
            :discrete-dim-spec
-           :dds))
+           :dds
+
+           ;; Variable binning histograms:
+           :make-variable-binning-histogram
+           :make-vhist))
 
 (cl-ana.gmath:use-gmath :cl-ana.histogram)

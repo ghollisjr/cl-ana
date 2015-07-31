@@ -68,6 +68,15 @@ dimension names)."
                                   (first (last x)))
                                 names-specs)))
 
+(defun make-vhist (names-specs
+                   &key
+                     (empty-bin-value 0)
+                     (default-increment 1))
+  (make-variable-binning-histogram
+   names-specs
+   :empty-bin-value empty-bin-value
+   :default-increment default-increment))
+
 (defmethod hist-insert ((hist variable-binning-histogram) datum &optional weight)
   (with-accessors ((low-edges variable-binning-histogram-dim-specs)
                    (btrees variable-binning-histogram-binary-trees)
@@ -95,3 +104,8 @@ dimension names)."
             (setf (gethash indices content)
                   (+ start weight)))))))
   hist)
+
+;; Map->alist
+(defmethod map->alist ((obj variable-binning-histogram))
+  (map->alist
+   (variable-binning-histogram-content obj)))

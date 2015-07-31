@@ -1,0 +1,3 @@
++ Add arithmetic operations for variable binning histograms and
+  possibly categorical histograms if not already present.
+  
