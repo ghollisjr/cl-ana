@@ -146,8 +146,9 @@ dimension names)."
 (defmethod copy-hist ((obj variable-binning-histogram)
                       &optional empty-p)
   (let ((result (make-variable-binning-histogram
-                 (variable-binning-histogram-dim-specs
-                  obj)
+                 (zip (hist-dim-names obj)
+                      (variable-binning-histogram-dim-specs
+                       obj))
                  :empty-bin-value
                  (hist-empty-bin-value obj)
                  :default-increment
@@ -163,3 +164,31 @@ dimension names)."
              do (setf (gethash indices result-ht)
                       count))
           result))))
+
+;; Arithmetic functions:
+
+;; Assumes that the histograms have congruent binnings
+(defmethod add ((h1 variable-binning-histogram)
+                (h2 variable-binning-histogram))
+  (let ((h2-content
+         (variable-binning-histogram-content h2))
+        (result
+         (copy-hist h1)))
+    (loop
+       for indices being the hash-keys in h2-content
+       for count being the hash-values in h2-content
+       do
+         (hins result indices count))
+    result))
+
+(defmethod sub ((h1 variable-binning-histogram)
+                (h2 variable-binning-histogram))
+  (let ((h2-content
+         (variable-binning-histogram-content h2))
+        (result
+         (copy-hist h1)))
+    (loop
+       for indices being the hash-keys in h2-content
+       for count being the hash-values in h2-content
+       do (hins result indices (- count)))
+    result))
