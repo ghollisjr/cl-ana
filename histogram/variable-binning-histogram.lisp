@@ -250,7 +250,8 @@ dimension names)."
        for count1 being the hash-values in h1-content
        do (let ((count2 (gethash indices h2-content)))
             (when count2
-              (hins result indices (protected-div count1 count2
-                                                  :protected-value
-                                                  protected-value)))))
+              (hins result indices
+                    (protected-div count1 count2
+                                   :protected-value
+                                   protected-value)))))
     result))
