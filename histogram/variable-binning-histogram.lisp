@@ -192,3 +192,65 @@ dimension names)."
        for count being the hash-values in h2-content
        do (hins result indices (- count)))
     result))
+
+(defmethod mult ((h1 variable-binning-histogram)
+                 (h2 variable-binning-histogram))
+  (let ((h1-content
+         (variable-binning-histogram-content h1))
+        (h2-content
+         (variable-binning-histogram-content h2))
+        (result
+         (copy-hist h1 t)))
+    (loop
+       for indices being the hash-keys in h1-content
+       for count1 being the hash-values in h1-content
+       do (let ((count2 (gethash indices h2-content)))
+            (when count2
+              (hins result indices (mult count1 count2)))))
+    result))
+
+(defmethod unary-div ((h variable-binning-histogram))
+  (let ((h-content
+         (variable-binning-histogram-content h))
+        (result
+         (copy-hist h t)))
+    (loop
+       for indices being the hash-keys in h-content
+       for count being the hash-values in h-content
+       do (hins result indices (unary-div count)))
+    result))
+
+(defmethod div ((h1 variable-binning-histogram)
+                (h2 variable-binning-histogram))
+  (let ((h1-content
+         (variable-binning-histogram-content h1))
+        (h2-content
+         (variable-binning-histogram-content h2))
+        (result
+         (copy-hist h1 t)))
+    (loop
+       for indices being the hash-keys in h1-content
+       for count1 being the hash-values in h1-content
+       do (let ((count2 (gethash indices h2-content)))
+            (when count2
+              (hins result indices (div count1 count2)))))
+    result))
+
+(defmethod protected-div ((h1 variable-binning-histogram)
+                          (h2 variable-binning-histogram)
+                          &key (protected-value 0))
+  (let ((h1-content
+         (variable-binning-histogram-content h1))
+        (h2-content
+         (variable-binning-histogram-content h2))
+        (result
+         (copy-hist h1 t)))
+    (loop
+       for indices being the hash-keys in h1-content
+       for count1 being the hash-values in h1-content
+       do (let ((count2 (gethash indices h2-content)))
+            (when count2
+              (hins result indices (protected-div count1 count2
+                                                  :protected-value
+                                                  protected-value)))))
+    result))
