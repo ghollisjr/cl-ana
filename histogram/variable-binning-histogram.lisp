@@ -48,10 +48,11 @@
     :documentation "List of maximum values for each dimension; for
     optimization.")))
 
-(defun make-variable-binning-histogram (names-specs
-                                        &key
-                                          (empty-bin-value 0)
-                                          (default-increment 1))
+(defun make-variable-binning-histogram
+    (names-specs
+     &key
+       (empty-bin-value 0)
+       (default-increment 1))
   "Creates a variable-binning-histogram.  names-specs should be an
 alist mapping from dimension name to the list of bin edges for that
 dimension (i.e. a list of lists with the first elements being the
@@ -77,7 +78,10 @@ dimension names)."
    :empty-bin-value empty-bin-value
    :default-increment default-increment))
 
-(defmethod hist-insert ((hist variable-binning-histogram) datum &optional weight)
+(defmethod hist-insert ((hist variable-binning-histogram)
+                        datum
+                        &optional
+                          weight)
   (with-accessors ((low-edges variable-binning-histogram-dim-specs)
                    (btrees variable-binning-histogram-binary-trees)
                    (content variable-binning-histogram-content)
@@ -107,5 +111,55 @@ dimension names)."
 
 ;; Map->alist
 (defmethod map->alist ((obj variable-binning-histogram))
-  (map->alist
-   (variable-binning-histogram-content obj)))
+  (let* ((edges-list
+          (variable-binning-histogram-dim-specs
+           obj))
+         (bin-widths-list
+          (mapcar (lambda (edges)
+                    (- (rest edges) edges))
+                  edges-list))
+         (edge->width-ht-list
+          (loop
+             for edges in edges-list
+             for bin-widths in bin-widths-list
+             collecting (let ((result (make-hash-table :test 'equal)))
+                          (loop
+                             for edge in edges
+                             for width in bin-widths
+                             do (setf (gethash edge result)
+                                      width))
+                          result)))
+         (content
+          (variable-binning-histogram-content obj)))
+    (loop
+       for point being the hash-keys in content
+       for count being the hash-values in content
+       collecting (cons (loop
+                           for p in point
+                           for edge->width in edge->width-ht-list
+                           collecting (+ p
+                                         (* 0.5
+                                            (gethash p edge->width))))
+                        count))))
+
+;; Copying
+(defmethod copy-hist ((obj variable-binning-histogram)
+                      &optional empty-p)
+  (let ((result (make-variable-binning-histogram
+                 (variable-binning-histogram-dim-specs
+                  obj)
+                 :empty-bin-value
+                 (hist-empty-bin-value obj)
+                 :default-increment
+                 (hist-default-increment obj))))
+    (if empty-p
+        result
+        (let ((ht (variable-binning-histogram-content obj))
+              (result-ht
+               (variable-binning-histogram-content result)))
+          (loop
+             for indices being the hash-keys in ht
+             for count being the hash-values in ht
+             do (setf (gethash indices result-ht)
+                      count))
+          result))))
