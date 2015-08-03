@@ -1,3 +1,11 @@
++ Possibly find iterative approach to transformations.  It would be
+  very useful to allow computation of results before applying
+  transformations so that computed results could change the way the
+  target table is interpreted.  Not sure how practical this is or
+  whether it would be efficient in practice, but this could allow for
+  very interesting computations.  E.g. the branching transformation
+  could branch on calculated results as opposed to compile-time data.
+
 - Fix err-num save-object
 
   Bug caused confusing behavior due to only being present in a large
