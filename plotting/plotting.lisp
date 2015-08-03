@@ -407,11 +407,201 @@ initargs from key-args."
 ;; A three dimensional plot has up to three labelled axes, "x", "y",
 ;; and "z".
 (defclass plot3d (plot)
-  ())
+  ((logaxes
+    :initarg :logaxes
+    :initform nil
+    :accessor plot3d-logaxes
+    :documentation "List of axes which should be in log scale.")
+   (x-range
+    :initarg :x-range
+    :initform (cons "*" "*")
+    :accessor plot3d-x-range
+    :documentation "Sets the x-domain for the plot; a cons where the car
+    is the lower bound and the cdr is the upper bound.")
+   (y-range
+    :initarg :y-range
+    :initform (cons "*" "*")
+    :accessor plot3d-y-range
+    :documentation "Sets the y-domain for the plot; a cons where the
+    car is the lower bound and the cdr is the upper bound.")
+   (z-range
+    :initarg :z-range
+    :initform (cons "*" "*")
+    :accessor plot3d-z-range
+    :documentation "Sets the z-range for the plot; a cons where the
+    car is the lower bound and the cdr is the upper bound.")
+   (cb-range
+    :initarg :cb-range
+    :initform (cons "*" "*")
+    :accessor plot3d-cb-range
+    :documentation "Sets the color box range for the plot; a cons
+    where the car is the lower bound and the cdr is the upper bound.")
+   (x-title
+    :initform nil
+    :initarg :x-title
+    :accessor plot3d-x-title
+    :documentation "Title for first x axis")
+   (x2-title
+    :initform nil
+    :initarg :x2-title
+    :accessor plot3d-x2-title
+    :documentation "Title for second x axis")
+   (y-title
+    :initform nil
+    :initarg :y-title
+    :accessor plot3d-y-title
+    :documentation "Title for first y axis")
+   (y2-title
+    :initform nil
+    :initarg :y2-title
+    :accessor plot3d-y2-title
+    :documentation "Title for second y axis")
+   (z-title
+    :initform nil
+    :initarg :z-title
+    :accessor plot3d-z-title
+    :documentation "Title for first z axis")
+   (z2-title
+    :initform nil
+    :initarg :z2-title
+    :accessor plot3d-z2-title
+    :documentation "Title for second z axis")
+   ;; 3d-specific
+   (pm3d
+    :initform nil
+    :initarg :pm3d
+    :accessor plot3d-pm3d
+    :documentation "pm3d settings string; use pm3d function to
+    generate these strings")))
+
+(defmethod pre-plot-cmd-settings ((p plot3d))
+  (flet ((maybe-make-str (label var &optional noquotes-p)
+           (when var
+             (list
+              (if noquotes-p
+                  (format nil "set ~a ~a~%" label var)
+                  (format nil "set ~a '~a'~%" label var))))))
+    (with-slots (logaxes
+                 x-title x2-title
+                 y-title y2-title
+                 z-title z2-title)
+        p
+      (append
+       (append
+        (list "unset xlabel"
+              "unset x2label"
+              "unset ylabel"
+              "unset y2label"
+              "unset zlabel"
+              "unset z2label"
+              "set nologscale x"
+              "set nologscale y"
+              "set nologscale z")
+        (maybe-make-str "xlabel" x-title)
+        (maybe-make-str "x2label" x2-title)
+        (maybe-make-str "ylabel" y-title)
+        (maybe-make-str "y2label" y2-title)
+        (maybe-make-str "zlabel" z-title)
+        (maybe-make-str "z2label" z2-title))
+       (mapcan (lambda (axis)
+                 (maybe-make-str "logscale"
+                                 (if (equal axis "z")
+                                     "zcb"
+                                     axis)
+                                 t))
+               logaxes)))))
 
 (defmethod plot-cmd ((p plot3d))
-  "splot")
+  (with-slots (x-range y-range z-range cb-range)
+      p
+    (with-output-to-string (s)
+      (if x-range
+          (format s "set xrange [~a:~a]~%"
+                  (car x-range) (cdr x-range))
+          (format s "set xrange [*:*]~%"))
+      (if y-range
+          (format s "set yrange [~a:~a]~%"
+                  (car y-range) (cdr y-range))
+          (format s "set yrange [*:*]~%"))
+      (if z-range
+          (format s "set zrange [~a:~a]~%"
+                  (car z-range)
+                  (cdr z-range))
+          (format s "set zrange [*:*]~%"))
+      (if cb-range
+          (format s "set cbrange [~a:~a]~%"
+                  (car cb-range)
+                  (cdr cb-range))
+          (format s "set cbrange [*:*]~%"))
+      (format s "splot "))))
 
+(defun plot3d (lines &rest key-args)
+  "Returns a plot3d object supplied lines and key-args"
+  (apply #'make-instance 'plot3d :lines
+         key-args))
+
+;; pm3d
+(defun pm3d (&key
+               ;; at should be a string of up to six of the characters
+               ;; b, s, and t.  See gnuplot documentation for usage.
+               at
+               ;; interpolate can be T or a cons (m . n) for
+               ;; interpolation between points.
+               interpolate
+               ;; scan can be :automatic, :forward, :backward or
+               ;; :depthorder
+               (scan :automatic)
+               ;; flush can be :begin, :center or :end
+               (flush :begin)
+               (ftriangles-p t)
+               ;; clip-strict controls clip1in or clip4in setting
+               clip-strict-p
+               ;; corners2color can be :mean, :geomean, :harmean,
+               ;; :rms, :median, :min, :max, :c1, :c2, :c3, :c4
+               (corners2color :mean)
+               ;; hidden 3d can be T or a linestyle option
+               hidden3d
+               (explicit-p t)
+               ;; map option is deprecated and unnecessary, so it's
+               ;; omitted.
+               )
+  (with-output-to-string (s)
+    (format s "pm3d")
+    (when at
+      (format s " at ~a" at))
+    (when interpolate
+      (format s " interpolate")
+      (when (consp interpolate)
+        (format s " ~a,~a"
+                (car interpolate)
+                (cdr interpolate))))
+    (case scan
+      (:automatic (format s " scansautomatic"))
+      (:forward (format s " scansforward"))
+      (:backward (format s " scansbackward"))
+      (:depthorder (format s " depthorder")))
+    (format s " flush ~a"
+            (string-downcase
+             (string flush)))
+    (format s " ~a"
+            (if ftriangles-p
+                "ftriangles"
+                "noftriangles"))
+    (if clip-strict-p
+        (format s " clip4in")
+        (format s " clip1in"))
+    (format s " corners2color ~a"
+            (string-downcase
+             (string corners2color)))
+    (if hidden3d
+        (if (eq hidden3d t)
+            (format s " hidden3d")
+            (format s " hidden3d ~a" hidden3d))
+        (format s " nohidden3d"))
+    (if explicit-p
+        (format s " explicit")
+        (format s " implicit"))))
+    
 ;; Labels
 (defun label (text
               &key
@@ -1250,60 +1440,60 @@ gnuplot to distinguish eps from ps)"
                         blacktext-p)
   "Generates the type string for a png terminal with options"
   (apply #'join-strings
-          (intersperse
-           " "
-           (remove-if-not
-            #'identity
-            (alexandria:flatten
-             (list "epslatex"
-                   (if standalone-p
-                       "standalone"
-                       "input")
-                   (if oldstyle-p
-                       "oldstyle"
-                       "newstyle")
-                   (if level1-p
-                       "level1"
-                       "leveldefault")
-                   (if color-p
-                       "color"
-                       "monochrome")
-                   (when size
-                     (list "size" (car size) "," (cdr size)))
-                   (when font-face
-                     (with-output-to-string (s)
-                       (format s "font \"~a" font-face)
-                       (if font-size
-                           (format s ",~a\"" font-size)
-                           (format s "\""))))
-                   (when line-width
-                     (list "linewidth" line-width))
-                   (if (not dashed-supplied-p)
-                       (if color-p
-                           "solid"
-                           "dashed")
-                       (if dashed-p
-                           "dashed"
-                           "solid"))
-                   (when dashed-p
-                     (when dash-length
-                       (list "dl" dash-length)))
-                   (when (not rounded)
-                     "butt")
-                   (when palfuncparam-samples
-                     (if palfuncparam-maxdeviation
-                         (format nil
-                                 "palfuncparam ~a,~a"
-                                 palfuncparam-samples
-                                 palfuncparam-maxdeviation)
-                         (format nil
-                                 "palfuncparam ~a"
-                                 palfuncparam-samples)))
-                   (when header-supplied-p
-                     (if header
-                         (format nil "header ~s"
-                                 header)
-                         (format nil "noheader")))
-                   (if blacktext-p
-                       "blacktext"
-                       "colortext")))))))
+         (intersperse
+          " "
+          (remove-if-not
+           #'identity
+           (alexandria:flatten
+            (list "epslatex"
+                  (if standalone-p
+                      "standalone"
+                      "input")
+                  (if oldstyle-p
+                      "oldstyle"
+                      "newstyle")
+                  (if level1-p
+                      "level1"
+                      "leveldefault")
+                  (if color-p
+                      "color"
+                      "monochrome")
+                  (when size
+                    (list "size" (car size) "," (cdr size)))
+                  (when font-face
+                    (with-output-to-string (s)
+                      (format s "font \"~a" font-face)
+                      (if font-size
+                          (format s ",~a\"" font-size)
+                          (format s "\""))))
+                  (when line-width
+                    (list "linewidth" line-width))
+                  (if (not dashed-supplied-p)
+                      (if color-p
+                          "solid"
+                          "dashed")
+                      (if dashed-p
+                          "dashed"
+                          "solid"))
+                  (when dashed-p
+                    (when dash-length
+                      (list "dl" dash-length)))
+                  (when (not rounded)
+                    "butt")
+                  (when palfuncparam-samples
+                    (if palfuncparam-maxdeviation
+                        (format nil
+                                "palfuncparam ~a,~a"
+                                palfuncparam-samples
+                                palfuncparam-maxdeviation)
+                        (format nil
+                                "palfuncparam ~a"
+                                palfuncparam-samples)))
+                  (when header-supplied-p
+                    (if header
+                        (format nil "header ~s"
+                                header)
+                        (format nil "noheader")))
+                  (if blacktext-p
+                      "blacktext"
+                      "colortext")))))))

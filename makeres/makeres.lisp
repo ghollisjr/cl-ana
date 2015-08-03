@@ -1000,12 +1000,13 @@ list args"
     (loop
        for logged-id in logged-id-strings
        for logged-path in logged-paths
-       do (when (not (gethash logged-id (target-table)))
+       do (when (or (not (gethash logged-id (target-table)))
+                    (ignored? logged-id))
             (if delete-p
                 (progn
                   (format t "Deleting ~a...~%"
                           logged-id)
                   (sb-ext:delete-directory logged-path
                                            :recursive t))
-                (format t "~a not in target table~%"
+                (format t "~a not tracked~%"
                         logged-id))))))

@@ -67,6 +67,8 @@
            :plot-add-line
            :plot2d-x-range
            :plot2d-y-range
+           ;; 3d plot functions
+           :pm3d
            ;; line functions
            :line-style
            :line-line-style
