@@ -412,6 +412,12 @@ initargs from key-args."
     :initform nil
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
+   (view
+       :initarg :view
+       :initform nil
+       :accessor plot3d-view
+       :documentation "Sets the view for the 3-d plot.  Set to :map or
+       \"map\" for contour plots.")
    (x-range
     :initarg :x-range
     :initform (cons "*" "*")
@@ -441,32 +447,22 @@ initargs from key-args."
     :initarg :x-title
     :accessor plot3d-x-title
     :documentation "Title for first x axis")
-   (x2-title
-    :initform nil
-    :initarg :x2-title
-    :accessor plot3d-x2-title
-    :documentation "Title for second x axis")
    (y-title
     :initform nil
     :initarg :y-title
     :accessor plot3d-y-title
     :documentation "Title for first y axis")
-   (y2-title
-    :initform nil
-    :initarg :y2-title
-    :accessor plot3d-y2-title
-    :documentation "Title for second y axis")
    (z-title
     :initform nil
     :initarg :z-title
     :accessor plot3d-z-title
     :documentation "Title for first z axis")
-   (z2-title
-    :initform nil
-    :initarg :z2-title
-    :accessor plot3d-z2-title
-    :documentation "Title for second z axis")
    ;; 3d-specific
+   (colorbox-p
+    :initform nil
+    :initarg :colorbox-p
+    :accessor plot3d-colorbox-p
+    :documentation "Boolean controlling whether colorbox is used")
    (pm3d
     :initform nil
     :initarg :pm3d
@@ -488,31 +484,24 @@ initargs from key-args."
         p
       (append
        (append
-        (list "unset xlabel"
-              "unset x2label"
+        (list "unset view"
+              "unset colorbox"
+              "unset xlabel"
               "unset ylabel"
-              "unset y2label"
               "unset zlabel"
-              "unset z2label"
               "set nologscale x"
               "set nologscale y"
               "set nologscale z")
         (maybe-make-str "xlabel" x-title)
-        (maybe-make-str "x2label" x2-title)
         (maybe-make-str "ylabel" y-title)
-        (maybe-make-str "y2label" y2-title)
         (maybe-make-str "zlabel" z-title)
-        (maybe-make-str "z2label" z2-title))
-       (mapcan (lambda (axis)
-                 (maybe-make-str "logscale"
-                                 (if (equal axis "z")
-                                     "zcb"
-                                     axis)
-                                 t))
-               logaxes)))))
+        (mapcan (lambda (axis)
+                  (maybe-make-str "logscale"
+                                  axis))
+                logaxes))))))
 
 (defmethod plot-cmd ((p plot3d))
-  (with-slots (x-range y-range z-range cb-range)
+  (with-slots (x-range y-range z-range cb-range colorbox-p pm3d view)
       p
     (with-output-to-string (s)
       (if x-range
@@ -533,11 +522,22 @@ initargs from key-args."
                   (car cb-range)
                   (cdr cb-range))
           (format s "set cbrange [*:*]~%"))
+      (when view
+        (if (or (and (symbolp view)
+                     (eq view :map))
+                (and (stringp view)
+                     (string= view "map")))
+            (format s "set view map~%")
+            (format s "set view ~a~%" view)))
+      (when pm3d
+        (format s "set ~a~%" pm3d))
+      (when colorbox-p
+        (format s "set colorbox~%"))
       (format s "splot "))))
 
 (defun plot3d (lines &rest key-args)
   "Returns a plot3d object supplied lines and key-args"
-  (apply #'make-instance 'plot3d :lines
+  (apply #'make-instance 'plot3d :lines lines
          key-args))
 
 ;; pm3d
@@ -601,7 +601,7 @@ initargs from key-args."
     (if explicit-p
         (format s " explicit")
         (format s " implicit"))))
-    
+
 ;; Labels
 (defun label (text
               &key
@@ -782,7 +782,15 @@ initargs from key-args."
     :accessor data-line-data
     :documentation "The individual data points to be plotted; can be
     2-D or 3-D, in either case the line-data is an alist mapping the
-    independent value (or values as a list) to the dependent value.")))
+    independent value (or values as a list) to the dependent value.")
+   (pm3d-ncols
+    :initarg :pm3d-ncols
+    :initform nil
+    :accessor data-line-pm3d-ncols
+    :documentation "Controls whether the data should be formatted
+    according to pm3d formatting or standard formatting.  If NIL,
+    standard formatting is used.  If a numerical value, controls the
+    number of columns in the data.")))
 
 (defmethod initialize-instance :after ((l data-line) &key)
   (with-slots (data plot-arg style)
@@ -802,18 +810,29 @@ initargs from key-args."
 
 (defmethod line-data-cmd ((line data-line))
   (with-output-to-string (s)
-    (with-accessors ((data data-line-data))
+    (with-accessors ((data data-line-data)
+                     (pm3d-ncols data-line-pm3d-ncols))
         line
       (let ((extractor
              (if data
-                 (if (listp (car (first data)))
-                     (lambda (cons)
-                       (format s "~{~a ~}" (car cons))
-                       (format s "~a~%" (cdr cons)))
-                     (lambda (cons)
-                       (format s "~a ~a~%"
-                               (car cons)
-                               (cdr cons))))
+                 (if pm3d-ncols
+                     (let ((ncols pm3d-ncols)
+                           (index 0))
+                       (lambda (cons)
+                         (format s "~{~a ~}" (car cons))
+                         (format s "~a~%" (cdr cons))
+                         (incf index)
+                         (when (= index ncols)
+                           (format s "~%")
+                           (setf index 0))))
+                     (if (listp (car (first data)))
+                         (lambda (cons)
+                           (format s "~{~a ~}" (car cons))
+                           (format s "~a~%" (cdr cons)))
+                         (lambda (cons)
+                           (format s "~a ~a~%"
+                                   (car cons)
+                                   (cdr cons)))))
                  (error "Empty data in data-line"))))
         (loop
            for d in data
@@ -1014,6 +1033,7 @@ denoting the page initargs."
                  &key
                    (title "data")
                    (style "points")
+                   pm3d-ncols
                    point-type
                    point-size
                    line-type
@@ -1026,6 +1046,7 @@ denoting the page initargs."
            :title title
            :data data-alist
            :style style
+           :pm3d-ncols pm3d-ncols
            :point-type point-type
            :point-size point-size
            :line-type line-type
@@ -1186,30 +1207,59 @@ of up to two double-float arguments."
                   other-keys)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
 
+;; Variable binning histograms
 ;; (defmethod line ((hist variable-binning-histogram)
 ;;                  &key
-;;                    sampling
 ;;                    (title "")
 ;;                    (style nil style-supplied-p)
-;;                    fill-style
-;;                    fill-density
 ;;                    color
 ;;                    &allow-other-keys)
-;;   (when (not sampling)
-;;     (error "Must supply sampling information for variable-binning-histogram"))
-;;   (case (hist-ndims hist)
-;;     (1
-;;      (let ((centers
-;;             (mapcar (lambda (dim-spec)
-;;                       (let ((result nil))
-;;                         (do* ((ds dim-spec (rest ds))
-;;                               (c (/ (+ (first ds) (second ds))
-;;                                     2)
-;;                                  (/ (+ (first ds) (second ds))
-;;                                     2)))
-;;                              ((null (cdr dim-spec)) (nreverse result))
-;;                           (push c result))))
-;;                     dim-specs))
+;;   (let* ((ndims (hist-ndims hist))
+;;          (bin-data
+;;           (mapcar (lambda (datum-cons)
+;;                     (let ((bin-center (car datum-cons))
+;;                           (bin-value (cdr datum-cons)))
+;;                       (cons (if (listp bin-center)
+;;                                 (mapcar (alexandria:rcurry #'float 0d0)
+;;                                         bin-center)
+;;                                 (float bin-center 0d0))
+;;                             (float bin-value 0d0))))
+;;                   (map->alist hist)))
+;;          (first-independent (car (first bin-data))))
+;;     (case ndims
+;;       (1
+;;        (if (not (atom first-independent))
+;;            (error "Must be 1-d independent variable")
+;;            (let ((first-dependent (cdr (first bin-data))))
+;;              (apply #'make-instance 'data-line
+;;                     :title title
+;;                     :data bin-data
+;;                     :fill-style fill-style
+;;                     :fill-density fill-density
+;;                     :style
+;;                     (if style-supplied-p
+;;                         style
+;;                         (if (subtypep (type-of first-dependent)
+;;                                       'err-num)
+;;                             "boxerrorbars"
+;;                             "boxes"))
+;;                     :color color
+;;                     :allow-other-keys t
+;;                     other-keys))))
+;;       (2
+;;        (if (or (not (consp first-independent))
+;;                (not (length-equal first-independent 2)))
+;;            (error "Must be 2-d independent variable")
+;;            (apply #'make-instance 'data-line
+;;                   :title title
+;;                   :data bin-data
+;;                   :style (if style-supplied-p
+;;                              style
+;;                              "image")
+;;                   :color color
+;;                   :allow-other-keys t
+;;                   other-keys)))
+;;       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
 
 ;;; Terminal type functions:
 

@@ -1,3 +1,7 @@
++ pre-plot-cmd-settings should be deprecated and its functionality
+  merged into plot-cmd.  As it stands, plotting settings are divided
+  into these two functions unnecessarily.
+
 + Add new functions to package.lisp, many new functions but I haven't
   added them to the package
 
@@ -7,3 +11,5 @@
   need to add 3d plotting functionality and functions to convert 2d
   lines into 3d lines for easily superimposing other lines on a 2d
   histogram using pm3d.
+
+  pm3d support added, need line method for variable-binning-histogram

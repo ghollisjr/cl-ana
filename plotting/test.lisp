@@ -119,3 +119,21 @@
              :color "red"))
  :plot-args '(:x-title "x"
               :y-title "N"))
+
+(defun pm3d-test ()
+  (draw
+   (page (list
+          (plot3d (list
+                   (line (sample-function (lambda (xs)
+                                            (sin (sum xs)))
+                                          (list 0 0)
+                                          (list pi pi)
+                                          (list 100 100))
+                         :style "pm3d"
+                         :pm3d-ncols 100))
+                  :colorbox-p t
+                  :pm3d (pm3d :interpolate (cons 0 0))
+                  :view :map
+                  :x-range (cons 0 pi)
+                  :y-range (cons 0 pi)
+                  :legend (legend :front-p t))))))
