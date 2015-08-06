@@ -87,6 +87,7 @@
            :dds
 
            ;; Variable binning histograms:
+           :variable-binning-histogram
            :make-variable-binning-histogram
            :make-vhist))
 

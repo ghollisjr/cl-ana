@@ -413,10 +413,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-       :initarg :view
-       :initform nil
-       :accessor plot3d-view
-       :documentation "Sets the view for the 3-d plot.  Set to :map or
+    :initarg :view
+    :initform nil
+    :accessor plot3d-view
+    :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -1207,59 +1207,47 @@ of up to two double-float arguments."
                   other-keys)))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
 
-;; Variable binning histograms
-;; (defmethod line ((hist variable-binning-histogram)
-;;                  &key
-;;                    (title "")
-;;                    (style nil style-supplied-p)
-;;                    color
-;;                    &allow-other-keys)
-;;   (let* ((ndims (hist-ndims hist))
-;;          (bin-data
-;;           (mapcar (lambda (datum-cons)
-;;                     (let ((bin-center (car datum-cons))
-;;                           (bin-value (cdr datum-cons)))
-;;                       (cons (if (listp bin-center)
-;;                                 (mapcar (alexandria:rcurry #'float 0d0)
-;;                                         bin-center)
-;;                                 (float bin-center 0d0))
-;;                             (float bin-value 0d0))))
-;;                   (map->alist hist)))
-;;          (first-independent (car (first bin-data))))
-;;     (case ndims
-;;       (1
-;;        (if (not (atom first-independent))
-;;            (error "Must be 1-d independent variable")
-;;            (let ((first-dependent (cdr (first bin-data))))
-;;              (apply #'make-instance 'data-line
-;;                     :title title
-;;                     :data bin-data
-;;                     :fill-style fill-style
-;;                     :fill-density fill-density
-;;                     :style
-;;                     (if style-supplied-p
-;;                         style
-;;                         (if (subtypep (type-of first-dependent)
-;;                                       'err-num)
-;;                             "boxerrorbars"
-;;                             "boxes"))
-;;                     :color color
-;;                     :allow-other-keys t
-;;                     other-keys))))
-;;       (2
-;;        (if (or (not (consp first-independent))
-;;                (not (length-equal first-independent 2)))
-;;            (error "Must be 2-d independent variable")
-;;            (apply #'make-instance 'data-line
-;;                   :title title
-;;                   :data bin-data
-;;                   :style (if style-supplied-p
-;;                              style
-;;                              "image")
-;;                   :color color
-;;                   :allow-other-keys t
-;;                   other-keys)))
-;;       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
+;;; Variable binning histograms
+;; special use function for generating pm3d data from
+;; variable-binning-histograms
+(defun vhist->pm3d (vhist)
+  (let* ((data (cl-ana.histogram::variable-binning-histogram-content
+                vhist))
+         (dim-specs
+          (cl-ana.histogram::variable-binning-histogram-dim-specs
+           vhist))
+         (empty-value
+          (hist-empty-bin-value vhist))
+         (sample-points
+          (apply #'cartesian-product
+                 dim-specs)))
+    (flet ((href (p)
+             (cons p
+                   (aif (gethash p data)
+                        it
+                        empty-value))))
+      (mapcar #'href sample-points))))
+
+(defmethod line ((hist variable-binning-histogram)
+                 &rest key-args)
+  (cond
+    ;; 1-D
+    ((= (length (hdn hist)) 1)
+     (apply #'line (map->alist hist) key-args))
+    ;; 2-D
+    ((= (length (hdn hist)) 2)
+     (apply #'line
+            (vhist->pm3d hist)
+            :style "pm3d"
+            :pm3d-ncols
+            (length
+             (first
+              (cl-ana.histogram::variable-binning-histogram-dim-specs
+               hist)))
+            key-args))
+    ;; error
+    (t (error "Only 1-D or 2-D histograms can be plotted"))))
+      
 
 ;;; Terminal type functions:
 

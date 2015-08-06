@@ -137,3 +137,49 @@
                   :x-range (cons 0 pi)
                   :y-range (cons 0 pi)
                   :legend (legend :front-p t))))))
+
+(defun vhist-1d-test ()
+  (let ((hist (make-vhist '(("x" -0.5d0 0d0 1d0 1.5d0 2d0)))))
+    (loop
+       for i below 1000
+       do
+         (hins hist (list (alexandria:gaussian-random -3d0 3d0))))
+    (draw
+     (page (list
+            (plot2d (list
+                     (line hist
+                           :style "points"
+                           :point-size 2))))))))
+
+(defun vhist-2d-test ()
+  (let ((hist (make-vhist '(("x" -0.5d0 0d0 1d0 1.5d0 2d0)
+                            ("y" -0.5d0 0d0 0.5d0 1d0 1.5d0 2d0)))))
+    (loop
+       for i below 1000
+       do
+         (hins hist (list (alexandria:gaussian-random -3d0 3d0)
+                          (alexandria:gaussian-random -3d0 3d0))))
+    (draw
+     (page (list
+            (plot3d (list
+                     (line hist
+                           :style "points"
+                           :point-size 2))))))))
+
+(defun vhist-pm3d-test ()
+  (let ((hist (make-vhist '(("x" -0.5d0 0d0 1d0 1.5d0 2d0)
+                            ("y" -0.5d0 0d0 0.5d0 1d0 1.5d0 2d0)
+                            ))))
+    (loop
+       for i below 1000
+       do
+         (hins hist (list (alexandria:gaussian-random -3d0 3d0)
+                          (alexandria:gaussian-random -3d0 3d0))))
+    (draw
+     (page (list
+            (plot3d (list
+                     (line hist))
+                    :pm3d (pm3d :interpolate (cons 1 1)
+                                :corners2color :c1)
+                    :colorbox-p t
+                    :view :map))))))
