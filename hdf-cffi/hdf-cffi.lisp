@@ -22,6 +22,8 @@
 (in-package :cl-ana.hdf-cffi)
 
 (define-foreign-library hdf5
+  (:unix (:or "/usr/lib/i386-linux-gnu/hdf5/serial/libhdf5.so"
+              "/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so"))
   (t (:default "libhdf5")))
 
 (use-foreign-library hdf5)
