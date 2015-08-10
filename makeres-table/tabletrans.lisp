@@ -294,6 +294,58 @@ non-ignored sources."
         (not (member y (gethash x depmap)
                      :test #'equal))))))
 
+;; ;; debug testing:
+;; (defun removed-source-dep< (target-table)
+;;   (let ((depmap (make-hash-table :test 'equal)))
+;;     (labels ((rec (id)
+;;                ;; returns full list of dependencies for id, ignoring
+;;                ;; t-stat targets (otherwise we neglect possible
+;;                ;; optimizations)
+;;                (let ((deps
+;;                       (remove-if
+;;                        (lambda (d)
+;;                          (target-stat (gethash d target-table)))
+;;                        (copy-list (target-deps (gethash id target-table))))))
+;;                  (when deps
+;;                    (reduce (lambda (ds d)
+;;                              (adjoin d ds :test #'equal))
+;;                            (mapcan #'rec
+;;                                    (append
+;;                                     ;; immediate dependencies
+;;                                     deps
+;;                                     ;; dependencies from source
+;;                                     (let ((expr
+;;                                            (target-expr (gethash id target-table))))
+;;                                       (when (table-reduction? expr)
+;;                                         (target-deps
+;;                                          (gethash
+;;                                           (unres
+;;                                            (table-reduction-source expr))
+;;                                           target-table))))))
+;;                            :initial-value
+;;                            (let ((expr
+;;                                   (target-expr (gethash id target-table))))
+;;                              (if (table-reduction? expr)
+;;                                  (append
+;;                                   (destructuring-bind (progn tab-form) expr
+;;                                    (cl-ana.makeres::find-dependencies
+;;                                     (cddr tab-form)
+;;                                     'res))
+;;                                   (target-deps
+;;                                    (gethash
+;;                                     (unres
+;;                                      (table-reduction-source expr))
+;;                                     target-table)))
+;;                                  deps)))))))
+;;       (loop
+;;          for id being the hash-keys in target-table
+;;          do (setf (gethash id depmap)
+;;                   (rec id)))
+;;       (values (lambda (x y)
+;;                 (not (member y (gethash x depmap)
+;;                              :test #'equal)))
+;;               depmap))))
+
 (defun removed-ltab-source-dep< (target-table)
   (let ((depmap (make-hash-table :test 'equal)))
     (labels ((rec (id)
@@ -324,6 +376,38 @@ non-ignored sources."
       (lambda (x y)
         (not (member y (gethash x depmap)
                      :test #'equal))))))
+
+;; ;; debug testing
+;; (defun removed-ltab-source-dep< (target-table)
+;;   (let ((depmap (make-hash-table :test 'equal)))
+;;     (labels ((rec (id)
+;;                ;; returns full list of dependencies for id, ignoring
+;;                ;; t-stat dependencies (otherwise we neglect possible
+;;                ;; optimizations).
+;;                (let ((deps
+;;                       (remove-if
+;;                        (lambda (d)
+;;                          (target-stat (gethash d target-table)))
+;;                        (copy-list (target-deps (gethash id target-table))))))
+;;                  (when deps
+;;                    (reduce (lambda (ds d)
+;;                              (adjoin d ds :test #'equal))
+;;                            (mapcan #'rec deps)
+;;                            :initial-value
+;;                            (let ((expr
+;;                                   (target-expr (gethash id target-table))))
+;;                              (if (ltab? expr)
+;;                                  (destructuring-bind (progn tab-form) expr
+;;                                    (cl-ana.makeres::find-dependencies (cddr tab-form)
+;;                                                                       'res))
+;;                                  deps)))))))
+;;       (loop
+;;          for id being the hash-keys in target-table
+;;          do (setf (gethash id depmap)
+;;                   (rec id)))
+;;       (lambda (x y)
+;;         (not (member y (gethash x depmap)
+;;                      :test #'equal))))))
 
 ;;; Table pass expression components
 
