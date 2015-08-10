@@ -626,6 +626,7 @@ from pass up to src."
                                       collect `(,s ,(gethash s initsym->gsym)))
                                 ,@initexpr)))
                       (push initsym processed-initsym-bindings)))))
+
       ;; Make body via recursing through context tree
 
       ;; * Make sure to make use of gsymed inits via symbol-macrolets in
@@ -847,10 +848,16 @@ from pass up to src."
                            (let ((result
                                   (replace-push-fields
                                    `(progn
-                                      ,@(table-reduction-body
-                                         (if (tab? expr)
-                                             (gethash c tab-expanded-expr)
-                                             expr)))
+                                      (symbol-macrolet
+                                          ,(awhen (gethash c reduction->initsym->gsym)
+                                                  (loop
+                                                     for s being the hash-keys in it
+                                                     for gsym being the hash-values in it
+                                                     collecting (list s gsym)))
+                                        ,@(table-reduction-body
+                                           (if (tab? expr)
+                                               (gethash c tab-expanded-expr)
+                                               expr))))
                                    sub-bodies)))
                              result)
                            (first sub-bodies)))))
