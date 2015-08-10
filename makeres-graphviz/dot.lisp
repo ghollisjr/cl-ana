@@ -21,7 +21,9 @@
 
 (in-package :cl-ana.makeres-graphviz)
 
-(defun dot-compile (path &key (if-exists :error))
+(defun dot-compile (path &key
+                           (if-exists :error)
+                           (target-table (target-table)))
   "Writes target graph into a file located at path.  Returns path of
 dot output file."
   (let ((*print-pretty* nil))
@@ -31,8 +33,8 @@ dot output file."
       (format file "digraph \"~a\" {~%"
               (project))
       (loop
-         for id being the hash-keys in (target-table)
-         for tar being the hash-values in (target-table)
+         for id being the hash-keys in target-table
+         for tar being the hash-values in target-table
          do (let ((deps (target-deps tar)))
               (loop
                  for d in deps
