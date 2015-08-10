@@ -1,10 +1,17 @@
-+ Found bug in makeres-table: Reproducible in my private 6barana code,
++ Using err-nums in CSV tables is broken since err-nums are not
+  actually readable as written.  Either need to go back to the
+  reader-macro #e or find a way to make +- readable.
+
+- Found bug in makeres-table: Reproducible in my private 6barana code,
   trying to find a minimal example for public.  When running project
   from scratch, no problems, but when loading a saved project and
   re-running, dep< when called on the final target table finds a loop
   in the graph.  It seems to be coming from a bug in table pass
   merging, as I checked the circular dependency in the final graph
   visually via dot-compile and dot->png.
+
+  Resolved via patching removed-*-dep< functions in
+  cl-ana.makeres-table
 
 + Possibly find iterative approach to transformations.  It would be
   very useful to allow computation of results before applying
