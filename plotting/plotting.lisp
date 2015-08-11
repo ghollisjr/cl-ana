@@ -334,21 +334,41 @@ layout specified in the page.")
     :initarg :x-title
     :accessor plot2d-x-title
     :documentation "Title for bottom x axis")
+   (x-title-offset
+    :initform nil
+    :initarg :x-title-offset
+    :accessor plot2d-x-title-offset
+    :documentation "Cons denoting offset for x-axis label")
    (x2-title
     :initform nil
     :initarg :x2-title
     :accessor plot2d-x2-title
     :documentation "Title for top x axis")
+   (x2-title-offset
+    :initform nil
+    :initarg :x2-title-offset
+    :accessor plot2d-x2-title-offset
+    :documentation "Cons denoting offset for x2-axis label")
    (y-title
     :initform nil
     :initarg :y-title
     :accessor plot2d-y-title
     :documentation "Title for left y axis")
+   (y-title-offset
+    :initform nil
+    :initarg :y-title-offset
+    :accessor plot2d-y-title-offset
+    :documentation "Cons denoting offset for y-axis label")
    (y2-title
     :initform nil
     :initarg :y2-title
     :accessor plot2d-y2-title
-    :documentation "Title for right y axis")))
+    :documentation "Title for right y axis")
+   (y2-title-offset
+    :initform nil
+    :initarg :y2-title-offset
+    :accessor plot2d-y2-title-offset
+    :documentation "Cons denoting offset for y2-axis label")))
 
 (defun plot2d (lines &rest key-args)
   "Creates a plot2d object with lines from lines argument and other
@@ -362,7 +382,11 @@ initargs from key-args."
               (if noquotes-p
                   (format nil "set ~a ~a~%" label var)
                   (format nil "set ~a '~a'~%" label var))))))
-    (with-slots (logaxes x-title x2-title y-title y2-title)
+    (with-slots (logaxes
+                 x-title x-title-offset
+                 x2-title x2-title-offset
+                 y-title y-title-offset
+                 y2-title y2-title-offset)
         p
       (append
        (append
@@ -373,10 +397,46 @@ initargs from key-args."
               "set nologscale x"
               "set nologscale y"
               "set nologscale zcb")
-        (maybe-make-str "xlabel" x-title)
-        (maybe-make-str "x2label" x2-title)
-        (maybe-make-str "ylabel" y-title)
-        (maybe-make-str "y2label" y2-title))
+        ;; x
+        (when x-title
+          (list (string-append
+                 (format nil "set xlabel '~a'"
+                         x-title)
+                 (if x-title-offset
+                     (format nil " offset ~a,~a"
+                             (car x-title-offset)
+                             (cdr x-title-offset)))
+                 (format nil "~%"))))
+        ;; x2
+        (when x2-title
+          (list (string-append
+                 (format nil "set x2label '~a'"
+                         x2-title)
+                 (if x2-title-offset
+                     (format nil " offset ~a,~a"
+                             (car x2-title-offset)
+                             (cdr x2-title-offset)))
+                 (format nil "~%"))))
+        ;; y
+        (when y-title
+          (list (string-append
+                 (format nil "set ylabel '~a'"
+                         y-title)
+                 (if y-title-offset
+                     (format nil " offset ~a,~a"
+                             (car y-title-offset)
+                             (cdr y-title-offset)))
+                 (format nil "~%"))))
+        ;; y2
+        (when y2-title
+          (list (string-append
+                 (format nil "set y2label '~a'"
+                         y2-title)
+                 (if y2-title-offset
+                     (format nil " offset ~a,~a"
+                             (car y2-title-offset)
+                             (cdr y2-title-offset)))
+                 (format nil "~%")))))
        (mapcan (lambda (axis)
                  (maybe-make-str "logscale"
                                  (if (equal axis "z")
