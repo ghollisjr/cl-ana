@@ -253,3 +253,7 @@ none are present."
                                :val oldval
                                :stat oldstat))))
     result))
+
+(deftransdeps #'macrotrans
+    (lambda (graph)
+      (macrotrans graph)))

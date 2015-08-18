@@ -1,4 +1,8 @@
-+ Dependencies propogated through lfields are not handled properly.
+- Possibly define added dependency function for macrotrans as done for
+  tabletrans since macros should be expanded to check for
+  dependencies.
+
+- Dependencies propogated through lfields are not handled properly.
   If a table reduction makes use of an lfield which depends on a
   result target, then updating the target does not propogate through
   the reductions using those lfields.

@@ -1210,3 +1210,44 @@ true when given the key and value from ht."
       (trans))
     ;; unmodified results are already present, so return result-graph
     result-graph))
+
+(deftransdeps #'tabletrans
+    (lambda (graph)
+      (loop
+         for id being the hash-keys in graph
+         for tar being the hash-values in graph
+         when (table-reduction? (target-expr tar))
+         do (let* ((expr (target-expr tar))
+                   (src (unres (table-reduction-source expr)))
+                   (lfields
+                    (gethash src
+                             (gethash (project)
+                                      *proj->tab->lfields*)))
+                   (lfield-map
+                    (let ((result (make-hash-table :test 'eq)))
+                      (loop
+                         for lfield in lfields
+                         do (setf (gethash (first lfield) result)
+                                  `(progn ,@(rest lfield))))
+                      result))
+                   (lfield-deps
+                    (remove-if-not (lambda (field)
+                                     (gethash field lfield-map))
+                                   (cl-ana.makeres::find-dependencies
+                                    expr
+                                    'field)))
+                   (lfield-dep-merged-expr
+                    `(progn ,@(loop
+                                 for ld in lfield-deps
+                                 collecting (gethash ld lfield-map))))
+                   (lfield-res-deps
+                    (cl-ana.makeres::find-dependencies
+                     lfield-dep-merged-expr
+                     'res)))
+              (symbol-macrolet ((deps
+                                 (target-deps tar)))
+                (setf deps
+                      (list->set (append deps
+                                         lfield-res-deps)
+                                 #'equal)))))
+      graph))

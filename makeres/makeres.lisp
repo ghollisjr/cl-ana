@@ -265,7 +265,7 @@ target-table."
   "Evaluates each function in fns given input either from the
   initial input or from the output of the previous function in the
   list fns"
-  (let ((val (alexandria:copy-hash-table input)))
+  (let ((val (copy-target-table input)))
     (dolist (f fns)
       (setf val (funcall f val)))
     val))
@@ -520,6 +520,26 @@ is."
 
 (defun parfn (id)
   (values (gethash id (gethash *project-id* *makeres-args*))))
+
+;;;; Additional transformation-induced dependencies
+
+(defparameter *trans->added-deps-fn*
+  (make-hash-table :test 'eq))
+
+(defmacro deftransdeps (trans fn)
+  "Assigns function for finding additional transformation-induced
+dependencies for a given target in a graph.  Transformation-induced
+means any dependencies not found by searching the target expression
+directly for (res ...) forms.
+
+trans should be a graph transformation function.
+
+fn should be a function accepting one argument, a target graph, and
+returning a modified graph with each target having sufficiently many
+additional dependencies induced by the transformation to allow
+propogration via makeres-propogate!."
+  `(setf (gethash ,trans *trans->added-deps-fn*)
+         ,fn))
 
 ;; Project creation macro
 ;;
@@ -805,17 +825,27 @@ is given."
              (suppress-output
                (compile (compres-fname project-id) comp-form))))))))
 
+(defun added-dep-graph (graph)
+  (let* ((trans-list
+          (gethash (project)
+                   *transformation-table*))
+         (added-fns
+          (remove nil
+                  (mapcar (lambda (x)
+                            (gethash x *trans->added-deps-fn*))
+                          trans-list))))
+    (pipe-functions added-fns graph)))
+
 (defun makeres-propogate! ()
-  (loop
-     for id being the hash-keys in (gethash *project-id*
-                                            *target-tables*)
-     for tar being the hash-values in (gethash *project-id*
-                                               *target-tables*)
-     do (when (null (target-stat tar))
-          (loop
-             for r in (res-dependents id (gethash *project-id*
-                                                  *target-tables*))
-             do (unsetresfn r)))))
+  (let ((graph
+         (added-dep-graph (target-table))))
+    (loop
+       for id being the hash-keys in graph
+       for tar being the hash-values in graph
+       do (when (null (target-stat tar))
+            (loop
+               for r in (res-dependents id graph)
+               do (unsetresfn r))))))
 
 (defvar *sticky-pars*
   t
