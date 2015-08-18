@@ -1229,25 +1229,42 @@ true when given the key and value from ht."
                          for lfield in lfields
                          do (setf (gethash (first lfield) result)
                                   `(progn ,@(rest lfield))))
-                      result))
-                   (lfield-deps
-                    (remove-if-not (lambda (field)
-                                     (gethash field lfield-map))
-                                   (cl-ana.makeres::find-dependencies
-                                    expr
-                                    'field)))
-                   (lfield-dep-merged-expr
-                    `(progn ,@(loop
-                                 for ld in lfield-deps
-                                 collecting (gethash ld lfield-map))))
-                   (lfield-res-deps
-                    (cl-ana.makeres::find-dependencies
-                     lfield-dep-merged-expr
-                     'res)))
-              (symbol-macrolet ((deps
-                                 (target-deps tar)))
-                (setf deps
-                      (list->set (append deps
-                                         lfield-res-deps)
-                                 #'equal)))))
+                      result)))
+              (labels ((rec (lfield)
+                         ;; finds all lfields referred to by lfield
+                         ;; expression including the lfield itself
+                         (let* ((expr (gethash lfield lfield-map))
+                                (referred
+                                 (remove-if-not (lambda (field)
+                                                  (gethash field lfield-map))
+                                                (cl-ana.makeres::find-dependencies
+                                                 expr
+                                                 'field))))
+                           (when referred
+                             (append referred
+                                     (mapcan #'rec referred))))))
+                (let* ((lfield-deps
+                        (list->set
+                         (mapcan
+                          #'rec
+                          (remove-if-not (lambda (field)
+                                           (gethash field lfield-map))
+                                         (cl-ana.makeres::find-dependencies
+                                          expr
+                                          'field)))
+                         #'eq))
+                       (lfield-dep-merged-expr
+                        `(progn ,@(loop
+                                     for ld in lfield-deps
+                                     collecting (gethash ld lfield-map))))
+                       (lfield-res-deps
+                        (cl-ana.makeres::find-dependencies
+                         lfield-dep-merged-expr
+                         'res)))
+                  (symbol-macrolet ((deps
+                                     (target-deps tar)))
+                    (setf deps
+                          (list->set (append deps
+                                             lfield-res-deps)
+                                     #'equal)))))))
       graph))
