@@ -39,8 +39,13 @@
   #-(or sbcl)
   nil)
 
+(defmethod printable ((obj cons))
+  (or (null obj)
+      (and (printable (car obj))
+           (printable (cdr obj)))))
+
 (defmethod save-object ((cell cons) path)
-  (if (printable-cons cell)
+  (if (printable cell)
       (with-open-file (file path
                             :direction :output
                             :if-does-not-exist :create

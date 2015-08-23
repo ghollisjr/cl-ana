@@ -21,10 +21,8 @@
 
 (in-package :cl-ana.makeres)
 
-;; For now, hash-tables are converted into alists, but in the future
-;; it would be nice if all container objects would use their storage
-;; file as an index, allowing e.g. lists of histograms to be stored
-;; (histograms are stored via HDF5, not text files).
+(defmethod printable ((obj hash-table))
+  nil)
 
 (defmethod save-object ((ht hash-table) path)
   (let* ((savedir

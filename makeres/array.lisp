@@ -21,6 +21,10 @@
 
 (in-package :cl-ana.makeres)
 
+;; fix in the future
+(defmethod printable ((vector array))
+  nil)
+
 (defmethod save-object ((vector array) path)
   (let* ((savedir
           (make-pathname

@@ -126,6 +126,7 @@
    :logres-trackfn
    :logres-track-by
    :function-target?
+   :printable
 
    :current-path
    :target-path

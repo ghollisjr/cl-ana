@@ -21,6 +21,9 @@
 
 (in-package :cl-ana.makeres)
 
+(defmethod printable ((f function))
+  nil)
+
 (define-save-target-method function id
   (functionp (target-val (gethash id (target-table))))
   nil)

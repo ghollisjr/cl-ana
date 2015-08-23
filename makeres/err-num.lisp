@@ -23,6 +23,9 @@
 
 (in-package :cl-ana.makeres)
 
+(defmethod printable ((obj err-num))
+  nil)
+
 (defmethod load-object ((type (eql 'err-num)) path)
   ;; (print type)
   (with-open-file (file path

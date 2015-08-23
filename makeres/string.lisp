@@ -21,9 +21,5 @@
 
 (in-package :cl-ana.makeres)
 
-(defmethod save-object ((str string) path)
-  (with-open-file (file path
-                        :direction :output
-                        :if-exists :supersede
-                        :if-does-not-exist :create)
-    (format file "~s~%" str)))
+(defmethod printable ((str string))
+  t)

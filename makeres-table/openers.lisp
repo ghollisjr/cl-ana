@@ -124,8 +124,9 @@ nil for writing."
          table)))))
 
 ;; CSV:
-(defun csv-opener (path field-names
+(defun csv-opener (path
                    &key
+                     field-names
                      read-from-string
                      (delimeter #\,))
   "Returns a closure which, when given a single keyword argument,

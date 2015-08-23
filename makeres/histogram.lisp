@@ -21,6 +21,9 @@
 
 (in-package :cl-ana.makeres)
 
+(defmethod printable ((h histogram))
+  nil)
+
 (defmethod save-object ((h histogram) path)
   (with-open-hdf-file (file path
                             :direction :output

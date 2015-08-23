@@ -946,11 +946,12 @@ from pass up to src."
                     (when (zerop (the fixnum
                                       (mod ,row-var
                                            (the fixnum ,*print-progress*))))
-                      (format t "Event ~a, ~$% complete~%"
-                              ,row-var
-                              (* 1f2
-                                 (/ (float ,row-var)
-                                    (float ,nrows-var)))))
+                      (when ,nrows-var
+                        (format t "Event ~a, ~$% complete~%"
+                                ,row-var
+                                (* 1f2
+                                   (/ (float ,row-var)
+                                      (float ,nrows-var))))))
                     (incf ,row-var))))))
         `(progn
            (table-pass ,(if (and (listp src)

@@ -208,6 +208,12 @@
                           :if-does-not-exist :create)
       (format file "~s~%" obj))))
 
+(defgeneric printable (object)
+  (:documentation "Returns true only for objects which can safely be
+  printed")
+  (:method (object)
+    t))
+
 (defgeneric cleanup (object)
   (:documentation "Clears any resources needing manual intervention
   for object.  Examples would include files and tables")
