@@ -1536,7 +1536,7 @@ gnuplot to distinguish eps from ps)"
                         ;; argument
                         (header nil header-supplied-p)
                         blacktext-p)
-  "Generates the type string for a png terminal with options"
+  "Generates the type string for a epslatex terminal with options"
   (apply #'join-strings
          (intersperse
           " "
@@ -1595,3 +1595,26 @@ gnuplot to distinguish eps from ps)"
                   (if blacktext-p
                       "blacktext"
                       "colortext")))))))
+
+(defun qt-term (&key
+                  window-number
+                  (size (cons 640 480))
+                  enhanced-p
+                  font
+                  title
+                  persist-p)
+  "Generates the type string for a qt terminal with options"
+  (format nil "~{~a ~}"
+          (remove nil
+                  (list "qt"
+                        (when window-number
+                          (format nil "~a" window-number))
+                        (format nil "size ~a, ~a" (car size) (cdr size))
+                        (when enhanced-p
+                          "enhanced")
+                        (when font
+                          (format nil "font \"~a\"" font))
+                        (when title
+                          (format nil "title \"~a\"" title))
+                        (when persist-p
+                          "persist")))))

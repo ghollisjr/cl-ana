@@ -96,6 +96,7 @@
            :ps-term
            :eps-term
            :pdf-term
-           :epslatex-term))
+           :epslatex-term
+           :qt-term))
 
 (cl-ana.gmath:use-gmath :cl-ana.plotting)
