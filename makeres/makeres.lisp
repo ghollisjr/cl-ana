@@ -1040,3 +1040,24 @@ list args"
                                            :recursive t))
                 (format t "~a not tracked~%"
                         logged-id))))))
+
+(defun purgeres (&optional delete-p)
+  "Finds targets which have null statuses and optionally deletes their
+logs."
+  (let ((null-stats
+         (loop
+            for id being the hash-keys in (target-table)
+            for tar being the hash-values in (target-table)
+            when (and (not (target-stat tar))
+                      (probe-file (target-path id)))
+            collecting id)))
+    (if delete-p
+        (loop
+           for id in null-stats
+           do (progn
+                (format t "Deleting ~s~%" id)
+                (sb-ext:delete-directory (target-path id)
+                                         :recursive t)))
+        (loop
+           for id in null-stats
+           do (format t "~s~%" id)))))
