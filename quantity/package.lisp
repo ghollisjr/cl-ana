@@ -58,6 +58,11 @@
    :atto
    :zepto
    :yocto
+   ;; Binary prefix functions:
+   :binary-kilo
+   :binary-mega
+   :binary-giga
+   :binary-tera
    ;; Constants:
    :+c+
    :+G+
