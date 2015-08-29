@@ -375,6 +375,29 @@ the necessary subdirectories are present."
 setting the target-stat to t for any targets which are found in the
 log."
   (let ((unset (make-hash-table :test 'equal)))
+    (when (probe-file (computation-stat-path))
+      (format t "Warning: Previous computation failed, recovering~%")
+      (let (timestamp
+            ids
+            ts)
+        (with-open-file (stat-file (computation-stat-path)
+                                   :direction :input)
+          (setf timestamp (read stat-file))
+          (setf ids (read stat-file)))
+        (loop
+           for id in ids
+           do
+             (if (probe-file (target-path id "timestamp"))
+                 (with-open-file (file (target-path id "timestamp")
+                                   :direction :input)
+                   (setf ts (read file)))
+                 (setf ts nil))
+             (when (or (not ts)
+                       (> timestamp ts))
+               (format t "Warning: Unsetting ~a from failed computation~%"
+                       id)
+               (setf (gethash id unset)
+                     t)))))
     (loop
        for id being the hash-keys in (target-table)
        for tar being the hash-values in (target-table)
@@ -866,7 +889,7 @@ does not backup if backup is NIL."
        do
          (setf (target-stat (gethash id (target-table)))
                nil)
-         ;;(cleanup (resfn id))
+       ;;(cleanup (resfn id))
          (unload-target id))
     (load-project)
     (when makeres-p

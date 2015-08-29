@@ -910,6 +910,14 @@ list args"
                     (or (null argstat)
                         (not (equal argval lastval))))))))))
 
+(defun computation-stat-path ()
+  "Returns the path for the computation status file"
+  (let ((path
+         (make-pathname :name "stat"
+                        :directory (pathname-directory
+                                    (current-path)))))
+    (ensure-directories-exist path)))
+
 (defun makeres ()
   "Function which compiles and executes generating function."
   (let ((all-args nil))
@@ -983,7 +991,24 @@ list args"
         (makeres-propogate!))
 
       (let ((comp (compres)))
-        (apply comp args)))))
+        ;; Write computation status file:
+        (with-open-file (stat-file (computation-stat-path)
+                                   :direction :output
+                                   :if-does-not-exist :create
+                                   :if-exists :supersede)
+          (let ((timestamp (get-universal-time))
+                (to-compute (loop
+                               for id being the hash-keys
+                               in (target-table)
+                               for tar being the hash-values
+                               in (target-table)
+                               when (null (target-stat tar))
+                               collecting id)))
+            (format stat-file "~a~%~a~%"
+                    timestamp
+                    to-compute)))
+        (apply comp args)
+        (delete-file (computation-stat-path))))))
 
 ;;;; Utilities:
 

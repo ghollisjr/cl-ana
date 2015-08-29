@@ -35,7 +35,11 @@
   (lambda ()
     (print t)))
 
-;; Call to load-project and makeres to initialize project:
+(defres delayed
+  (sleep 5)
+  t)
 
-(load-project)
-(makeres)
+(defres delayed2
+  (and (res delayed)
+       (sleep 5))
+  t)
