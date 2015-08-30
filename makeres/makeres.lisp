@@ -310,6 +310,19 @@ target-table."
 ;; this uses lists for sets, inefficient for large dependency
 ;; graphs, so it needs to be updated in the future
 
+(defun res-dependencies (graph id)
+  (labels ((rec (id)
+             ;; returns full list of dependencies for id
+             (let ((tar (gethash id graph)))
+               (when tar
+                 (let ((deps (copy-list (target-deps tar))))
+                   (when deps
+                     (reduce (lambda (ds d)
+                               (adjoin d ds :test #'equal))
+                             (mapcan #'rec deps)
+                             :initial-value deps)))))))
+    (rec id)))
+
 (defun dep< (target-table)
   "Returns comparison function from target-table which returns true
 when the left argument does not depend on the right argument."
@@ -992,21 +1005,22 @@ list args"
 
       (let ((comp (compres)))
         ;; Write computation status file:
-        (with-open-file (stat-file (computation-stat-path)
-                                   :direction :output
-                                   :if-does-not-exist :create
-                                   :if-exists :supersede)
-          (let ((timestamp (get-universal-time))
-                (to-compute (loop
-                               for id being the hash-keys
-                               in (target-table)
-                               for tar being the hash-values
-                               in (target-table)
-                               when (null (target-stat tar))
-                               collecting id)))
-            (format stat-file "~a~%~a~%"
-                    timestamp
-                    to-compute)))
+        (let ((*print-pretty* nil))
+          (with-open-file (stat-file (computation-stat-path)
+                                     :direction :output
+                                     :if-does-not-exist :create
+                                     :if-exists :supersede)
+            (let ((timestamp (get-universal-time))
+                  (to-compute (loop
+                                 for id being the hash-keys
+                                 in (target-table)
+                                 for tar being the hash-values
+                                 in (target-table)
+                                 when (null (target-stat tar))
+                                 collecting id)))
+              (format stat-file "~a~%~a~%"
+                      timestamp
+                      to-compute))))
         (apply comp args)
         (delete-file (computation-stat-path))))))
 

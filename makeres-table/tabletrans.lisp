@@ -286,36 +286,39 @@ non-ignored sources."
                  ;;         id deps)
                  (when deps
                    (list->set
-                    (reduce (lambda (ds d)
-                              (adjoin d ds :test #'equal))
-                            (mapcan #'rec
-                                    (append
-                                     ;; immediate dependencies
-                                     deps
-                                     ;; dependencies from source
-                                     (let ((expr
-                                            (target-expr (gethash id target-table))))
-                                       (when (table-reduction? expr)
-                                         (target-deps
-                                          (gethash
-                                           (unres
-                                            (table-reduction-source expr))
-                                           target-table))))))
-                            :initial-value
-                            (let ((expr
-                                   (target-expr (gethash id target-table))))
-                              (if (table-reduction? expr)
-                                  (append
-                                   (destructuring-bind (progn tab-form) expr
-                                     (cl-ana.makeres::find-dependencies
-                                      (cddr tab-form)
-                                      'res))
-                                   (target-deps
-                                    (gethash
-                                     (unres
-                                      (table-reduction-source expr))
-                                     target-table)))
-                                  deps))))))))
+                    (append
+                     (lfield-dependencies
+                      target-table id)
+                     (reduce (lambda (ds d)
+                               (adjoin d ds :test #'equal))
+                             (mapcan #'rec
+                                     (append
+                                      ;; immediate dependencies
+                                      deps
+                                      ;; dependencies from source
+                                      (let ((expr
+                                             (target-expr (gethash id target-table))))
+                                        (when (table-reduction? expr)
+                                          (target-deps
+                                           (gethash
+                                            (unres
+                                             (table-reduction-source expr))
+                                            target-table))))))
+                             :initial-value
+                             (let ((expr
+                                    (target-expr (gethash id target-table))))
+                               (if (table-reduction? expr)
+                                   (append
+                                    (destructuring-bind (progn tab-form) expr
+                                      (cl-ana.makeres::find-dependencies
+                                       (cddr tab-form)
+                                       'res))
+                                    (target-deps
+                                     (gethash
+                                      (unres
+                                       (table-reduction-source expr))
+                                      target-table)))
+                                   deps)))))))))
       (loop
          for id being the hash-keys in target-table
          do (setf (gethash id depmap)
@@ -345,35 +348,39 @@ non-ignored sources."
                         (copy-list (target-deps (gethash id target-table))))))
                  (when deps
                    (list->set
-                    (reduce (lambda (ds d)
-                              (adjoin d ds :test #'equal))
-                            (mapcan #'rec
-                                    (append
-                                     ;; immediate dependencies
-                                     deps
-                                     ;; dependencies from source
-                                     (let ((expr
-                                            (target-expr (gethash id target-table))))
-                                       (when (table-reduction? expr)
-                                         (target-deps
-                                          (gethash
-                                           (unres
-                                            (table-reduction-source expr))
-                                           target-table))))))
-                            :initial-value
-                            (let ((expr
-                                   (target-expr (gethash id target-table))))
-                              (if (ltab? expr)
-                                  (append
-                                   (destructuring-bind (progn tab-form) expr
-                                     (cl-ana.makeres::find-dependencies (cddr tab-form)
-                                                                        'res))
-                                   (target-deps
-                                    (gethash
-                                     (unres
-                                      (table-reduction-source expr))
-                                     target-table)))
-                                  deps))))))))
+                    (append
+                     (lfield-dependencies
+                      target-table id)
+                     (reduce (lambda (ds d)
+                               (adjoin d ds :test #'equal))
+                             (mapcan #'rec
+                                     (append
+                                      ;; immediate dependencies
+                                      deps
+                                      ;; dependencies from source
+                                      (let ((expr
+                                             (target-expr (gethash id target-table))))
+                                        (when (table-reduction? expr)
+                                          (target-deps
+                                           (gethash
+                                            (unres
+                                             (table-reduction-source expr))
+                                            target-table))))))
+                             :initial-value
+                             (let ((expr
+                                    (target-expr (gethash id target-table))))
+                               (if (ltab? expr)
+                                   (append
+                                    (destructuring-bind (progn tab-form) expr
+                                      (cl-ana.makeres::find-dependencies (cddr tab-form)
+                                                                         'res))
+                                    (target-deps
+                                     (gethash
+                                      (unres
+                                       (table-reduction-source expr))
+                                      target-table)))
+                                   deps))))
+                    #'equal)))))
       (loop
          for id being the hash-keys in target-table
          do (setf (gethash id depmap)
@@ -1202,6 +1209,18 @@ true when given the key and value from ht."
                                            target-table
                                            src
                                            pass)))
+                       ;; Add lfield dependencies:
+                       (symbol-macrolet ((deps (target-deps
+                                                (gethash id
+                                                         result-graph))))
+                         (setf deps
+                               (list->set
+                                (append deps
+                                        (mapcan
+                                         (lambda (i)
+                                           (lfield-dependencies graph i))
+                                         pass))
+                                #'equal)))
                        (set-pass-result-targets!
                         result-graph
                         id
@@ -1211,6 +1230,67 @@ true when given the key and value from ht."
       (trans))
     ;; unmodified results are already present, so return result-graph
     result-graph))
+
+(defun lfield-dependencies (graph id)
+  "Returns full list of dependencies caused by lfields"
+  (when (table-reduction?
+         (target-expr (gethash id graph)))
+    (let* ((tar (gethash id graph))
+           (expr (target-expr tar))
+           (src (unres (table-reduction-source expr)))
+           (lfields
+            (gethash src
+                     (gethash (project)
+                              *proj->tab->lfields*)))
+           (lfield-map
+            (let ((result (make-hash-table :test 'eq)))
+              (loop
+                 for lfield in lfields
+                 do (setf (gethash (first lfield) result)
+                          `(progn ,@(rest lfield))))
+              result)))
+      (labels ((rec (lfield)
+                 ;; finds all lfields referred to by lfield
+                 ;; expression including the lfield itself
+                 (let* ((expr (gethash lfield lfield-map))
+                        (referred
+                         (remove-if-not (lambda (field)
+                                          (gethash field lfield-map))
+                                        (cl-ana.makeres::find-dependencies
+                                         expr
+                                         'field))))
+                   (when referred
+                     (append referred
+                             (mapcan #'rec referred))))))
+        (let* ((lfield-deps
+                (list->set
+                 (mapcan
+                  #'rec
+                  (remove-if-not (lambda (field)
+                                   (gethash field lfield-map))
+                                 (cl-ana.makeres::find-dependencies
+                                  expr
+                                  'field)))
+                 #'eq))
+               (lfield-dep-merged-expr
+                `(progn ,@(loop
+                             for ld in lfield-deps
+                             collecting (gethash ld lfield-map))))
+               (lfield-res-deps
+                (cl-ana.makeres::find-dependencies
+                 lfield-dep-merged-expr
+                 'res)))
+          (remove-if
+           (lambda (i)
+             (target-stat (gethash i graph)))
+           (list->set
+            (append lfield-res-deps
+                    (mapcan (lambda (x)
+                              (lfield-dependencies graph x))
+                            (mapcan (lambda (i)
+                                      (res-dependencies graph i))
+                                    lfield-res-deps)))
+            #'equal)))))))
 
 (deftransdeps #'tabletrans
     (lambda (graph)

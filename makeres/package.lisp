@@ -50,6 +50,7 @@
    :make-target
    :copy-target
    ;; propogation:
+   :res-dependencies
    :res-dependents
    :makeres-set-auto-propogate
    :makeres-propogate!

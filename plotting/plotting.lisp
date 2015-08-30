@@ -315,12 +315,24 @@ layout specified in the page.")
     :accessor plot2d-x-range
     :documentation "Sets the domain for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (x-tics
+    :initarg :x-tics
+    :initform nil
+    :accessor plot2d-x-tics
+    :documentation "Sets the x-axis tic options.  Can be a single
+    string or a list of strings which will be added together.  Use
+    tics function to generate string(s).")
    (y-range
     :initarg :y-range
     :initform (cons "*" "*")
     :accessor plot2d-y-range
     :documentation "Sets the range for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (y-tics
+    :initarg :y-tics
+    :initform nil
+    :accessor plot2d-y-tics
+    :documentation "y-axis tics.  See x-tics.")
    (cb-range
     :initarg :cb-range
     :initform (cons "*" "*")
@@ -329,6 +341,11 @@ layout specified in the page.")
     for the plot; a cons where the car is the lower bound and the cdr
     is the upper bound.  A property of the plot since it is the z-axis
     for 2-d representations of 3-d objects.")
+   (cb-tics
+    :initarg :x-tics
+    :initform nil
+    :accessor plot2d-cb-tics
+    :documentation "color box tics.  See x-tics.")
    (x-title
     :initform nil
     :initarg :x-title
@@ -446,9 +463,19 @@ initargs from key-args."
                logaxes)))))
 
 (defmethod plot-cmd ((p plot2d))
-  (with-slots (x-range y-range cb-range)
+  (with-slots (x-range
+               x-tics
+               y-range
+               y-tics
+               cb-range
+               cb-tics)
       p
     (with-output-to-string (s)
+      ;; tics
+      (format s "~a" (merge-tics :x x-tics))
+      (format s "~a" (merge-tics :y y-tics))
+      (format s "~a" (merge-tics :cb cb-tics))
+
       (if cb-range
           (format s "set cbrange [~a:~a]~%"
                   (car cb-range)
@@ -484,24 +511,46 @@ initargs from key-args."
     :accessor plot3d-x-range
     :documentation "Sets the x-domain for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (x-tics
+    :initarg :x-tics
+    :initform nil
+    :accessor plot3d-x-tics
+    :documentation "Sets the x-axis tic options.  Can be a single
+    string or a list of strings which will be added together.  Use
+    tics function to generate string(s).")
    (y-range
     :initarg :y-range
     :initform (cons "*" "*")
     :accessor plot3d-y-range
     :documentation "Sets the y-domain for the plot; a cons where the
     car is the lower bound and the cdr is the upper bound.")
+   (y-tics
+    :initarg :y-tics
+    :initform nil
+    :accessor plot3d-y-tics
+    :documentation "y-axis tics.  See x-tics.")
    (z-range
     :initarg :z-range
     :initform (cons "*" "*")
     :accessor plot3d-z-range
     :documentation "Sets the z-range for the plot; a cons where the
     car is the lower bound and the cdr is the upper bound.")
+   (z-tics
+    :initarg :z-tics
+    :initform nil
+    :accessor plot3d-z-tics
+    :documentation "z-axis tics.  See x-tics.")
    (cb-range
     :initarg :cb-range
     :initform (cons "*" "*")
     :accessor plot3d-cb-range
-    :documentation "Sets the color box range for the plot; a cons
-    where the car is the lower bound and the cdr is the upper bound.")
+    :documentation "color box tics.  See x-tics.")
+   (cb-tics
+    :initarg :cb-tics
+    :initform nil
+    :accessor plot2d-cb-tics
+    :documentation "Sets the color box tic options.  Use tics function
+    to generate string.")
    (x-title
     :initform nil
     :initarg :x-title
@@ -561,9 +610,25 @@ initargs from key-args."
                 logaxes))))))
 
 (defmethod plot-cmd ((p plot3d))
-  (with-slots (x-range y-range z-range cb-range colorbox-p pm3d view)
+  (with-slots (x-range
+               x-tics
+               y-range
+               y-tics
+               z-range
+               z-tics
+               cb-range
+               cb-tics
+               colorbox-p
+               pm3d
+               view)
       p
     (with-output-to-string (s)
+      ;; tics
+      (format s "~a" (merge-tics :x x-tics))
+      (format s "~a" (merge-tics :y y-tics))
+      (format s "~a" (merge-tics :z z-tics))
+      (format s "~a" (merge-tics :cb cb-tics))
+      ;; ranges
       (if x-range
           (format s "set xrange [~a:~a]~%"
                   (car x-range) (cdr x-range))
@@ -722,6 +787,131 @@ initargs from key-args."
     (when offset
       (format s "offest ~{~a~^,~}"
               offset))))
+
+;; Tics
+(defun merge-tics (axis tics)
+  "Generates tics command(s) from tics.  axis should be :x, :y, :z,
+or :cb"
+  (let ((axis
+         (case axis
+           (:x "xtics")
+           (:y "ytics")
+           (:z "ztics")
+           (:cb "cbtics"))))
+    (cond
+      ((null tics)
+       "")
+      ((listp tics)
+       (with-output-to-string (s)
+         (loop
+            for tic in tics
+            for i from 0
+            do (if (zerop i)
+                   (format s "set ~a ~a~%"
+                           axis tic)
+                   (format s "set ~a add ~a~%"
+                           axis tic)))))
+      (t
+       (format nil "set ~a ~a~%"
+               axis tics)))))
+
+(defun tics (&key
+               border-p ; tics on border instead of axis
+               mirror-p ; put tics on opposite axis as well
+               (location :in) ; can be :in or :out
+               ;; scale options:
+               major-scale
+               minor-scale
+               rotate ; rotation angle in degrees
+               offset ; offset
+               ;;; Note: Only one of sampling or manual-labels should
+               ;;; be used at a time.  To add manual-labels to
+               ;;; automatic tics, supply separate tic strings to the
+               ;;; plot in a list.
+               
+               ;; sampling can be
+               ;;
+               ;; 1. A number for the increment
+               ;; 2. A list containing the start, increment and
+               ;;    optionally end
+               ;; 3. NIL, denoting default behavior
+               sampling
+               ;; manual-labels is a list of label specification
+               ;; plists.  Each plist has the following slots:
+               ;;
+               ;; * :name is the text for the label
+               ;; * :position is the position for the label
+               ;; * :level is an optional slot and can be :major or
+               ;;   :minor
+               manual-labels
+               ;; font settings
+               font-face
+               font-size
+               color)
+  (with-output-to-string (s)
+    (format s "~a"
+            (if border-p
+                "border"
+                "axis"))
+    (format s " ~a"
+            (if mirror-p
+                "mirror"
+                "nomirror"))
+    (format s " ~a"
+            (string-downcase (string location)))
+    (format s " scale ")
+    (if major-scale
+        (progn
+          (format s "~a" major-scale)
+          (when minor-scale
+            (format s ", ~a"
+                    minor-scale)))
+        (format s "default"))
+    (if rotate
+        (format s " rotate ~a" rotate)
+        (format s " norotate"))
+    (if offset
+        (format s " offset ~a" offset)
+        (format s " nooffset"))
+    (cond
+      ((null sampling))
+      ((listp sampling)
+       (destructuring-bind (start incr &optional end)
+           sampling
+         (format s " ~a, ~a" start incr)
+         (when end
+           (format s ", ~a" end))))
+      (t
+       (format s " ~a" sampling)))
+    (when manual-labels
+      (format s " (")
+      (loop
+         for ml in manual-labels
+         for nleft downfrom (1- (length manual-labels))
+         do (destructuring-bind (&key name position level)
+                ml
+              (when name
+                (format s "~s " name))
+              (format s "~a" position)
+              (when level
+                (let ((level
+                       (case level
+                         (:major 0)
+                         (:minor 1))))
+                  (format s " ~a" level)))
+              (when (not (zerop nleft))
+                (format s ","))))
+      (format s ")"))
+    (when font-face
+      (format s " font \"~a"
+              font-face)
+      (when font-size
+        (format s ",~a"
+                font-size))
+      (format s "\""))
+    (when color
+      (format s " textcolor ~a"
+              color))))
 
 ;; A line is a single function or data set.  Each line may have its
 ;; own individual name/title.  These may be listed together in a key or
@@ -1307,7 +1497,7 @@ of up to two double-float arguments."
             key-args))
     ;; error
     (t (error "Only 1-D or 2-D histograms can be plotted"))))
-      
+
 
 ;;; Terminal type functions:
 
