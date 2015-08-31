@@ -875,7 +875,8 @@ or :cb"
         (format s " nooffset"))
     (cond
       ((null sampling)
-       (format s " autofreq"))
+       (when (not manual-labels)
+         (format s " autofreq")))
       ((listp sampling)
        (destructuring-bind (start incr &optional end)
            sampling
