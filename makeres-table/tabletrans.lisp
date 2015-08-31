@@ -1403,64 +1403,79 @@ true when given the key and value from ht."
 
 (defun lfield-dependencies (graph id)
   "Returns full list of dependencies caused by lfields"
-  (when (table-reduction?
-         (target-expr (gethash id graph)))
-    (let* ((tar (gethash id graph))
-           (expr (target-expr tar))
-           (src (unres (table-reduction-source expr)))
-           (lfields
-            (gethash src
-                     (gethash (project)
-                              *proj->tab->lfields*)))
-           (lfield-map
-            (let ((result (make-hash-table :test 'eq)))
-              (loop
-                 for lfield in lfields
-                 do (setf (gethash (first lfield) result)
-                          `(progn ,@(rest lfield))))
-              result)))
-      (labels ((rec (lfield)
-                 ;; finds all lfields referred to by lfield
-                 ;; expression including the lfield itself
-                 (let* ((expr (gethash lfield lfield-map))
-                        (referred
-                         (remove-if-not (lambda (field)
-                                          (gethash field lfield-map))
-                                        (cl-ana.makeres::find-dependencies
-                                         expr
-                                         'field))))
-                   (when referred
-                     (append referred
-                             (mapcan #'rec referred))))))
-        (let* ((lfield-deps
-                (list->set
-                 (mapcan
-                  #'rec
-                  (remove-if-not (lambda (field)
-                                   (gethash field lfield-map))
-                                 (cl-ana.makeres::find-dependencies
-                                  expr
-                                  'field)))
-                 #'eq))
-               (lfield-dep-merged-expr
-                `(progn ,@(loop
-                             for ld in lfield-deps
-                             collecting (gethash ld lfield-map))))
-               (lfield-res-deps
-                (cl-ana.makeres::find-dependencies
-                 lfield-dep-merged-expr
-                 'res)))
-          (remove-if
-           (lambda (i)
-             (target-stat (gethash i graph)))
-           (list->set
-            (append lfield-res-deps
-                    (mapcan (lambda (x)
-                              (lfield-dependencies graph x))
-                            (mapcan (lambda (i)
-                                      (res-dependencies graph i))
-                                    lfield-res-deps)))
-            #'equal)))))))
+  (labels ((lfield-deps (id)
+             ;; Returns the res dependencies directly imposed by
+             ;; reference to an lfield from a table reduction
+             (when (and (not (target-stat (gethash id graph)))
+                        (table-reduction?
+                         (target-expr (gethash id graph))))
+               (let* ((tar (gethash id graph))
+                      (expr (target-expr tar))
+                      (src (unres (table-reduction-source expr)))
+                      (lfields
+                       (gethash src
+                                (gethash (project)
+                                         *proj->tab->lfields*)))
+                      (lfield-map
+                       (let ((result (make-hash-table :test 'eq)))
+                         (loop
+                            for lfield in lfields
+                            do (setf (gethash (first lfield) result)
+                                     `(progn ,@(rest lfield))))
+                         result)))
+                 (labels ((rec (lfield)
+                            ;; finds all lfields referred to by lfield
+                            ;; expression including the lfield itself
+                            (let* ((expr (gethash lfield lfield-map))
+                                   (referred
+                                    (remove-if-not
+                                     (lambda (field)
+                                       (gethash field lfield-map))
+                                     (cl-ana.makeres::find-dependencies
+                                      expr
+                                      'field))))
+                              (when referred
+                                (append referred
+                                        (mapcan #'rec referred))))))
+                   (let* ((lfield-deps
+                           (list->set
+                            (mapcan
+                             #'rec
+                             (remove-if-not
+                              (lambda (field)
+                                (gethash field lfield-map))
+                              (cl-ana.makeres::find-dependencies
+                               expr
+                               'field)))
+                            #'eq))
+                          (lfield-dep-merged-expr
+                           `(progn
+                              ,@(loop
+                                   for ld in lfield-deps
+                                   collecting (gethash ld lfield-map))))
+                          (lfield-res-deps
+                           (cl-ana.makeres::find-dependencies
+                            lfield-dep-merged-expr
+                            'res)))
+                     (remove-if
+                      (lambda (i)
+                        (target-stat (gethash i graph)))
+                      (list->set
+                       lfield-res-deps
+                       #'equal)))))))
+           (lfdrec (id)
+             ;; Finds lfield dependencies to an id both directly and
+             ;; from any possible dependency path
+             (when (not (target-stat (gethash id graph)))
+               (let ((imm-deps
+                      (append (lfield-deps id)
+                              (target-deps (gethash id graph)))))
+                 (list->set
+                  (append imm-deps
+                          (mapcan #'lfdrec
+                                  imm-deps))
+                  #'equal)))))
+    (lfdrec id)))
 
 (deftransdeps #'tabletrans
     (lambda (graph)
