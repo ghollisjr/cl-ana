@@ -816,7 +816,7 @@ or :cb"
                axis tics)))))
 
 (defun tics (&key
-               border-p ; tics on border instead of axis
+               axis-p ; tics on axis instead of axis
                mirror-p ; put tics on opposite axis as well
                (location :in) ; can be :in or :out
                ;; scale options:
@@ -850,9 +850,9 @@ or :cb"
                color)
   (with-output-to-string (s)
     (format s "~a"
-            (if border-p
-                "border"
-                "axis"))
+            (if axis-p
+                "axis"
+                "border"))
     (format s " ~a"
             (if mirror-p
                 "mirror"
