@@ -874,7 +874,8 @@ or :cb"
         (format s " offset ~a" offset)
         (format s " nooffset"))
     (cond
-      ((null sampling))
+      ((null sampling)
+       (format s " autofreq"))
       ((listp sampling)
        (destructuring-bind (start incr &optional end)
            sampling
