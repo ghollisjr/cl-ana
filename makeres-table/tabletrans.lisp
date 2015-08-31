@@ -202,9 +202,13 @@ connected via a chain of reductions from src."
                           (target-expr (gethash red target-table))))
                        imm-reds))))))
 
-(defun group-ids-by-pass (target-table src &optional dep<)
+(defun group-ids-by-pass (target-table src
+                          &key
+                            dep<
+                            (test (constantly t)))
   "Groups all ids from target-table according the the pass required
-over src using the dependency checker dep<."
+over src, optionally using the dependency checker dep< and keeping
+only targets for which test returns t."
   (let* ((dep< (if dep<
                    dep<
                    (dep< target-table)))
@@ -212,7 +216,8 @@ over src using the dependency checker dep<."
           (chained-reductions target-table src))
          (sorted-ids
           (remove-if-not (lambda (x)
-                           (member x chained :test #'equal))
+                           (and (member x chained :test #'equal)
+                                (funcall test x)))
                          (depsort-graph target-table dep<))))
     (when sorted-ids
       (let ((pass (list (pop sorted-ids)))
@@ -327,6 +332,70 @@ non-ignored sources."
         (not (member y (gethash x depmap)
                      :test #'equal))))))
 
+;; (defun removed-source-dep< (target-table)
+;;   (let ((depmap (make-hash-table :test 'equal)))
+;;     (labels ((rec (id)
+;;                ;; returns full list of dependencies for id, ignoring
+;;                ;; t-stat targets (otherwise we neglect possible
+;;                ;; optimizations)
+;;                (let* ((src
+;;                        (if (table-reduction?
+;;                             (target-expr (gethash id target-table)))
+;;                            (unres
+;;                             (table-reduction-source
+;;                              (target-expr (gethash id target-table))))
+;;                            nil))
+;;                       (deps
+;;                        (remove-if
+;;                         (lambda (d)
+;;                           (and (not (equal d src))
+;;                                (target-stat (gethash d target-table))))
+;;                         (copy-list (target-deps (gethash id target-table))))))
+;;                  ;; (format t "rec-id: ~a, deps: ~a~%"
+;;                  ;;         id deps)
+;;                  (when deps
+;;                    (list->set
+;;                     (append
+;;                      (lfield-dependencies
+;;                       target-table id)
+;;                      (reduce (lambda (ds d)
+;;                                (adjoin d ds :test #'equal))
+;;                              (mapcan #'rec
+;;                                      (append
+;;                                       ;; immediate dependencies
+;;                                       deps
+;;                                       ;; dependencies from source
+;;                                       (let ((expr
+;;                                              (target-expr (gethash id target-table))))
+;;                                         (when (table-reduction? expr)
+;;                                           (target-deps
+;;                                            (gethash
+;;                                             (unres
+;;                                              (table-reduction-source expr))
+;;                                             target-table))))))
+;;                              :initial-value
+;;                              (let ((expr
+;;                                     (target-expr (gethash id target-table))))
+;;                                (if (table-reduction? expr)
+;;                                    (append
+;;                                     (destructuring-bind (progn tab-form) expr
+;;                                       (cl-ana.makeres::find-dependencies
+;;                                        (cddr tab-form)
+;;                                        'res))
+;;                                     (target-deps
+;;                                      (gethash
+;;                                       (unres
+;;                                        (table-reduction-source expr))
+;;                                       target-table)))
+;;                                    deps)))))))))
+;;       (loop
+;;          for id being the hash-keys in target-table
+;;          do (setf (gethash id depmap)
+;;                   (rec id)))
+;;       (lambda (x y)
+;;         (not (member y (gethash x depmap)
+;;                      :test #'equal))))))
+
 (defun removed-ltab-source-dep< (target-table)
   (let ((depmap (make-hash-table :test 'equal)))
     (labels ((rec (id)
@@ -388,6 +457,68 @@ non-ignored sources."
       (lambda (x y)
         (not (member y (gethash x depmap)
                      :test #'equal))))))
+
+;; (defun removed-ltab-source-dep< (target-table)
+;;   (let ((depmap (make-hash-table :test 'equal)))
+;;     (labels ((rec (id)
+;;                ;; returns full list of dependencies for id, ignoring
+;;                ;; t-stat dependencies (otherwise we neglect possible
+;;                ;; optimizations).
+;;                (let* ((src
+;;                        (if (table-reduction?
+;;                             (target-expr (gethash id target-table)))
+;;                            (unres
+;;                             (table-reduction-source
+;;                              (target-expr (gethash id target-table))))
+;;                            nil))
+;;                       (deps
+;;                        (remove-if
+;;                         (lambda (d)
+;;                           (and (not (equal d src))
+;;                                (target-stat (gethash d target-table))))
+;;                         (copy-list (target-deps (gethash id target-table))))))
+;;                  (when deps
+;;                    (list->set
+;;                     (append
+;;                      (lfield-dependencies
+;;                       target-table id)
+;;                      (reduce (lambda (ds d)
+;;                                (adjoin d ds :test #'equal))
+;;                              (mapcan #'rec
+;;                                      (append
+;;                                       ;; immediate dependencies
+;;                                       deps
+;;                                       ;; dependencies from source
+;;                                       (let ((expr
+;;                                              (target-expr (gethash id target-table))))
+;;                                         (when (table-reduction? expr)
+;;                                           (target-deps
+;;                                            (gethash
+;;                                             (unres
+;;                                              (table-reduction-source expr))
+;;                                             target-table))))))
+;;                              :initial-value
+;;                              (let ((expr
+;;                                     (target-expr (gethash id target-table))))
+;;                                (if (ltab? expr)
+;;                                    (append
+;;                                     (destructuring-bind (progn tab-form) expr
+;;                                       (cl-ana.makeres::find-dependencies (cddr tab-form)
+;;                                                                          'res))
+;;                                     (target-deps
+;;                                      (gethash
+;;                                       (unres
+;;                                        (table-reduction-source expr))
+;;                                       target-table)))
+;;                                    deps))))
+;;                     #'equal)))))
+;;       (loop
+;;          for id being the hash-keys in target-table
+;;          do (setf (gethash id depmap)
+;;                   (rec id)))
+;;       (lambda (x y)
+;;         (not (member y (gethash x depmap)
+;;                      :test #'equal))))))
 
 ;;; Table pass expression components
 
@@ -636,6 +767,10 @@ from pass up to src."
            ;; map from tab reduction to expanded form (needed due to
            ;; with-gensyms in the body)
            (tab-expanded-expr (make-hash-table :test 'equal)))
+      ;; ;; debug
+      ;; (print 'context-tree)
+      ;; (print context-tree)
+      ;; ;; end debug
       ;; Initialize context maps:
       (macrolet ((setht (place k)
                    `(setf (gethash ,k ,place)
@@ -1166,7 +1301,13 @@ true when given the key and value from ht."
                                                        :test #'equal))
                                              pass))
                             (group-ids-by-pass
-                             graph src remltab-dep<)))))
+                             graph src
+                             :dep< remltab-dep<
+                             :test (lambda (i)
+                                     (not
+                                      (or (not (member i nec-reds :test #'equal))
+                                          (ltab? (target-expr (gethash i graph))))))
+                             )))))
                         ;; passes relative to ultimate source:
                         (ult-passes
                          (remove
@@ -1193,12 +1334,41 @@ true when given the key and value from ht."
                               ;; processed reduction targets:
                               graph
                               src
-                              remsrc-dep<))))))
+                              :dep< remsrc-dep<
+                              :test (lambda (i)
+                                      (not
+                                       (or (member i processed-reds :test #'equal)
+                                           (ltab? (target-expr
+                                                   (gethash i graph)))
+                                           (target-stat (gethash i graph)))))
+                              ))))))
                         ;; collapsible reductions of src:
                         (collapsible-passes
                          (mapcar (lambda (x y)
                                    y)
                                  nec-passes ult-passes)))
+                   ;; ;; debug
+                   ;; (print 'src)
+                   ;; (print src)
+                   ;; (print 'nec-reds)
+                   ;; (print nec-reds)
+                   ;; (print 'nec-passes)
+                   ;; (print nec-passes)
+                   ;; (print 'nec-passes-input)
+                   ;; ;; (print (group-ids-by-pass
+                   ;; ;;         graph src remltab-dep<))
+                   ;; (print 'ult-passes)
+                   ;; (print ult-passes)
+                   ;; (print 'ult-passes-input)
+                   ;; ;; (print (group-ids-by-pass
+                   ;; ;;         ;; must remove logical tables and previously
+                   ;; ;;         ;; processed reduction targets:
+                   ;; ;;         graph
+                   ;; ;;         src
+                   ;; ;;         remsrc-dep<))
+                   ;; (print 'collapsible-passes)
+                   ;; (print collapsible-passes)
+                   ;; ;; end debug
                    (dolist (pass collapsible-passes)
                      (dolist (p pass)
                        (push p processed-reds))

@@ -1,3 +1,6 @@
+- Solved bug in cl-ana.makeres-table; group-ids-by-pass needed to
+  remove targets prior to grouping into passes.
+
 + Need to add warning message in the case where an lfield is defined
   which causes circular dependencies.  Circular dependencies need
   detection and handling in general.
