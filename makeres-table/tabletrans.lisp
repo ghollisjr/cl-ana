@@ -1303,11 +1303,11 @@ true when given the key and value from ht."
                             (group-ids-by-pass
                              graph src
                              :dep< remltab-dep<
-                             :test (lambda (i)
-                                     (not
-                                      (or (not (member i nec-reds :test #'equal))
-                                          (ltab? (target-expr (gethash i graph))))))
-                             )))))
+                             :test
+                             (lambda (i)
+                               (not
+                                (or (not (member i nec-reds :test #'equal))
+                                    (ltab? (target-expr (gethash i graph)))))))))))
                         ;; passes relative to ultimate source:
                         (ult-passes
                          (remove
@@ -1335,13 +1335,13 @@ true when given the key and value from ht."
                               graph
                               src
                               :dep< remsrc-dep<
-                              :test (lambda (i)
-                                      (not
-                                       (or (member i processed-reds :test #'equal)
-                                           (ltab? (target-expr
-                                                   (gethash i graph)))
-                                           (target-stat (gethash i graph)))))
-                              ))))))
+                              :test
+                              (lambda (i)
+                                (not
+                                 (or (member i processed-reds :test #'equal)
+                                     (ltab? (target-expr
+                                             (gethash i graph)))
+                                     (target-stat (gethash i graph)))))))))))
                         ;; collapsible reductions of src:
                         (collapsible-passes
                          (mapcar (lambda (x y)
