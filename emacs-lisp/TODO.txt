@@ -1,0 +1,13 @@
++ Add support for autocompletion of result ids
+
+  To evaluate a form in the superior lisp, use the following:
+
+  (slime-eval `(swank:eval-and-grab-output lisp-code-as-string))
+
+  So, for example, to get the list of target ids in the current
+  project,
+
+  (slime-eval `(swank:eval-and-grab-output "(target-ids)"))
+
+  would return to emacs the list of target ids from the current
+  project.
