@@ -254,6 +254,6 @@ none are present."
                                :stat oldstat))))
     result))
 
-(deftransdeps #'macrotrans
+(defpropogator #'macrotrans
     (lambda (graph)
       (macrotrans graph)))

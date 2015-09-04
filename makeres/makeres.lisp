@@ -536,9 +536,11 @@ is."
 
 ;;;; Additional transformation-induced dependencies
 
+;; defunct
 (defparameter *trans->added-deps-fn*
   (make-hash-table :test 'eq))
 
+;; defunct
 (defmacro deftransdeps (trans fn)
   "Assigns function for finding additional transformation-induced
 dependencies for a given target in a graph.  Transformation-induced
@@ -552,6 +554,26 @@ returning a modified graph with each target having sufficiently many
 additional dependencies induced by the transformation to allow
 propogration via makeres-propogate!."
   `(setf (gethash ,trans *trans->added-deps-fn*)
+         ,fn))
+
+(defparameter *trans->propogator-fn*
+  (make-hash-table :test 'eq))
+
+(defmacro defpropogator (trans fn)
+  "Assigns function for finding additional transformation-induced
+dependencies for a given target in a graph.  Transformation-induced
+means any dependencies not found by searching the target expression
+directly for (res ...) forms.
+
+trans should be a graph transformation function.
+
+fn should be a function accepting one argument, a target graph, and
+returning a modified graph with each target having sufficiently many
+additional dependencies induced by the transformation to allow
+propogration via makeres-propogate!, as well as having the target
+status for each target be appropriate for makeres-propogate!, as the
+result graph is what will be checked, not the original target table."
+  `(setf (gethash ,trans *trans->propogator-fn*)
          ,fn))
 
 ;; Project creation macro
@@ -838,6 +860,7 @@ is given."
              (suppress-output
                (compile (compres-fname project-id) comp-form))))))))
 
+;; Defunct
 (defun added-dep-graph (graph)
   (let* ((trans-list
           (gethash (project)
@@ -849,15 +872,28 @@ is given."
                           trans-list))))
     (pipe-functions added-fns graph)))
 
+(defun transforms-propogate (graph)
+  "Propogates as makeres-propogate! would but for special cases which
+graph transformations must individually manage."
+  (let* ((trans-list
+          (gethash (project)
+                   *transformation-table*))
+         (propogators
+          (remove nil
+                  (mapcar (lambda (x)
+                            (gethash x *trans->propogator-fn*))
+                          trans-list))))
+    (pipe-functions propogators graph)))
+
 (defun makeres-propogate! ()
-  (let ((graph
-         (added-dep-graph (target-table))))
+  (let ((graph (transforms-propogate (target-table))))
     (loop
        for id being the hash-keys in graph
        for tar being the hash-values in graph
        do (when (null (target-stat tar))
             (loop
                for r in (res-dependents id graph)
+               when (gethash r (target-table))
                do (unsetresfn r))))))
 
 (defvar *sticky-pars*

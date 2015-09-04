@@ -104,8 +104,8 @@
    :lrestrans ; allows logical results
    :lres
    ;; Transformation utilities:
-   :*trans->added-deps-fn*
-   :deftransdeps
+   :*trans->propogator-fn*
+   :defpropogator
    ;; logres:
    :save-target
    :load-target
