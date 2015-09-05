@@ -1,6 +1,47 @@
-+ Major bug: Load tests/push-fields.lisp, run (makeres), (clrres) and
+- Major bug: Load tests/push-fields.lisp, run (makeres), (clrres) and
   then (makeres).  There is an unhandled memory fault in a call to
   table-load-next-row on the (src) reusable-table.
+
+  * FIX: Apparently reusable-table was not checking to see if a table
+    was actually open, and instead relying on its own tracking.
+    Adding to check for table-open-p fixed the bug, although it may
+    suggest a deeper problem in the logic.
+
+  More information:
+
+  * If either of the defres forms are compiled after the initial call
+    to makeres (regardless of before or after clrres), the problem
+    disappears for a few repeated runs of (clrres) (makeres).  If the
+    source form is recompiled before every (clrres) (makeres), then
+    the problem seems to be avoided altogether.
+
+  * The problem affects lfields.lisp as well, it seems to be a
+    fundamental bug in hdf-tables.
+
+  * Error message:
+
+HDF5-DIAG: Error detected in HDF5 (1.8.14) thread 0:
+#000: H5F.c line 781 in H5Fclose(): invalid file identifier
+major: Invalid arguments to routine
+minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.8.14) thread 0:
+#000: H5D.c line 983 in H5Dset_extent(): unable to set extend dataset
+major: Dataset
+minor: Unable to initialize object
+#001: H5Dint.c line 2172 in H5D__set_extent(): no write intent on file
+major: Dataset
+minor: Write failed
+HDF5-DIAG: Error detected in HDF5 (1.8.14) thread 0:
+#000: H5Dio.c line 271 in H5Dwrite(): can't prepare for writing data
+major: Dataset
+minor: Write failed
+#001: H5Dio.c line 352 in H5D__pre_write(): can't write data
+major: Dataset
+minor: Write failed
+#002: H5Dio.c line 636 in H5D__write(): no write intent on file
+major: Dataset
+minor: Write failed
+*** Error in `/usr/bin/sbcl': double free or corruption (!prev): 0x00007fffc8220a70 ***
 
 - Major bug: Current tabletrans does not allow separate push-fields
   forms in the reduction body.  Each push-fields form should be

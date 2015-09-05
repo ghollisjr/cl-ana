@@ -5,7 +5,7 @@
   which causes circular dependencies.  Circular dependencies need
   detection and handling in general.
 
-+ Changing an lfield definition currently does not effect any targets
+- Changing an lfield definition currently does not effect any targets
   in the target-table directly, and therefore propogation does not
   automatically recompute affected targets.  The transdeps system is
   in place, so maybe it could be used in conjunction with small

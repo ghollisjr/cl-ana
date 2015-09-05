@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -91,46 +91,46 @@
 ;; define high-level table access from files here
 (defun open-hdf-table (hdf-file dataset-name &key buffer-size)
   (labels ((get-dataset-length (dataset)
-	     (with-open-dataspace (dataspace dataset)
+             (with-open-dataspace (dataspace dataset)
                (let ((rank (h5sget-simple-extent-ndims dataspace)))
                  (with-foreign-objects ((dims 'hsize-t rank)
                                         (maxdims 'hsize-t rank))
                    (h5sget-simple-extent-dims dataspace dims maxdims)
                    (mem-aref dims 'hsize-t 0))))))
-    (with-foreign-string (cdataset-name dataset-name)
-      (let* ((dataset (h5dopen2 hdf-file cdataset-name +H5P-DEFAULT+))
-	     (typespec (dataset-read-typespec dataset))
-	     (cstruct (typespec->cffi-type typespec))
-	     (hdf-row-type (h5dget-type dataset))
-	     (buffer-size
-	      (if (null buffer-size)
-		  ;; get buffer-size from the dataset
-		  ;; chunk-size:
-                  ;; this needs cleaning up
-		  (let* ((create-plist (h5dget-create-plist dataset)))
-		    (with-foreign-object (chunkdims 'hsize-t 1)
-                      ;; this needs cleaning up
-		      (h5pget-chunk create-plist
-				    1
-				    chunkdims)
-		      (mem-aref chunkdims 'hsize-t 0)))
-		  buffer-size))
-	     (row-buffer
-	      (typespec-foreign-alloc typespec buffer-size)))
-	(make-instance 'hdf-table
-		       :field-names (typespec->field-names typespec)
-		       :field-specs (typespec->field-specs typespec)
-		       :row-buffer row-buffer
-                       :row-pointer
-                       (mem-aptr row-buffer
-                                 cstruct
-                                 0)
-		       :hdf-dataset dataset
-		       :hdf-row-type hdf-row-type
-		       :row-cstruct cstruct
-		       :buffer-size buffer-size
-		       :access-mode :read
-		       :nrows (get-dataset-length dataset))))))
+    (let* ((dataset (h5dopen2 hdf-file dataset-name +H5P-DEFAULT+))
+           (typespec (dataset-read-typespec dataset))
+           (cstruct (typespec->cffi-type typespec))
+           (hdf-row-type (h5dget-type dataset))
+           (buffer-size
+            (if (null buffer-size)
+                ;; get buffer-size from the dataset
+                ;; chunk-size:
+                ;; this needs cleaning up
+                (let* ((create-plist (h5dget-create-plist dataset)))
+                  (with-foreign-object (chunkdims 'hsize-t 1)
+                    ;; this needs cleaning up
+                    (h5pget-chunk create-plist
+                                  1
+                                  chunkdims)
+                    (mem-aref chunkdims 'hsize-t 0)))
+                buffer-size))
+           (row-buffer
+            (typespec-foreign-alloc typespec buffer-size)))
+      (make-instance 'hdf-table
+                     :field-names (typespec->field-names typespec)
+                     :field-specs (typespec->field-specs typespec)
+                     :row-buffer row-buffer
+                     :row-pointer
+                     (mem-aptr row-buffer
+                               cstruct
+                               0)
+                     :hdf-dataset dataset
+                     :hdf-row-type hdf-row-type
+                     :row-cstruct cstruct
+                     :buffer-size buffer-size
+                     :access-mode :read
+                     :nrows
+                     (get-dataset-length dataset)))))
 
 (defun create-hdf-table
     (hdf-file dataset-path names-specs &key (buffer-size 1000))
@@ -143,8 +143,8 @@
   (let* ((typespec (cons :compound names-specs))
 	 (cstruct (typespec->cffi-type typespec))
 	 (row-buffer ;; (foreign-alloc cstruct
-		     ;;    	    :count
-		     ;;    	    buffer-size)
+          ;;    	    :count
+          ;;    	    buffer-size)
           (typespec-foreign-alloc typespec buffer-size))
 	 (hdf-type (typespec->hdf-type typespec))
 	 (dataset
@@ -207,26 +207,26 @@ the dataset."
                                (dataspace-maxdims 'hsize-t 1)
                                (memdims 'hsize-t 1)
                                (memmaxdims 'hsize-t 1))
-	    (setf (mem-aref start 'hsize-t 0)
-                  (* buffer-size chunk-index))
-	    (setf (mem-aref stride 'hsize-t 0) 1)
-	    (setf (mem-aref count 'hsize-t 0) 1)
-	    (setf (mem-aref blck 'hsize-t 0) row-buffer-index)
-            (with-open-dataspace (dataspace dataset)
-              (h5sget-simple-extent-dims
-               dataspace dataspace-dims dataspace-maxdims)
-              (incf (mem-aref dataspace-dims 'hsize-t 0)
-                    row-buffer-index)
-              (h5dset-extent dataset dataspace-dims))
-            (with-open-dataspace (dataspace dataset)
-              (setf (mem-aref memdims 'hsize-t 0) row-buffer-index)
-              (setf (mem-aref memmaxdims 'hsize-t 0) row-buffer-index)
-              (with-create-dataspace (memspace 1 memdims memmaxdims)
-                (h5sselect-hyperslab
-                 dataspace :H5S-SELECT-SET start stride count blck)
-                (h5dwrite
-                 dataset hdf-type memspace
-                 dataspace +H5P-DEFAULT+ row-buffer))))))
+          (setf (mem-aref start 'hsize-t 0)
+                (* buffer-size chunk-index))
+          (setf (mem-aref stride 'hsize-t 0) 1)
+          (setf (mem-aref count 'hsize-t 0) 1)
+          (setf (mem-aref blck 'hsize-t 0) row-buffer-index)
+          (with-open-dataspace (dataspace dataset)
+            (h5sget-simple-extent-dims
+             dataspace dataspace-dims dataspace-maxdims)
+            (incf (mem-aref dataspace-dims 'hsize-t 0)
+                  row-buffer-index)
+            (h5dset-extent dataset dataspace-dims))
+          (with-open-dataspace (dataspace dataset)
+            (setf (mem-aref memdims 'hsize-t 0) row-buffer-index)
+            (setf (mem-aref memmaxdims 'hsize-t 0) row-buffer-index)
+            (with-create-dataspace (memspace 1 memdims memmaxdims)
+              (h5sselect-hyperslab
+               dataspace :H5S-SELECT-SET start stride count blck)
+              (h5dwrite
+               dataset hdf-type memspace
+               dataspace +H5P-DEFAULT+ row-buffer))))))
     ;; no type closing for now, it's a complete headache and is
     ;; causing problems with memoization etc.
     ;;(h5tclose hdf-type)

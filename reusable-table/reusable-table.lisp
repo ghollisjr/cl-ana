@@ -74,7 +74,8 @@ returns the table."
   (with-slots (raw-table creation-fn needs-reloading)
       table
     (when needs-reloading
-      (table-close raw-table)
+      (when (table-open-p raw-table)
+        (table-close raw-table))
       (setf raw-table (funcall creation-fn))
       (setf needs-reloading nil))
     (let ((status (table-load-next-row raw-table)))

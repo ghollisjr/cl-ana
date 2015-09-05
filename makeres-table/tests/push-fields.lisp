@@ -4,7 +4,7 @@
 
 (defproject push-fields
     "/home/ghollisjr/test/makeres-table/push-fields"
-  (list #'macrotrans #'tabletrans)
+  (list #'macrotrans #'tabletrans #'progresstrans)
   (fixed-cache 5))
 
 (setf *print-pretty* 10)

@@ -16,7 +16,7 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
-;;;; You may contact Gary Hollis (me!) via email at
+;;;; You may contact Gary Hollis via email at
 ;;;; ghollisjr@gmail.com
 
 (in-package :cl-ana.hdf-utils)

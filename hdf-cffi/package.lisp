@@ -83,6 +83,8 @@
    :cffi-native-type
    :hdf-native-type
    ;; hdf functions:
+   :h5open
+   :h5close
    :h5fcreate
    :h5fopen
    :h5pcreate

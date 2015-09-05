@@ -71,6 +71,7 @@
 ;;; (:array :double 20)
 
 ;; Creates cstruct types recursively as per the typespec
+
 (defun-memoized typespec->cffi-type (typespec)
   (labels
       ((make-slot-spec (name-cstruct)

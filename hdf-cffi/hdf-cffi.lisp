@@ -135,6 +135,10 @@
 
 ;;; hdf functions:
 
+(defcfun "H5open" herr-t)
+
+(defcfun "H5close" herr-t)
+
 (defcfun "H5Fcreate" hid-t
   (filename :string)
   (flags :uint)

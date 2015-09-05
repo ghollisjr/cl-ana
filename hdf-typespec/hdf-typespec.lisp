@@ -22,6 +22,7 @@
 (in-package :cl-ana.hdf-typespec)
 
 ;; defines the structure as an hdf type if necessary from the typespec.
+
 (defun-memoized typespec->hdf-type (typespec)
   (if (listp typespec)
       ;; handle compound and array types

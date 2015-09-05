@@ -1458,134 +1458,134 @@ true when given the key and value from ht."
 ;; Propogation strategy: Create new targets for each lfield and set
 ;; its status based on whether it has been changed.
 (defpropogator #'tabletrans
-  (lambda (graph)
-    (let ((graph (copy-target-table graph))
-          (changed-lfields
-           (changed-lfields))
-          (tab-lfield->gsym (make-hash-table :test 'equal)))
-      ;; Create tab-lfield->gsym map
-      (loop
-         for tab being the hash-keys
-         in (gethash (project) *proj->tab->lfields*)
-         for lfields being the hash-values
-         in (gethash (project) *proj->tab->lfields*)
-         do (loop
-               for lf in lfields
-               do (setf (gethash (list tab (car lf))
-                                 tab-lfield->gsym)
-                        (gsym 'tabletrans))))
+    (lambda (graph)
+      (let ((graph (copy-target-table graph))
+            (changed-lfields
+             (changed-lfields))
+            (tab-lfield->gsym (make-hash-table :test 'equal)))
+        ;; Create tab-lfield->gsym map
+        (loop
+           for tab being the hash-keys
+           in (gethash (project) *proj->tab->lfields*)
+           for lfields being the hash-values
+           in (gethash (project) *proj->tab->lfields*)
+           do (loop
+                 for lf in lfields
+                 do (setf (gethash (list tab (car lf))
+                                   tab-lfield->gsym)
+                          (gsym 'tabletrans))))
 
-      ;; Create lfield targets
-      (loop
-         for tab-lfield being the hash-keys in tab-lfield->gsym
-         for gsym being the hash-values in tab-lfield->gsym
-         do
-           (destructuring-bind (tab lfield) tab-lfield
-             (let* ((lfields (gethash tab
-                                      (gethash (project)
-                                               *proj->tab->lfields*)))
-                    (lfield-map
-                     (let ((result (make-hash-table :test 'eq)))
-                       (loop
-                          for lfield in lfields
-                          do (setf (gethash (first lfield) result)
-                                   `(progn ,@(rest lfield))))
-                       result)))
-               (labels ((lfield-deps (lfield)
-                          ;; finds all lfields referred to by lfield
-                          ;; expression including the lfield itself
-                          (let* ((expr (gethash lfield lfield-map))
-                                 (referred
-                                  (remove-if-not (lambda (field)
-                                                   (gethash field lfield-map))
-                                                 (cl-ana.makeres::find-dependencies
-                                                  expr
-                                                  'field))))
-                            (when referred
-                              (append referred
-                                      (mapcan #'lfield-deps
-                                              referred))))))
-                 (setf (gethash gsym graph)
-                       (make-target
-                        gsym
-                        `(progn
-                           ',lfield
-                           ,@(loop
-                                for lfdep
-                                in (lfield-deps lfield)
-                                collecting `(res ,(gethash (list tab lfdep)
-                                                           tab-lfield->gsym))))
-                        :stat
-                        ;; (not (not x)) is an easy way of only getting
-                        ;; T or NIL from x
-                        (not
-                         (not (not (member lfield
-                                           (gethash tab
-                                                    changed-lfields)
-                                           :test #'eq))))))))))
-      (loop
-         for id being the hash-keys in graph
-         for tar being the hash-values in graph
-         when (table-reduction? (target-expr tar))
-         do (let* ((expr (target-expr tar))
-                   (src (unres (table-reduction-source expr)))
-                   (lfields
-                    (gethash src
-                             (gethash (project)
-                                      *proj->tab->lfields*)))
-                   (lfield-map
-                    (let ((result (make-hash-table :test 'eq)))
-                      (loop
-                         for lfield in lfields
-                         do (setf (gethash (first lfield) result)
-                                  `(progn ,@(rest lfield))))
-                      result)))
-              (labels ((lfield-deps (lfield)
-                         ;; finds all lfields referred to by lfield
-                         ;; expression including the lfield itself
-                         (let* ((expr (gethash lfield lfield-map))
-                                (referred
-                                 (remove-if-not (lambda (field)
-                                                  (gethash field lfield-map))
-                                                (cl-ana.makeres::find-dependencies
-                                                 expr
-                                                 'field))))
-                           (when referred
-                             (append referred
-                                     (mapcan (lambda (x)
-                                               (lfield-deps x))
-                                             referred))))))
-                (let* ((lfield-deps
-                        (list->set
-                         (mapcan
-                          (lambda (x)
-                            (cons x (lfield-deps x)))
-                          (remove-if-not (lambda (field)
-                                           (gethash field lfield-map))
-                                         (cl-ana.makeres::find-dependencies
-                                          expr
-                                          'field)))
-                         #'eq))
-                       (lfield-dep-merged-expr
-                        `(progn ,@(loop
-                                     for ld in lfield-deps
-                                     collecting (gethash ld lfield-map))))
-                       (lfield-res-deps
-                        (append
-                         (mapcar (lambda (lf)
-                                   (gethash (list src lf)
-                                            tab-lfield->gsym))
-                                 lfield-deps)
-                         (cl-ana.makeres::find-dependencies
-                          lfield-dep-merged-expr
-                          'res))))
-                  (symbol-macrolet ((deps
-                                     (target-deps tar)))
-                    (setf deps
-                          (list->set (append deps
-                                             lfield-res-deps)
-                                     #'equal)))))))
-      graph)))
+        ;; Create lfield targets
+        (loop
+           for tab-lfield being the hash-keys in tab-lfield->gsym
+           for gsym being the hash-values in tab-lfield->gsym
+           do
+             (destructuring-bind (tab lfield) tab-lfield
+               (let* ((lfields (gethash tab
+                                        (gethash (project)
+                                                 *proj->tab->lfields*)))
+                      (lfield-map
+                       (let ((result (make-hash-table :test 'eq)))
+                         (loop
+                            for lfield in lfields
+                            do (setf (gethash (first lfield) result)
+                                     `(progn ,@(rest lfield))))
+                         result)))
+                 (labels ((lfield-deps (lfield)
+                            ;; finds all lfields referred to by lfield
+                            ;; expression including the lfield itself
+                            (let* ((expr (gethash lfield lfield-map))
+                                   (referred
+                                    (remove-if-not (lambda (field)
+                                                     (gethash field lfield-map))
+                                                   (cl-ana.makeres::find-dependencies
+                                                    expr
+                                                    'field))))
+                              (when referred
+                                (append referred
+                                        (mapcan #'lfield-deps
+                                                referred))))))
+                   (setf (gethash gsym graph)
+                         (make-target
+                          gsym
+                          `(progn
+                             ',lfield
+                             ,@(loop
+                                  for lfdep
+                                  in (lfield-deps lfield)
+                                  collecting `(res ,(gethash (list tab lfdep)
+                                                             tab-lfield->gsym))))
+                          :stat
+                          ;; (not (not x)) is an easy way of only getting
+                          ;; T or NIL from x
+                          (not
+                           (not (not (member lfield
+                                             (gethash tab
+                                                      changed-lfields)
+                                             :test #'eq))))))))))
+        (loop
+           for id being the hash-keys in graph
+           for tar being the hash-values in graph
+           when (table-reduction? (target-expr tar))
+           do (let* ((expr (target-expr tar))
+                     (src (unres (table-reduction-source expr)))
+                     (lfields
+                      (gethash src
+                               (gethash (project)
+                                        *proj->tab->lfields*)))
+                     (lfield-map
+                      (let ((result (make-hash-table :test 'eq)))
+                        (loop
+                           for lfield in lfields
+                           do (setf (gethash (first lfield) result)
+                                    `(progn ,@(rest lfield))))
+                        result)))
+                (labels ((lfield-deps (lfield)
+                           ;; finds all lfields referred to by lfield
+                           ;; expression including the lfield itself
+                           (let* ((expr (gethash lfield lfield-map))
+                                  (referred
+                                   (remove-if-not (lambda (field)
+                                                    (gethash field lfield-map))
+                                                  (cl-ana.makeres::find-dependencies
+                                                   expr
+                                                   'field))))
+                             (when referred
+                               (append referred
+                                       (mapcan (lambda (x)
+                                                 (lfield-deps x))
+                                               referred))))))
+                  (let* ((lfield-deps
+                          (list->set
+                           (mapcan
+                            (lambda (x)
+                              (cons x (lfield-deps x)))
+                            (remove-if-not (lambda (field)
+                                             (gethash field lfield-map))
+                                           (cl-ana.makeres::find-dependencies
+                                            expr
+                                            'field)))
+                           #'eq))
+                         (lfield-dep-merged-expr
+                          `(progn ,@(loop
+                                       for ld in lfield-deps
+                                       collecting (gethash ld lfield-map))))
+                         (lfield-res-deps
+                          (append
+                           (mapcar (lambda (lf)
+                                     (gethash (list src lf)
+                                              tab-lfield->gsym))
+                                   lfield-deps)
+                           (cl-ana.makeres::find-dependencies
+                            lfield-dep-merged-expr
+                            'res))))
+                    (symbol-macrolet ((deps
+                                       (target-deps tar)))
+                      (setf deps
+                            (list->set (append deps
+                                               lfield-res-deps)
+                                       #'equal)))))))
+        graph)))
 
 ;; Logging lfields
 
@@ -1631,6 +1631,9 @@ disk"
 (defun changed-lfields ()
   "Returns lfields which are different from those logged.  Result is a
 hash-table mapping from table to a list of changed lfield symbols."
+  (when (not (gethash (project) *proj->tab->lfields*))
+    (setf (gethash (project) *proj->tab->lfields*)
+          (make-hash-table :test 'equal)))
   (let* ((tab->lfields (gethash (project) *proj->tab->lfields*))
          (tab->logged-lfields
           (load-lfields))
