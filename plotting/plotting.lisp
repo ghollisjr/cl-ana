@@ -322,6 +322,13 @@ layout specified in the page.")
     :documentation "Sets the x-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
     tics function to generate string(s).")
+   (x2-tics
+    :initarg :x2-tics
+    :initform nil
+    :accessor plot2d-x2-tics
+    :documentation "Sets the x2-axis tic options.  Can be a single
+    string or a list of strings which will be added together.  Use
+    tics function to generate string(s).")
    (y-range
     :initarg :y-range
     :initform (cons "*" "*")
@@ -333,6 +340,11 @@ layout specified in the page.")
     :initform nil
     :accessor plot2d-y-tics
     :documentation "y-axis tics.  See x-tics.")
+   (y2-tics
+    :initarg :y2-tics
+    :initform nil
+    :accessor plot2d-y2-tics
+    :documentation "y2-axis tics.  See x-tics.")
    (cb-range
     :initarg :cb-range
     :initform (cons "*" "*")
@@ -409,8 +421,10 @@ initargs from key-args."
        (append
         (list "unset xlabel"
               "unset x2label"
+              "unset x2tics"
               "unset ylabel"
               "unset y2label"
+              "unset y2tics"
               "set nologscale x"
               "set nologscale y"
               "set nologscale zcb")
@@ -465,17 +479,21 @@ initargs from key-args."
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range
                x-tics
+               x2-tics
                y-range
                y-tics
+               y2-tics
                cb-range
                cb-tics)
       p
     (with-output-to-string (s)
       ;; tics
       (format s "~a" (merge-tics :x x-tics))
+      (format s "~a" (merge-tics :x2 x2-tics))
       (format s "~a" (merge-tics :y y-tics))
+      (format s "~a" (merge-tics :y2 y2-tics))
       (format s "~a" (merge-tics :cb cb-tics))
-
+      
       (if cb-range
           (format s "set cbrange [~a:~a]~%"
                   (car cb-range)
@@ -795,8 +813,11 @@ or :cb"
   (let ((axis
          (case axis
            (:x "xtics")
+           (:x2 "x2tics")
            (:y "ytics")
+           (:y2 "y2tics")
            (:z "ztics")
+           (:z2 "z2tics")
            (:cb "cbtics"))))
     (cond
       ((null tics)
@@ -828,7 +849,7 @@ or :cb"
                ;;; be used at a time.  To add manual-labels to
                ;;; automatic tics, supply separate tic strings to the
                ;;; plot in a list.
-               
+
                ;; sampling can be
                ;;
                ;; 1. A number for the increment

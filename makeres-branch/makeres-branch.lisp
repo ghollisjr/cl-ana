@@ -127,7 +127,7 @@ branch, (branch branch-id) is replaced to all levels"
              (cond
                ((null tree) nil)
                ((equal tree '(branch))
-                `',value)
+                value)
                ((atom tree)
                 tree)
                ((eq (first tree) 'branch)
@@ -138,7 +138,7 @@ branch, (branch branch-id) is replaced to all levels"
                (t (mapcar #'rec tree)))))
     (sublis (loop
                for id in branch-ids
-               collecting `((branch ,id) . ',value))
+               collecting `((branch ,id) . ,value))
             (rec tree)
             :test #'equal)))
 
