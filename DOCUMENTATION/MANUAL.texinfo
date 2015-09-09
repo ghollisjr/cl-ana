@@ -4,6 +4,9 @@
 @settitle cl-ana Manual
 @c %**end of header
 
+@c Settings
+@paragraphindent none
+
 @copying
 This is the documentation for cl-ana.
 
@@ -34,6 +37,7 @@ the github webpage: www.github.com/ghollisjr/cl-ana
 
 @menu
 * Features::            Description of provided functionality
+* Installation::        Installation
 * User's Guide::        Tutorial-style user's guide
 * Manual::              Complete manual
 * Index::               Index
@@ -43,7 +47,128 @@ the github webpage: www.github.com/ghollisjr/cl-ana
 @chapter Features
 @cindex Features
 
-The features are@dots{}
+cl-ana is built in two layers.  The lowest layer is completely
+extendible via defining classes or methods of generic functions and
+supports:
+
+@itemize
+@item
+Generic math: Comes with MATLAB-like array mathematics and is
+extendable.
+
+@item
+Tabular data analysis: Supports reading datasets stored in HDF5 files,
+Ntuple files as used by CERN's PAW and GSL, CSV files, and can be
+extended.
+
+@item
+Binned data analysis: Supports various kinds of histograms and
+arithmetic on histograms.
+
+@item
+Plotting: Provides a Lisp interface to gnuplot and comes with methods
+predefined for various data types.
+
+@item
+Nonlinear least-squares fitting: Provides a clean front end to the
+fitting capabilities of GSLL and comes with methods predefined for
+various data types.
+@end itemize
+
+The higher level provides a data analysis environment with dependency
+management, result logging, and the ability to define special
+operators which allow definition of powerful operators and
+optimizations.  At the time of the writing of this manual, there is a
+significant gap between the capabilities of widely available software
+which supports small datasets versus large datasets.  Spreadsheet
+software provides dependency management (e.g. recalculation based on
+changed definitions) and logging of computations to disk without
+having to explicitly program these abilities into the spreadsheet
+``program'', while at the moment the tools available for large
+datasets are more or less compilers and text editors (i.e. you have to
+write your own code).
+
+cl-ana bridges this gap by providing not only dependency management
+and result logging, but also a novel approach to exposing the compiler
+to the user which allows for powerful new operators and optimizations:
+the transformation pipeline.  The user selects whatever optimizations
+or special operators he/she wishes to use in a project, and can define
+custom transformations as well.  The most notable transformations
+included with cl-ana are
+
+@itemize
+@item
+makeres-table: Provides optimizations and operators for processing
+tabular data.  Supports all table types from the low level of cl-ana.
+
+@item
+makeres-branch: Provides branching computations, i.e. parallel
+computations with automatic collection and classification of results.
+@end itemize
+
+The related project makeres-cpp provides a transformation which
+provides analogous operators to those in makeres-table, but which
+allows orders of magnitude faster code by generating C++ code and
+utilizing CERN's ROOT to provide basic analysis functionality as
+opposed to cl-ana's lower level.  Automatic conversion between results
+calculated in the C++ programs is provided for histograms, lists, and
+can easily be extended.
+
+@node Installation
+@chapter Installation
+@cindex Installation
+
+cl-ana is Common Lisp software, so you need a Common Lisp
+implementation.  The author strongly recommends SBCL
+(http://www.sbcl.org/), which is available for Linux and easily
+installed for many distributions, although there are many fine
+implementations available for download or purchase.
+
+The non-Lisp dependencies are:
+
+@itemize
+@item
+HDF5 (https://www.hdfgroup.org/HDF5/)
+@item
+GSL (http://www.gnu.org/software/gsl/)
+@item
+gnuplot (http://www.gnuplot.info/)
+@end itemize
+
+The Lisp dependencies are:
+
+@itemize
+@item
+CFFI (http://common-lisp.net/project/cffi/)
+@item
+GSLL (http://common-lisp.net/project/gsll/)
+@item
+Alexandria (http://common-lisp.net/project/alexandria/)
+@item
+iterate (http://common-lisp.net/project/iterate/)
+@item
+antik (http://www.common-lisp.net/project/antik/)
+@item
+closer-mop (http://common-lisp.net/project/closer/closer-mop.html)
+@item
+cl-csv (https://github.com/AccelerationNet/cl-csv)
+@item
+gnuplot (http://www.gnuplot.info/)
+@item
+cl-fad (http://weitz.de/cl-fad/)
+@item
+external-program (http://github.com/sellout/external-program)
+@end itemize
+
+The easiest way to install the Lisp dependencies is via quicklisp
+(http://www.quicklisp.org/).  The install.lisp can be loaded into your
+Lisp image once you've installed quicklisp and will automatically
+install all the Lisp components of cl-ana via quicklisp.
+
+cl-ana itself is available via quicklisp, which normally provides
+appropriately up-to-date software, but since cl-ana is under rapid
+development it is often out of date.  Therefore the easiest method is
+to use the install.lisp file once you've installed quicklisp.
 
 @node User's Guide
 @chapter User's Guide
