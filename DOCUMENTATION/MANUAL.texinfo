@@ -47,9 +47,8 @@ the github webpage: www.github.com/ghollisjr/cl-ana
 @chapter Features
 @cindex Features
 
-cl-ana is built in two layers.  The lowest layer is completely
-extendible via defining classes or methods of generic functions and
-supports:
+cl-ana is built in two layers.  The lowest layer is extendible via
+defining classes or methods of generic functions and supports:
 
 @itemize
 @item
