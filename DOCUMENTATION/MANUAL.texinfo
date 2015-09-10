@@ -10,7 +10,7 @@
 @copying
 This is the documentation for cl-ana.
 
-Copyright @copyright{} 2013, 2014 Gary Hollis
+Copyright @copyright{} 2013-2015 Gary Hollis
 @end copying
 
 @titlepage
@@ -29,10 +29,11 @@ Copyright @copyright{} 2013, 2014 Gary Hollis
 This is the manual and user's guide for cl-ana, a free (GPL) Common
 Lisp data analysis library.
 
-@noindent Contact the project maintainer Gary Hollis at: ghollisjr@@gmail.com
+Contact the project maintainer Gary Hollis at: ghollisjr@@gmail.com
 
-@noindent This documentation is distributed with the source code as well as on
+This documentation is distributed with the source code as well as on
 the github webpage: www.github.com/ghollisjr/cl-ana
+
 @end ifnottex
 
 @menu
@@ -75,8 +76,8 @@ various data types.
 @end itemize
 
 The higher level provides a data analysis environment with dependency
-management, result logging, and the ability to define special
-operators which allow definition of powerful operators and
+management, transparent result logging, and the ability to define
+special operators which allow definition of powerful operators and
 optimizations.  At the time of the writing of this manual, there is a
 significant gap between the capabilities of widely available software
 which supports small datasets versus large datasets.  Spreadsheet
@@ -93,7 +94,7 @@ to the user which allows for powerful new operators and optimizations:
 the transformation pipeline.  The user selects whatever optimizations
 or special operators he/she wishes to use in a project, and can define
 custom transformations as well.  The most notable transformations
-included with cl-ana are
+included with cl-ana are:
 
 @itemize
 @item
@@ -111,7 +112,7 @@ allows orders of magnitude faster code by generating C++ code and
 utilizing CERN's ROOT to provide basic analysis functionality as
 opposed to cl-ana's lower level.  Automatic conversion between results
 calculated in the C++ programs is provided for histograms, lists, and
-can easily be extended.
+can be extended to other types.
 
 @node Installation
 @chapter Installation
@@ -169,11 +170,127 @@ appropriately up-to-date software, but since cl-ana is under rapid
 development it is often out of date.  Therefore the easiest method is
 to use the install.lisp file once you've installed quicklisp.
 
+Note: libffi (https://sourceware.org/libffi/) is required at least by CFFI
+
 @node User's Guide
 @chapter User's Guide
 @cindex User's Guide
 
-This is the user's guide@dots{}
+cl-ana is Common Lisp software, which means that the vast majority of
+people for whom it would be a useful library don't know the language.
+Therefore, this guide combines information about how to use cl-ana
+specifically as well as the basics of Lisp and how to use widely
+available free tools to best effect.
+
+Peter Seibel's @i{Practical Common Lisp}
+(http://www.gigamonkeys.com/book/) is hands-down the best single
+resource for starting to learn Common Lisp I've come across.  Paul
+Graham's @i{On Lisp} (http://www.paulgraham.com/onlisp.html) teaches
+you how powerful macros can be, and Doug Hoyte's @i{Let Over Lambda}
+(http://letoverlambda.com/) provides additional examples of how you
+can use Common Lisp's features creatively to powerful effect.
+Supplementing the information in these books with your search engine
+of choice and the will to learn will make you a capable Lisp
+programmer.
+
+What follows is humorous experience that may result in one learning
+how to make use of Common Lisp and cl-ana.
+
+@menu
+@c Basic information on lisp, e.g. REPL, etc.
+* Hazing::                 For those uninitiated in the Lisp dark arts
+@c Commonly used software, e.g. Emacs + SLIME, SBCL, etc.
+* Armory::                 The weapons of war
+@c Basic Lisp programming
+* Basic Training::         This is my rifle, this is my gun
+@c Macros
+* Red Pill::               See the matrix
+@end menu
+
+@node Hazing
+@section Hazing
+@cindex Hazing
+
+Welcome.  Those of you who have heard of Common Lisp may doubt the
+rumors of its power.  Doubt no more brothers.  The ancient computer
+scientist John McCarthy discovered something very powerful in the
+depths of MIT.  The faithful have studied and found ways to harness
+its power in the years that followed, culminating in two churches:
+Common Lisp (https://common-lisp.net/) and Scheme
+(http://www.schemers.org/), although there are rumors that there is a
+growing mystery cult, Clojure (http://clojure.org/), hiding in the
+shadows.
+
+The Church of Scheme and their followers, known as Schemers, strive
+for the highest purity, obstaining from sullying themselves with the
+problems of common people.  The Church of Common Lisp, whose followers
+are known as Lispers, fancy themselves to be pragmatic and have
+sacrificed purity for the sake of providing assistance to the hapless
+programmers of the world.  No one knows exactly what adherents to the
+Cult of Clojure have in mind.
+
+The basic truths of Lisp are common to all these sects, and they are
+
+@enumerate
+@item
+The REPL: Lisp code is entered into an interactive environment called
+the Read Eval Print Loop.
+@item
+The list: Lisp programs are made of lists.  The first element of a
+list is the operator which gives meaning to the expression, and the
+rest that follow are the arguments to the operator.
+@end enumerate
+
+These truths, simple as they are, are the ultimate source of Lisp's
+power.  Each church of Lisp extends this power by having additional
+features.
+
+@node Armory
+@section Armory
+@cindex Armory
+
+If you're still reading this, then you truly want to learn how to use
+cl-ana.  You've passed the first test; enter the armory.
+
+First: your Lisp implementation.  SBCL (http://www.sbcl.org/) is at
+the moment the only implementation completely supported by cl-ana.
+SBCL is available for POSIX platforms like Linux and Mac OS X,
+although there is only experimental support for Windows.
+
+Next is your text editor/operating system, Emacs
+(https://www.gnu.org/software/emacs/).  Anywhere else you could use
+whatever you like to write code, but nothing comes close to Emacs and
+SLIME (https://common-lisp.net/project/slime/) for writing and running
+Common Lisp code.
+
+@ref{Installation} once you have SBCL, Emacs and SLIME installed for
+installing the software dependencies of cl-ana.
+
+ASDF (https://common-lisp.net/project/asdf/) is the primary way Lisp
+software dependencies are managed.  The easiest way to allow all of
+your personal code to be found is to create a file located at
+
+~/.config/common-lisp/source-registry.conf.d/projects.conf
+
+with the line
+
+(:tree (:home ``path/to/source/directory''))
+
+denoting that any ASDF projects located under
+~/path/to/source/directory/ are available to be loaded.
+
+@node Basic Training
+@section Basic Training
+@cindex Basic Training
+
+Now that you have the proper tools, it's time to get acquainted with
+them.  
+
+@node Red Pill
+@section Red Pill
+@cindex Red Pill
+
+test
 
 @node Manual
 @chapter Manual
