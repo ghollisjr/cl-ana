@@ -193,8 +193,18 @@ Supplementing the information in these books with your search engine
 of choice and the will to learn will make you a capable Lisp
 programmer.
 
-What follows is humorous experience that may result in one learning
-how to make use of Common Lisp and cl-ana.
+@menu
+* Lisp Basics::                 Prepare thyself
+* cl-ana Introduction::         Basically an advert for cl-ana
+* cl-ana Basic Libraries::      cl-ana's brick and mortar
+* cl-ana Analysis Framework::   How to really use cl-ana
+@end menu
+
+@node Lisp Basics
+@section Lisp Basics
+@cindex Lisp Basics
+
+Are you sure you want this?
 
 @menu
 @c Basic information on lisp, e.g. REPL, etc.
@@ -208,7 +218,7 @@ how to make use of Common Lisp and cl-ana.
 @end menu
 
 @node Hazing
-@section Hazing
+@subsection Hazing
 @cindex Hazing
 
 Welcome.  Those of you who have heard of Common Lisp may doubt the
@@ -246,7 +256,7 @@ power.  Each church of Lisp extends this power by having additional
 features.
 
 @node Armory
-@section Armory
+@subsection Armory
 @cindex Armory
 
 If you're still reading this, then you truly want to learn how to use
@@ -280,17 +290,156 @@ denoting that any ASDF projects located under
 ~/path/to/source/directory/ are available to be loaded.
 
 @node Basic Training
-@section Basic Training
+@subsection Basic Training
 @cindex Basic Training
 
 Now that you have the proper tools, it's time to get acquainted with
-them.  
+them.  Open Emacs and hit the @kbd{F9} key, or alternatively use the
+command @kbd{M-x slime}.  You should now have an SBCL REPL in Emacs
+via SLIME.  Type
+
+@code{"Hello World!"}
+
+into the REPL.  Congrats on your hello world program.  Strings in
+Common Lisp are denoted by text inside double quotes, as you just
+entered into the REPL.  There are many types provided out of the box
+by Common Lisp, but the most important in practice are (in no
+particular order)
+
+@itemize
+@item
+Lists
+@item
+Symbols
+@item
+Strings
+@item
+Numbers
+@item
+Arrays
+@item
+Hash tables
+@item
+Functions
+@item
+Streams
+@end itemize
+
+LISP originally stood for LISt Programming, and lists still play a
+fundamental role in all Lisp programming as they provide the syntax.
+Accordingly, data types are broadly divided into two categories: Lists
+and Atoms, where the only confusing bit comes from the fact that the
+empty list is both a list and an atom.  As your first non-trivial
+code, enter
+
+@code{(+ 2 2)}
+
+Lisp syntax works as follows: Lisp programs are made of expressions.
+Expressions are either atoms or lists, and expressions always return
+at least one value when evaluated.  A list begins and ends with
+parentheses, and the elements of the list are separated by whitespace.
+The first element of the list is the operator, and the proceeding
+elements are the arguments to the operator.  So, in the above example,
+you typed in the list @code{(+ 2 2)} with @code{+}, @code{2} and
+@code{2} as the elements.  Lisp saw that the first element was a valid
+operator, in this case the addition function, and supplied the value
+@code{2} for both of the arguments, resulting in the value @code{4}
+being returned.
+
+Symbols are of critical importance to Lisp programming, but are
+typically nonexistant in other programming languages.  Symbols are
+special kinds of strings which are used to denote variable and
+function names, but they belong to packages (i.e. groups of symbols)
+and their values can be operated on.  For example, the function for
+addition has the symbol @code{+}, and this symbol can be returned to
+you by entering the code
+
+@code{(quote +)}
+
+@code{quote} is a special operator which returns whatever code you
+enter as its argument as-is with no evaluation.  There is a convenient
+shorthand for the @code{quote} operator: Type a single quote before
+any expression to have Lisp transparently embed it inside a quote
+operator.  E.g.,
+
+@code{'+}
+
+would be equivalent to what we did before.  Symbols are treated
+differently than other atoms.  If a symbol is the first element of a
+list to be evaluated, then Lisp checks to see if there is an operator
+with the same name as that symbol.  If there is, the corresponding
+operator is applied; else an error is signalled.  Atoms to be
+evaluated which are not symbols are generally returned as-is, whereas
+symbols to be evaluated are checked to see if there is a value bound
+to that symbol; if so, then the value is returned, otherwise an error
+is signalled.  So Lisp's variables and functions differ in subtle ways
+from the way most languages handle them, and the reasons for this are
+clearer once one is more familiar with the language.
+
+As these concepts are best understood through application, we proceed
+with examples.
+
+Functions are defined via @code{defun}.  To define a hello-world function,
+
+@code{(defun hello-world () (print "Hello, World!"))}
+
+The first argument to @code{defun} is the function symbol, the second
+is a list of argument specifications, and the rest of the arguments
+comprise the body of the function.  The body is executed expression by
+expression, returning the value of the last expression as the result
+value of the function.  So, a function which prints a number specified
+by the user could be defined as
+
+@code{(defun printnum (number) (print number))}
+
+and would be called as e.g.
+
+@code{(printnum 7)}
+
+There are a plethora of functions available for manipulating the
+various types provided by Common Lisp, and in addition there are two
+mechanisms for defining your own types, @code{defstruct} and
+@code{defclass}, which differ in the degree of control the user has
+over the types, with @code{defclass} being much more powerful.
+
+At this point it is highly recommended to at least work through some
+of the early chapters of Practical Common Lisp to prepare for
+metaprogramming.
 
 @node Red Pill
-@section Red Pill
+@subsection Red Pill
 @cindex Red Pill
 
-test
+Metaprogramming is the most neglected powerful programming concept at
+present.  Virtually none of the new fashionable languages support
+practical metaprogramming, and this is mostly due to the fact that the
+more complex a language's syntax, the less practical metaprogramming
+becomes.  Python is an excellent example of this.
+
+So what is metaprogramming?  Metaprogramming is writing code which
+processes other code.  Put simply, the programmer is allowed direct
+access to the compiler, and can define new operators which have the
+same level of control over software as the built-in operators
+providing conditional executation, loop constructs, special-case
+syntax, etc.
+
+@node cl-ana Introduction
+@section cl-ana Introduction
+@cindex cl-ana Introduction
+
+Introduction to cl-ana
+
+@node cl-ana Basic Libraries
+@section cl-ana Basic Libraries
+@cindex cl-ana Basic Libraries
+
+Basic libraries
+
+@node cl-ana Analysis Framework
+@section cl-ana Analysis Framework
+@cindex cl-ana Analysis Framework
+
+Analysis framework
 
 @node Manual
 @chapter Manual
