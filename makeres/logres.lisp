@@ -425,6 +425,7 @@ log."
            (t nil)))
     (loop
        for r being the hash-keys in unset
+       when (gethash r (target-table))
        do (unsetresfn r))
     nil))
 
