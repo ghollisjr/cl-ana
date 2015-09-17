@@ -668,6 +668,53 @@ parameters."
                           :stat ,stat))
        ',id)))
 
+(defun defresfn (id expr)
+  "Defines a result target with id and expression"
+  (let* ((tartab (target-table *project-id*))
+         (oldtar (gethash id tartab))
+         (val (if oldtar
+                  (target-val oldtar)
+                  nil))
+         ;; statuses are reset
+         (stat nil))
+    (setf (gethash id tartab)
+          (make-target id (if (or (not (listp expr))
+                                  (not (eq (first expr) 'progn)))
+                              `(progn ,expr)
+                              expr)
+                       :val val
+                       :stat stat))
+    id))
+
+(defun defresfn-uniq (id expr)
+  "Defines a result target with id and expression"
+  (let* ((tartab (target-table *project-id*))
+         (oldtar (gethash id tartab))
+         (val (if oldtar
+                  (target-val oldtar)
+                  nil))
+         ;; statuses are reset
+         (stat nil))
+    (setf (gethash id tartab)
+          (make-target id (if (or (not (listp expr))
+                                  (not (eq (first expr) 'progn)))
+                              `(progn ,expr)
+                              expr)
+                       :val val
+                       :stat stat))
+    id))
+
+(defmacro defres-uniq (id &body body)
+  "Only defines the target if the expression would be different from
+that already in the target table."
+  (alexandria:with-gensyms (bod)
+    `(let ((,bod `(progn ,@',body)))
+       (when (or (not (gethash ',id (target-table)))
+                 (not (equal (target-expr
+                              (gethash ',id (target-table)))
+                             ,bod)))
+         (defres ,id ,@body)))))
+
 (defmacro undefres (&rest res)
   "Undefines result targets"
   `(progn

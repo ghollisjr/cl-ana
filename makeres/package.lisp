@@ -88,6 +88,7 @@
    :defpars
    :undefpars
    :defres
+   :defres-uniq
    :undefres
    :setresfn
    :setres
