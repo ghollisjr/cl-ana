@@ -1124,15 +1124,19 @@ list args"
 ;; Inspects target table to see if there are spurious references to
 ;; targets
 
-(defun checkres ()
-  (loop
-     for id being the hash-keys in (target-table)
-     for tar being the hash-values in (target-table)
-     do (loop
-           for dep in (target-deps tar)
-           do (when (not (gethash dep (target-table)))
-                (format t "~s: ~s not present in target-table~%"
-                        id dep)))))
+(defun checkres (&optional target-table)
+  (let ((target-table
+         (if target-table
+             target-table
+             (target-table))))
+    (loop
+       for id being the hash-keys in target-table
+       for tar being the hash-values in target-table
+       do (loop
+             for dep in (target-deps tar)
+             do (when (not (gethash dep target-table))
+                  (format t "~s: ~s not present in target-table~%"
+                          id dep))))))
 
 ;; Deletes target logs for targets which are not present in the
 ;; target-table.
