@@ -34,6 +34,7 @@
                #:cl-ana.symbol-utils
                #:cl-ana.map
                #:cl-ana.hash-table-utils
+               #:cl-ana.plotting
                ;; logres:
                #:external-program
                #:cl-ana.hdf-utils

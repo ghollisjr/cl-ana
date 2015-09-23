@@ -37,3 +37,21 @@
         ;; handle relative
         (merge-pathnames pathname)
         pathname)))
+
+(defun directory-pathname-p (pathname-or-string)
+  "Returns t iff pathname-or-string refers to a directory"
+  (string= (file-namestring (pathname pathname-or-string))
+           ""))
+
+(defun mkdirpath (pathname-or-string)
+  "Returns a path which always refers to a directory (platform
+independent)"
+  (let ((pn (merge-pathnames pathname-or-string)))
+    (if (directory-pathname-p pn)
+        pn
+        (let ((dirname (directory-namestring pn))
+              (filename (file-namestring pn)))
+          (make-pathname :directory
+                         (list :absolute
+                               dirname
+                               filename))))))

@@ -67,6 +67,29 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
+(defvar *gnuplot-file-io* nil
+  "Set to a directory path to use files for data to be transferred to
+gnuplot via files instead of pipes.")
+
+(defvar *gnuplot-file-io-index* 0)
+
+(defun reset-data-path ()
+  (when *gnuplot-file-io*
+    (setf *gnuplot-file-io-index* 0)))
+
+(defun next-data-path ()
+  (when *gnuplot-file-io*
+    (let* ((dir (mkdirpath (->absolute-pathname
+                            *gnuplot-file-io*)))
+           (pn
+            (namestring
+             (merge-pathnames
+              (format nil "data~a.dat"
+                      *gnuplot-file-io-index*)
+              dir))))
+      (ensure-directories-exist pn)
+      pn)))
+
 (defvar *gnuplot-sessions* nil)
 
 (defparameter *gnuplot-single-session* t
@@ -186,7 +209,7 @@ other initargs from key-args."
                    (plots page-plots))
       p
     (when (not terminal)
-      (setf terminal (wxt-term)))
+      (setf terminal (qt-term)))
     (string-append
      (with-output-to-string (s)
        (format s "set output~%")
@@ -266,7 +289,9 @@ layout specified in the page.")
                    (labels plot-labels)
                    (legend plot-legend))
       p
-    (let ((lines (remove-if #'null lines)))
+    (let ((lines (remove-if #'null lines))
+          (line-index->data-path
+           (make-hash-table :test 'equal)))
       (with-output-to-string (s)
         (format s "set title '~a'~%" title)
         (when legend
@@ -281,21 +306,56 @@ layout specified in the page.")
            do (format s "set label ~a ~a~%"
                       i label))
         (format s "~a " (plot-cmd p))
+        (when *gnuplot-file-io*
+          (reset-data-path))
         (loop
+           for line-index from 0
            for cons on lines
-           do (format s "~a" (generate-cmd (car cons)))
+           do
+             (progn
+               (setf (gethash line-index
+                              line-index->data-path)
+                     (next-data-path))
+               (let* ((raw-cmd (generate-cmd (car cons)))
+                      (cmd
+                       (if *gnuplot-file-io*
+                           (let ((subcmd
+                                  (subseq raw-cmd 3)))
+                             (format nil
+                                     "'~a'~a"
+                                     (gethash line-index
+                                              line-index->data-path)
+                                     subcmd))
+                           raw-cmd)))
+                 (format s "~a" cmd)))
            when (cdr cons)
            do (format s ", "))
         (format s "~%")
-        (loop
-           for l in lines
-           do (format s "~a"
-                      (map 'string
-                           (lambda (c)
-                             (if (eq c #\f)
-                                 #\e
-                                 c))
-                           (line-data-cmd l))))))))
+        ;; Send data either through pipes or file IO
+        (if *gnuplot-file-io*
+            ;; file IO
+            (loop
+               for line-index from 0
+               for line in lines
+               do (let ((pn (gethash line-index
+                                     line-index->data-path)))
+                    (with-open-file (file pn
+                                          :direction :output
+                                          :if-exists :supersede
+                                          :if-does-not-exist :create)
+                      (format file "~a~%"
+                              (line-data-cmd line)))))
+            
+            ;; pipe IO
+            (loop
+               for l in lines
+               do (format s "~a"
+                          (map 'string
+                               (lambda (c)
+                                 (if (eq c #\f)
+                                     #\e
+                                     c))
+                               (line-data-cmd l)))))))))
 
 ;; A two-dimensional plot has up to four labelled axes:
 ;;
@@ -493,7 +553,7 @@ initargs from key-args."
       (format s "~a" (merge-tics :y y-tics))
       (format s "~a" (merge-tics :y2 y2-tics))
       (format s "~a" (merge-tics :cb cb-tics))
-      
+
       (if cb-range
           (format s "set cbrange [~a:~a]~%"
                   (car cb-range)
@@ -518,10 +578,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-    :initarg :view
-    :initform nil
-    :accessor plot3d-view
-    :documentation "Sets the view for the 3-d plot.  Set to :map or
+       :initarg :view
+       :initform nil
+       :accessor plot3d-view
+       :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -1530,22 +1590,21 @@ of up to two double-float arguments."
        for o in objects
        do (format s "~a" o))))
 
-(defvar *wxt-id* 0)
+(defvar *window-number* 0)
 
 (defun wxt-term (&key
                    (size (cons 800 600))
-                   id
+                   window-number
                    title)
-  (when (not id)
-    (setf id *wxt-id*)
-    (incf *wxt-id*))
+  (when (not window-number)
+    (setf window-number *window-number*)
+    (incf *window-number*))
   (when (not title)
     (setf title
-          (with-output-to-string (s)
-            (format s "Page ~a" id))))
+          (format nil "Page ~a" window-number)))
   (with-output-to-string (s)
     (format s "wxt")
-    (format s " ~a" id)
+    (format s " ~a" window-number)
     (format s " title '~a'" title)
     (when size
       (format s " size ~a,~a" (car size) (cdr size)))))
@@ -1817,17 +1876,24 @@ gnuplot to distinguish eps from ps)"
                   title
                   persist-p)
   "Generates the type string for a qt terminal with options"
-  (format nil "~{~a ~}"
-          (remove nil
-                  (list "qt"
-                        (when window-number
-                          (format nil "~a" window-number))
-                        (format nil "size ~a, ~a" (car size) (cdr size))
-                        (when enhanced-p
-                          "enhanced")
-                        (when font
-                          (format nil "font \"~a\"" font))
-                        (when title
-                          (format nil "title \"~a\"" title))
-                        (when persist-p
-                          "persist")))))
+  (when (not window-number)
+    (setf window-number *window-number*)
+    (incf *window-number*))
+  (when (not title)
+    (setf title
+          (format nil "Page ~a" window-number)))
+  (with-output-to-string (s)
+    (format s "~{~a ~}"
+            (remove nil
+                    (list "qt"
+                          (when window-number
+                            (format nil "~a" window-number))
+                          (format nil "size ~a, ~a" (car size) (cdr size))
+                          (when enhanced-p
+                            "enhanced")
+                          (when font
+                            (format nil "font \"~a\"" font))
+                          (when title
+                            (format nil "title \"~a\"" title))
+                          (when persist-p
+                            "persist"))))))

@@ -585,11 +585,22 @@ result graph is what will be checked, not the original target table."
 ;; * Caching strategy
 (defmacro defproject (id path transformations cache-strategy
                       &key
+                        gnuplot-file-io
                         warnings-p
-                        ;; Unless something changes, functions can't be logged
+                        ;; Unless something changes, functions can't
+                        ;; be logged
                         (ignore-functions-p t))
   "Defines a makeres project.  id is unevaluated whereas all other
-arguments are evaluated."
+arguments are evaluated.
+
+gnuplot-file-io controls whether pipe IO or file IO is used to draw
+plots.  If nil, pipe IO is used.  If a string or pathname, files are
+placed under a directory at that path.
+
+warnings-p controls whether warnings are printed during compilation.
+
+ignore-functions-p should be set to T unless you find a way to log
+functions."
   `(progn
      (in-project ,id)
      (set-project-path ,path)
@@ -603,7 +614,9 @@ arguments are evaluated."
      ;; Initialize target-stat for each logged result
      ;; (init-logged-stats)
      (when ,ignore-functions-p
-       (logres-ignore-by #'function-target?))))
+       (logres-ignore-by #'function-target?))
+     ;; setup gnuplot
+     (setf *gnuplot-file-io* ,gnuplot-file-io)))
 
 (defmacro in-project (project-id)
   "Selects graph identified by graph-id for use.  Graph does not need

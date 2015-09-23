@@ -456,24 +456,6 @@ project"
 (defun reset-log-id ()
   (setf *last-id* -1))
 
-(defun directory-pathname-p (pathname-or-string)
-  "Returns t iff pathname-or-string refers to a directory"
-  (string= (file-namestring (pathname pathname-or-string))
-           ""))
-
-(defun mkdirpath (pathname-or-string)
-  "Returns a path which always refers to a directory (platform
-independent)"
-  (let ((pn (merge-pathnames pathname-or-string)))
-    (if (directory-pathname-p pn)
-        pn
-        (let ((dirname (directory-namestring pn))
-              (filename (file-namestring pn)))
-          (make-pathname :directory
-                         (list :absolute
-                               dirname
-                               filename))))))
-
 (defun id-string-p (string)
   "t iff all characters are digit-char-p"
   (every #'digit-char-p string))

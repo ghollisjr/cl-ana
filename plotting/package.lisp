@@ -22,6 +22,7 @@
 
 (defpackage #:cl-ana.plotting
   (:use :cl
+        :cl-ana.pathname-utils
         :cl-ana.math-functions
         :cl-ana.error-propogation
         :cl-ana.gnuplot-interface
@@ -33,6 +34,7 @@
         :cl-ana.tensor)
   (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
+           :*gnuplot-file-io*
            :restart-gnuplot-sessions
            :titled
            :title

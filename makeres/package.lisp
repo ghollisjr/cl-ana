@@ -36,7 +36,8 @@
         :cl-ana.pathname-utils
         :cl-ana.table
         :cl-ana.reusable-table
-        :cl-ana.hash-table-utils)
+        :cl-ana.hash-table-utils
+        :cl-ana.plotting)
   (:export
    ;; target
    :target

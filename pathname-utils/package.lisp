@@ -2,4 +2,6 @@
   (:use :cl)
   (:export :pathname-absolute-p
            :pathname-relative-p
-           :->absolute-pathname))
+           :->absolute-pathname
+           :directory-pathname-p
+           :mkdirpath))

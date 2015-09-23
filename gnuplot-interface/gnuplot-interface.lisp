@@ -22,7 +22,8 @@
 (in-package :cl-ana.gnuplot-interface)
 
 (defun gnuplot-init ()
-  (start "gnuplot" ()
+  (start "gnuplot"
+         ()
          :input :stream))
 
 (defun gnuplot-close (session)
