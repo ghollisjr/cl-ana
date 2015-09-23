@@ -180,7 +180,9 @@ The return values of fit are:
 		   (dof (- n-data n-params))
 					;(c (max 1.0d0 (/ chi (sqrt dof))))) ;; not sure why
 					;they made the cutoff
-		   (c (/ chi (sqrt dof))))
+		   ;;(c (/ chi (sqrt dof)))
+                   (c (protected-/ chi (sqrt dof)))
+                   )
               (let ((fit-params
                      (loop
                         for i from 0 below n-params
