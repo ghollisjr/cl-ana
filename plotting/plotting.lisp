@@ -85,7 +85,7 @@ gnuplot via files instead of pipes.")
             (namestring
              (merge-pathnames
               (format nil "data~a.dat"
-                      *gnuplot-file-io-index*)
+                      (incf *gnuplot-file-io-index*))
               dir))))
       (ensure-directories-exist pn)
       pn)))
@@ -1897,3 +1897,44 @@ gnuplot to distinguish eps from ps)"
                             (format nil "title \"~a\"" title))
                           (when persist-p
                             "persist"))))))
+
+;; Special function for outputting PDF plots since it requires precise
+;; coordination between various functions
+(defun draw-pdf (page output-prefix &rest terminal-keywords)
+  "Generates a properly formatted PDF graph from gnuplot using LaTeX
+formatting"
+  (let* ((output
+          (string-append output-prefix ".tex"))
+         (terminal
+          (apply #'epslatex-term
+                 :standalone-p t
+                 :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"
+                 terminal-keywords))
+         (current-dir
+          (namestring (sb-posix:getcwd)))
+         (destdir
+          (namestring
+           (make-pathname :directory
+                          (pathname-directory output)))))
+    (setf (page-output page)
+          output)
+    (setf (page-terminal page)
+          terminal)
+    (draw page)
+    #+sbcl
+    (sb-posix:chdir destdir)
+    (external-program:run "pdflatex"
+                          (list "--shell-escape"
+                                output))
+    (flet ((maybe-delete-file (x)
+             (handler-case (delete-file x)
+               (error () (format t "Warning: Error deleting ~a"
+                                 x)))))
+      (maybe-delete-file (string-append output-prefix ".aux"))
+      (maybe-delete-file (string-append output-prefix "-inc.eps"))
+      (maybe-delete-file (string-append output-prefix "-inc-eps-converted-to.pdf"))
+      (maybe-delete-file (string-append output-prefix ".log"))
+      (maybe-delete-file (string-append output-prefix ".tex")))
+    #+sbcl
+    (sb-posix:chdir current-dir))
+  nil)

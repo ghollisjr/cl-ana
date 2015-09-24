@@ -50,6 +50,7 @@
            :generate-cmd
            ;; page functions
            :draw
+           :draw-pdf
            :page-next-id
            :page-id
            :page-gnuplot-session

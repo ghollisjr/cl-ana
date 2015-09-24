@@ -36,6 +36,7 @@
                #:cl-ana.macro-utils
                #:cl-ana.histogram
                #:cl-ana.tensor
+               #:external-program
                #:alexandria)
   :components ((:file "package")
 	       (:file "plotting")))
