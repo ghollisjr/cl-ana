@@ -26,7 +26,8 @@
   gnuplot as the backend."
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on (#:cl-ana.generic-math
+  :depends-on (#:cl-ana.pathname-utils
+               #:cl-ana.generic-math
                #:cl-ana.math-functions
                #:cl-ana.error-propogation
                #:cl-ana.gnuplot-interface
