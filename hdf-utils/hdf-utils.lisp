@@ -147,7 +147,30 @@ if-does-not-exist can be :create :error nil"
 	       (nil nil))))))))
 
 (defun close-hdf-file (hdf-file)
-  "Just a wrapper around the h5fclose function"
+  "Closes all datatype objects associated with file along with the
+file"
+  (reset-memo-map #'typespec->hdf-type)
+  (reset-memo-map #'hdf-type->typespec)
+  (let ((nobs (h5fget-obj-count hdf-file +H5F-OBJ-ALL+))
+        (ids nil))
+    (with-foreign-object (raw-ids 'hid-t nobs)
+      (h5fget-obj-ids hdf-file
+                      +H5F-OBJ-ALL+
+                      nobs
+                      raw-ids)
+      (setf ids
+            (loop
+               for i below nobs
+               collecting (mem-aref raw-ids 'hid-t i))))
+    (loop
+       for id in ids
+       do
+         ;; In the future, detect type instead of trying everything
+         (h5fclose id)
+         (h5dclose id)
+         (h5gclose id)
+         (h5tclose id)
+         (h5aclose id)))
   (h5fclose hdf-file))
 
 (defmacro with-open-hdf-file ((hdf-file
@@ -177,7 +200,7 @@ handle inside of the macro body."
 	 (body-with-close
 	  `(let ((,result
 		  (progn ,@body)))
-	     (h5fclose ,hdf-file)
+	     (close-hdf-file ,hdf-file)
 	     ,result)))
     `(let ((,hdf-file
             (open-hdf-file ,file-path-or-string

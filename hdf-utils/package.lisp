@@ -23,6 +23,9 @@
   (:use #:cl
 	#:cffi
         #:alexandria
+        #:cl-ana.memoization
+        #:cl-ana.typespec
+        #:cl-ana.hdf-typespec
 	#:cl-ana.hdf-cffi
         #:cl-ana.macro-utils
         #:cl-ana.string-utils

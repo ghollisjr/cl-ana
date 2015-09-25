@@ -24,6 +24,7 @@
 ;; defines the structure as an hdf type if necessary from the typespec.
 
 (defun-memoized typespec->hdf-type (typespec)
+  ;; (defun typespec->hdf-type (typespec)
   (if (listp typespec)
       ;; handle compound and array types
       (case (first typespec)
@@ -61,6 +62,7 @@
 
 ;; Construct typespec from hdf type:
 (defun-memoized hdf-type->typespec (hdf-type)
+  ;; (defun hdf-type->typespec (hdf-type)
   ;; may need cleaning up
   (let ((hdf-class (h5tget-class hdf-type)))
     (case hdf-class

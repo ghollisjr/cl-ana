@@ -28,6 +28,9 @@
   :depends-on (#:cffi
                #:alexandria
                #:cl-ana.pathname-utils
+               #:cl-ana.memoization
+               #:cl-ana.typespec
+               #:cl-ana.hdf-typespec
                #:cl-ana.string-utils
                #:cl-ana.macro-utils
                #:cl-ana.hdf-cffi)

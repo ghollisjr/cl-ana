@@ -229,14 +229,13 @@ the dataset."
                dataspace +H5P-DEFAULT+ row-buffer))))))
     ;; no type closing for now, it's a complete headache and is
     ;; causing problems with memoization etc.
-    ;;(h5tclose hdf-type)
+    
     ;; (let ((typespec (cons :compound fields-specs)))
     ;;   (print 'typespec->hdf-type)
     ;;   (print (typespec->hdf-type :int))
     ;;   (remhash (list typespec) (get-memo-map #'typespec->hdf-type)))
     ;; (print 'hdf-type->typespec)
     ;; (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
-    (h5dclose dataset)
     (foreign-free row-buffer)))
 
 (defmethod table-commit-row ((table hdf-table))

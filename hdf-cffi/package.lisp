@@ -57,6 +57,14 @@
    :+H5F-ACC-RDONLY+
    :+H5P-DEFAULT+
    :+H5P-DATASET-CREATE+
+   ;; Identifier constants:
+   :+H5F-OBJ-FILE+
+   :+H5F-OBJ-DATASET+
+   :+H5F-OBJ-GROUP+
+   :+H5F-OBJ-DATATYPE+
+   :+H5F-OBJ-ATTR+
+   :+H5F-OBJ-ALL+
+   
    ;; H5T type constants:
    :+H5T-NATIVE-CHAR+
    :+H5T-NATIVE-UCHAR+
@@ -83,10 +91,15 @@
    :cffi-native-type
    :hdf-native-type
    ;; hdf functions:
+   :h5aclose
+   
    :h5open
    :h5close
    :h5fcreate
    :h5fopen
+   :h5fclose
+   :h5fget-obj-count
+   :h5fget-obj-ids
    :h5pcreate
    :h5pset-chunk
    :h5pset-deflate
@@ -104,7 +117,6 @@
    :h5dget-type
    :h5dget-create-plist
    :h5dset-extent
-   :h5fclose
    :h5screate-simple
    :h5sclose
    :h5sselect-hyperslab

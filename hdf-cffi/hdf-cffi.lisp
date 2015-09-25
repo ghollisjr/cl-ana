@@ -106,6 +106,14 @@
 (defconstant +H5T-NATIVE-DOUBLE+ 50331691)
 (defconstant +H5T-COMPOUND+ 6)
 
+;; Identifiers (macros from H5public.h)
+(defconstant +H5F-OBJ-FILE+ 1)
+(defconstant +H5F-OBJ-DATASET+ 2)
+(defconstant +H5F-OBJ-GROUP+ 4)
+(defconstant +H5F-OBJ-DATATYPE+ 8)
+(defconstant +H5F-OBJ-ATTR+ 16)
+(defconstant +H5F-OBJ-ALL+ 31)
+
 ;;; hdf-cffi interface utilities:
 
 (defparameter *hdf-cffi-type-map*
@@ -135,6 +143,9 @@
 
 ;;; hdf functions:
 
+(defcfun "H5Aclose" herr-t
+  (attr-id hid-t))
+
 (defcfun "H5open" herr-t)
 
 (defcfun "H5close" herr-t)
@@ -149,6 +160,16 @@
   (name :string)
   (flags :uint)
   (fapl-id hid-t))
+
+(defcfun "H5Fget_obj_count" hssize-t
+  (file-id hid-t)
+  (types :uint))
+
+(defcfun "H5Fget_obj_ids" hssize-t
+  (file-id hid-t)
+  (types :uint)
+  (max-objs size-t)
+  (obj-id-list :pointer)) ; *hid-t
 
 (defcfun "H5Pcreate" hid-t
   (cls-id hid-t))

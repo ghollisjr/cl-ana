@@ -34,6 +34,12 @@
 ;;;; you wish (I like to use lists which denote the chain of
 ;;;; tables/filters/etc along with a reduction id).
 
+(defun run-prog (program args)
+  (run program args
+       :input *standard-input*
+       :output *standard-output*
+       :error *error-output*))
+
 (defvar *load-function-map*
   (make-hash-table)
   "Map from method-symbol to cons pair of target id test function and
@@ -389,7 +395,7 @@ log."
            do
              (if (probe-file (target-path id "timestamp"))
                  (with-open-file (file (target-path id "timestamp")
-                                   :direction :input)
+                                       :direction :input)
                    (setf ts (read file)))
                  (setf ts nil))
              (when (or (not ts)
@@ -496,7 +502,7 @@ directory."
                                          "versions"))))
     (when (probe-file current-path)
       (delete-file current-path))
-    (run "ln"
+    (run-prog "/usr/bin/ln"
          (list "-s"
                "-T"
                version-path
@@ -629,7 +635,7 @@ to this project."
         (when (probe-file work-to-path)
           #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
         (format t "Saving work/ files~%")
-        (run "cp"
+        (run-prog "/usr/bin/cp"
              (list "-r"
                    (namestring work-from-path)
                    (namestring work-to-path)))))
@@ -664,7 +670,7 @@ to this project."
 ;;                                            project-path)))
 ;;         (when (probe-file work-to-path)
 ;;           #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
-;;         (run "cp"
+;;         (run-prog "cp"
 ;;              (list "-r"
 ;;                    (namestring work-from-path)
 ;;                    (namestring work-to-path)))))
@@ -827,9 +833,9 @@ will be returned."
       (error "Snapshot cannot be named \"current\""))
     (when (probe-file destpath)
       (sb-ext:delete-directory destpath :recursive t))
-    (run "cp" (list "-r"
-                    (current-path)
-                    destpath))
+    (run-prog "/usr/bin/cp" (list "-r"
+                             (current-path)
+                             destpath))
     nil))
 
 (defun load-snapshot (name backup
@@ -860,13 +866,13 @@ does not backup if backup is NIL."
                                           (project-path)))
         (when (probe-file backuppath)
           (sb-ext:delete-directory backuppath :recursive t))
-        (run "cp" (list "-r"
-                        (current-path)
-                        backuppath))))
+        (run-prog "/usr/bin/cp" (list "-r"
+                                 (current-path)
+                                 backuppath))))
     (sb-ext:delete-directory (current-path) :recursive t)
-    (run "cp" (list "-r"
-                    sourcepath
-                    (current-path)))
+    (run-prog "/usr/bin/cp" (list "-r"
+                             sourcepath
+                             (current-path)))
     (loop
        for id being the hash-keys in (target-table)
        do
