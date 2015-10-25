@@ -164,7 +164,8 @@
             (plot3d (list
                      (line hist
                            :style "points"
-                           :point-size 2))))))))
+                           :point-size 2))
+                    :view "map"))))))
 
 (defun vhist-pm3d-test ()
   (let ((hist (make-vhist '(("x" -0.5d0 0d0 1d0 1.5d0 2d0)
