@@ -832,10 +832,16 @@ will be returned."
                  (current-path))
       (error "Snapshot cannot be named \"current\""))
     (when (probe-file destpath)
+      (format t "Overwriting old snapshot at ~a~%"
+              destpath)
       (sb-ext:delete-directory destpath :recursive t))
-    (run-prog "/usr/bin/cp" (list "-r"
-                             (current-path)
-                             destpath))
+    (format t "Copying ~a to ~a~%"
+            (current-path) destpath)
+    (run "cp" (list "-r"
+                    (namestring (current-path))
+                    (namestring destpath))
+         :output *standard-output*
+         :error *error-output*)
     nil))
 
 (defun load-snapshot (name backup
