@@ -56,15 +56,6 @@
                       (hbv hist)))
          (- count 1)))))
 
-(defmethod variance ((hist histogram))
-  (multiple-value-bind (mean count)
-      (mean hist)
-    (/ (sum (mapcar (lambda (x)
-                      (dbind (c x) x
-                             (* c (expt (- x mean) 2))))
-                    (hbv hist)))
-       (- count 1))))
-
 (defun standard-deviation (data)
   (sqrt (variance data)))
 
