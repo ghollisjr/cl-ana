@@ -161,7 +161,7 @@ cumulant)"
 (defun qq-plot (data cdf-inv)
   "Returns data suitable for a Q-Q probability scatter plot given data
 and inverse of cummulative density function.  Useful for checking
-whether data is distribution according to cdf or not."
+whether data is distributed according to cdf or not."
   (mapcar (lambda (x)
             (cons (funcall cdf-inv (cdr x))
                   (car x)))
@@ -181,7 +181,7 @@ whether data is distribution according to cdf or not."
        finally (return result))))
 
 (defun mean-accumulator (&rest sample)
-  "Returns two values:
+  "Utility function used by moving-average.  Returns two values:
 
 1. A function which returns the (updated) moving/running average each
 time you call it on a value.  The samples you give provide the

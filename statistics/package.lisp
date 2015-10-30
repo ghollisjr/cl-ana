@@ -28,7 +28,6 @@
   (:shadow :mean
            :standard-deviation)
   (:export :mean
-           :mean-accumulator
            :variance
            :standard-deviation
            :standard-scores
