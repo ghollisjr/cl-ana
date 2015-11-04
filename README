@@ -126,6 +126,7 @@ The dependencies for this project are:
 * closer-mop (http://common-lisp.net/project/closer/closer-mop.html)
 * cl-csv (https://github.com/AccelerationNet/cl-csv)
 * gnuplot (http://www.gnuplot.info/)
+* expect (http://expect.sourceforge.net/)
 * cl-fad (http://weitz.de/cl-fad/)
 * external-program (http://github.com/sellout/external-program)
 

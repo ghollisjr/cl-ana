@@ -232,13 +232,123 @@ other initargs from key-args."
        (format s "unset multiplot~%")
        (format s "set output")))))
 
+;; Temporary solution to waiting on gnuplot to return prompt until
+;; subprocess control library is added to cl-ana
+
+(defun matches (string prompt)
+  "Returns true if the end of the string is equal to prompt"
+  (let ((string-length (length string))
+        (prompt-length (length prompt)))
+    (and (>= string-length
+             prompt-length)
+         (equal (subseq string
+                        (- string-length
+                           prompt-length))
+                prompt))))
+
+(defun dynamic-wait-fn (x min max delay slope
+                        &optional (cutoff 50))
+  "Generates a wait time based on the parameters.
+
+* x should be >= 0,
+* min and max control the minimum and maximum wait times,
+* delay controls how long the minimum wait time should be used,
+* slope controls how quickly the wait time transitions between the
+  minimum and maximum wait times."
+  (let ((raw (if (< x cutoff)
+                 (atan (* slope (- x delay)))
+                 (/ pi 2))))
+    (+ (* (- max min)
+          (/ pi)
+          (+ (/ pi 2)
+             raw))
+       min)))
+
+(defun read-stream-no-hang (stream)
+  "Reads all output from stream without hanging at the end of output"
+  (with-output-to-string (output)
+    (do ((char (read-char-no-hang stream nil nil)
+               (read-char-no-hang stream nil nil)))
+        ((null char))
+      (format output "~c" char))))
+
+(defun clean-output (string)
+  "Removes unnecessary control characters from string like ^M"
+  (remove #\return string))
+
+(defun receive (process)
+  "Reads any available data from process output stream"
+  (let ((stream (external-program:process-output-stream process)))
+    (clean-output (read-stream-no-hang stream))))
+
+(defun get-internal-real-time-in-seconds ()
+  "Returns real internal time in seconds"
+  (float (/ (get-internal-real-time)
+            internal-time-units-per-second)))
+
+(defun prompt-wait-by (process test
+                       &key
+                         (duration-min 0.05)
+                         (duration-max 1)
+                         (duration-delay 3)
+                         (duration-slope 10.0)
+                         max-wait-time)
+  "Waits until session log passes test for at least duration amount of
+time matches the prompt.  Returns value returned by test.
+
+duration is the frequency at which to check for the prompt, and
+consequently the amount of time required to establish prompt presence."
+  (let* ((start-time (get-internal-real-time-in-seconds))
+         (current-time start-time)
+         (msg "")
+         (return-val nil))
+    (do ()
+        ((setf return-val
+               (funcall test msg))
+         return-val)
+      (setf current-time
+            (get-internal-real-time-in-seconds))
+      (when (and max-wait-time
+                 (> (- current-time start-time)
+                    max-wait-time))
+        (error "Maximum wait time expired"))
+      (sleep (dynamic-wait-fn (- current-time start-time)
+                              duration-min
+                              duration-max
+                              duration-delay
+                              duration-slope))
+      (setf msg
+            (string-append msg
+                           (receive process))))))
+
+(defun prompt-wait (process prompt
+                    &key
+                      (duration-min 0.05)
+                      (duration-max 1)
+                      (duration-delay 3)
+                      (duration-slope 10.0)
+                      max-wait-time)
+  "Waits until the last message printed for at least duration amount
+of time matches the prompt.
+
+duration is the frequency at which to check for the prompt, and
+consequently the amount of time required to establish prompt presence."
+  (prompt-wait-by process (lambda (x)
+                            (matches x prompt))
+                  :duration-min duration-min
+                  :duration-max duration-max
+                  :duration-delay duration-delay
+                  :duration-slope duration-slope
+                  :max-wait-time max-wait-time))
+
 (defgeneric draw (page &rest key-args)
   (:documentation "Draws the contents of a page using the multiplot
 layout specified in the page.")
   (:method ((p page) &rest key-args)
     (with-accessors ((session page-gnuplot-session))
         p
-      (gnuplot-cmd session (generate-cmd p)))))
+      (gnuplot-cmd session (generate-cmd p))
+      (prompt-wait session "gnuplot> "))))
 
 (defmethod initialize-instance :after
     ((p page) &key)
@@ -345,7 +455,7 @@ layout specified in the page.")
                                           :if-does-not-exist :create)
                       (format file "~a~%"
                               (line-data-cmd line)))))
-            
+
             ;; pipe IO
             (loop
                for l in lines

@@ -22,9 +22,17 @@
 (in-package :cl-ana.gnuplot-interface)
 
 (defun gnuplot-init ()
-  (start "gnuplot"
-         ()
-         :input :stream))
+  (let ((session
+         (start "unbuffer"
+                (list "-p" "/bin/sh")
+                :input :stream
+                :output :stream
+                :error :output
+                :external-format :utf-8)))
+    (format (process-input-stream session)
+            "gnuplot~%")
+    (finish-output (process-input-stream session))
+    session))
 
 (defun gnuplot-close (session)
   (close (process-input-stream session)))

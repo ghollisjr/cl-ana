@@ -1,5 +1,10 @@
-+ Found bug with gnuplot-file-io; my PhD code is currently an example
+- Found bug with gnuplot-file-io; my PhD code is currently an example
   of the bug.
+
+  gnuplot-interface and plotting need to be modified so that the draw
+  function can wait on gnuplot to return a prompt.
+
+  Fixed using unbuffer from expect
 
 + Need operator mvres which renames a target in the target table and
   moves its log as well.  Should take arguments from, to, and &key

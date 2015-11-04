@@ -133,6 +133,8 @@ HDF5 (https://www.hdfgroup.org/HDF5/)
 GSL (http://www.gnu.org/software/gsl/)
 @item
 gnuplot (http://www.gnuplot.info/)
+@item
+expect (http://expect.sourceforge.net/)
 @end itemize
 
 The Lisp dependencies are:
@@ -152,8 +154,6 @@ antik (http://www.common-lisp.net/project/antik/)
 closer-mop (http://common-lisp.net/project/closer/closer-mop.html)
 @item
 cl-csv (https://github.com/AccelerationNet/cl-csv)
-@item
-gnuplot (http://www.gnuplot.info/)
 @item
 cl-fad (http://weitz.de/cl-fad/)
 @item
