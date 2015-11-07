@@ -1,3 +1,11 @@
++ Improve plotting so that safe IO is more efficient.  At the moment
+  the per-line checking after generating all commands for a page is
+  much slower than I'd like it to be.  Perhaps instead of per-line it
+  could be per a certain number of lines?  Pages now control the file
+  index so plots can theoretically have their commands sent without
+  confirming receipt, but this caused problems with larger multiplots
+  even using file IO.
+
 - Found bug with gnuplot-file-io; my PhD code is currently an example
   of the bug.
 

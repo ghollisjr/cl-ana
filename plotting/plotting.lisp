@@ -67,20 +67,35 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
-(defvar *gnuplot-safe-io* nil
+(defvar *gnuplot-safe-io* t
   "Sometimes input is lost on the way to gnuplot due to needing to use
-unbuffered input.  Set to T if you anticipate this being a problem; it
-typically only happens for very large input streams and is very
-inefficient when *gnuplot-file-io* is NIL.")
+an unbuffered input pipe.  Set to T if you anticipate this being a
+problem; it typically only happens for very large input streams and is
+very inefficient when *gnuplot-file-io* is NIL.  When using file
+IO (default), this safety check must be enabled.")
 
-(defvar *gnuplot-file-io* nil
+(defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
   "Set to a directory path to use files for data to be transferred to
-gnuplot via files instead of pipes.")
+gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
+be used for data transfer, but this is potentially unsafe for large
+transfers and can lead to hard to diagnose bugs.")
 
 (defvar *gnuplot-file-io-index* 0)
 
 (defun reset-data-path ()
   (when *gnuplot-file-io*
+    (loop
+       for i from 1 to *gnuplot-file-io-index*
+       do (let* ((dir (mkdirpath (->absolute-pathname
+                                  *gnuplot-file-io*)))
+                 (pn
+                  (namestring
+                   (merge-pathnames
+                    (format nil "data~a.dat"
+                            i)
+                    dir))))
+            (ensure-directories-exist pn)
+            (delete-file pn)))
     (setf *gnuplot-file-io-index* 0)))
 
 (defun next-data-path ()
@@ -216,6 +231,8 @@ other initargs from key-args."
       p
     (when (not terminal)
       (setf terminal (qt-term)))
+    (when *gnuplot-file-io*
+      (reset-data-path))
     (string-append
      (with-output-to-string (s)
        (format s "set output~%")
@@ -236,7 +253,12 @@ other initargs from key-args."
                 collecting (generate-cmd plot)))
      (with-output-to-string (s)
        (format s "unset multiplot~%")
-       (format s "set output")))))
+       (format s "set output")))
+    ;; Should enable this later, but at the moment it causes an error
+    ;; 
+    ;; ;; (when *gnuplot-file-io*
+    ;; ;;   (reset-data-path))
+    ))
 
 ;; Temporary solution to waiting on gnuplot to return prompt until
 ;; subprocess control library is added to cl-ana
@@ -436,8 +458,6 @@ layout specified in the page.")
            do (format s "set label ~a ~a~%"
                       i label))
         (format s "~a " (plot-cmd p))
-        (when *gnuplot-file-io*
-          (reset-data-path))
         (loop
            for line-index from 0
            for cons on lines
