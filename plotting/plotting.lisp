@@ -74,6 +74,10 @@ problem; it typically only happens for very large input streams and is
 very inefficient when *gnuplot-file-io* is NIL.  When using file
 IO (default), this safety check must be enabled.")
 
+(defvar *gnuplot-safe-io-nlines* 10
+  "Number of lines to send before waiting on prompt from gnuplot.
+  Adjust for your system.")
+
 (defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
@@ -255,7 +259,7 @@ other initargs from key-args."
        (format s "unset multiplot~%")
        (format s "set output")))
     ;; Should enable this later, but at the moment it causes an error
-    ;; 
+    ;;
     ;; ;; (when *gnuplot-file-io*
     ;; ;;   (reset-data-path))
     ))
@@ -376,13 +380,18 @@ layout specified in the page.")
     (with-accessors ((session page-gnuplot-session))
         p
       (if *gnuplot-safe-io*
-          (let ((lines
-                 (split-sequence:split-sequence #\Newline
-                                                (generate-cmd p))))
+          (let* ((lines
+                  (split-sequence:split-sequence #\Newline
+                                                 (generate-cmd p)))
+                 (groups
+                  (group lines *gnuplot-safe-io-nlines*)))
             (loop
-               for line in lines
+               for group in groups
                do
-                 (gnuplot-cmd session line)
+                 (loop
+                    for line in group
+                    do
+                      (gnuplot-cmd session line))
                  (prompt-wait-by session
                                  (lambda (x)
                                    (or (matches x "gnuplot> ")
