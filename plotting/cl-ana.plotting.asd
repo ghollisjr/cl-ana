@@ -38,6 +38,7 @@
                #:cl-ana.histogram
                #:cl-ana.tensor
                #:external-program
+               #:split-sequence
                #:alexandria)
   :components ((:file "package")
 	       (:file "plotting")))

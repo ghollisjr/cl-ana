@@ -34,6 +34,7 @@
         :cl-ana.tensor)
   (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
+           :*gnuplot-safe-io*
            :*gnuplot-file-io*
            :restart-gnuplot-sessions
            :titled

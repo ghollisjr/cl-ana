@@ -67,6 +67,12 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
+(defvar *gnuplot-safe-io* nil
+  "Sometimes input is lost on the way to gnuplot due to needing to use
+unbuffered input.  Set to T if you anticipate this being a problem; it
+typically only happens for very large input streams and is very
+inefficient when *gnuplot-file-io* is NIL.")
+
 (defvar *gnuplot-file-io* nil
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.")
@@ -347,8 +353,22 @@ layout specified in the page.")
   (:method ((p page) &rest key-args)
     (with-accessors ((session page-gnuplot-session))
         p
-      (gnuplot-cmd session (generate-cmd p))
-      (prompt-wait session "gnuplot> "))))
+      (if *gnuplot-safe-io*
+          (let ((lines
+                 (split-sequence:split-sequence #\Newline
+                                                (generate-cmd p))))
+            (loop
+               for line in lines
+               do
+                 (gnuplot-cmd session line)
+                 (prompt-wait-by session
+                                 (lambda (x)
+                                   (or (matches x "gnuplot> ")
+                                       (matches x "multiplot> ")))
+                                 :duration-min 0.0001)))
+          (progn
+            (gnuplot-cmd session (generate-cmd p))
+            (prompt-wait session "gnuplot> "))))))
 
 (defmethod initialize-instance :after
     ((p page) &key)
