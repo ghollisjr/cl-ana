@@ -23,11 +23,11 @@
 
 (defun gnuplot-init ()
   (let ((session
-         (start "unbuffer"
-                (list "-p" "/bin/sh")
+         (start "script"
+                (list "-c" "/bin/sh" "-f")
                 :input :stream
                 :output :stream
-                :error :output
+                :error :stream
                 :external-format :utf-8)))
     (format (process-input-stream session)
             "gnuplot~%")

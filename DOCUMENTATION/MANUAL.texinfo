@@ -133,8 +133,6 @@ HDF5 (https://www.hdfgroup.org/HDF5/)
 GSL (http://www.gnu.org/software/gsl/)
 @item
 gnuplot (http://www.gnuplot.info/)
-@item
-expect (http://expect.sourceforge.net/)
 @end itemize
 
 The Lisp dependencies are:
