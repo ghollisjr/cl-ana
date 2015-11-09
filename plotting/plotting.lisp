@@ -74,7 +74,7 @@ problem; it typically only happens for very large input streams and is
 very inefficient when *gnuplot-file-io* is NIL.  When using file
 IO (default), this safety check must be enabled.")
 
-(defvar *gnuplot-safe-io-nlines* 10
+(defvar *gnuplot-safe-io-nlines* 1
   "Number of lines to send before waiting on prompt from gnuplot.
   Adjust for your system.")
 

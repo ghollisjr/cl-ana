@@ -24,7 +24,7 @@
 (defun gnuplot-init ()
   (let ((session
          (start "script"
-                (list "-c" "/bin/sh" "-q" "-f" "/dev/null")
+                (list "-c" "/bin/sh" "-q" "/dev/null")
                 :input :stream
                 :output :stream
                 :error :stream
