@@ -4,4 +4,5 @@
            :pathname-relative-p
            :->absolute-pathname
            :directory-pathname-p
+           :basename
            :mkdirpath))

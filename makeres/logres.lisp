@@ -36,7 +36,7 @@
 
 (defun run-prog (program args)
   (run program args
-       :input *standard-input*
+       ;; :input *standard-input*
        :output *standard-output*
        :error *error-output*))
 

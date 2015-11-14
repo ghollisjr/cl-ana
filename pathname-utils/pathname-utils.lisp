@@ -55,3 +55,12 @@ independent)"
                          (list :absolute
                                dirname
                                filename))))))
+
+(defun basename (pathname)
+  "Returns basename of pathname; pathname-name strips the extension
+while this utility function preserves it."
+  (let ((pathname (namestring pathname)))
+    (enough-namestring
+     pathname
+     (make-pathname :directory
+                    (pathname-directory pathname)))))
