@@ -85,5 +85,13 @@
 (define-unit :long-ton
     (* 2240 :pound))
 
+;; Speed
+
 (define-unit :mph
     (/ :mile :hour))
+
+;; Miscellaneous
+
+;; U.S. commonly used size for a "cup" of coffee
+(define-unit :coffee-cup
+    (* 6 :fluid-ounce))
