@@ -99,7 +99,8 @@ transfers and can lead to hard to diagnose bugs.")
                             i)
                     dir))))
             (ensure-directories-exist pn)
-            (delete-file pn)))
+            (when (probe-file pn)
+              (delete-file pn))))
     (setf *gnuplot-file-io-index* 0)))
 
 (defun next-data-path ()
@@ -150,6 +151,8 @@ transfers and can lead to hard to diagnose bugs.")
   (loop
      for s in *gnuplot-sessions*
      do (gnuplot-close s))
+  (when *gnuplot-file-io*
+    (reset-data-path))
   (setf *gnuplot-sessions* nil)
   (spawn-gnuplot-session))
 
@@ -2061,14 +2064,20 @@ gnuplot to distinguish eps from ps)"
 ;; coordination between various functions
 (defun draw-pdf (page output-prefix &rest terminal-keywords)
   "Generates a properly formatted PDF graph from gnuplot using LaTeX
-formatting"
+formatting.  terminal-keywords are supplied to the epslatex-term used
+in generating the plot.  Header keyword argument needs to enable math,
+so if the user does not supply a :header argument then the default is
+to enable math and use the Helvetica font."
   (let* ((output
           (string-append output-prefix ".tex"))
          (terminal
           (apply #'epslatex-term
                  :standalone-p t
-                 :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"
-                 terminal-keywords))
+
+                 (append
+                  (when (not (find :header terminal-keywords))
+                    (list :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"))
+                  terminal-keywords)))
          (current-dir
           (namestring (sb-posix:getcwd)))
          (destdir

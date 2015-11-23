@@ -21,7 +21,17 @@
 
 (in-package :cl-ana.macro-utils)
 
-;; with-gensyms provided by Alexandria
+;; Macro for defining pluralized versions of functions, e.g. a
+;; function which would map car across a list could be called cars.
+(defmacro defplural (fname)
+  "Defines a function which maps the function with symbol fname across
+a list.  The defined function has as its symbol fname with a trailing
+s character appended."
+  (let* ((fname-str (string fname))
+         (fnames-str (string-append fname-str "S"))
+         (fnames (intern fnames-str)))
+    `(defun ,fnames (list)
+       (mapcar #',fname list))))
 
 ;; Macro for evaluating multiple functions on a single object,
 ;; creating bindings for the return values:

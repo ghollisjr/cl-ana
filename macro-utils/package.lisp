@@ -26,7 +26,8 @@
         #:cl-ana.list-utils
         #:cl-ana.string-utils
         #:cl-ana.symbol-utils)
-  (:export :inrange
+  (:export :defplural
+           :inrange
            :case-equal
 	   :cond-setf
 	   :print-eval
