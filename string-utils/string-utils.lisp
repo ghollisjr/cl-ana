@@ -47,6 +47,7 @@ string"
 ;;;; From let-over-lambda:
 
 (defun mkstr (&rest args)
-  (with-output-to-string (s)
-    (dolist (a args)
-      (princ a s))))
+  (let ((*print-pretty* nil))
+    (with-output-to-string (s)
+      (dolist (a args)
+        (princ a s)))))
