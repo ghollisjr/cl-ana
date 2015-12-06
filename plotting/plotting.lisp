@@ -429,6 +429,11 @@ layout specified in the page.")
        :documentation "List of labels to be drawn on the plot.  Use
        the label function to generate the command strings for each
        label.")
+   (title-offset
+    :initarg :title-offset
+    :initform nil
+    :accessor plot-title-offset
+    :documentation "A cons pair denoting the offset of the plot title")
    (legend
     :initarg :legend
     :initform (legend)
@@ -449,6 +454,7 @@ layout specified in the page.")
 
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
+                   (title-offset plot-title-offset)
                    (lines plot-lines)
                    (labels plot-labels)
                    (legend plot-legend))
@@ -457,7 +463,12 @@ layout specified in the page.")
           (line-index->data-path
            (make-hash-table :test 'equal)))
       (with-output-to-string (s)
-        (format s "set title '~a'~%" title)
+        (format s "set title '~a'" title)
+        (when title-offset
+          (format s " offset ~a,~a"
+                  (car title-offset)
+                  (cdr title-offset)))
+        (format s "~%")
         (when legend
           (format s "~a~%" legend))
         (loop
