@@ -2090,7 +2090,10 @@ to enable math and use the Helvetica font."
                     (list :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"))
                   terminal-keywords)))
          (current-dir
-          (namestring (sb-posix:getcwd)))
+          #+sbcl
+           (namestring (sb-posix:getcwd))
+           #+clisp
+           (ext:cd))
          (destdir
           (namestring
            (make-pathname :directory
@@ -2102,6 +2105,8 @@ to enable math and use the Helvetica font."
     (draw page)
     #+sbcl
     (sb-posix:chdir destdir)
+    #+clisp
+    (ext:cd destdir)
     (external-program:run "pdflatex"
                           (list "--shell-escape"
                                 output))
@@ -2115,5 +2120,7 @@ to enable math and use the Helvetica font."
       (maybe-delete-file (string-append output-prefix ".log"))
       (maybe-delete-file (string-append output-prefix ".tex")))
     #+sbcl
-    (sb-posix:chdir current-dir))
+    (sb-posix:chdir current-dir)
+    #+clisp
+    (ext:cd current-dir))
   nil)
