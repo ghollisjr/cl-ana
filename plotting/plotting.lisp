@@ -86,27 +86,42 @@ transfers and can lead to hard to diagnose bugs.")
 
 (defvar *gnuplot-file-io-index* 0)
 
+(defun getpid ()
+  #+sbcl
+  (sb-posix:getpid)
+  ;; Can't seem to find information on how to do this for other
+  ;; implementations
+  )
+
+(defun plotdir ()
+  (mkdirpath (->absolute-pathname
+              (string-append
+               (namestring *gnuplot-file-io*)
+               "/"
+               (mkstr (getpid))))))
+
 (defun reset-data-path ()
   (when *gnuplot-file-io*
-    (loop
-       for i from 1 to *gnuplot-file-io-index*
-       do (let* ((dir (mkdirpath (->absolute-pathname
-                                  *gnuplot-file-io*)))
-                 (pn
-                  (namestring
-                   (merge-pathnames
-                    (format nil "data~a.dat"
-                            i)
-                    dir))))
-            (ensure-directories-exist pn)
-            (when (probe-file pn)
-              (delete-file pn))))
-    (setf *gnuplot-file-io-index* 0)))
+    (let ((dir (plotdir)))
+      (loop
+         for i from 1 to *gnuplot-file-io-index*
+         do (let ((pn
+                   (namestring
+                    (merge-pathnames
+                     (format nil "data~a.dat"
+                             i)
+                     dir))))
+              (ensure-directories-exist pn)
+              (when (probe-file pn)
+                (delete-file pn))))
+      (when (probe-file dir)
+        #+sbcl
+        (sb-ext:delete-directory dir))
+      (setf *gnuplot-file-io-index* 0))))
 
 (defun next-data-path ()
   (when *gnuplot-file-io*
-    (let* ((dir (mkdirpath (->absolute-pathname
-                            *gnuplot-file-io*)))
+    (let* ((dir (plotdir))
            (pn
             (namestring
              (merge-pathnames

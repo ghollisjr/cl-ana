@@ -1,3 +1,19 @@
++ FLAW: Current plotting solution file based solution grows
+  uncontrolled every time a new Lisp instance running cl-ana draws a
+  plot.  Need to find a better way to allow multiple cl-ana instances
+  to share the same plotting directory without clobbering and with
+  data files cleaned up automatically.  gnuplot seems to be the main
+  problem here, since as it stands gnuplot seems to return a prompt
+  prior to actually plotting the data, which means that cl-ana has no
+  way to know when the plot has finished.
+
+- BUG: Fix plotting so that multiple instances of lisp running cl-ana
+  do not clobber each other's plot data files.
+
+  Possible fix: Use process ID as unique identifier and place all plot
+  data underneath a directory named after the PID.  Have draw delete
+  the directory after returning.
+
 + Improve plotting so that safe IO is more efficient.  At the moment
   the per-line checking after generating all commands for a page is
   much slower than I'd like it to be.  Perhaps instead of per-line it
