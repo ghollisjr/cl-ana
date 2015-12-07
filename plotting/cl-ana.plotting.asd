@@ -39,6 +39,8 @@
                #:cl-ana.tensor
                #:external-program
                #:split-sequence
-               #:alexandria)
+               #:alexandria
+               #+sbcl
+               #:sb-posix)
   :components ((:file "package")
 	       (:file "plotting")))
