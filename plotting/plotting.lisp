@@ -160,7 +160,9 @@ transfers and can lead to hard to diagnose bugs.")
         (push session *gnuplot-sessions*)
         session)))
 
-(spawn-gnuplot-session)
+(defun ensure-gnuplot-session ()
+  (when (not *gnuplot-sessions*)
+    (spawn-gnuplot-session)))
 
 (defun restart-gnuplot-sessions ()
   (loop
@@ -421,6 +423,7 @@ layout specified in the page.")
 
 (defmethod initialize-instance :after
     ((p page) &key)
+  (ensure-gnuplot-session)
   (with-slots (session layout plots)
       p
     (setf session (spawn-gnuplot-session))
