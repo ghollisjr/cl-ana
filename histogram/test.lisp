@@ -19,13 +19,9 @@
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
 
-(require 'cl-ana.generic-math)
+(require 'cl-ana)
 
-(require 'cl-ana.histogram)
-
-(require 'cl-ana.error-propogation)
-
-(in-package :cl-ana.histogram)
+(in-package :cl-ana)
 
 (defparameter *ndata* 1000000)
 (defparameter *x-data* nil)

@@ -28,4 +28,5 @@
            :min-by
            :minimum
            :max-by
-           :maximum))
+           :maximum
+           :iterate))

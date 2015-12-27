@@ -82,3 +82,10 @@ arbitrary number of arguments."
   (when xs
     (reduce (lambda (x y) (max-by x y :key key))
             xs)))
+
+(defun iterate (fn initial count)
+  "Calls a function on its own result for count iterations."
+  (do* ((i 1 (1+ i))
+        (fnval initial (funcall fn fnval))
+        (result nil (cons fnval result)))
+       ((> i count) (nreverse result))))

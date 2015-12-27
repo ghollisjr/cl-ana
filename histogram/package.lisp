@@ -21,8 +21,8 @@
 
 (defpackage :cl-ana.histogram 
   (:use #:cl
-        #:iter
-	#:alexandria
+        #:alexandria
+        ;; #:iter
         #:cl-ana.clos-utils
 	#:cl-ana.tensor
         #:cl-ana.binary-tree

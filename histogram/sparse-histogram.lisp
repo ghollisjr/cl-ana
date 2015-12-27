@@ -230,9 +230,9 @@ nil if the point is not inside the histogram domain."
   (with-accessors ((value-map sparse-hist-value-map)
 		   (bin-specs rectangular-hist-bin-specs))
       hist
-    (iter
-      (for (key val) in-hashtable value-map)
-      (collect (cons val (get-bin-center bin-specs key))))))
+    (iter:iter
+      (iter:for (key val) in-hashtable value-map)
+      (iter:collect (cons val (get-bin-center bin-specs key))))))
 
 ;;; Generic Math functions:
 ;; It may not be in the best style to implement mathematical functions
@@ -265,8 +265,8 @@ and third elements respectively."
 	(let ((axis (first index-spec))
 	      (low-bound (second index-spec))
 	      (high-bound (third index-spec)))
-	  (iter
-            (for (key val) in-hashtable value-map)
+	  (iter:iter
+            (iter:for (key val) in-hashtable value-map)
             (let ((this-axis (elt key axis)))
               (when (and (<= low-bound this-axis)
                          (< this-axis high-bound))
@@ -275,8 +275,8 @@ and third elements respectively."
                             val))))))
 	;; handle the unbounded case
 	(let ((axis index-spec))
-	  (iter
-            (for (key val) in-hashtable value-map)
+	  (iter:iter
+            (iter:for (key val) in-hashtable value-map)
             (setf (gethash (except-nth key axis) result)
                   (cl:+ (gethash (except-nth key axis) result empty-bin-value)
                         val)))))
