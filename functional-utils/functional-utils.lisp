@@ -84,7 +84,15 @@ arbitrary number of arguments."
             xs)))
 
 (defun iterate (fn initial count)
-  "Calls a function on its own result for count iterations."
+  "Calls a function on its own result for count iterations.  Returns
+the final result."
+  (do* ((i 1 (1+ i))
+        (fnval initial (funcall fn fnval)))
+       ((> i count) fnval)))
+
+(defun iterate-collect (fn initial count)
+  "Calls a function on its own result for count iterations.  Returns
+the full list of results."
   (do* ((i 1 (1+ i))
         (fnval initial (funcall fn fnval))
         (result nil (cons fnval result)))

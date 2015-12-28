@@ -29,4 +29,5 @@
            :minimum
            :max-by
            :maximum
-           :iterate))
+           :iterate
+           :iterate-collect))
