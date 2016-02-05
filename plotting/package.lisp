@@ -73,6 +73,7 @@
            :plot2d-x-range
            :plot2d-y-range
            :tics
+           :merge-tics
            ;; 3d plot functions
            :pm3d
            ;; line functions

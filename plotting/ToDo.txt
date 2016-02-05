@@ -1,3 +1,7 @@
++ Should be able to plot functions in 3-d, but currently the sampled
+  function data is always interpreted as linear parametrizations
+  instead of planar.  Need to allow choice of interpretation.
+
 + pre-plot-cmd-settings should be deprecated and its functionality
   merged into plot-cmd.  As it stands, plotting settings are divided
   into these two functions unnecessarily.

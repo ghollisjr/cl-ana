@@ -573,6 +573,13 @@ layout specified in the page.")
     :documentation "Sets the x-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
     tics function to generate string(s).")
+   (x-mtics
+    :initarg :x-mtics
+    :initform nil
+    :accessor plot2d-x-mtics
+    :documentation "Controls the x-axis minor tic options.  Can be NIL
+    for no minor tics, T for default minor tics, and an integer for
+    the number of minor tics between major tics.")
    (x2-tics
     :initarg :x2-tics
     :initform nil
@@ -580,6 +587,13 @@ layout specified in the page.")
     :documentation "Sets the x2-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
     tics function to generate string(s).")
+   (x2-mtics
+    :initarg :x2-mtics
+    :initform nil
+    :accessor plot2d-x2-mtics
+    :documentation "Controls the x2-axis minor tic options.  Can be
+    NIL for no minor tics, T for default minor tics, and an integer
+    for the number of minor tics between major tics.")
    (y-range
     :initarg :y-range
     :initform (cons "*" "*")
@@ -591,11 +605,25 @@ layout specified in the page.")
     :initform nil
     :accessor plot2d-y-tics
     :documentation "y-axis tics.  See x-tics.")
+   (y-mtics
+    :initarg :y-mtics
+    :initform nil
+    :accessor plot2d-y-mtics
+    :documentation "Controls the y-axis minor tic options.  Can be
+    NIL for no minor tics, T for default minor tics, and an integer
+    for the number of minor tics between major tics.")
    (y2-tics
     :initarg :y2-tics
     :initform nil
     :accessor plot2d-y2-tics
     :documentation "y2-axis tics.  See x-tics.")
+   (y2-mtics
+    :initarg :y2-mtics
+    :initform nil
+    :accessor plot2d-y2-mtics
+    :documentation "Controls the y2-axis minor tic options.  Can be
+    NIL for no minor tics, T for default minor tics, and an integer
+    for the number of minor tics between major tics.")
    (cb-range
     :initarg :cb-range
     :initform (cons "*" "*")
@@ -605,10 +633,17 @@ layout specified in the page.")
     is the upper bound.  A property of the plot since it is the z-axis
     for 2-d representations of 3-d objects.")
    (cb-tics
-    :initarg :x-tics
+    :initarg :cb-tics
     :initform nil
     :accessor plot2d-cb-tics
     :documentation "color box tics.  See x-tics.")
+   (cb-mtics
+    :initarg :cb-mtics
+    :initform nil
+    :accessor plot2d-cb-mtics
+    :documentation "Controls the cb-axis minor tic options.  Can be
+    NIL for no minor tics, T for default minor tics, and an integer
+    for the number of minor tics between major tics.")
    (x-title
     :initform nil
     :initarg :x-title
@@ -730,12 +765,17 @@ initargs from key-args."
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range
                x-tics
+               x-mtics
                x2-tics
+               x2-mtics
                y-range
                y-tics
+               y-mtics
                y2-tics
+               y2-mtics
                cb-range
-               cb-tics)
+               cb-tics
+               cb-mtics)
       p
     (with-output-to-string (s)
       ;; tics
@@ -744,7 +784,37 @@ initargs from key-args."
       (format s "~a" (merge-tics :y y-tics))
       (format s "~a" (merge-tics :y2 y2-tics))
       (format s "~a" (merge-tics :cb cb-tics))
-
+      ;; minor tics
+      (format s "unset mxtics~%")
+      (format s "unset mx2tics~%")
+      (format s "unset mytics~%")
+      (format s "unset my2tics~%")
+      (format s "unset mcbtics~%")
+      (when x-mtics
+        (format s "set mxtics ~a~%"
+                (if (integerp x-mtics)
+                    x-mtics
+                    "default")))
+      (when x2-mtics
+        (format s "set mx2tics ~a~%"
+                (if (integerp x2-mtics)
+                    x2-mtics
+                    "default")))
+      (when y-mtics
+        (format s "set mytics ~a~%"
+                (if (integerp y-mtics)
+                    y-mtics
+                    "default")))
+      (when y2-mtics
+        (format s "set y2-mtics ~a~%"
+                (if (integerp y2-mtics)
+                    y2-mtics
+                    "default")))
+      (when cb-mtics
+        (format s "set mcbtics ~a~%"
+                (if (integerp cb-mtics)
+                    cb-mtics
+                    "default")))
       (if cb-range
           (format s "set cbrange [~a:~a]~%"
                   (car cb-range)
@@ -769,10 +839,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-       :initarg :view
-       :initform nil
-       :accessor plot3d-view
-       :documentation "Sets the view for the 3-d plot.  Set to :map or
+    :initarg :view
+    :initform nil
+    :accessor plot3d-view
+    :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -787,6 +857,13 @@ initargs from key-args."
     :documentation "Sets the x-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
     tics function to generate string(s).")
+   (x-mtics
+    :initarg :x-mtics
+    :initform nil
+    :accessor plot2d-x-mtics
+    :documentation "Controls the x-axis minor tic options.  Can be NIL
+    for no minor tics, T for default minor tics, and an integer for
+    the number of minor tics between major tics.")
    (y-range
     :initarg :y-range
     :initform (cons "*" "*")
@@ -798,6 +875,13 @@ initargs from key-args."
     :initform nil
     :accessor plot3d-y-tics
     :documentation "y-axis tics.  See x-tics.")
+   (y-mtics
+    :initarg :y-mtics
+    :initform nil
+    :accessor plot2d-y-mtics
+    :documentation "Controls the y-axis minor tic options.  Can be NIL
+    for no minor tics, T for default minor tics, and an integer for
+    the number of minor tics between major tics.")
    (z-range
     :initarg :z-range
     :initform (cons "*" "*")
@@ -809,6 +893,13 @@ initargs from key-args."
     :initform nil
     :accessor plot3d-z-tics
     :documentation "z-axis tics.  See x-tics.")
+   (z-mtics
+    :initarg :z-mtics
+    :initform nil
+    :accessor plot2d-z-mtics
+    :documentation "Controls the z-axis minor tic options.  Can be NIL
+    for no minor tics, T for default minor tics, and an integer for
+    the number of minor tics between major tics.")
    (cb-range
     :initarg :cb-range
     :initform (cons "*" "*")
@@ -820,6 +911,13 @@ initargs from key-args."
     :accessor plot2d-cb-tics
     :documentation "Sets the color box tic options.  Use tics function
     to generate string.")
+   (cb-mtics
+    :initarg :cb-mtics
+    :initform nil
+    :accessor plot2d-cb-mtics
+    :documentation "Controls the cb-axis minor tic options.  Can be
+    NIL for no minor tics, T for default minor tics, and an integer
+    for the number of minor tics between major tics.")
    (x-title
     :initform nil
     :initarg :x-title
@@ -881,12 +979,16 @@ initargs from key-args."
 (defmethod plot-cmd ((p plot3d))
   (with-slots (x-range
                x-tics
+               x-mtics
                y-range
                y-tics
+               y-mtics
                z-range
                z-tics
+               z-mtics
                cb-range
                cb-tics
+               cb-mtics
                colorbox-p
                pm3d
                view)
@@ -897,6 +999,31 @@ initargs from key-args."
       (format s "~a" (merge-tics :y y-tics))
       (format s "~a" (merge-tics :z z-tics))
       (format s "~a" (merge-tics :cb cb-tics))
+      ;; minor tics
+      (format s "unset mxtics~%")
+      (format s "unset mytics~%")
+      (format s "unset mztics~%")
+      (format s "unset mcbtics~%")
+      (when x-mtics
+        (format s "set mxtics ~a~%"
+                (if (integerp x-mtics)
+                    x-mtics
+                    "default")))
+      (when y-mtics
+        (format s "set mytics ~a~%"
+                (if (integerp y-mtics)
+                    y-mtics
+                    "default")))
+      (when z-mtics
+        (format s "set mztics ~a~%"
+                (if (integerp z-mtics)
+                    z-mtics
+                    "default")))
+      (when cb-mtics
+        (format s "set mcbtics ~a~%"
+                (if (integerp cb-mtics)
+                    cb-mtics
+                    "default")))
       ;; ranges
       (if x-range
           (format s "set xrange [~a:~a]~%"
