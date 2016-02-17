@@ -1,3 +1,8 @@
++ Small bug: Fix contiguous->sparse and sparse->contiguous so that the
+  empty bin value and default increment can be copied or optionally
+  set to new values.  At the moment they are not copied and left to
+  the default values.
+
 + FLAW: Current plotting solution file based solution grows
   uncontrolled every time a new Lisp instance running cl-ana draws a
   plot.  Need to find a better way to allow multiple cl-ana instances
