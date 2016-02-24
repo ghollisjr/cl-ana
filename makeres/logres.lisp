@@ -70,129 +70,134 @@
 
 (defun load-target (id)
   "Loads a target given the target id."
-  (cond
-    ((not (gethash id
-                   (target-table)))
-     (format t "Warning: ~s not found in target table~%"
-             id)
-     nil)
-    ((ignored? id)
-     nil)
-    (;; Specific method found:
-     (loop
-        for sym being the hash-keys in *load-function-map*
-        for (test . load) being the hash-values in *load-function-map*
-        when (and (funcall test id)
-                  (probe-file (target-path id)))
-        do
-          (funcall load id)
-          (setf (target-load-stat (gethash id (target-table)))
-                t)
-          (return nil)
-        finally (return t))
-     ;; Default execution when no specific method found:
-     (flet ((read-from-path (path)
-              (with-open-file (file path
-                                    :direction :input)
-                (read file))))
-       (let ((type (read-from-path (target-path id "type")))
-             (form (read-from-path (target-path id "form")))
-             (timestamp (read-from-path (target-path id "timestamp"))))
-         (if (not (logged-form-equal id))
-             (format t
-                     "Warning: ~s logged target expression not equal to~%~
+  (let ((*print-pretty* nil))
+    (cond
+      ((not (gethash id
+                     (target-table)))
+       (format t "Warning: ~s not found in target table~%"
+               id)
+       nil)
+      ((ignored? id)
+       nil)
+      (;; Specific method found:
+       (loop
+          for sym being the hash-keys in *load-function-map*
+          for (test . load) being the hash-values in *load-function-map*
+          when (and (funcall test id)
+                    (probe-file (target-path id)))
+          do
+            (funcall load id)
+            (setf (target-load-stat (gethash id (target-table)))
+                  t)
+            (return nil)
+          finally (return t))
+       ;; Default execution when no specific method found:
+       (flet ((read-from-path (path)
+                (with-open-file (file path
+                                      :direction :input)
+                  (read file))))
+         (let ((type (read-from-path (target-path id "type")))
+               ;; (form (read-from-path (target-path id "form")))
+               (timestamp (read-from-path (target-path id "timestamp"))))
+           (if (not (logged-form-equal id))
+               (format t
+                       "Warning: ~s logged target expression not equal to~%~
                        expression in target table, skipping.~%"
-                     id)
-             (progn
-               (setf (target-val (gethash id (target-table)))
-                     (load-object type (target-path id "data")))
-               (setf (target-load-stat (gethash id (target-table)))
-                     t)
-               (setf (target-timestamp (gethash id (target-table)))
-                     timestamp))))))
-    (t nil)))
+                       id)
+               (progn
+                 (setf (target-val (gethash id (target-table)))
+                       (load-object type (target-path id "data")))
+                 (setf (target-load-stat (gethash id (target-table)))
+                       t)
+                 (setf (target-timestamp (gethash id (target-table)))
+                       timestamp))))))
+      (t nil))))
 
 (defun save-target (id)
   "Saves a target given the target id.  When destruct-on-save? is T
   for result value, reloads the result value after saving."
-  (cond
-    ((not (gethash id
-                   (target-table)))
-     (format t "Warning: ~s not found in target table~%"
-             id)
-     nil)
-    ((ignored? id)
-     nil)
-    (;; Specific method found:
-     (loop
-        for sym being the hash-keys in *save-function-map*
-        for (test . save) being the hash-values in *save-function-map*
-        when (funcall test id)
-        do
-        ;; delete save-path recursively
-          (when (probe-file (target-path id))
-            #+sbcl
-            (sb-ext:delete-directory (target-path id)
-                                     :recursive t))
-          (ensure-directories-exist (target-path id))
-          (let ((destruct-on-save?
-                 (destruct-on-save?
-                  (target-val (gethash id (target-table))))))
+  ;; debug: trying nil for now
+  (let ((*print-pretty* nil))
+    (cond
+      ((not (gethash id
+                     (target-table)))
+       (format t "Warning: ~s not found in target table~%"
+               id)
+       nil)
+      ((ignored? id)
+       nil)
+      (;; Specific method found:
+       (loop
+          for sym being the hash-keys in *save-function-map*
+          for (test . save) being the hash-values in *save-function-map*
+          when (funcall test id)
+          do
+          ;; delete save-path recursively
+            (when (probe-file (target-path id))
+              #+sbcl
+              (sb-ext:delete-directory (target-path id)
+                                       :recursive t))
+            (ensure-directories-exist (target-path id))
+            (let ((destruct-on-save?
+                   (destruct-on-save?
+                    (target-val (gethash id (target-table))))))
 
-            (flet ((write-to-path (object path)
-                     (with-open-file (file path
-                                           :direction :output
-                                           :if-does-not-exist :create
-                                           :if-exists :supersede)
-                       (format file "~s~%" object))))
-              (let ((tar (gethash id (target-table))))
-                (write-to-path (target-type (target-val tar))
-                               (target-path id "type"))
-                (with-open-file (form-file (target-path id "form")
-                                           :direction :output
-                                           :if-does-not-exist :create
-                                           :if-exists :supersede)
-                  (format form-file "~s~%"
-                          (with-output-to-string (s)
-                            (format s "~s" (target-expr tar)))))
-                (write-to-path (target-timestamp tar)
-                               (target-path id "timestamp"))
-                (funcall save id)))
-            (when destruct-on-save?
-              (load-target id)))
-          (return nil)
-        finally (return t))
-     ;; delete save-path recursively
-     (when (probe-file (target-path id))
-       #+sbcl
-       (sb-ext:delete-directory (target-path id)
-                                :recursive t))
-     (ensure-directories-exist (target-path id))
-     (let ((destruct-on-save?
-            (destruct-on-save? (target-val (gethash id (target-table))))))
-       (flet ((write-to-path (object path)
-                (with-open-file (file path
-                                      :direction :output
-                                      :if-does-not-exist :create
-                                      :if-exists :supersede)
-                  (format file "~s~%" object))))
-         (let ((tar (gethash id (target-table))))
-           (write-to-path (target-type (target-val tar))
-                          (target-path id "type"))
-           (with-open-file (form-file (target-path id "form")
-                                      :direction :output
-                                      :if-does-not-exist :create
-                                      :if-exists :supersede)
-             (format form-file "~s~%"
-                     (with-output-to-string (s)
-                       (format s "~s" (target-expr tar)))))
-           (write-to-path (target-timestamp tar)
-                          (target-path id "timestamp"))
-           (save-object (target-val tar)
-                        (target-path id "data"))))
-       (when destruct-on-save?
-         (load-target id))))
-    (t nil))
+              (flet ((write-to-path (object path)
+                       (with-open-file (file path
+                                             :direction :output
+                                             :if-does-not-exist :create
+                                             :if-exists :supersede)
+                         (format file "~s~%" object))))
+                (let ((tar (gethash id (target-table))))
+                  (write-to-path (target-type (target-val tar))
+                                 (target-path id "type"))
+                  (with-open-file (form-file (target-path id "form")
+                                             :direction :output
+                                             :if-does-not-exist :create
+                                             :if-exists :supersede)
+
+
+                    (format form-file "~s~%"
+                            (with-output-to-string (s)
+                              (format s "~s" (target-expr tar)))))
+                  (write-to-path (target-timestamp tar)
+                                 (target-path id "timestamp"))
+                  (funcall save id)))
+              (when destruct-on-save?
+                (load-target id)))
+            (return nil)
+          finally (return t))
+       ;; delete save-path recursively
+       (when (probe-file (target-path id))
+         #+sbcl
+         (sb-ext:delete-directory (target-path id)
+                                  :recursive t))
+       (ensure-directories-exist (target-path id))
+       (let ((destruct-on-save?
+              (destruct-on-save? (target-val (gethash id (target-table))))))
+         (flet ((write-to-path (object path)
+                  (with-open-file (file path
+                                        :direction :output
+                                        :if-does-not-exist :create
+                                        :if-exists :supersede)
+                    (format file "~s~%" object))))
+           (let ((tar (gethash id (target-table))))
+             (write-to-path (target-type (target-val tar))
+                            (target-path id "type"))
+             (with-open-file (form-file (target-path id "form")
+                                        :direction :output
+                                        :if-does-not-exist :create
+                                        :if-exists :supersede)
+               (format form-file "~s~%"
+                       (with-output-to-string (s)
+                         (format s "~s" (target-expr tar)))))
+             (write-to-path (target-timestamp tar)
+                            (target-path id "timestamp"))
+             (save-object (target-val tar)
+                          (target-path id "data"))))
+         (when destruct-on-save?
+           (load-target id))))
+      (t nil)))
   nil)
 
 (defgeneric load-object (type path)
@@ -419,9 +424,9 @@ log."
             (format t "Warning: ~s logged target expression not equal to~%~
                     expression in target table, unsetting dependents.~%"
                     id)
-            (unsetresfn id)
+            ;; (unsetresfn id)
             (loop
-               for r in (res-dependents id (target-table))
+               for r in (cons id (res-dependents id (target-table)))
                do (setf (gethash r unset)
                         t))
             nil)
@@ -439,14 +444,15 @@ log."
 (defun logged-form-equal (id)
   "Checks to see if logged expression for id is the same as the one
 loaded into the Lisp image"
-  (when (probe-file (target-path id "form"))
-    (with-open-file (form-file (target-path id "form")
-                               :direction :input)
-      (let ((form (read form-file)))
-        (string= form
-                 (with-output-to-string (s)
-                   (format s "~s"
-                           (target-expr (gethash id (target-table))))))))))
+  (let ((*print-pretty* nil))
+    (when (probe-file (target-path id "form"))
+      (with-open-file (form-file (target-path id "form")
+                                 :direction :input)
+        (let ((form (read form-file)))
+          (string= form
+                   (with-output-to-string (s)
+                     (format s "~s"
+                             (target-expr (gethash id (target-table)))))))))))
 
 (defun project-path ()
   "Returns path for current project, nil when not set or in nil
@@ -503,10 +509,10 @@ directory."
     (when (probe-file current-path)
       (delete-file current-path))
     (run-prog "/usr/bin/ln"
-         (list "-s"
-               "-T"
-               version-path
-               current-path)))
+              (list "-s"
+                    "-T"
+                    version-path
+                    current-path)))
   nil)
 
 ;; only save results which have t-stat and non-default parameters
@@ -636,9 +642,9 @@ to this project."
           #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
         (format t "Saving work/ files~%")
         (run-prog "/usr/bin/cp"
-             (list "-r"
-                   (namestring work-from-path)
-                   (namestring work-to-path)))))
+                  (list "-r"
+                        (namestring work-from-path)
+                        (namestring work-to-path)))))
     ;; Save sublid map:
     (save-sublid-map version-string))
   nil)
@@ -765,27 +771,28 @@ to this project."
   "Returns the path to the current log location for given target, or
 optionally a subpath formed by concatenating subpath to the target's
 log directory."
-  (let ((id-path
-         (format nil "~s" id)))
-    (when (pathname-directory id-path)
-      (error "ID ~s yields illegal pathname" id))
-    (setf id-path
-          (make-pathname :directory (list :relative id-path)))
-    (when (and subpath
-               (pathname-directory subpath))
-      (error "subpath ~s yields illegal path" subpath))
-    (let* ((id+sub-path
-            (if subpath
-                (merge-pathnames subpath
-                                 (namestring id-path))
-                (namestring id-path)))
-           (result
-            (merge-pathnames
-             (merge-pathnames id+sub-path
-                              (make-pathname
-                               :directory '(:relative "targets")))
-             (current-path))))
-      (namestring result))))
+  (let ((*print-pretty* nil))
+    (let ((id-path
+           (format nil "~s" id)))
+      (when (pathname-directory id-path)
+        (error "ID ~s yields illegal pathname" id))
+      (setf id-path
+            (make-pathname :directory (list :relative id-path)))
+      (when (and subpath
+                 (pathname-directory subpath))
+        (error "subpath ~s yields illegal path" subpath))
+      (let* ((id+sub-path
+              (if subpath
+                  (merge-pathnames subpath
+                                   (namestring id-path))
+                  (namestring id-path)))
+             (result
+              (merge-pathnames
+               (merge-pathnames id+sub-path
+                                (make-pathname
+                                 :directory '(:relative "targets")))
+               (current-path))))
+        (namestring result)))))
 
 (defun work-path (path-or-format-recipe &rest args)
   "Returns namestring for a path in the project work directory.
@@ -800,21 +807,22 @@ If for whatever reason work-path is given an absolute pathname, it
 will be returned as-is.  If the result of a format processing a format
 string and the rest of the arguments is an absolute pathname, this
 will be returned."
-  (let ((namestring
-         (namestring
-          (cond
-            ((stringp path-or-format-recipe)
-             (work-path
-              (pathname (apply #'format nil path-or-format-recipe args))))
-            ((pathnamep path-or-format-recipe)
-             (if (pathname-absolute-p path-or-format-recipe)
-                 path-or-format-recipe
-                 (merge-pathnames path-or-format-recipe
-                                  (merge-pathnames "work/"
-                                                   (pathname (current-path))))))
-            (t (error "work-path accepts strings or pathnames only for first argument"))))))
-    (ensure-directories-exist namestring)
-    namestring))
+  (let ((*print-pretty* nil))
+    (let ((namestring
+           (namestring
+            (cond
+              ((stringp path-or-format-recipe)
+               (work-path
+                (pathname (apply #'format nil path-or-format-recipe args))))
+              ((pathnamep path-or-format-recipe)
+               (if (pathname-absolute-p path-or-format-recipe)
+                   path-or-format-recipe
+                   (merge-pathnames path-or-format-recipe
+                                    (merge-pathnames "work/"
+                                                     (pathname (current-path))))))
+              (t (error "work-path accepts strings or pathnames only for first argument"))))))
+      (ensure-directories-exist namestring)
+      namestring)))
 
 ;;;; Snapshot control:
 
@@ -873,12 +881,12 @@ does not backup if backup is NIL."
         (when (probe-file backuppath)
           (sb-ext:delete-directory backuppath :recursive t))
         (run-prog "/usr/bin/cp" (list "-r"
-                                 (current-path)
-                                 backuppath))))
+                                      (current-path)
+                                      backuppath))))
     (sb-ext:delete-directory (current-path) :recursive t)
     (run-prog "/usr/bin/cp" (list "-r"
-                             sourcepath
-                             (current-path)))
+                                  sourcepath
+                                  (current-path)))
     (loop
        for id being the hash-keys in (target-table)
        do
