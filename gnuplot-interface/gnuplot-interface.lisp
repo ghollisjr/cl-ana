@@ -21,36 +21,13 @@
 
 (in-package :cl-ana.gnuplot-interface)
 
-;; (defun gnuplot-init ()
-;;   (let ((session
-;;          (start "script"
-;;                 (list "-c" "/bin/sh" "-q" "/dev/null")
-;;                 :input :stream
-;;                 :output :stream
-;;                 :error :stream
-;;                 :external-format :utf-8)))
-;;     (format (process-input-stream session)
-;;             "gnuplot~%")
-;;     (finish-output (process-input-stream session))
-;;     session))
-
-;; (defun gnuplot-init ()
-;;   (let ((session
-;;          (start "gnuplot"
-;;                 ()
-;;                 :input :stream
-;;                 :output :stream
-;;                 :error :stream
-;;                 :external-format :utf-8)))
-;;     session))
-
 (defun gnuplot-init ()
   (let ((session
-         (start "/home/ghollisjr/gnuplot.sh"
+         (start "gnuplot"
                 ()
                 :input :stream
                 :output :stream
-                :error :stream
+                :error :output
                 :external-format :utf-8)))
     session))
 

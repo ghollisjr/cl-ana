@@ -409,27 +409,9 @@ layout specified in the page.")
         p
       ;; Use NIL for no special treatment, or *gnuplot-safe-io* for
       ;; special waiting
-      (if *gnuplot-safe-io*
-          (let* ((lines
-                  (split-sequence:split-sequence #\Newline
-                                                 (generate-cmd p)))
-                 (groups
-                  (group lines *gnuplot-safe-io-nlines*)))
-            (loop
-               for group in groups
-               do
-                 (loop
-                    for line in group
-                    do
-                      (gnuplot-cmd session line))
-                 (prompt-wait-by session
-                                 (lambda (x)
-                                   (or (matches x "gnuplot> ")
-                                       (matches x "multiplot> ")))
-                                 :duration-min 0.0001)))
-          (progn
-            (gnuplot-cmd session (generate-cmd p))
-            (prompt-wait session "gnuplot> "))))))
+      (gnuplot-cmd session (generate-cmd p))
+      ;; (prompt-wait session (format nil "gnuplot> ~%"))
+      (prompt-wait session (format nil "gnuplot> ~%")))))
 
 (defmethod initialize-instance :after
     ((p page) &key)
