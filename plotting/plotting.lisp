@@ -86,6 +86,12 @@ transfers and can lead to hard to diagnose bugs.")
 
 (defvar *gnuplot-file-io-index* 0)
 
+(defgeneric line-file-io-p (object)
+  (:documentation "Returns T if object uses files for safe input, or
+  NIL if files are not needed.")
+  (:method (obj)
+    t))
+
 (defun getpid ()
   #+sbcl
   (sb-posix:getpid)
@@ -513,7 +519,8 @@ layout specified in the page.")
                      (next-data-path))
                (let* ((raw-cmd (generate-cmd (car cons)))
                       (cmd
-                       (if *gnuplot-file-io*
+                       (if (and *gnuplot-file-io*
+                                (line-file-io-p (car cons)))
                            (let ((subcmd
                                   (subseq raw-cmd 3)))
                              (format nil
@@ -1501,6 +1508,9 @@ or :cb"
     :accessor analytic-line-fn-string
     :documentation "The function expression to plot, should be a
     function of x/x and y.")))
+
+(defmethod line-file-io-p ((line analytic-line))
+  nil)
 
 (defun analytic-line-set-plot-arg (line)
   (with-slots (x-range y-range fn-string)
