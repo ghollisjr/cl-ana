@@ -277,7 +277,9 @@ other initargs from key-args."
                 collecting (generate-cmd plot)))
      (with-output-to-string (s)
        (format s "unset multiplot~%")
-       (format s "set output")))
+       (format s "set output~%")
+       ;; Return prompt
+       (format s "print 'gnuplot> '")))
     ;; Should enable this later, but at the moment it causes an error
     ;;
     ;; ;; (when *gnuplot-file-io*
@@ -399,6 +401,8 @@ layout specified in the page.")
   (:method ((p page) &rest key-args)
     (with-accessors ((session page-gnuplot-session))
         p
+      ;; Use NIL for no special treatment, or *gnuplot-safe-io* for
+      ;; special waiting
       (if *gnuplot-safe-io*
           (let* ((lines
                   (split-sequence:split-sequence #\Newline
