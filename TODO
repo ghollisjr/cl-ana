@@ -1,3 +1,11 @@
++ Find more efficient way of interacting with gnuplot.  The only
+  reason cl-ana has to poll for output from gnuplot is because it
+  loses output when unbuffered, but buffering could still be possible
+  if real-time output could be read while maintaining buffered input.
+
+  If gnuplot could work with files then a simple file-based system
+  could be used to signal completion of commands.
+
 + Small bug: Fix contiguous->sparse and sparse->contiguous so that the
   empty bin value and default increment can be copied or optionally
   set to new values.  At the moment they are not copied and left to
