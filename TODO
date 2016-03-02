@@ -1,3 +1,6 @@
++ Add tutorial and example code to cl-ana which covers all the wiki
+  material and other useful examples.
+
 + Fix draw-pdf so that periods, (.), in path basenames do not cause
   problems.  At the moment it looks like pdflatex can't infer the plot
   type if a period is in the path basename.
