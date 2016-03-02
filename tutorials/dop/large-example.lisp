@@ -18,3 +18,22 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
+
+
+(require 'cl-ana)
+(in-package :cl-ana)
+
+(defproject large-example "/home/ghollisjr/dop-large-example/logged-results"
+  (list #'macrotrans #'branchtrans #'tabletrans #'progresstrans)
+  (fixed-cache 5))
+
+(ensure-table-binding-ops)
+(ensure-table-op-expanders)
+(setf *print-progress* 10)
+
+(defun project-graph->png ()
+  (dot->png (dot-compile "/home/ghollisjr/dop-large-example/graph.dot"
+                         :if-exists :supersede)
+            "/home/ghollisjr/dop-large-example/graph.dot"))
+
+;;;; Need to add source data
