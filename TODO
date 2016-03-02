@@ -1,10 +1,20 @@
-+ Find more efficient way of interacting with gnuplot.  The only
++ Fix draw-pdf so that periods, (.), in path basenames do not cause
+  problems.  At the moment it looks like pdflatex can't infer the plot
+  type if a period is in the path basename.
+
+- Find more efficient way of interacting with gnuplot.  The only
   reason cl-ana has to poll for output from gnuplot is because it
   loses output when unbuffered, but buffering could still be possible
   if real-time output could be read while maintaining buffered input.
 
   If gnuplot could work with files then a simple file-based system
   could be used to signal completion of commands.
+
+  RESOLVED: Used the 'print' command to generate a prompt and
+  prompt-wait for this on a per-plot basis.  There would likely be
+  problems if an error caused the prompt command to not be evaluated,
+  but since separate lines are sent to the gnuplot session this should
+  not happen.
 
 + Small bug: Fix contiguous->sparse and sparse->contiguous so that the
   empty bin value and default increment can be copied or optionally

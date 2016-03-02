@@ -74,10 +74,6 @@ problem; it typically only happens for very large input streams and is
 very inefficient when *gnuplot-file-io* is NIL.  When using file
 IO (default), this safety check must be enabled.")
 
-(defvar *gnuplot-safe-io-nlines* 1
-  "Number of lines to send before waiting on prompt from gnuplot.
-  Adjust for your system.")
-
 (defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
@@ -832,10 +828,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-    :initarg :view
-    :initform nil
-    :accessor plot3d-view
-    :documentation "Sets the view for the 3-d plot.  Set to :map or
+       :initarg :view
+       :initform nil
+       :accessor plot3d-view
+       :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -2255,11 +2251,18 @@ to enable math and use the Helvetica font."
              (handler-case (delete-file x)
                (error () (format t "Warning: Error deleting ~a"
                                  x)))))
+      ;; ;; debug
+      ;; (when nil
+      ;;   ;; end debug
       (maybe-delete-file (string-append output-prefix ".aux"))
       (maybe-delete-file (string-append output-prefix "-inc.eps"))
       (maybe-delete-file (string-append output-prefix "-inc-eps-converted-to.pdf"))
       (maybe-delete-file (string-append output-prefix ".log"))
-      (maybe-delete-file (string-append output-prefix ".tex")))
+      (maybe-delete-file (string-append output-prefix ".tex"))
+      ;; ;; debug
+      ;;   )
+      ;; ;; end debug
+      )
     #+sbcl
     (sb-posix:chdir current-dir)
     #+clisp

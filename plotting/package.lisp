@@ -35,7 +35,6 @@
   (:export :*gnuplot-sessions*
            :*gnuplot-single-session*
            :*gnuplot-safe-io*
-           :*gnuplot-safe-io-nlines*
            :*gnuplot-file-io*
            :restart-gnuplot-sessions
            :titled
