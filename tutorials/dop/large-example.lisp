@@ -137,5 +137,5 @@
                          :title "Contaminated X Distribution"))
                   :x-title "X"
                   :y-title "Count"))
-         :output (work-path "plots/src/x-hist.jpg")
-         :terminal (jpeg-term))))
+         :output (work-path "plots/src/x-hist.png")
+         :terminal (png-term))))
