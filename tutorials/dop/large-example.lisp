@@ -34,7 +34,7 @@
 (defun project-graph->png ()
   (dot->png (dot-compile "/home/ghollisjr/dop-large-example/graph.dot"
                          :if-exists :supersede)
-            "/home/ghollisjr/dop-large-example/graph.dot"))
+            "/home/ghollisjr/dop-large-example/graph.png"))
 
 ;;; Source data generation
 
