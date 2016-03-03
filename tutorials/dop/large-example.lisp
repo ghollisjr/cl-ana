@@ -139,3 +139,110 @@
                   :y-title "Count"))
          :output (work-path "plots/src/x-hist.png")
          :terminal (png-term))))
+
+;; Model fitting:
+
+(defun model (params x)
+  (destructuring-bind (sigA sigMu sigSigma bacA bacMu bacSigma)
+      params
+    (+ (gaussian (list sigA sigMu sigSigma) x)
+       (gaussian (list bacA bacMu bacSigma) x))))
+
+(defres (model fit-results)
+  (let* ((hist (res (src x hist)))
+         (peak (maximum (cdrs (map->alist hist)))))
+    (rest
+     (multiple-value-list
+      (fit (res (src x hist))
+           #'model
+           (list
+            ;; Signal guess parameters
+            (gauss-amp (* 0.5 peak)
+                       1d0)
+            0d0
+            1d0
+            ;; Background guess parameters
+            (gauss-amp (* 0.5 peak)
+                       1d0)
+            0d0
+            3d0))))))
+(defres (model fit-params)
+  (first (res (model fit-results))))
+(defres (model fit)
+  (let ((params (res (model fit-params))))
+    (lambda (x)
+      (model params x))))
+
+;; Signal fit
+(defres (model signal fit-params)
+  (subseq (res (model fit-params))
+          0 3))
+(defres (model signal fit)
+  (let ((params (res (model signal fit-params))))
+    (lambda (x)
+      (gaussian params x))))
+
+;; Background fit
+(defres (model background fit-params)
+  (subseq (res (model fit-params))
+          3))
+(defres (model background fit)
+  (let ((params (res (model background fit-params))))
+    (lambda (x)
+      (gaussian params x))))
+
+;; Model plot:
+
+(defres (plot (model signal background))
+  (let* ((hist (res (src x hist)))
+         (hist-alist (map->alist hist))
+         (xmin (minimum (cars hist-alist)))
+         (xmax (maximum (cars hist-alist)))
+         (ymax (maximum (cdrs hist-alist)))
+         (model (res (model fit)))
+         (signal (res (model signal fit)))
+         (signal-params (res (model signal fit-params)))
+         (background (res (model background fit)))
+         (background-params (res (model background fit-params))))
+    (draw
+     (page (list
+            (plot2d (list
+                     (line hist
+                           :style "boxes"
+                           :fill-density 0d0
+                           :color "red"
+                           :title "Contaminated X Distribution")
+                     (line model
+                           :style "lines"
+                           :color "black"
+                           :line-width 2
+                           :title "Model Signal+Background")
+                     (line signal
+                           :sampling (list :nsamples 1000
+                                           :low xmin
+                                           :high xmax)
+                           :style "lines"
+                           :color "blue"
+                           :line-width 2
+                           :title (format nil
+                                          "Signal (A=~,2e,mu=~,2e,sigma=~,2e)"
+                                          (first signal-params)
+                                          (second signal-params)
+                                          (third signal-params)))
+                     (line background
+                           :sampling (list :nsamples 1000
+                                           :low xmin
+                                           :high xmax)
+                           :style "lines"
+                           :color "green"
+                           :line-width 2
+                           :title (format nil
+                                          "Background (A=~,2e,mu=~,2e,sigma=~,2e)"
+                                          (first background-params)
+                                          (second background-params)
+                                          (third background-params))))
+                    :x-title "X"
+                    :y-title "Count"
+                    :y-range (cons 0 (* 1.2 ymax))))
+           :output (work-path "plots/model.png")
+           :terminal (png-term)))))
