@@ -246,3 +246,26 @@
                     :y-range (cons 0 (* 1.2 ymax))))
            :output (work-path "plots/model.png")
            :terminal (png-term)))))
+
+;;; Cut on Y
+
+(defres (src x-y hist)
+  (dotab (res src)
+      ((hist (make-shist '((:name "X" :low -9d0 :high 9d0 :nbins 100)
+                           (:name "Y" :low -5d0 :high 8d0 :nbins 100)))))
+      hist
+    (hins hist (list (field x)
+                     (field y)))))
+
+;; plot
+(defres (plot (src x-y hist))
+  (let* ((hist (res (src x-y hist))))
+    (draw
+     (page (list
+            (plot2d (list
+                     (line hist))
+                    :title "X-Y Distribution"
+                    :x-title "X"
+                    :y-title "Y"))
+           :output (work-path "plots/src/x-y-hist.jpg")
+           :terminal (jpeg-term)))))
