@@ -269,3 +269,15 @@
                     :y-title "Y"))
            :output (work-path "plots/src/x-y-hist.jpg")
            :terminal (jpeg-term)))))
+
+;;;; TODO:
+;;;;
+;;;; * Use branching to experiment with different X-Y cuts to isolate signal
+;;;;
+;;;;   * Includes branching on ltabs and a final selection
+;;;;
+;;;; * Plot different cuts all together in cut plot
+
+(defres (src x-y hist sliced)
+  (hslice (res (src x-y hist))
+          "X"))
