@@ -426,7 +426,7 @@
                   :key #'car))))
 
 (defres (y-cut upper-bounds)
-  (branch *y-cut-nsigmas*
+  (branch (res (y-cut lower-bounds))
           (let ((fit-params (res (y-cut fit-params))))
 
             (sort (loop
@@ -591,3 +591,34 @@
                     :y-range (cons ymin (* 2 ymax))))
            :output (work-path "plots/y-cut/branching-cuts.jpg")
            :terminal (jpeg-term)))))
+
+;; Cut function:
+(defres y-cut
+  (branch (res (y-cut lower-bounds fit))
+          (let ((lower-fit (res (y-cut lower-bounds fit)))
+                (upper-fit (res (y-cut upper-bounds fit))))
+            (lambda (x y)
+              (and (<= (car (res (y-cut x-range)))
+                       x
+                       (cdr (res (y-cut x-range))))
+                   (<= (funcall lower-fit x)
+                       y
+                       (funcall upper-fit x)))))))
+(logres-ignore y-cut)
+
+;; y-cut table
+(defres (src y-cut)
+  (branch (res y-cut)
+          (ltab (res src)
+              ()
+            (when (funcall (res y-cut)
+                           (field x)
+                           (field y))
+              (push-fields)))))
+
+(defres (src y-cut x hist)
+  (branch (res (src y-cut))
+          (dotab (res (src y-cut))
+              ((hist (make-shist '((:name "X" :low -9d0 :high 9d0 :nbins 100)))))
+              hist
+            (hins hist (list (field x))))))
