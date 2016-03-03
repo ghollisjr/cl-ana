@@ -284,7 +284,122 @@
 ;;;;
 ;;;; * Plot different cuts all together in cut plot
 
-(defres (src x-y hist sliced)
+(defres (y-cut slices)
   (hslice (res (src x-y hist))
           "X"))
 
+(defres (y-cut x-range)
+  (cons -2 2))
+
+(defres (y-cut y-range)
+  (cons 3 8))
+
+(defres (y-cut slices filtered)
+  (let* ((slices (res (y-cut slices)))
+         (x-range (res (y-cut x-range)))
+         (y-range (res (y-cut y-range)))
+         (result (make-hash-table :test 'equal)))
+    (loop
+       for key being the hash-keys in slices
+       for h being the hash-values in slices
+       when (<= (car x-range)
+                (first key)
+                (cdr x-range))
+       do (setf (gethash key result)
+                (hist-filter (lambda (count &key y)
+                               (<= (car y-range)
+                                   y
+                                   (cdr y-range)))
+                             h)))
+    result))
+
+(defres (y-cut fit-results)
+  (let* ((filtered (res (y-cut slices filtered)))
+         (result (make-hash-table :test 'equal)))
+    (loop
+       for key being the hash-keys in filtered
+       for h being the hash-values in filtered
+       do
+         (let* ((alist (map->alist h))
+                (peak (maximum alist :key #'car))
+                (xpeak (car peak))
+                (ypeak (cdr peak)))
+           (setf (gethash key result)
+                 (rest
+                  (multiple-value-list
+                   (fit h
+                        #'gaussian
+                        (list (gauss-amp ypeak 0.5d0)
+                              xpeak
+                              0.5d0)))))))
+    result))
+
+(defres (y-cut fit-params)
+  (let* ((fit-results (res (y-cut fit-results)))
+         (result (make-hash-table :test 'equal)))
+    (loop
+       for key being the hash-keys in fit-results
+       for fr being the hash-values in fit-results
+       do (setf (gethash key result)
+                (first fr)))
+    result))
+
+(defres (y-cut fits)
+  (let* ((fit-params (res (y-cut fit-params)))
+         (result (make-hash-table :test 'equal)))
+    (loop
+       for key being the hash-keys in fit-params
+       for fp being the hash-values in fit-params
+       do (setf (gethash key result)
+                (let ((pars (copy-list fp)))
+                  (lambda (x)
+                    (gaussian pars x)))))
+    result))
+(logres-ignore (y-cut fits))
+
+;; Plot of slice fits:
+(defres (plot (y-cut slice fits))
+  (let* ((filtered (res (y-cut slices filtered)))
+         (fits (res (y-cut fits)))
+         (fit-params (res (y-cut fit-params))))
+    (loop
+       for key being the hash-keys in filtered
+       for h being the hash-values in filtered
+       do (let* ((x (first key))
+                 (alist (map->alist h))
+                 (xmin (minimum (cars alist)))
+                 (xmax (maximum (cars alist)))
+                 (ymax (maximum (cdrs alist)))
+                 (fit (gethash key fits))
+                 (params (gethash key fit-params))
+                 (A (first params))
+                 (mu (second params))
+                 (sigma (third params)))
+            (draw
+             (page (list
+                    (plot2d (list
+                             (line h
+                                   :title "Y Distribution"
+                                   :color "red"
+                                   :style "boxes"
+                                   :fill-style "solid"
+                                   :fill-density 0.3)
+                             (line fit
+                                   :title
+                                   (format nil
+                                           "Gaussian Fit (A=~,2e,mu=~,2e,sigma=~,2e)"
+                                           A mu sigma)
+                                   :sampling (list :nsamples 1000
+                                                   :low xmin
+                                                   :high xmax)
+                                   :color "black"
+                                   :style "lines"
+                                   :line-width 2))
+                            :title (format nil "Y Slice Fit for X=~,2e"
+                                           x)
+                            :x-title "Y"
+                            :x-range (cons xmin xmax)
+                            :y-title "count"
+                            :y-range (cons 0 (* 1.2 ymax))))
+                   :output (work-path "plots/y-cut/slices/X_~,4f.jpg" x)
+                   :terminal (jpeg-term)))))))
