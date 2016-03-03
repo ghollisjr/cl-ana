@@ -403,3 +403,191 @@
                             :y-range (cons 0 (* 1.2 ymax))))
                    :output (work-path "plots/y-cut/slices/X_~,4f.jpg" x)
                    :terminal (jpeg-term)))))))
+
+;;; Branching on nsigma
+
+(defparameter *y-cut-nsigmas*
+  (range 1 3 1))
+
+(defres (y-cut lower-bounds)
+  (branch *y-cut-nsigmas*
+          (let ((fit-params (res (y-cut fit-params))))
+
+            (sort (loop
+                     for key being the hash-keys in fit-params
+                     for fp being the hash-values in fit-params
+                     collecting
+                       (let ((mu (second fp))
+                             (sigma (third fp)))
+                         (cons (first key)
+                               (- mu (* (branch)
+                                        sigma)))))
+                  #'<
+                  :key #'car))))
+
+(defres (y-cut upper-bounds)
+  (branch *y-cut-nsigmas*
+          (let ((fit-params (res (y-cut fit-params))))
+
+            (sort (loop
+                     for key being the hash-keys in fit-params
+                     for fp being the hash-values in fit-params
+                     collecting
+                       (let ((mu (second fp))
+                             (sigma (third fp)))
+                         (cons (first key)
+                               (+ mu (* (branch)
+                                        sigma)))))
+                  #'<
+                  :key #'car))))
+
+;; lower fit
+(defres (y-cut lower-bounds fit-results)
+  (branch (res (y-cut lower-bounds))
+          (rest
+           (multiple-value-list
+            (fit (res (y-cut lower-bounds))
+                 #'polynomial
+                 (list 1d0 1d0))))))
+(defres (y-cut lower-bounds fit-params)
+  (branch (res (y-cut lower-bounds fit-results))
+          (first (res (y-cut lower-bounds fit-results)))))
+(defres (y-cut lower-bounds fit)
+  (branch (res (y-cut lower-bounds fit-params))
+          (let ((ps (res (y-cut lower-bounds fit-params))))
+            (lambda (x)
+              (polynomial ps x)))))
+(logres-ignore (y-cut lower-bounds fit))
+
+;; upper fit
+(defres (y-cut upper-bounds fit-results)
+  (branch (res (y-cut upper-bounds))
+          (rest
+           (multiple-value-list
+            (fit (res (y-cut upper-bounds))
+                 #'polynomial
+                 (list 1d0 1d0))))))
+(defres (y-cut upper-bounds fit-params)
+  (branch (res (y-cut upper-bounds fit-results))
+          (first (res (y-cut upper-bounds fit-results)))))
+(defres (y-cut upper-bounds fit)
+  (branch (res (y-cut upper-bounds fit-params))
+          (let ((ps (res (y-cut upper-bounds fit-params))))
+            (lambda (x)
+              (polynomial ps x)))))
+(logres-ignore (y-cut upper-bounds fit))
+
+;; y-cut plot
+
+(defres (plot (y-cut branching))
+  (let* ((lower-bounds (res (y-cut lower-bounds)))
+         (upper-bounds (res (y-cut upper-bounds)))
+         (lower-fit (res (y-cut lower-bounds fit)))
+         (upper-fit (res (y-cut upper-bounds fit)))
+         (x-range (res (y-cut x-range)))
+         (y-range (res (y-cut y-range)))
+         (hist (res (src x-y hist)))
+         (hist-alist (map->alist hist))
+         (xs (cars (cars hist-alist)))
+         (xmin (minimum xs))
+         (xmax (maximum xs))
+         (ys (cars (cdrs (cars hist-alist))))
+         (ymin (minimum ys))
+         (ymax (maximum ys)))
+    (draw
+     (page (list
+            (plot2d (append
+                     ;; Non-branching
+                     (list
+                      ;; histogram
+                      (line hist)
+                      ;; left edge
+                      (line (list (cons (car x-range) (car y-range))
+                                  (cons (car x-range) (cdr y-range)))
+                            :title "Fit Area"
+                            :color "black"
+                            :style "lines"
+                            :line-width 2)
+                      ;; right edge
+                      (line (list (cons (cdr x-range) (car y-range))
+                                  (cons (cdr x-range) (cdr y-range)))
+                            :title ""
+                            :color "black"
+                            :style "lines"
+                            :line-width 2)
+                      ;; top edge
+                      (line (list (cons (car x-range) (cdr y-range))
+                                  (cons (cdr x-range) (cdr y-range)))
+                            :title ""
+                            :color "black"
+                            :style "lines"
+                            :line-width 2)
+                      ;; bottom edge
+                      (line (list (cons (car x-range) (car y-range))
+                                  (cons (cdr x-range) (car y-range)))
+                            :title ""
+                            :color "black"
+                            :style "lines"
+                            :line-width 2)
+                      ;; Function legend entry
+                      (line (list (cons -100 -100))
+                            :title "Upper Cut Functions"
+                            :color "red"
+                            :style "lines"
+                            :line-width 2)
+                      (line (list (cons -100 -100))
+                                  :title "Lower Cut Functions"
+                                  :color "green"
+                                  :style "lines"
+                                  :line-width 2))
+                     ;; Branching
+                     (loop
+                        for key being the hash-keys in lower-bounds
+                        for lb being the hash-values in lower-bounds
+                        for i from 1
+                        appending
+                          (let* ((ub (gethash key upper-bounds))
+                                 (lowfit (gethash key lower-fit))
+                                 (upfit (gethash key upper-fit)))
+                            (list
+                             ;; Upper bounds
+                             (line ub
+                                   :title (format nil
+                                                  "Cut Bounds (nsigma=~,2f)"
+                                                  key)
+                                   :style "points"
+                                   :point-type i
+                                   :color "orange"
+                                   :point-size 1)
+                             ;; Lower bounds
+                             (line lb
+                                   :title ""
+                                   :style "points"
+                                   :point-type i
+                                   :color "orange"
+                                   :point-size 1)
+                             ;; Upper fit
+                             (line upfit
+                                   :sampling (list :nsamples 1000
+                                                   :low (car x-range)
+                                                   :high (cdr x-range))
+                                   :title ""
+                                   :style "lines"
+                                   :color "red"
+                                   :line-width 2)
+                             ;; Lower fit
+                             (line lowfit
+                                   :sampling (list :nsamples 1000
+                                                   :low (car x-range)
+                                                   :high (cdr x-range))
+                                   :title ""
+                                   :style "lines"
+                                   :color "green"
+                                   :line-width 2)))))
+                    :legend (legend :location (cons :left :top))
+                    :x-title "X"
+                    :x-range (cons xmin xmax)
+                    :y-title "Y"
+                    :y-range (cons ymin (* 2 ymax))))
+           :output (work-path "plots/y-cut/branching-cuts.jpg")
+           :terminal (jpeg-term)))))
