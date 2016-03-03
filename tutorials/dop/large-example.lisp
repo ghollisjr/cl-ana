@@ -134,6 +134,8 @@
                    (line (res (src x hist))
                          :style "boxes"
                          :color "red"
+                         :fill-style "solid"
+                         :fill-density 0.3
                          :title "Contaminated X Distribution"))
                   :x-title "X"
                   :y-title "Count"))
@@ -209,10 +211,14 @@
             (plot2d (list
                      (line hist
                            :style "boxes"
-                           :fill-density 0d0
+                           :fill-style "solid"
+                           :fill-density 0.3
                            :color "red"
                            :title "Contaminated X Distribution")
                      (line model
+                           :sampling (list :nsamples 1000
+                                           :low xmin
+                                           :high xmax)
                            :style "lines"
                            :color "black"
                            :line-width 2
@@ -281,3 +287,4 @@
 (defres (src x-y hist sliced)
   (hslice (res (src x-y hist))
           "X"))
+
