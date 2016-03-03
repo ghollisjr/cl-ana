@@ -92,25 +92,27 @@
             (return nil)
           finally (return t))
        ;; Default execution when no specific method found:
-       (flet ((read-from-path (path)
-                (with-open-file (file path
-                                      :direction :input)
-                  (read file))))
-         (let ((type (read-from-path (target-path id "type")))
-               ;; (form (read-from-path (target-path id "form")))
-               (timestamp (read-from-path (target-path id "timestamp"))))
-           (if (not (logged-form-equal id))
-               (format t
-                       "Warning: ~s logged target expression not equal to~%~
+
+       (when (probe-file (target-path id))
+         (flet ((read-from-path (path)
+                  (with-open-file (file path
+                                        :direction :input)
+                    (read file))))
+           (let ((type (read-from-path (target-path id "type")))
+                 ;; (form (read-from-path (target-path id "form")))
+                 (timestamp (read-from-path (target-path id "timestamp"))))
+             (if (not (logged-form-equal id))
+                 (format t
+                         "Warning: ~s logged target expression not equal to~%~
                        expression in target table, skipping.~%"
-                       id)
-               (progn
-                 (setf (target-val (gethash id (target-table)))
-                       (load-object type (target-path id "data")))
-                 (setf (target-load-stat (gethash id (target-table)))
-                       t)
-                 (setf (target-timestamp (gethash id (target-table)))
-                       timestamp))))))
+                         id)
+                 (progn
+                   (setf (target-val (gethash id (target-table)))
+                         (load-object type (target-path id "data")))
+                   (setf (target-load-stat (gethash id (target-table)))
+                         t)
+                   (setf (target-timestamp (gethash id (target-table)))
+                         timestamp)))))))
       (t nil))))
 
 (defun save-target (id)
