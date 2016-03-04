@@ -406,11 +406,11 @@
 
 ;;; Branching on nsigma
 
-(defparameter *y-cut-nsigmas*
-  (range 1 3 1))
+(defres (branch y-cut-nsigmas)
+  (branch (range 1 3 1)))
 
 (defres (y-cut lower-bounds)
-  (branch *y-cut-nsigmas*
+  (branch (res (branch y-cut-nsigmas))
           (let ((fit-params (res (y-cut fit-params))))
 
             (sort (loop

@@ -21,16 +21,16 @@
 
 (in-package :cl-ana.makeres-branch)
 
-(defmacro branch (branch-list form &optional (test 'eql))
-  "branch operator takes the branch-list and execution body as arguents.
+(defmacro branch (branch-list &optional form)
+  "branch operator takes the branch-list and an optional expression as
+ arguments.
 
 branch-list must be either 1. A form which can be evaluated in the
   null-environment to yield a list whose elements each correspond to a
   separate branch of a computation, or 2. A (res id) form which
   denotes co-branching.  Each branching computation has access to the
   value during its evaluation, and branch operators can be nested,
-  although this is technically unnecessary."
-  nil)
+  although this is technically unnecessary."  nil)
 
 ;; These branch functions take full target expressions
 (defun branch? (expr)
@@ -52,7 +52,12 @@ branch-list must be either 1. A form which can be evaluated in the
   (let ((result (fourth (second expr))))
     (if result
         result
-        'eql)))
+        'equal)))
+
+(defun branch-source? (expr)
+  (and (branch? expr)
+       (= (length (second expr))
+          2)))
 
 (defun res? (expr)
   (and (listp expr)
@@ -75,7 +80,7 @@ form (source &rest co-branches)"
           (loop
              for id in branch-ids
              when (let ((expr (target-expr (gethash id graph))))
-                    (not (res? (branch-list expr))))
+                    (branch-source? expr))
              collecting id))
          ;; map from id to all immediate dependents
          (id->imm-dependent
@@ -175,7 +180,9 @@ branch, (branch branch-id) is replaced to all levels"
             id->list)))
     (if (some (lambda (chain)
                 (some (lambda (id)
-                        (not (target-stat (gethash id graph))))
+                        (and (not (target-stat (gethash id graph)))
+                             (not (branch-source?
+                                   (target-expr (gethash id graph))))))
                       chain))
               branch-chains)
         (progn
@@ -242,14 +249,17 @@ branch, (branch branch-id) is replaced to all levels"
                                   (setf (gethash gsym result)
                                         (make-target gsym
                                                      body))))
-                          (setf (target-expr (gethash id result))
-                                `(let ((result (make-hash-table :test ',test)))
-                                   ,@(loop
-                                        for branch in branch-list
-                                        collecting
-                                          `(setf (gethash ',branch result)
-                                                 (res ,(gethash branch
-                                                                (gethash id id->branch->gsym)))))
-                                   result))))))
+                          (when (not
+                                 (branch-source?
+                                  (target-expr (gethash id result))))
+                            (setf (target-expr (gethash id result))
+                                  `(let ((result (make-hash-table :test ',test)))
+                                     ,@(loop
+                                          for branch in branch-list
+                                          collecting
+                                            `(setf (gethash ',branch result)
+                                                   (res ,(gethash branch
+                                                                  (gethash id id->branch->gsym)))))
+                                     result)))))))
           (branchtrans result))
         result)))

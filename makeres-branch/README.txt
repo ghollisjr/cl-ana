@@ -37,12 +37,12 @@ transformations, we might do the following:
 
 However, branching allows us to do the following:
 
-    (defparameter *religiosity-ranges*
-      '((list 0 0.5)
-        (list 0.5 1)))
+    (defres (branching religiosity-ranges)
+      (branch '((list 0 0.5)
+                (list 0.5 1))))
 
     (defres (src religious mean-IQ)
-      (branch *religiosity-ranges*
+      (branch (res (branching religiosity-ranges))
         (dotab (res src)
             ((sum 0)
              (count 0))
@@ -52,23 +52,28 @@ However, branching allows us to do the following:
             (incf sum (field IQ))
             (incf count)))))
 
-The branch operator serves two purposes:
+The branch operator serves three purposes:
 
-1. The outermost branch operator defines a branching computation.  The
-first argument is known as the branch-list and should be either a form
-which when evaluated by branctrans results in a list of forms which
-will be used in the body of each branch of the computation, or a (res
-id) form which denotes that it should branch in parallel to another
-branching computation using the same branch values.
+1. Defining a branching source: When given a form which would be
+evaluated to a list of expressions, the target is treated as a
+branching source to which other targets can be attached and undergo
+simultaneous branching.
 
-2. The branch operators present inside a branching computation are
+2. Defining a branching result: The outermost branch operator defines
+a branching computation when given two arguments.  The first argument
+is known as the branch-list and should be a (res ID) form which
+denotes that it should branch in parallel to another branching
+computation using the same branch values; for style this ID should be
+the branching source, but it isn't necessary to be the source.
+
+3. The branch operators present inside a branching computation are
 substituted with the value of the branch form for that branch of the
 computation.  The branch forms are thus supplied at compile time to
 the branching computation.  If not supplied any arguments,
 e.g. (branch), it evaluates to the inner-most branch in the case of
 nested branches (explained below).  It also accepts a single argument
-which should be the branch list supplied to one of the outermost
-branch forms in order to select which branch value it refers to.
+which should be the branch source (res ID) in order to select which
+branch value it refers to.
 
 The result of a branching computation is a hash-table mapping from
 each branch value (at run time) to the result of the computation
@@ -76,16 +81,17 @@ branch.
 
 Branching can be nested, e.g.
 
-    (defparameter *xs* (list 1 2 3))
-    (defparameter *ys* (list ''a ''b ''c)) ; double quotes needed
+    (defres (branching xs) (list 1 2 3))
+    (defres (branching ys) (list ''a ''b ''c)) ; double quotes needed
 
     (defres double-branch
-      (branch *xs*
-        (branch *ys*
-          (cons (branch *xs*) (branch *ys*)))))
+      (branch (res (branching xs))
+        (branch (res (branching ys))
+          (cons (branch (res (branching xs)))
+                (branch (res (branching ys)))))))
 
 would result in nested hash tables mapping to conses of every possible
-pair from *xs* and *ys*.
+pair from (res (branching xs)) and (res (branching ys)).
 
 What would be nice would be to support branch-lists which are
 themselves result targets, but this would require rennovation of the
