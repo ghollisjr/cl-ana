@@ -406,11 +406,11 @@
 
 ;;; Branching on nsigma
 
-(defres (branch y-cut-nsigmas)
+(defres (branching y-cut-nsigmas)
   (branch (range 1 3 1)))
 
 (defres (y-cut lower-bounds)
-  (branch (res (branch y-cut-nsigmas))
+  (branch (res (branching y-cut-nsigmas))
           (let ((fit-params (res (y-cut fit-params))))
 
             (sort (loop
@@ -426,7 +426,7 @@
                   :key #'car))))
 
 (defres (y-cut upper-bounds)
-  (branch (res (y-cut lower-bounds))
+  (branch (res (branching y-cut-nsigmas))
           (let ((fit-params (res (y-cut fit-params))))
 
             (sort (loop
@@ -443,17 +443,17 @@
 
 ;; lower fit
 (defres (y-cut lower-bounds fit-results)
-  (branch (res (y-cut lower-bounds))
+  (branch (res (branching y-cut-nsigmas))
           (rest
            (multiple-value-list
             (fit (res (y-cut lower-bounds))
                  #'polynomial
                  (list 1d0 1d0))))))
 (defres (y-cut lower-bounds fit-params)
-  (branch (res (y-cut lower-bounds fit-results))
+  (branch (res (branching y-cut-nsigmas))
           (first (res (y-cut lower-bounds fit-results)))))
 (defres (y-cut lower-bounds fit)
-  (branch (res (y-cut lower-bounds fit-params))
+  (branch (res (branching y-cut-nsigmas))
           (let ((ps (res (y-cut lower-bounds fit-params))))
             (lambda (x)
               (polynomial ps x)))))
@@ -461,17 +461,17 @@
 
 ;; upper fit
 (defres (y-cut upper-bounds fit-results)
-  (branch (res (y-cut upper-bounds))
+  (branch (res (branching y-cut-nsigmas))
           (rest
            (multiple-value-list
             (fit (res (y-cut upper-bounds))
                  #'polynomial
                  (list 1d0 1d0))))))
 (defres (y-cut upper-bounds fit-params)
-  (branch (res (y-cut upper-bounds fit-results))
+  (branch (res (branching y-cut-nsigmas))
           (first (res (y-cut upper-bounds fit-results)))))
 (defres (y-cut upper-bounds fit)
-  (branch (res (y-cut upper-bounds fit-params))
+  (branch (res (branching y-cut-nsigmas))
           (let ((ps (res (y-cut upper-bounds fit-params))))
             (lambda (x)
               (polynomial ps x)))))
@@ -536,10 +536,10 @@
                             :style "lines"
                             :line-width 2)
                       (line (list (cons -100 -100))
-                                  :title "Lower Cut Functions"
-                                  :color "green"
-                                  :style "lines"
-                                  :line-width 2))
+                            :title "Lower Cut Functions"
+                            :color "green"
+                            :style "lines"
+                            :line-width 2))
                      ;; Branching
                      (loop
                         for key being the hash-keys in lower-bounds
@@ -594,7 +594,7 @@
 
 ;; Cut function:
 (defres y-cut
-  (branch (res (y-cut lower-bounds fit))
+  (branch (res (branching y-cut-nsigmas))
           (let ((lower-fit (res (y-cut lower-bounds fit)))
                 (upper-fit (res (y-cut upper-bounds fit))))
             (lambda (x y)
@@ -608,7 +608,7 @@
 
 ;; y-cut table
 (defres (src y-cut)
-  (branch (res y-cut)
+  (branch (res (branching y-cut-nsigmas))
           (ltab (res src)
               ()
             (when (funcall (res y-cut)
@@ -617,8 +617,69 @@
               (push-fields)))))
 
 (defres (src y-cut x hist)
-  (branch (res (src y-cut))
+  (branch (res (branching y-cut-nsigmas))
           (dotab (res (src y-cut))
               ((hist (make-shist '((:name "X" :low -9d0 :high 9d0 :nbins 100)))))
               hist
             (hins hist (list (field x))))))
+
+(defres (plot (y-cut x hist branching normalized))
+  (let* ((hists (res (src y-cut x hist)))
+         (x-range (res (y-cut x-range)))
+         ;; Peak normalization for shape comparison
+         (peaks
+          (loop
+             for nsigmas being the hash-keys in hists
+             for h being the hash-values in hists
+             collecting (let* ((alist (map->alist h))
+                               (peak (maximum (cdrs alist))))
+                          (cons nsigmas
+                                peak))))
+         (fact-alist (mapcar (lambda (cons)
+                               (cons (car cons)
+                                     (/ (cdr cons))))
+                             peaks))
+         (factors (map->hash-table fact-alist 'equal)))
+    (draw
+     (page (list
+            (plot2d (append
+                     (list
+                      ;; X fit-range bounds
+                      (line (list (cons (car x-range) 0)
+                                  (cons (car x-range) 1e9))
+                            :title "X fit-range"
+                            :style "lines"
+                            :color "black")
+                      (line (list (cons (cdr x-range) 0)
+                                  (cons (cdr x-range) 1e9))
+                            :title ""
+                            :style "lines"
+                            :color "black"))
+                     (loop
+                       for nsigmas being the hash-keys in hists
+                        for hist being the hash-values in hists
+                        for point-type from 1
+                       for color
+                       in (list "blue" "green" "red"
+                                ;; some extras in case we try more values
+                                "orange" "purple" "yellow" "brown")
+                       collecting
+                         (line (* (gethash nsigmas factors)
+                                  hist)
+                               :color color
+                               :point-type point-type
+                               :point-size 2
+                               :title (format nil "X Distribution (nsigma=~a)"
+                                              nsigmas)
+                               :style "points")))
+                    :title "Comparison of Y-cut effects on X distribution"
+                    :legend (legend :front-p t
+                                    :location (cons :right :top)
+                                    :box t
+                                    :width-inc 0.5)
+                    :x-title "X"
+                    :x-range (cons "*" "*")
+                    :y-title "Peak-Normalized Count"
+                    :y-range (cons 0 1.3)))
+           :output (work-path "plots/X-hist-y-cut-branching.jpg")
+           :terminal (jpeg-term)))))
