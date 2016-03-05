@@ -328,6 +328,10 @@ non-ignored sources."
          for id being the hash-keys in target-table
          do (setf (gethash id depmap)
                   (rec id)))
+      ;; ;; debug
+      ;; (print 'depmap)
+      ;; (print (cl-ana.map:map->alist depmap))
+      ;; ;; end debug
       (lambda (x y)
         (not (member y (gethash x depmap)
                      :test #'equal))))))
@@ -1305,7 +1309,8 @@ true when given the key and value from ht."
                              (lambda (i)
                                (not
                                 (or (not (member i nec-reds :test #'equal))
-                                    (ltab? (target-expr (gethash i graph)))))))))))
+                                    (ltab? (target-expr (gethash i graph)))
+                                    (target-stat (gethash i graph))))))))))
                         ;; passes relative to ultimate source:
                         (ult-passes
                          (remove
@@ -1345,6 +1350,16 @@ true when given the key and value from ht."
                          (mapcar (lambda (x y)
                                    y)
                                  nec-passes ult-passes)))
+                   ;; ;; debug
+                   ;; (print 'src)
+                   ;; (print src)
+                   ;; (print 'collapsible-passes)
+                   ;; (print collapsible-passes)
+                   ;; (print 'nec-passes)
+                   ;; (print nec-passes)
+                   ;; (print 'ult-passes)
+                   ;; (print ult-passes)
+                   ;; ;; end debug
                    (dolist (pass collapsible-passes)
                      (dolist (p pass)
                        (push p processed-reds))

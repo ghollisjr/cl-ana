@@ -1,3 +1,8 @@
++ Fix potential bug in makeres-table as demonstrated in the large wiki
+  example; apparently the (src y-cut x-y hist) target is still being
+  treated as needing a second pass over (src y-cut) even when they are
+  the only two targets with NIL stats.  Needs further investigation.
+
 + Add tutorial and example code to cl-ana which covers all the wiki
   material and other useful examples.
 

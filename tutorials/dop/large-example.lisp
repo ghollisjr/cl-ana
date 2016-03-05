@@ -115,9 +115,7 @@
 
 ;; Source data
 (defres src
-  (srctab (hdf-opener (work-path "data.h5")
-                      '(("X" . :double)
-                        ("Y" . :double)))
+  (srctab (hdf-chain-opener (list (work-path "data.h5")))
           (res bootstrap)))
 
 ;; contaminated X histogram
@@ -409,7 +407,7 @@
 (defres (branching y-cut-nsigmas)
   (branch (range 1 3 1)))
 
-(defres (y-cut lower-bounds)
+(defres (branching y-cut lower-bounds)
   (branch (res (branching y-cut-nsigmas))
           (let ((fit-params (res (y-cut fit-params))))
 
@@ -425,7 +423,7 @@
                   #'<
                   :key #'car))))
 
-(defres (y-cut upper-bounds)
+(defres (branching y-cut upper-bounds)
   (branch (res (branching y-cut-nsigmas))
           (let ((fit-params (res (y-cut fit-params))))
 
@@ -442,48 +440,48 @@
                   :key #'car))))
 
 ;; lower fit
-(defres (y-cut lower-bounds fit-results)
+(defres (branching y-cut lower-bounds fit-results)
   (branch (res (branching y-cut-nsigmas))
           (rest
            (multiple-value-list
-            (fit (res (y-cut lower-bounds))
+            (fit (res (branching y-cut lower-bounds))
                  #'polynomial
                  (list 1d0 1d0))))))
-(defres (y-cut lower-bounds fit-params)
+(defres (branching y-cut lower-bounds fit-params)
   (branch (res (branching y-cut-nsigmas))
-          (first (res (y-cut lower-bounds fit-results)))))
-(defres (y-cut lower-bounds fit)
+          (first (res (branching y-cut lower-bounds fit-results)))))
+(defres (branching y-cut lower-bounds fit)
   (branch (res (branching y-cut-nsigmas))
-          (let ((ps (res (y-cut lower-bounds fit-params))))
+          (let ((ps (res (branching y-cut lower-bounds fit-params))))
             (lambda (x)
               (polynomial ps x)))))
-(logres-ignore (y-cut lower-bounds fit))
+(logres-ignore (branching y-cut lower-bounds fit))
 
 ;; upper fit
-(defres (y-cut upper-bounds fit-results)
+(defres (branching y-cut upper-bounds fit-results)
   (branch (res (branching y-cut-nsigmas))
           (rest
            (multiple-value-list
-            (fit (res (y-cut upper-bounds))
+            (fit (res (branching y-cut upper-bounds))
                  #'polynomial
                  (list 1d0 1d0))))))
-(defres (y-cut upper-bounds fit-params)
+(defres (branching y-cut upper-bounds fit-params)
   (branch (res (branching y-cut-nsigmas))
-          (first (res (y-cut upper-bounds fit-results)))))
-(defres (y-cut upper-bounds fit)
+          (first (res (branching y-cut upper-bounds fit-results)))))
+(defres (branching y-cut upper-bounds fit)
   (branch (res (branching y-cut-nsigmas))
-          (let ((ps (res (y-cut upper-bounds fit-params))))
+          (let ((ps (res (branching y-cut upper-bounds fit-params))))
             (lambda (x)
               (polynomial ps x)))))
-(logres-ignore (y-cut upper-bounds fit))
+(logres-ignore (branching y-cut upper-bounds fit))
 
 ;; y-cut plot
 
 (defres (plot (y-cut branching))
-  (let* ((lower-bounds (res (y-cut lower-bounds)))
-         (upper-bounds (res (y-cut upper-bounds)))
-         (lower-fit (res (y-cut lower-bounds fit)))
-         (upper-fit (res (y-cut upper-bounds fit)))
+  (let* ((lower-bounds (res (branching y-cut lower-bounds)))
+         (upper-bounds (res (branching y-cut upper-bounds)))
+         (lower-fit (res (branching y-cut lower-bounds fit)))
+         (upper-fit (res (branching y-cut upper-bounds fit)))
          (x-range (res (y-cut x-range)))
          (y-range (res (y-cut y-range)))
          (hist (res (src x-y hist)))
@@ -593,10 +591,10 @@
            :terminal (jpeg-term)))))
 
 ;; Cut function:
-(defres y-cut
+(defres (branching y-cut)
   (branch (res (branching y-cut-nsigmas))
-          (let ((lower-fit (res (y-cut lower-bounds fit)))
-                (upper-fit (res (y-cut upper-bounds fit))))
+          (let ((lower-fit (res (branching y-cut lower-bounds fit)))
+                (upper-fit (res (branching y-cut upper-bounds fit))))
             (lambda (x y)
               (and (<= (car (res (y-cut x-range)))
                        x
@@ -604,27 +602,27 @@
                    (<= (funcall lower-fit x)
                        y
                        (funcall upper-fit x)))))))
-(logres-ignore y-cut)
+(logres-ignore (branching y-cut))
 
 ;; y-cut table
-(defres (src y-cut)
+(defres (branching src y-cut)
   (branch (res (branching y-cut-nsigmas))
           (ltab (res src)
               ()
-            (when (funcall (res y-cut)
+            (when (funcall (res (branching y-cut))
                            (field x)
                            (field y))
               (push-fields)))))
 
-(defres (src y-cut x hist)
+(defres (branching src y-cut x hist)
   (branch (res (branching y-cut-nsigmas))
-          (dotab (res (src y-cut))
+          (dotab (res (branching src y-cut))
               ((hist (make-shist '((:name "X" :low -9d0 :high 9d0 :nbins 100)))))
               hist
             (hins hist (list (field x))))))
 
 (defres (plot (y-cut x hist branching normalized))
-  (let* ((hists (res (src y-cut x hist)))
+  (let* ((hists (res (branching src y-cut x hist)))
          (x-range (res (y-cut x-range)))
          ;; Peak normalization for shape comparison
          (peaks
@@ -656,22 +654,22 @@
                             :style "lines"
                             :color "black"))
                      (loop
-                       for nsigmas being the hash-keys in hists
+                        for nsigmas being the hash-keys in hists
                         for hist being the hash-values in hists
                         for point-type from 1
-                       for color
-                       in (list "blue" "green" "red"
-                                ;; some extras in case we try more values
-                                "orange" "purple" "yellow" "brown")
-                       collecting
-                         (line (* (gethash nsigmas factors)
-                                  hist)
-                               :color color
-                               :point-type point-type
-                               :point-size 2
-                               :title (format nil "X Distribution (nsigma=~a)"
-                                              nsigmas)
-                               :style "points")))
+                        for color
+                        in (list "blue" "green" "red"
+                                 ;; some extras in case we try more values
+                                 "orange" "purple" "yellow" "brown")
+                        collecting
+                          (line (* (gethash nsigmas factors)
+                                   hist)
+                                :color color
+                                :point-type point-type
+                                :point-size 2
+                                :title (format nil "X Distribution (nsigma=~a)"
+                                               nsigmas)
+                                :style "points")))
                     :title "Comparison of Y-cut effects on X distribution"
                     :legend (legend :front-p t
                                     :location (cons :right :top)
@@ -683,3 +681,46 @@
                     :y-range (cons 0 1.3)))
            :output (work-path "plots/X-hist-y-cut-branching.jpg")
            :terminal (jpeg-term)))))
+
+(defres y-cut-nsigmas
+  3)
+
+(defres y-cut
+  (gethash (res y-cut-nsigmas)
+           (res (branching y-cut))))
+(logres-ignore y-cut)
+
+;; y-cut table
+(defres (src y-cut)
+  (tab (res src)
+      ()
+      (hdf-opener (work-path "y-cut.h5")
+                  (list (cons "X" :double)
+                        (cons "Y" :double)))
+    (when (funcall (res y-cut)
+                   (field x)
+                   (field y))
+      (push-fields
+       (x (field x))
+       (y (field y))))))
+
+(defres (src y-cut x hist)
+  (gethash (res y-cut-nsigmas)
+           (res (branching src y-cut x hist))))
+
+(defres (src y-cut x-y hist)
+  (dotab (res (src y-cut))
+      ((x-range (res (y-cut x-range)))
+       (y-range (res (y-cut y-range)))
+       (hist (make-shist
+              (list (list :name "X"
+                          :low (car x-range)
+                          :high (cdr x-range)
+                          :nbins 100)
+                    (list :name "Y"
+                          :low (car y-range)
+                          :high (cdr y-range)
+                          :nbins 100)))))
+      hist
+    (hins hist (list (field x)
+                     (field y)))))

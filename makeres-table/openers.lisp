@@ -76,8 +76,6 @@
                       file group fields-specs
                       (when buffer-size
                         (list :buffer-size buffer-size))))
-         (close-hdf-file file)
-         (setf file nil)
          table)))))
 
 (defun hdf-chain-opener (paths
