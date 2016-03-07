@@ -1,3 +1,8 @@
++ Add plotting cleanup methods for implementations other than SBCL
+
+  Added:
+  * CLISP (needs testing but should work)
+
 + Fix potential bug in makeres-table as demonstrated in the large wiki
   example; apparently the (src y-cut x-y hist) target is still being
   treated as needing a second pass over (src y-cut) even when they are
@@ -29,7 +34,7 @@
   set to new values.  At the moment they are not copied and left to
   the default values.
 
-+ FLAW: Current plotting solution file based solution grows
+- FLAW: Current plotting solution file based solution grows
   uncontrolled every time a new Lisp instance running cl-ana draws a
   plot.  Need to find a better way to allow multiple cl-ana instances
   to share the same plotting directory without clobbering and with
@@ -37,6 +42,13 @@
   problem here, since as it stands gnuplot seems to return a prompt
   prior to actually plotting the data, which means that cl-ana has no
   way to know when the plot has finished.
+
+  POSSIBLE FIX: SBCL at least supports exit hooks through
+  sb-ext:*exit-hooks*, so an implementation-dependent exit-hook system
+  could allow cl-ana to cleanup after itself.  Quitting Lisp from
+  SLIME seems to trigger the exit hook system in SBCL at least.
+
+  SOLUTION: Added SBCL method for cleaning up
 
 - BUG: Fix plotting so that multiple instances of lisp running cl-ana
   do not clobber each other's plot data files.

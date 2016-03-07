@@ -40,6 +40,7 @@
                #:external-program
                #:split-sequence
                #:alexandria
+               #:cl-fad
                #+sbcl
                #:sb-posix)
   :components ((:file "package")

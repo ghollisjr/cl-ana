@@ -67,13 +67,6 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
-(defvar *gnuplot-safe-io* t
-  "Sometimes input is lost on the way to gnuplot due to needing to use
-an unbuffered input pipe.  Set to T if you anticipate this being a
-problem; it typically only happens for very large input streams and is
-very inefficient when *gnuplot-file-io* is NIL.  When using file
-IO (default), this safety check must be enabled.")
-
 (defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
@@ -81,6 +74,21 @@ be used for data transfer, but this is potentially unsafe for large
 transfers and can lead to hard to diagnose bugs.")
 
 (defvar *gnuplot-file-io-index* 0)
+
+;; Cleaning up on exit:
+(defun plotting-exit-hook ()
+  (when *gnuplot-file-io*
+    (let* ((plotdir (plotdir)))
+      (cl-fad:delete-directory-and-files plotdir))))
+(defparameter *plotting-exit-hook-p* nil)
+(defun ensure-exit-hook ()
+  (when (not *plotting-exit-hook-p*)
+    #+sbcl
+    (push #'plotting-exit-hook sb-ext:*exit-hooks*)
+    #+clisp
+    (push #'plotting-exit-hook custom:*fini-hooks*)
+    (setf *plotting-exit-hook-p* t)))
+(ensure-exit-hook)
 
 (defgeneric line-file-io-p (object)
   (:documentation "Returns T if object uses files for safe input, or
@@ -403,10 +411,7 @@ layout specified in the page.")
   (:method ((p page) &rest key-args)
     (with-accessors ((session page-gnuplot-session))
         p
-      ;; Use NIL for no special treatment, or *gnuplot-safe-io* for
-      ;; special waiting
       (gnuplot-cmd session (generate-cmd p))
-      ;; (prompt-wait session (format nil "gnuplot> ~%"))
       (prompt-wait session (format nil "gnuplot> ~%")))))
 
 (defmethod initialize-instance :after
