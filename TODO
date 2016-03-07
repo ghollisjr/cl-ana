@@ -15,6 +15,9 @@
   problems.  At the moment it looks like pdflatex can't infer the plot
   type if a period is in the path basename.
 
+  WORKAROUND: Write to a temporary file and move to the final
+  location.
+
 - Find more efficient way of interacting with gnuplot.  The only
   reason cl-ana has to poll for output from gnuplot is because it
   loses output when unbuffered, but buffering could still be possible
