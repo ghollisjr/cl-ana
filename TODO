@@ -387,7 +387,7 @@ makeres-macro:
 
   SOLUTION: Defined new operator, define-res-function, which is just a
   special kind of res-macro which expands the body in such a way that
-  the argments are only evaluated once.
+  the arguments are only evaluated once.
 
 makeres-table:
 
