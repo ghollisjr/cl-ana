@@ -24,6 +24,7 @@
         :cl-ana.list-utils
         :cl-ana.makeres)
   (:export :define-res-macro
+           :define-res-function
            :expand-res-macros
            :add-binding-ops
            :macrotrans

@@ -23,11 +23,13 @@
 
 (declaim (optimize (debug 3)))
 
+;;; Macros
+
 (defvar *proj->res-macros*
   (make-hash-table :test 'equal)
   "Map from project to macro symbols for project")
 
-(defmacro define-res-macro (name lambda-list &rest body)
+(defmacro define-res-macro (name lambda-list &body body)
   "Defines a res-macro to be expanded in the pipeline."
   `(progn
      (symbol-macrolet ((macros (gethash (project) *proj->res-macros*)))
@@ -233,6 +235,15 @@ none are present."
                                (rec (cdr f) t))))))
                  result)))
       (rec expr))))
+
+;;;; Functions
+(defmacro define-res-function (name lambda-list &body body)
+  "Defines a res-macro with the same syntax you would use for defining
+a function, which is just removing the double-evaluation of the body
+form."
+  `(define-res-macro ,name (&rest args)
+     `(destructuring-bind ,',lambda-list (list ,@args)
+        ,@',body)))
 
 (defun macrotrans (target-table)
   "Implements macro expansion transformation"
