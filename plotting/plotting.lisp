@@ -80,7 +80,8 @@ transfers and can lead to hard to diagnose bugs.")
   (when *gnuplot-file-io*
     #+sbcl
     (let* ((plotdir (plotdir)))
-      (cl-fad:delete-directory-and-files plotdir))))
+      (when (probe-file plotdir)
+        (cl-fad:delete-directory-and-files plotdir)))))
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
   (when (not *plotting-exit-hook-p*)
