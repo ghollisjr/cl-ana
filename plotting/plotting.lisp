@@ -84,7 +84,6 @@ transfers and can lead to hard to diagnose bugs.")
     (setf *gnuplot-max-file-io-index*
           (max *gnuplot-max-file-io-index*
                *gnuplot-file-io-index*))
-    #+sbcl
     (let* ((plotdir (plotdir)))
       (when (probe-file plotdir)
         (loop
@@ -95,8 +94,11 @@ transfers and can lead to hard to diagnose bugs.")
                                         i)
                                 (make-pathname :directory
                                                (namestring plotdir)))))
-        
-        (sb-ext:delete-directory plotdir)))))
+        #+sbcl
+        (sb-ext:delete-directory plotdir)
+        #+clisp
+        (ext:delete-dir (make-pathname :directory
+                                       (namestring plotdir)))))))
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
   (when (not *plotting-exit-hook-p*)
@@ -116,6 +118,8 @@ transfers and can lead to hard to diagnose bugs.")
 (defun getpid ()
   #+sbcl
   (sb-posix:getpid)
+  #+clisp
+  (system::process-id)
   ;; Can't seem to find information on how to do this for other
   ;; implementations
   )
