@@ -75,13 +75,28 @@ transfers and can lead to hard to diagnose bugs.")
 
 (defvar *gnuplot-file-io-index* 0)
 
+(defvar *gnuplot-max-file-io-index* 0
+  "Stores maximum file index")
+
 ;; Cleaning up on exit:
 (defun plotting-exit-hook ()
   (when *gnuplot-file-io*
+    (setf *gnuplot-max-file-io-index*
+          (max *gnuplot-max-file-io-index*
+               *gnuplot-file-io-index*))
     #+sbcl
     (let* ((plotdir (plotdir)))
       (when (probe-file plotdir)
-        (cl-fad:delete-directory-and-files plotdir)))))
+        (loop
+           for i from 1 to *gnuplot-max-file-io-index*
+           do (delete-file
+               (merge-pathnames (format nil
+                                        "data~a.dat"
+                                        i)
+                                (make-pathname :directory
+                                               (namestring plotdir)))))
+        
+        (sb-ext:delete-directory plotdir)))))
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
   (when (not *plotting-exit-hook-p*)
@@ -115,6 +130,9 @@ transfers and can lead to hard to diagnose bugs.")
 (defun reset-data-path ()
   (when *gnuplot-file-io*
     (let ((dir (plotdir)))
+      (setf *gnuplot-max-file-io-index*
+            (max *gnuplot-max-file-io-index*
+                 *gnuplot-file-io-index*))
       (loop
          for i from 1 to *gnuplot-file-io-index*
          do (let ((pn
