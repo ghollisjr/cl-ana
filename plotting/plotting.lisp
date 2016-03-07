@@ -78,6 +78,7 @@ transfers and can lead to hard to diagnose bugs.")
 ;; Cleaning up on exit:
 (defun plotting-exit-hook ()
   (when *gnuplot-file-io*
+    #+sbcl
     (let* ((plotdir (plotdir)))
       (cl-fad:delete-directory-and-files plotdir))))
 (defparameter *plotting-exit-hook-p* nil)
