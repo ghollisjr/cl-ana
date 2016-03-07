@@ -391,14 +391,8 @@ makeres-macro:
 
 makeres-table:
 
-+ Source table definition with bootstrapping.  At the moment, the user
+- Source table definition with bootstrapping.  At the moment, the user
   is tasked with opening source tables and handling the situation when
   the source material for a table is not present.  There should be an
   operator, perhaps stab, which allows the definition of a source
   table.
-
-+ Perhaps renaming the operator tab to ptab.  If the above stab
-  operator is implemented, then having stab, ptab, and ltab is more
-  symmetrical and potentially easier to remember than having stab,
-  tab, and ltab, since physical tables won't be as special once a
-  separate operator is made for source tables.
