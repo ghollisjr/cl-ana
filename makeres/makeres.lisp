@@ -1158,7 +1158,8 @@ list args"
           (mapcar (lambda (pn)
                     (read-from-string
                      (first (last (pathname-directory pn)))))
-                  logged-paths)))
+                  logged-paths))
+         (*print-pretty* nil))
     (loop
        for logged-id in logged-id-strings
        for logged-path in logged-paths
@@ -1166,7 +1167,7 @@ list args"
                     (ignored? logged-id))
             (if delete-p
                 (progn
-                  (format t "Deleting ~a...~%"
+                  (format t "Deleting ~a~%"
                           logged-id)
                   (sb-ext:delete-directory logged-path
                                            :recursive t))
