@@ -35,6 +35,35 @@
 (defun string-append (&rest strings)
   (apply #'concatenate 'string strings))
 
+;; Working with lines:
+
+(defun lines (string)
+  "Splits a string into a list of the lines comprising the string."
+  (flet ((cut-newline (s)
+           (let ((length (length s)))
+             (if (not (zerop length))
+                 (if (char= #\Newline (elt s (1- length)))
+                     (subseq s 0 (1- length))
+                     s)
+                 ""))))
+    (split-sequence:split-sequence
+     #\Newline
+     (cut-newline string))))
+
+(defun unlines (lines &optional (trailing-newline-p t))
+  "Joins a list of lines into original string, with optional trailing
+newline."
+  (let ((result
+         (reduce (lambda (str line)
+                   (string-append str
+                                  (string #\Newline)
+                                  line))
+                 lines
+                 :initial-value "")))
+    (if trailing-newline-p
+        (string-append result (string #\Newline))
+        result)))
+
 ;; Useful for getting the words out of a string:
 (defun words (string)
   "Returns the read words (symbols, numbers, etc.) contained in a

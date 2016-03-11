@@ -21,7 +21,9 @@
 
 (defpackage #:cl-ana.string-utils 
   (:use :cl)
-  (:export :mkstr
+  (:export :lines
+           :unlines
+           :mkstr
            :lispify
            :string-append
            :words))

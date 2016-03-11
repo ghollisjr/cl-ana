@@ -25,6 +25,6 @@
   :description "String utilities not already provided by Alexandria"
   :author "Gary Hollis"
   :license "GPLv3"
-  :depends-on ()
+  :depends-on (#:split-sequence)
   :components ((:file "package")
 	       (:file "string-utils")))
