@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -51,19 +51,26 @@
                          `(expt ,@u)
                          u)))))
 
+(defun reader-macro-units->quantity (unit-list)
+  (apply #'*
+         (mapcar (lambda (u)
+                   (if (listp u)
+                       (apply #'expt u)
+                       u))
+                 unit-list)))
+
 (defun quantity-transformer-reader-macro (stream subchar arg)
   (let* ((expr (read stream t)))
-    `(make-instance 'quantity
-                    :scale ,(first expr)
-                    :unit
-                    ,(cons 'list
-                           (loop
-                              for e in (rest expr)
-                              collecting
-                                (if (listp e)
-                                    (cons 'list
-                                          e)
-                                    e))))))
+    `(* ,(first expr)
+        (reader-macro-units->quantity
+         ,(cons 'list
+                (loop
+                   for e in (rest expr)
+                   collecting
+                     (if (listp e)
+                         (cons 'list
+                               e)
+                         e)))))))
 
 (set-dispatch-macro-character
  #\# #\q #'quantity-transformer-reader-macro)
@@ -75,20 +82,20 @@
     ;; For default behavior:
     (:method (x)
       x))
-  
+
   ;; defquantity defines a method on the quantity generic function
-  
+
   ;;(eval-when (:compile-toplevel :load-toplevel)
   (defquantity quantity
       q q)
-  
+
   (defquantity number
       n (make-instance 'quantity :scale n))
-  
+
   ;; For base units
   (defquantity symbol
       s (make-instance 'quantity :scale 1 :unit s))
-  
+
   ;; For err-nums:
   (defquantity err-num
       e (make-instance 'quantity :scale e :unit 1)))

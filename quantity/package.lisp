@@ -88,6 +88,8 @@
    :+stefan-boltzmann+
    :+graviational-acceleration+
    :+vsound+
-   :+T0+))
+   :+T0+
+   ;; Misc.
+   :reader-macro-units->quantity))
 
 (cl-ana.gmath:use-gmath :cl-ana.quantity)

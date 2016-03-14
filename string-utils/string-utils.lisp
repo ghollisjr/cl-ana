@@ -53,16 +53,18 @@
 (defun unlines (lines &optional (trailing-newline-p t))
   "Joins a list of lines into original string, with optional trailing
 newline."
-  (let ((result
-         (reduce (lambda (str line)
-                   (string-append str
-                                  (string #\Newline)
-                                  line))
-                 lines
-                 :initial-value "")))
-    (if trailing-newline-p
-        (string-append result (string #\Newline))
-        result)))
+  (if (null lines)
+      ""
+      (let ((result
+             (reduce (lambda (str line)
+                       (string-append str
+                                      (string #\Newline)
+                                      line))
+                     (rest lines)
+                     :initial-value (first lines))))
+        (if trailing-newline-p
+            (string-append result (string #\Newline))
+            result))))
 
 ;; Useful for getting the words out of a string:
 (defun words (string)
