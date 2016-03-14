@@ -61,7 +61,7 @@
 
 (defun quantity-transformer-reader-macro (stream subchar arg)
   (let* ((expr (read stream t)))
-    `(* ,(first expr)
+    `(* ',(first expr)
         (reader-macro-units->quantity
          ,(cons 'list
                 (loop
