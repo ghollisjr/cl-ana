@@ -1,4 +1,7 @@
-+ Use #~ reader macro for err-nums instead of the (+- ...) system
++ Possibly implement system for enabling or disabling the
+  reader-macros for quantities and err-nums.
+
+- Use #~ reader macro for err-nums instead of the (+- ...) system
   which doesn't allow reading and writing of literal objects.
 
 + Fully test new quantity implementation.  Quantities are not always
