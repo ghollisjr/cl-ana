@@ -38,8 +38,11 @@
 (define-unit :nautical-mile
     (* 1.151d0 :mile))
 
+;; (define-unit :acre
+;;     #q(4046.873d0 (:meter 2)))
+
 (define-unit :acre
-    #q(4046.873d0 (:meter 2)))
+    (* 4046.873d0 (expt :meter 2)))
 
 ;;;; Fluid volumes:
 
