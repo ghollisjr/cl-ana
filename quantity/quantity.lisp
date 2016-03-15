@@ -130,17 +130,28 @@
                              u))
                        (mklist unit-list)))))
 
+  ;; Function for distrubuting units across a sequence
+  (defun distribute-units (q)
+    (let* ((scale (quantity-scale q))
+           (unit (quantity-unit q)))
+      (if (typep scale 'sequence)
+          (apply #'* scale (mklist unit))
+          q)))
+
   (defquantity quantity
       q
-    (let* ((scale (quantity-scale q))
-           (unit (quantity-unit q))
-           (unit-quantity (unit->quantity unit))
-           (new-unit (quantity-unit unit-quantity)))
-      (if (equal unit new-unit)
-          q
-          (make-instance 'quantity
-                         :scale (* scale (quantity-scale unit-quantity))
-                         :unit (quantity-unit unit-quantity)))))
+    ;; Handle sequences
+    (distribute-units
+     ;; Process units
+     (let* ((scale (quantity-scale q))
+            (unit (quantity-unit q))
+            (unit-quantity (unit->quantity unit))
+            (new-unit (quantity-unit unit-quantity)))
+       (if (equal unit new-unit)
+           q
+           (make-instance 'quantity
+                          :scale (* scale (quantity-scale unit-quantity))
+                          :unit (quantity-unit unit-quantity))))))
 
   (defquantity number
       n (make-instance 'quantity :scale n))

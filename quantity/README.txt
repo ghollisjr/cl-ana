@@ -28,19 +28,12 @@ unit conversion I have found.  The temperature conversion method is
 accomplished via linear functions; I have defined a library for
 dealing with linear transformations/functions from one quantity to
 another and have used this for implementing the temperature conversion
-function convert-temperature.
-
-Temperatures are the only place where there is a slight inconsistency
-in the way unit conversions are handled, both for the methods
-explained above and for the fact that you cannot rely on the
-equivalence of quantities created via the generic math operations and
-the reader macro/direct make-instance function.  The reason is that,
-while other quantities are simply scaled units, temperatures are
-scaled and shifted.  In general you should specify temperatures via
-the reader macro/make-instance functions any time you will need to
-refer to 0 on a temperature scale.  I may be able to repair this at
-some point, but for now this is how it is.
+function convert-temperature.  Note that temperatures are
+automatically converted into Kelvins via the quantity function, so the
+only extra complication is being forced to use the convert-temperature
+function to convert temperature units.
 
 Keyword symbols can be used as units without any extra definitions;
 however there will be no defined conversion from that unit into the
-S.I. system which is necessary for ease of conversion.
+S.I. system which is necessary for ease of conversion.  This is useful
+however for working with your own domain-specific units.
