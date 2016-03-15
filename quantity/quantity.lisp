@@ -89,15 +89,25 @@
             (cons (quantity-scale q)
                   (mklist (quantity-unit q)))))
 
+  ;; Function for distrubuting units across a sequence
+  (defun distribute-units (q)
+    (let* ((scale (quantity-scale q))
+           (unit (quantity-unit q)))
+      (if (typep scale 'sequence)
+          `',(apply #'* scale (mklist unit))
+          q)))
+
   (defun quantity-transformer-reader-macro (stream subchar arg)
     (let* ((expr (read stream t))
            (scale (first expr))
            (unit (if (single (rest expr))
                      (first (rest expr))
                      (rest expr))))
-      (make-instance 'quantity
-                     :scale scale
-                     :unit unit)))
+      ;; Handle sequences
+      (distribute-units
+       (make-instance 'quantity
+                      :scale scale
+                      :unit unit))))
 
   (set-dispatch-macro-character
    #\# #\q #'quantity-transformer-reader-macro)
@@ -130,19 +140,9 @@
                              u))
                        (mklist unit-list)))))
 
-  ;; Function for distrubuting units across a sequence
-  (defun distribute-units (q)
-    (let* ((scale (quantity-scale q))
-           (unit (quantity-unit q)))
-      (if (typep scale 'sequence)
-          (apply #'* scale (mklist unit))
-          q)))
-
   (defquantity quantity
       q
-    ;; Handle sequences
-    (distribute-units
-     ;; Process units
+    ;; Process units
      (let* ((scale (quantity-scale q))
             (unit (quantity-unit q))
             (unit-quantity (unit->quantity unit))
@@ -151,7 +151,7 @@
            q
            (make-instance 'quantity
                           :scale (* scale (quantity-scale unit-quantity))
-                          :unit (quantity-unit unit-quantity))))))
+                          :unit (quantity-unit unit-quantity)))))
 
   (defquantity number
       n (make-instance 'quantity :scale n))
