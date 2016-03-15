@@ -108,77 +108,11 @@ slot-vals."
 (defmacro define-quantity-method
     (fname (&rest args) &body qbody)
 
-  "Defines all suitable methods on quantities using only the
-  quantity-only function body.  Note that one should omit the
-  quantity-if-necessary call, as this is always a good idea and is
-  built into the generated methods.
-
-  The methods implemented via the minimal set of necessary methods to
-  allow quantities to interact with numbers, symbols, quantities, and
-  err-nums.
-
-  The rules:
-
-  1. Methods on quantities should only be invoked by the presence of a
-  symbol or quantity as an argument.
-
-  2. Methods invoked via the presence of a quantity should have
-  explicit typing of all arguments.
-
-  3. Methods invoked via the presence of a symbol should leave all
-  other argument types unspecified and simply call quantity on all
-  arguments to pass to the quantity-only method."
-
-  (flet ((lzip (xs ys)
-           (loop
-              for x in xs
-              for y in ys
-              collect (list x y))))
-    (let* ((q-only
-            `(defmethod ,fname
-                 ,(loop
-                     for a in args
-                     collecting `(,a quantity))
-               (quantity-if-necessary
-                (progn
-                  ,@qbody))))
-           (body-args
-            (loop
-               for a in args
-               collect `(quantity ,a)))
-           (q-types
-            (some-not-all 'quantity
-                          (length args)
-                          *quantity-types*))
-           (q-args
-            (mapcar (lambda (x) (lzip args x))
-                    q-types))
-           (q-methods
-            (loop
-               for a in q-args
-               collect `(defmethod ,fname ,a
-                          (,fname ,@body-args))))
-           (symbol-args
-            (let ((traversed-elements ())
-                  (result ()))
-              (loop
-                 for lst on args
-                 do
-                   (progn
-                     (push (append (reverse traversed-elements)
-                                   (list (list (first lst)
-                                               'symbol))
-                                   (rest lst))
-                           result)
-                     (push (first lst)
-                           traversed-elements))
-                 finally (return (nreverse result)))))
-           (symbol-methods
-            (loop
-               for a in symbol-args
-               collect `(defmethod ,fname ,a
-                          (,fname ,@body-args)))))
-      `(progn
-         ,q-only
-         ,@q-methods
-         ,@symbol-methods))))
+  "Defines a default method for math operations which passes the
+   arguments through #'quantity and the result through
+   #'quantity-if-necessary."
+  `(defmethod ,fname ,args
+     (quantity-if-necessary
+      (let ,(loop for a in args
+                  collecting `(,a (quantity ,a)))
+        ,@qbody))))
