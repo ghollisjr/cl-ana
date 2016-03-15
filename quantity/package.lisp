@@ -33,6 +33,8 @@
    :quantity
    :quantity-scale
    :quantity-unit
+   ;; Quantity methods:
+   :define-quantity-method
    ;; Temperature
    :convert-temperature
    ;; General unit conversion

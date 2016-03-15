@@ -40,11 +40,6 @@ however for working with your own domain-specific units.
 
 *************** NOTES *************************
 
-1. When defining new arithmetic or generic math methods, make sure to
-   call the quantity function on any quantity arguments before
-   performing any operations to handle the problem of units not being
-   available at read time.  This is already done with the functions
-   included with cl-ana, but until I can find a way to automatically
-   handle this the user will need to be careful with this.  Note that
-   this only affects code which uses the reader-macro #q(...);
-   directly using arithmetic with symbols etc. is not affected.
+1. When defining new methods on quantities, use define-quantity-method
+   which automatically calls #'quantity-if-necessary and #'quantity in
+   the execution body in addition to defining mixed-type methods.

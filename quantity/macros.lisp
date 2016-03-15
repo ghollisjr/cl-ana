@@ -140,7 +140,9 @@ slot-vals."
                      for a in args
                      collecting `(,a quantity))
                (quantity-if-necessary
-                (progn
+                (let ,(loop
+                         for a in args
+                         collecting `(,a (quantity ,a)))
                   ,@qbody))))
            (body-args
             (loop

@@ -212,62 +212,52 @@
   ;; no dimension checking.
 
   (define-quantity-method add (ql qr)
-    (let ((ql (quantity ql))
-          (qr (quantity qr)))
-      (make-instance 'quantity
-                     :scale (add (quantity-scale ql)
-                                 (quantity-scale qr))
-                     :unit (quantity-unit ql))))
+    (make-instance 'quantity
+                   :scale (add (quantity-scale ql)
+                               (quantity-scale qr))
+                   :unit (quantity-unit ql)))
 
   (define-quantity-method sub (ql qr)
-    (let ((ql (quantity ql))
-          (qr (quantity qr)))
-      (make-instance 'quantity
-                     :scale (sub (quantity-scale ql)
-                                 (quantity-scale qr))
-                     :unit (quantity-unit ql))))
+    (make-instance 'quantity
+                   :scale (sub (quantity-scale ql)
+                               (quantity-scale qr))
+                   :unit (quantity-unit ql)))
 
   (define-quantity-method unary-sub (q)
-    (let ((q (quantity q)))
-      (make-instance 'quantity
-                     :scale (unary-sub (quantity-scale q))
-                     :unit (quantity-unit q))))
+    (make-instance 'quantity
+                   :scale (unary-sub (quantity-scale q))
+                   :unit (quantity-unit q)))
 
   (define-quantity-method mult (ql qr)
-    (let ((ql (quantity ql))
-          (qr (quantity qr)))
-      (quantity-if-necessary
-       (with-accessors ((scalel quantity-scale)
-                        (unitl quantity-unit))
-           ql
-         (with-accessors ((scaler quantity-scale)
-                          (unitr quantity-unit))
-             qr
-           (make-instance 'quantity
-                          :scale (* scalel scaler)
-                          :unit (unit-mult unitl unitr)))))))
+    (quantity-if-necessary
+     (with-accessors ((scalel quantity-scale)
+                      (unitl quantity-unit))
+         ql
+       (with-accessors ((scaler quantity-scale)
+                        (unitr quantity-unit))
+           qr
+         (make-instance 'quantity
+                        :scale (* scalel scaler)
+                        :unit (unit-mult unitl unitr))))))
 
   (define-quantity-method unary-div (q)
-    (let ((q (quantity q)))
-      (with-slots (scale unit)
-          q
-        (make-instance 'quantity
-                       :scale (unary-div scale)
-                       :unit (unit-div 1 unit)))))
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (unary-div scale)
+                     :unit (unit-div 1 unit))))
 
   (define-quantity-method div (ql qr)
-    (let ((ql (quantity ql))
-          (qr (quantity qr)))
-      (quantity-if-necessary
-       (with-accessors ((scalel quantity-scale)
-                        (unitl quantity-unit))
-           ql
-         (with-accessors ((scaler quantity-scale)
-                          (unitr quantity-unit))
-             qr
-           (make-instance 'quantity
-                          :scale (div scalel scaler)
-                          :unit (unit-div unitl unitr)))))))
+    (quantity-if-necessary
+     (with-accessors ((scalel quantity-scale)
+                      (unitl quantity-unit))
+         ql
+       (with-accessors ((scaler quantity-scale)
+                        (unitr quantity-unit))
+           qr
+         (make-instance 'quantity
+                        :scale (div scalel scaler)
+                        :unit (unit-div unitl unitr))))))
 
   ;; Could provide the protected-div functions, but I'm lazy right now.
 
@@ -275,17 +265,15 @@
   ;; as a quantity.
 
   (define-quantity-method expt (q x)
-    (let ((q (quantity q)))
-      (with-slots (scale unit)
-          q
-        (let ((x (quantity-scale x)))
-          (make-instance 'quantity
-                         :scale (expt scale x)
-                         :unit (unit-expt unit x))))))
+    (with-slots (scale unit)
+        q
+      (let ((x (quantity-scale x)))
+        (make-instance 'quantity
+                       :scale (expt scale x)
+                       :unit (unit-expt unit x)))))
 
   (define-quantity-method sqrt (q)
-    (let ((q (quantity q)))
-      (expt q 1/2)))
+    (expt q 1/2))
 
 ;;; Metric prefixes (e.g. mega, micro, kilo, ...)
 
