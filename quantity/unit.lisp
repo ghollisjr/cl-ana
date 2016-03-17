@@ -108,10 +108,16 @@ being expressed with explicit exponent."
       1
       x))
 
+(defun unwrap-single (l)
+  (if (single l)
+      (car l)
+      l))
+
 (defun unit-simplify (u)
   "Expects u to be in standard form"
-  (one-if-null
-   (un-singleton-zero u)))
+  (unwrap-single
+   (one-if-null
+    (un-singleton-zero u))))
 
 (defun unit-mult (unit1 unit2)
   (labels ((ucoef (u)
