@@ -198,7 +198,7 @@
     x)
 
 ;;;; Methods on quantities are always done via the
-;;;; define-quantity-method macro which defines all appropriate
+;;;; define-quantity-methods macro which defines all appropriate
 ;;;; methods for quantities and symbols as quantities.
 ;;;;
 ;;;; Method bodies are for quantity-only arguments; other combinations
@@ -211,24 +211,24 @@
   ;; Note that addition & subtraction assume you know what you're doing,
   ;; no dimension checking.
 
-  (define-quantity-method add (ql qr)
+  (define-quantity-methods add (ql qr)
     (make-instance 'quantity
                    :scale (add (quantity-scale ql)
                                (quantity-scale qr))
                    :unit (quantity-unit ql)))
 
-  (define-quantity-method sub (ql qr)
+  (define-quantity-methods sub (ql qr)
     (make-instance 'quantity
                    :scale (sub (quantity-scale ql)
                                (quantity-scale qr))
                    :unit (quantity-unit ql)))
 
-  (define-quantity-method unary-sub (q)
+  (define-quantity-methods unary-sub (q)
     (make-instance 'quantity
                    :scale (unary-sub (quantity-scale q))
                    :unit (quantity-unit q)))
 
-  (define-quantity-method mult (ql qr)
+  (define-quantity-methods mult (ql qr)
     (quantity-if-necessary
      (with-accessors ((scalel quantity-scale)
                       (unitl quantity-unit))
@@ -240,14 +240,14 @@
                         :scale (* scalel scaler)
                         :unit (unit-mult unitl unitr))))))
 
-  (define-quantity-method unary-div (q)
+  (define-quantity-methods unary-div (q)
     (with-slots (scale unit)
         q
       (make-instance 'quantity
                      :scale (unary-div scale)
                      :unit (unit-div 1 unit))))
 
-  (define-quantity-method div (ql qr)
+  (define-quantity-methods div (ql qr)
     (quantity-if-necessary
      (with-accessors ((scalel quantity-scale)
                       (unitl quantity-unit))
@@ -264,7 +264,7 @@
   ;; Note that expt treats x as a pure number, ignoring the unit for it
   ;; as a quantity.
 
-  (define-quantity-method expt (q x)
+  (define-quantity-methods expt (q x)
     (with-slots (scale unit)
         q
       (let ((x (quantity-scale x)))
@@ -272,7 +272,7 @@
                        :scale (expt scale x)
                        :unit (unit-expt unit x)))))
 
-  (define-quantity-method sqrt (q)
+  (define-quantity-methods sqrt (q)
     (expt q 1/2))
 
 ;;; Metric prefixes (e.g. mega, micro, kilo, ...)
