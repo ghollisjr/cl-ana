@@ -1,3 +1,10 @@
++ Resolve define-quantity-methods situation.  As it is now, it suffers
+  from inefficiencies and a previously missed limitation: Methods
+  which come with cl-ana cannot know about new quantity types, even if
+  defquantity is used.  Either a smarter system is needed, or define a
+  default arithmetic method which interprets everything as a quantity
+  if necessary.
+
 + Possibly implement system for enabling or disabling the
   reader-macros for quantities and err-nums.
 

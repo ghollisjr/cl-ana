@@ -113,9 +113,9 @@ slot-vals."
   quantity-if-necessary call, as this is always a good idea and is
   built into the generated methods.
 
-  The methods implemented via the minimal set of necessary methods to
-  allow quantities to interact with numbers, symbols, quantities, and
-  err-nums.
+  The methods are implemented via the minimal set of necessary methods
+  to allow quantities to interact with numbers, symbols, quantities,
+  and err-nums.
 
   The rules:
 
