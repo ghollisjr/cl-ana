@@ -5,6 +5,14 @@
   default arithmetic method which interprets everything as a quantity
   if necessary.
 
+  Due to this, and due to the fact that the only commonly defined
+  operations on quantities are basic arithmetic, it doesn't makes
+  sense to favor extensible methods over a working solution.  At the
+  same time, this also means that clobbering the default method is
+  overkill since there is virtually no need to define new quantity
+  types, whereas the user or other libraries may wish to override
+  default settings.
+
 + Possibly implement system for enabling or disabling the
   reader-macros for quantities and err-nums.
 

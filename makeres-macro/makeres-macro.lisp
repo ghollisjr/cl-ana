@@ -240,7 +240,8 @@ none are present."
 (defmacro define-res-function (name lambda-list &body body)
   "Defines a res-macro with the same syntax you would use for defining
 a function, which is just removing the double-evaluation of the body
-form."
+form.  Note that this still just defines a macro, so wrap calls to it
+in a lambda form when e.g. mapping."
   `(define-res-macro ,name (&rest args)
      `(destructuring-bind ,',lambda-list (list ,@args)
         ,@',body)))
