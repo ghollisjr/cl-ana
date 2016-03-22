@@ -48,18 +48,6 @@
                     :scale ',(quantity-scale self)
                     :unit ',(quantity-unit self)))
 
-  ;; Defunct method which didn't use the reader-macro.
-  ;;
-  ;; (defmethod print-object ((q quantity) stream)
-  ;;   (format stream "(* ~{~S~^ ~})" ; ~S tries to print READable formatting.
-  ;;           (cons (quantity-scale q)
-  ;;                 (loop
-  ;;                    for u in (mklist (quantity-unit q))
-  ;;                    collecting
-  ;;                      (if (listp u)
-  ;;                          `(expt ,@u)
-  ;;                          u)))))
-
   (defun reader-macro-units->quantity (unit-list)
     (apply #'*
            (mapcar (lambda (u)
@@ -67,21 +55,6 @@
                          (apply #'expt u)
                          u))
                    unit-list)))
-
-  ;; Experimental version
-  ;;
-  ;; (defun quantity-transformer-reader-macro (stream subchar arg)
-  ;;   (let* ((expr (read stream t)))
-  ;;     `(* ',(first expr)
-  ;;         (reader-macro-units->quantity
-  ;;          ,(cons 'list
-  ;;                 (loop
-  ;;                    for e in (rest expr)
-  ;;                    collecting
-  ;;                      (if (listp e)
-  ;;                          (cons 'list
-  ;;                                e)
-  ;;                          e)))))))
 
   ;; Read-time version:
   (defmethod print-object ((q quantity) stream)
@@ -120,14 +93,6 @@
       x))
 
   ;; defquantity defines a method on the quantity generic function
-
-  ;;(eval-when (:compile-toplevel :load-toplevel)
-
-  ;; Single-expansion version:
-  ;; (defquantity quantity
-  ;;     q q)
-
-  ;; Smarter version:
 
   (defun unit->quantity (unit-list)
     "Converts raw units into a quantity."
@@ -196,16 +161,10 @@
   (defmethod quantity-if-necessary (x)
     x)
 
-;;;; Methods on quantities are always done via the
-;;;; define-quantity-methods macro which defines all appropriate
-;;;; methods for quantities and symbols as quantities.
-;;;;
-;;;; Method bodies are for quantity-only arguments; other combinations
-;;;; are generated automatically making use of the quantity generic
-;;;; function.
-;;;;
-;;;; At the moment, I do not have a centralized way to add a type to
-;;;; the automatic quantity method generation, but the procedure for doing so is to simply
+  ;;; The following are default methods on the basic arithmetic
+  ;;; operators which assume that quantities should be used.  This
+  ;;; means that a user only needs to define a method on #'quantity
+  ;;; for a type in order to have arithmetic available.
 
   ;; Note that addition & subtraction assume you know what you're doing,
   ;; no dimension checking.
