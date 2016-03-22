@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2013-2016 Gary Hollis, 2016 Elijah Malaby
 ;;;;
 ;;;; This file is part of cl-ana.
 ;;;;
@@ -91,96 +91,121 @@ slot-vals."
                    (lcons sv
                           (just-some val (1- n-slots) slot-vals)))))))
 
-(defvar *quantity-types* nil)
+;; Elijah Malaby's with-quantities:
+(defmacro with-quantities ((&rest args) &body body)
+  "Ensures all arguments are quantities and evaluates body in this
+context and with a quantity-if-necessary call.  Supports dual syntax
+for arguments:
+
+* Symbols: Simply binds the symbol to the quantity value.
+* Lists of form (s u q): Binds quantity to q, scale to s, and unit to u."
+  (labels ((recursor (args)
+             (if args
+                 (if (symbolp (car args))
+                     `(let ((,(car args) (quantity ,(car args))))
+                        ,(recursor (cdr args)))
+                     `(with-accessors ((,(caar args) quantity-scale)
+                                       (,(cadar args) quantity-unit))
+                          (quantity ,(caddar args))
+                        ,(recursor (cdr args))))
+                 `(progn ,@body))))
+    `(quantity-if-necessary
+      (block nil
+        ;; Block here so that #'return still passes through
+        ;; quantity-if-necessary, although #'return-from does
+        ;; not (similar to loop)
+        ,(recursor args)))))
+
+;; (defvar *quantity-types* nil)
 ;; (list 'number
 ;;         'symbol
 ;;         'err-num
 ;;         'quantity))
 
-(defmacro defquantity (type var &body body)
-  "Defines a method on quantity for transforming a value from a given
-  type into a quantity."
-  `(when (not (member ',type *quantity-types* :test #'equal))
-     (push ',type *quantity-types*)
-     (defmethod quantity ((,var ,type))
-       ,@body)))
+;; (defmacro defquantity (type var &body body)
+;;   "Defines a method on quantity for transforming a value from a given
+;;   type into a quantity."
+;;   `(when (not (member ',type *quantity-types* :test #'equal))
+;;      (push ',type *quantity-types*)
+;;      (defmethod quantity ((,var ,type))
+;;        ,@body)))
 
-(defmacro define-quantity-methods
-    (fname (&rest args) &body qbody)
+;; (defmacro define-quantity-methods
+;;     (fname (&rest args) &body qbody)
 
-  "Defines all suitable methods on quantities using only the
-  quantity-only function body.  Note that one should omit the
-  quantity-if-necessary call, as this is always a good idea and is
-  built into the generated methods.
+;;   "Defines all suitable methods on quantities using only the
+;;   quantity-only function body.  Note that one should omit the
+;;   quantity-if-necessary call, as this is always a good idea and is
+;;   built into the generated methods.
 
-  The methods are implemented via the minimal set of necessary methods
-  to allow quantities to interact with numbers, symbols, quantities,
-  and err-nums.
+;;   The methods are implemented via the minimal set of necessary methods
+;;   to allow quantities to interact with numbers, symbols, quantities,
+;;   and err-nums.
 
-  The rules:
+;;   The rules:
 
-  1. Methods on quantities should only be invoked by the presence of a
-  symbol or quantity as an argument.
+;;   1. Methods on quantities should only be invoked by the presence of a
+;;   symbol or quantity as an argument.
 
-  2. Methods invoked via the presence of a quantity should have
-  explicit typing of all arguments.
+;;   2. Methods invoked via the presence of a quantity should have
+;;   explicit typing of all arguments.
 
-  3. Methods invoked via the presence of a symbol should leave all
-  other argument types unspecified and simply call quantity on all
-  arguments to pass to the quantity-only method."
+;;   3. Methods invoked via the presence of a symbol should leave all
+;;   other argument types unspecified and simply call quantity on all
+;;   arguments to pass to the quantity-only method."
 
-  (flet ((lzip (xs ys)
-           (loop
-              for x in xs
-              for y in ys
-              collect (list x y))))
-    (let* ((q-only
-            `(defmethod ,fname
-                 ,(loop
-                     for a in args
-                     collecting `(,a quantity))
-               (quantity-if-necessary
-                (let ,(loop
-                         for a in args
-                         collecting `(,a (quantity ,a)))
-                  ,@qbody))))
-           (body-args
-            (loop
-               for a in args
-               collect `(quantity ,a)))
-           (q-types
-            (some-not-all 'quantity
-                          (length args)
-                          *quantity-types*))
-           (q-args
-            (mapcar (lambda (x) (lzip args x))
-                    q-types))
-           (q-methods
-            (loop
-               for a in q-args
-               collect `(defmethod ,fname ,a
-                          (,fname ,@body-args))))
-           (symbol-args
-            (let ((traversed-elements ())
-                  (result ()))
-              (loop
-                 for lst on args
-                 do
-                   (progn
-                     (push (append (reverse traversed-elements)
-                                   (list (list (first lst)
-                                               'symbol))
-                                   (rest lst))
-                           result)
-                     (push (first lst)
-                           traversed-elements))
-                 finally (return (nreverse result)))))
-           (symbol-methods
-            (loop
-               for a in symbol-args
-               collect `(defmethod ,fname ,a
-                          (,fname ,@body-args)))))
-      `(progn
-         ,q-only
-         ,@q-methods
-         ,@symbol-methods))))
+;;   (flet ((lzip (xs ys)
+;;            (loop
+;;               for x in xs
+;;               for y in ys
+;;               collect (list x y))))
+;;     (let* ((q-only
+;;             `(defmethod ,fname
+;;                  ,(loop
+;;                      for a in args
+;;                      collecting `(,a quantity))
+;;                (quantity-if-necessary
+;;                 (let ,(loop
+;;                          for a in args
+;;                          collecting `(,a (quantity ,a)))
+;;                   ,@qbody))))
+;;            (body-args
+;;             (loop
+;;                for a in args
+;;                collect `(quantity ,a)))
+;;            (q-types
+;;             (some-not-all 'quantity
+;;                           (length args)
+;;                           *quantity-types*))
+;;            (q-args
+;;             (mapcar (lambda (x) (lzip args x))
+;;                     q-types))
+;;            (q-methods
+;;             (loop
+;;                for a in q-args
+;;                collect `(defmethod ,fname ,a
+;;                           (,fname ,@body-args))))
+;;            (symbol-args
+;;             (let ((traversed-elements ())
+;;                   (result ()))
+;;               (loop
+;;                  for lst on args
+;;                  do
+;;                    (progn
+;;                      (push (append (reverse traversed-elements)
+;;                                    (list (list (first lst)
+;;                                                'symbol))
+;;                                    (rest lst))
+;;                            result)
+;;                      (push (first lst)
+;;                            traversed-elements))
+;;                  finally (return (nreverse result)))))
+;;            (symbol-methods
+;;             (loop
+;;                for a in symbol-args
+;;                collect `(defmethod ,fname ,a
+;;                           (,fname ,@body-args)))))
+;;       `(progn
+;;          ,q-only
+;;          ,@q-methods
+;;          ,@symbol-methods))))
