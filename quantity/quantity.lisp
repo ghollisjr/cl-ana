@@ -273,7 +273,67 @@
                        :unit (unit-expt unit x)))))
 
   (define-quantity-method sqrt (q)
-    (expt q 1/2))
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (sqrt scale)
+                     :unit unit)))
+
+  (define-quantity-method exp (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (exp scale)
+                     :unit unit)))
+
+  (define-quantity-method log (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (log scale)
+                     :unit unit)))
+
+  (define-quantity-method sin (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (sin scale)
+                     :unit unit)))
+
+  (define-quantity-method cos (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (cos scale)
+                     :unit unit)))
+
+  (define-quantity-method tan (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (tan scale)
+                     :unit unit)))
+
+  (define-quantity-method sinh (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (sinh scale)
+                     :unit unit)))
+
+  (define-quantity-method cosh (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (cosh scale)
+                     :unit unit)))
+
+  (define-quantity-method tanh (q)
+    (with-slots (scale unit)
+        q
+      (make-instance 'quantity
+                     :scale (tanh scale)
+                     :unit unit)))
 
 ;;; Metric prefixes (e.g. mega, micro, kilo, ...)
 
