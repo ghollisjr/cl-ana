@@ -475,7 +475,13 @@ layout specified in the page.")
     :accessor plot-legend
     :documentation "The legend (if any) to be drawn on the plot.
     Either nil or a string, use the function legend to generate legend
-    strings.")))
+    strings.")
+   (grid
+    :initarg :grid
+    :initform (grid)
+    :accessor plot-grid
+    :documentation "The grid settings (if any) to be used in the plot.
+    Must use output from grid function.")))
 
 (defgeneric plot-cmd (plot)
   (:documentation "The command used for plotting the plot in gnuplot;
@@ -780,6 +786,25 @@ initargs from key-args."
                                  t))
                logaxes)))))
 
+(defun grid
+    (&key
+       ;; Tics settings
+       x-tics-p
+       x-mtics-p
+       x2-tics-p
+       x2-mtics-p
+       y-tics-p
+       y-mtics-p
+       y2-tics-p
+       y2-mtics-p
+       z-tics-p
+       z-mtics-p
+       cb-tics-p
+       cb-mtics-p
+       ;; Polar system angle
+       polar
+       ))
+
 (defmethod plot-cmd ((p plot2d))
   (with-slots (x-range
                x-tics
@@ -793,7 +818,8 @@ initargs from key-args."
                y2-mtics
                cb-range
                cb-tics
-               cb-mtics)
+               cb-mtics
+               grid)
       p
     (with-output-to-string (s)
       ;; tics
@@ -838,6 +864,14 @@ initargs from key-args."
                   (car cb-range)
                   (cdr cb-range))
           (format s "set cbrange [*:*]~%"))
+
+      ;; Grid settings
+      ;; Enable this once grid is ready
+      (when nil
+        (format s "set grid ~a~%"
+                grid))
+      
+      ;; Plot command line:
       (format s "plot ")
       (if x-range
           (format s "[~a:~a] "
@@ -857,10 +891,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-       :initarg :view
-       :initform nil
-       :accessor plot3d-view
-       :documentation "Sets the view for the 3-d plot.  Set to :map or
+    :initarg :view
+    :initform nil
+    :accessor plot3d-view
+    :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -1007,6 +1041,7 @@ initargs from key-args."
                cb-range
                cb-tics
                cb-mtics
+               grid
                colorbox-p
                pm3d
                view)
@@ -1042,6 +1077,13 @@ initargs from key-args."
                 (if (integerp cb-mtics)
                     cb-mtics
                     "default")))
+
+      ;; Grid settings
+      ;; Enable this when grid is ready
+      (when nil
+        (format s "set grid ~a~%"
+                grid))
+      
       ;; ranges
       (if x-range
           (format s "set xrange [~a:~a]~%"
@@ -1072,6 +1114,7 @@ initargs from key-args."
         (format s "set ~a~%" pm3d))
       (when colorbox-p
         (format s "set colorbox~%"))
+      ;; Plot command line:
       (format s "splot "))))
 
 (defun plot3d (lines &rest key-args)

@@ -47,6 +47,7 @@
            :data-line
            :analytic-line
            :legend
+           :grid
            :generate-cmd
            ;; page functions
            :draw
@@ -67,6 +68,7 @@
            ;; plot functions
            :plot-lines
            :plot-legend
+           :plot-grid
            :plot-add-line
            :plot2d-x-range
            :plot2d-y-range
