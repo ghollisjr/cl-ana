@@ -207,6 +207,37 @@ transfers and can lead to hard to diagnose bugs.")
   (setf *gnuplot-sessions* nil)
   (spawn-gnuplot-session))
 
+(defgeneric lisp->gnuplot (x)
+  (:documentation "Handles any troublesome data types for sending to
+  gnuplot and processes cons trees.")
+  (:method (x)
+    x)
+  (:method ((x cons))
+    (cons (lisp->gnuplot (car x))
+          (lisp->gnuplot (cdr x))))
+  (:method ((x double-float))
+    (let* ((rawstr (mkstr x))
+           (rawlen (length rawstr))
+           (str
+            ;; Remove unnecessary exponents
+            (if (string= (subseq rawstr (- rawlen 2))
+                         "d0")
+                (subseq rawstr 0 (- rawlen 2))
+                rawstr)))
+      (map 'string
+           (lambda (char)
+             (if (or (char= char #\d)
+                     (char= char #\f))
+                 #\e
+                 char))
+           str))))
+
+(defun gnuplot-format (stream &rest format-args)
+  "Runs format with lisp->gnuplot mapped across all format arguments."
+  (apply #'format stream
+         (first format-args)
+         (mapcar #'lisp->gnuplot (rest format-args))))
+
 (defgeneric generate-cmd (object)
   (:documentation "Generates a command string (with new-line at end)
   for drawing a particular element.  Assumes that the appropriate
@@ -293,27 +324,27 @@ other initargs from key-args."
       (reset-data-path))
     (string-append
      (with-output-to-string (s)
-       (format s "set output~%")
-       (format s "set term ~a" terminal)
-       (format s "~%")
-       (when output (format s "set output '~a'~%" output))
-       (format s "set multiplot layout ~a,~a title '~a'"
-               (car layout) (cdr layout)
-               (if shown-title
-                   shown-title
-                   ""))
+       (gnuplot-format s "set output~%")
+       (gnuplot-format s "set term ~a" terminal)
+       (gnuplot-format s "~%")
+       (when output (gnuplot-format s "set output '~a'~%" output))
+       (gnuplot-format s "set multiplot layout ~a,~a title '~a'"
+                       (car layout) (cdr layout)
+                       (if shown-title
+                           shown-title
+                           ""))
        (when scale
-         (format s "scale ~a,~a" (car scale) (cdr scale)))
-       (format s "~%"))
+         (gnuplot-format s "scale ~a,~a" (car scale) (cdr scale)))
+       (gnuplot-format s "~%"))
      (reduce #'string-append
              (loop
                 for plot in plots
                 collecting (generate-cmd plot)))
      (with-output-to-string (s)
-       (format s "unset multiplot~%")
-       (format s "set output~%")
+       (gnuplot-format s "unset multiplot~%")
+       (gnuplot-format s "set output~%")
        ;; Return prompt
-       (format s "print 'gnuplot> '")))
+       (gnuplot-format s "print 'gnuplot> '")))
     ;; Should enable this later, but at the moment it causes an error
     ;;
     ;; ;; (when *gnuplot-file-io*
@@ -504,24 +535,24 @@ layout specified in the page.")
           (line-index->data-path
            (make-hash-table :test 'equal)))
       (with-output-to-string (s)
-        (format s "set title '~a'" title)
+        (gnuplot-format s "set title '~a'" title)
         (when title-offset
-          (format s " offset ~a,~a"
-                  (car title-offset)
-                  (cdr title-offset)))
-        (format s "~%")
+          (gnuplot-format s " offset ~a,~a"
+                          (car title-offset)
+                          (cdr title-offset)))
+        (gnuplot-format s "~%")
         (when legend
-          (format s "~a~%" legend))
+          (gnuplot-format s "~a~%" legend))
         (loop
            for a in (pre-plot-cmd-settings p)
-           do (format s "~a~%" a))
-        (format s "unset label~%")
+           do (gnuplot-format s "~a~%" a))
+        (gnuplot-format s "unset label~%")
         (loop
            for i from 1
            for label in labels
-           do (format s "set label ~a ~a~%"
-                      i label))
-        (format s "~a " (plot-cmd p))
+           do (gnuplot-format s "set label ~a ~a~%"
+                              i label))
+        (gnuplot-format s "~a " (plot-cmd p))
         (loop
            for line-index from 0
            for cons on lines
@@ -542,10 +573,10 @@ layout specified in the page.")
                                               line-index->data-path)
                                      subcmd))
                            raw-cmd)))
-                 (format s "~a" cmd)))
+                 (gnuplot-format s "~a" cmd)))
            when (cdr cons)
-           do (format s ", "))
-        (format s "~%")
+           do (gnuplot-format s ", "))
+        (gnuplot-format s "~%")
         ;; Send data either through pipes or file IO
         (if *gnuplot-file-io*
             ;; file IO
@@ -564,13 +595,13 @@ layout specified in the page.")
             ;; pipe IO
             (loop
                for l in lines
-               do (format s "~a"
-                          (map 'string
-                               (lambda (c)
-                                 (if (eq c #\f)
-                                     #\e
-                                     c))
-                               (line-data-cmd l)))))))))
+               do (gnuplot-format s "~a"
+                                  (map 'string
+                                       (lambda (c)
+                                         (if (eq c #\f)
+                                             #\e
+                                             c))
+                                       (line-data-cmd l)))))))))
 
 ;; A two-dimensional plot has up to four labelled axes:
 ;;
@@ -719,8 +750,8 @@ initargs from key-args."
            (when var
              (list
               (if noquotes-p
-                  (format nil "set ~a ~a~%" label var)
-                  (format nil "set ~a '~a'~%" label var))))))
+                  (gnuplot-format nil "set ~a ~a~%" label var)
+                  (gnuplot-format nil "set ~a '~a'~%" label var))))))
     (with-slots (logaxes
                  x-title x-title-offset
                  x2-title x2-title-offset
@@ -741,43 +772,43 @@ initargs from key-args."
         ;; x
         (when x-title
           (list (string-append
-                 (format nil "set xlabel '~a'"
-                         x-title)
+                 (gnuplot-format nil "set xlabel '~a'"
+                                 x-title)
                  (if x-title-offset
-                     (format nil " offset ~a,~a"
-                             (car x-title-offset)
-                             (cdr x-title-offset)))
-                 (format nil "~%"))))
+                     (gnuplot-format nil " offset ~a,~a"
+                                     (car x-title-offset)
+                                     (cdr x-title-offset)))
+                 (gnuplot-format nil "~%"))))
         ;; x2
         (when x2-title
           (list (string-append
-                 (format nil "set x2label '~a'"
-                         x2-title)
+                 (gnuplot-format nil "set x2label '~a'"
+                                 x2-title)
                  (if x2-title-offset
-                     (format nil " offset ~a,~a"
-                             (car x2-title-offset)
-                             (cdr x2-title-offset)))
-                 (format nil "~%"))))
+                     (gnuplot-format nil " offset ~a,~a"
+                                     (car x2-title-offset)
+                                     (cdr x2-title-offset)))
+                 (gnuplot-format nil "~%"))))
         ;; y
         (when y-title
           (list (string-append
-                 (format nil "set ylabel '~a'"
-                         y-title)
+                 (gnuplot-format nil "set ylabel '~a'"
+                                 y-title)
                  (if y-title-offset
-                     (format nil " offset ~a,~a"
-                             (car y-title-offset)
-                             (cdr y-title-offset)))
-                 (format nil "~%"))))
+                     (gnuplot-format nil " offset ~a,~a"
+                                     (car y-title-offset)
+                                     (cdr y-title-offset)))
+                 (gnuplot-format nil "~%"))))
         ;; y2
         (when y2-title
           (list (string-append
-                 (format nil "set y2label '~a'"
-                         y2-title)
+                 (gnuplot-format nil "set y2label '~a'"
+                                 y2-title)
                  (if y2-title-offset
-                     (format nil " offset ~a,~a"
-                             (car y2-title-offset)
-                             (cdr y2-title-offset)))
-                 (format nil "~%")))))
+                     (gnuplot-format nil " offset ~a,~a"
+                                     (car y2-title-offset)
+                                     (cdr y2-title-offset)))
+                 (gnuplot-format nil "~%")))))
        (mapcan (lambda (axis)
                  (maybe-make-str "logscale"
                                  (if (equal axis "z")
@@ -823,64 +854,65 @@ initargs from key-args."
       p
     (with-output-to-string (s)
       ;; tics
-      (format s "~a" (merge-tics :x x-tics))
-      (format s "~a" (merge-tics :x2 x2-tics))
-      (format s "~a" (merge-tics :y y-tics))
-      (format s "~a" (merge-tics :y2 y2-tics))
-      (format s "~a" (merge-tics :cb cb-tics))
+      (gnuplot-format s "~a" (merge-tics :x x-tics))
+      (gnuplot-format s "~a" (merge-tics :x2 x2-tics))
+      (gnuplot-format s "~a" (merge-tics :y y-tics))
+      (gnuplot-format s "~a" (merge-tics :y2 y2-tics))
+      (gnuplot-format s "~a" (merge-tics :cb cb-tics))
       ;; minor tics
-      (format s "unset mxtics~%")
-      (format s "unset mx2tics~%")
-      (format s "unset mytics~%")
-      (format s "unset my2tics~%")
-      (format s "unset mcbtics~%")
+      (gnuplot-format s "unset mxtics~%")
+      (gnuplot-format s "unset mx2tics~%")
+      (gnuplot-format s "unset mytics~%")
+      (gnuplot-format s "unset my2tics~%")
+      (gnuplot-format s "unset mcbtics~%")
       (when x-mtics
-        (format s "set mxtics ~a~%"
-                (if (integerp x-mtics)
-                    x-mtics
-                    "default")))
+        (gnuplot-format s "set mxtics ~a~%"
+                        (if (integerp x-mtics)
+                            x-mtics
+                            "default")))
       (when x2-mtics
-        (format s "set mx2tics ~a~%"
-                (if (integerp x2-mtics)
-                    x2-mtics
-                    "default")))
+        (gnuplot-format s "set mx2tics ~a~%"
+                        (if (integerp x2-mtics)
+                            x2-mtics
+                            "default")))
       (when y-mtics
-        (format s "set mytics ~a~%"
-                (if (integerp y-mtics)
-                    y-mtics
-                    "default")))
+        (gnuplot-format s "set mytics ~a~%"
+                        (if (integerp y-mtics)
+                            y-mtics
+                            "default")))
       (when y2-mtics
-        (format s "set y2-mtics ~a~%"
-                (if (integerp y2-mtics)
-                    y2-mtics
-                    "default")))
+        (gnuplot-format s "set y2-mtics ~a~%"
+                        (if (integerp y2-mtics)
+                            y2-mtics
+                            "default")))
       (when cb-mtics
-        (format s "set mcbtics ~a~%"
-                (if (integerp cb-mtics)
-                    cb-mtics
-                    "default")))
+        (gnuplot-format s "set mcbtics ~a~%"
+                        (if (integerp cb-mtics)
+                            cb-mtics
+                            "default")))
+      (if x-range
+          (gnuplot-format s "set xrange [~a:~a]~%"
+                          (car x-range) (cdr x-range))
+          (gnuplot-format s "set xrange [*:*]~%"))
+      (when y-range
+        (gnuplot-format s "set yrange [~a:~a]~%"
+                        (car y-range) (cdr y-range))
+        (gnuplot-format s "set yrange [*:*]~%"))
       (if cb-range
-          (format s "set cbrange [~a:~a]~%"
-                  (car cb-range)
-                  (cdr cb-range))
-          (format s "set cbrange [*:*]~%"))
+          (gnuplot-format s "set cbrange [~a:~a]~%"
+                          (car cb-range)
+                          (cdr cb-range))
+          (gnuplot-format s "set cbrange [*:*]~%"))
 
       ;; Grid settings
       ;; Enable this once grid is ready
       (when nil
-        (format s "set grid ~a~%"
-                grid))
-      
+        (gnuplot-format s "set grid ~a~%"
+                        grid))
+
       ;; Plot command line:
-      (format s "plot ")
-      (if x-range
-          (format s "[~a:~a] "
-                  (car x-range) (cdr x-range))
-          (format s "[*:*] "))
-      (when y-range
-        (format s "[~a:~a] "
-                (car y-range) (cdr y-range))
-        (format s "[*:*] ")))))
+      (gnuplot-format s "plot ")
+      )))
 
 ;; A three dimensional plot has up to three labelled axes, "x", "y",
 ;; and "z".
@@ -891,10 +923,10 @@ initargs from key-args."
     :accessor plot3d-logaxes
     :documentation "List of axes which should be in log scale.")
    (view
-    :initarg :view
-    :initform nil
-    :accessor plot3d-view
-    :documentation "Sets the view for the 3-d plot.  Set to :map or
+       :initarg :view
+       :initform nil
+       :accessor plot3d-view
+       :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -1003,8 +1035,8 @@ initargs from key-args."
            (when var
              (list
               (if noquotes-p
-                  (format nil "set ~a ~a~%" label var)
-                  (format nil "set ~a '~a'~%" label var))))))
+                  (gnuplot-format nil "set ~a ~a~%" label var)
+                  (gnuplot-format nil "set ~a '~a'~%" label var))))))
     (with-slots (logaxes
                  x-title x2-title
                  y-title y2-title
@@ -1048,74 +1080,74 @@ initargs from key-args."
       p
     (with-output-to-string (s)
       ;; tics
-      (format s "~a" (merge-tics :x x-tics))
-      (format s "~a" (merge-tics :y y-tics))
-      (format s "~a" (merge-tics :z z-tics))
-      (format s "~a" (merge-tics :cb cb-tics))
+      (gnuplot-format s "~a" (merge-tics :x x-tics))
+      (gnuplot-format s "~a" (merge-tics :y y-tics))
+      (gnuplot-format s "~a" (merge-tics :z z-tics))
+      (gnuplot-format s "~a" (merge-tics :cb cb-tics))
       ;; minor tics
-      (format s "unset mxtics~%")
-      (format s "unset mytics~%")
-      (format s "unset mztics~%")
-      (format s "unset mcbtics~%")
+      (gnuplot-format s "unset mxtics~%")
+      (gnuplot-format s "unset mytics~%")
+      (gnuplot-format s "unset mztics~%")
+      (gnuplot-format s "unset mcbtics~%")
       (when x-mtics
-        (format s "set mxtics ~a~%"
-                (if (integerp x-mtics)
-                    x-mtics
-                    "default")))
+        (gnuplot-format s "set mxtics ~a~%"
+                        (if (integerp x-mtics)
+                            x-mtics
+                            "default")))
       (when y-mtics
-        (format s "set mytics ~a~%"
-                (if (integerp y-mtics)
-                    y-mtics
-                    "default")))
+        (gnuplot-format s "set mytics ~a~%"
+                        (if (integerp y-mtics)
+                            y-mtics
+                            "default")))
       (when z-mtics
-        (format s "set mztics ~a~%"
-                (if (integerp z-mtics)
-                    z-mtics
-                    "default")))
+        (gnuplot-format s "set mztics ~a~%"
+                        (if (integerp z-mtics)
+                            z-mtics
+                            "default")))
       (when cb-mtics
-        (format s "set mcbtics ~a~%"
-                (if (integerp cb-mtics)
-                    cb-mtics
-                    "default")))
+        (gnuplot-format s "set mcbtics ~a~%"
+                        (if (integerp cb-mtics)
+                            cb-mtics
+                            "default")))
 
       ;; Grid settings
       ;; Enable this when grid is ready
       (when nil
-        (format s "set grid ~a~%"
-                grid))
-      
+        (gnuplot-format s "set grid ~a~%"
+                        grid))
+
       ;; ranges
       (if x-range
-          (format s "set xrange [~a:~a]~%"
-                  (car x-range) (cdr x-range))
-          (format s "set xrange [*:*]~%"))
+          (gnuplot-format s "set xrange [~a:~a]~%"
+                          (car x-range) (cdr x-range))
+          (gnuplot-format s "set xrange [*:*]~%"))
       (if y-range
-          (format s "set yrange [~a:~a]~%"
-                  (car y-range) (cdr y-range))
-          (format s "set yrange [*:*]~%"))
+          (gnuplot-format s "set yrange [~a:~a]~%"
+                          (car y-range) (cdr y-range))
+          (gnuplot-format s "set yrange [*:*]~%"))
       (if z-range
-          (format s "set zrange [~a:~a]~%"
-                  (car z-range)
-                  (cdr z-range))
-          (format s "set zrange [*:*]~%"))
+          (gnuplot-format s "set zrange [~a:~a]~%"
+                          (car z-range)
+                          (cdr z-range))
+          (gnuplot-format s "set zrange [*:*]~%"))
       (if cb-range
-          (format s "set cbrange [~a:~a]~%"
-                  (car cb-range)
-                  (cdr cb-range))
-          (format s "set cbrange [*:*]~%"))
+          (gnuplot-format s "set cbrange [~a:~a]~%"
+                          (car cb-range)
+                          (cdr cb-range))
+          (gnuplot-format s "set cbrange [*:*]~%"))
       (when view
         (if (or (and (symbolp view)
                      (eq view :map))
                 (and (stringp view)
                      (string= view "map")))
-            (format s "set view map~%")
-            (format s "set view ~a~%" view)))
+            (gnuplot-format s "set view map~%")
+            (gnuplot-format s "set view ~a~%" view)))
       (when pm3d
-        (format s "set ~a~%" pm3d))
+        (gnuplot-format s "set ~a~%" pm3d))
       (when colorbox-p
-        (format s "set colorbox~%"))
+        (gnuplot-format s "set colorbox~%"))
       ;; Plot command line:
-      (format s "splot "))))
+      (gnuplot-format s "splot "))))
 
 (defun plot3d (lines &rest key-args)
   "Returns a plot3d object supplied lines and key-args"
@@ -1148,41 +1180,41 @@ initargs from key-args."
                ;; omitted.
                )
   (with-output-to-string (s)
-    (format s "pm3d")
+    (gnuplot-format s "pm3d")
     (when at
-      (format s " at ~a" at))
+      (gnuplot-format s " at ~a" at))
     (when interpolate
-      (format s " interpolate")
+      (gnuplot-format s " interpolate")
       (when (consp interpolate)
-        (format s " ~a,~a"
-                (car interpolate)
-                (cdr interpolate))))
+        (gnuplot-format s " ~a,~a"
+                        (car interpolate)
+                        (cdr interpolate))))
     (case scan
-      (:automatic (format s " scansautomatic"))
-      (:forward (format s " scansforward"))
-      (:backward (format s " scansbackward"))
-      (:depthorder (format s " depthorder")))
-    (format s " flush ~a"
-            (string-downcase
-             (string flush)))
-    (format s " ~a"
-            (if ftriangles-p
-                "ftriangles"
-                "noftriangles"))
+      (:automatic (gnuplot-format s " scansautomatic"))
+      (:forward (gnuplot-format s " scansforward"))
+      (:backward (gnuplot-format s " scansbackward"))
+      (:depthorder (gnuplot-format s " depthorder")))
+    (gnuplot-format s " flush ~a"
+                    (string-downcase
+                     (string flush)))
+    (gnuplot-format s " ~a"
+                    (if ftriangles-p
+                        "ftriangles"
+                        "noftriangles"))
     (if clip-strict-p
-        (format s " clip4in")
-        (format s " clip1in"))
-    (format s " corners2color ~a"
-            (string-downcase
-             (string corners2color)))
+        (gnuplot-format s " clip4in")
+        (gnuplot-format s " clip1in"))
+    (gnuplot-format s " corners2color ~a"
+                    (string-downcase
+                     (string corners2color)))
     (if hidden3d
         (if (eq hidden3d t)
-            (format s " hidden3d")
-            (format s " hidden3d ~a" hidden3d))
-        (format s " nohidden3d"))
+            (gnuplot-format s " hidden3d")
+            (gnuplot-format s " hidden3d ~a" hidden3d))
+        (gnuplot-format s " nohidden3d"))
     (if explicit-p
-        (format s " explicit")
-        (format s " implicit"))))
+        (gnuplot-format s " explicit")
+        (gnuplot-format s " implicit"))))
 
 ;; Labels
 (defun label (text
@@ -1207,43 +1239,44 @@ initargs from key-args."
                 offset) ; set to a a list (dx dy dz) to displace the
                                         ; point from the text
   (with-output-to-string (s)
-    (format s "\"~a\" " text)
+    (gnuplot-format s "\"~a\" " text)
     (when position
-      (format s "at ")
+      (gnuplot-format s "at ")
       (when coordinate-system
-        (format s "~a " coordinate-system))
-      (format s "~{~a~^,~} "
-              position))
-    (format s "~a "
-            (case justification
-              (:left "left")
-              (:right "right")
-              (:center "center")))
+        (gnuplot-format s "~a " coordinate-system))
+      (gnuplot-format s "~{~a~^,~} "
+                      position))
+    (gnuplot-format s "~a "
+                    (case justification
+                      (:left "left")
+                      (:right "right")
+                      (:center "center")))
     (when rotation
-      (format s "rotate by ~a "
-              ;; needs to be double for gnuplot to understand
-              (->double-float rotation)))
+      (gnuplot-format s "rotate by ~a "
+                      ;; needs to be double for gnuplot to understand
+                      (->double-float rotation)))
     (when font
-      (format s "\"~a" font)
+      (gnuplot-format s "\"~a" font)
       (when font-size
-        (format s ",~a" (->double-float font-size)))
-      (format s "\" "))
+        (gnuplot-format s ",~a"
+                        (->double-float font-size)))
+      (gnuplot-format s "\" "))
     (when (not enhanced-p)
-      (format s "noenhanced "))
-    (format s "~a "
-            (case layer
-              (:front "front")
-              (:back "back")))
+      (gnuplot-format s "noenhanced "))
+    (gnuplot-format s "~a "
+                    (case layer
+                      (:front "front")
+                      (:back "back")))
     (when color
-      (format s "tc ~s "
-              color))
+      (gnuplot-format s "tc ~s "
+                      color))
     (if point-style
-        (format s "point ~a "
-                point-style)
-        (format s "nopoint "))
+        (gnuplot-format s "point ~a "
+                        point-style)
+        (gnuplot-format s "nopoint "))
     (when offset
-      (format s "offest ~{~a~^,~}"
-              offset))))
+      (gnuplot-format s "offset ~{~a~^,~}"
+                      offset))))
 
 ;; Tics
 (defun merge-tics (axis tics)
@@ -1267,13 +1300,13 @@ or :cb"
             for tic in tics
             for i from 0
             do (if (zerop i)
-                   (format s "set ~a ~a~%"
-                           axis tic)
-                   (format s "set ~a add ~a~%"
-                           axis tic)))))
+                   (gnuplot-format s "set ~a ~a~%"
+                                   axis tic)
+                   (gnuplot-format s "set ~a add ~a~%"
+                                   axis tic)))))
       (t
-       (format nil "set ~a ~a~%"
-               axis tics)))))
+       (gnuplot-format nil "set ~a ~a~%"
+                       axis tics)))))
 
 (defun tics (&key
                axis-p ; tics on axis instead of axis
@@ -1309,71 +1342,71 @@ or :cb"
                font-size
                color)
   (with-output-to-string (s)
-    (format s "~a"
-            (if axis-p
-                "axis"
-                "border"))
-    (format s " ~a"
-            (if mirror-p
-                "mirror"
-                "nomirror"))
-    (format s " ~a"
-            (string-downcase (string location)))
-    (format s " scale ")
+    (gnuplot-format s "~a"
+                    (if axis-p
+                        "axis"
+                        "border"))
+    (gnuplot-format s " ~a"
+                    (if mirror-p
+                        "mirror"
+                        "nomirror"))
+    (gnuplot-format s " ~a"
+                    (string-downcase (string location)))
+    (gnuplot-format s " scale ")
     (if major-scale
         (progn
-          (format s "~a" major-scale)
+          (gnuplot-format s "~a" major-scale)
           (when minor-scale
-            (format s ", ~a"
-                    minor-scale)))
-        (format s "default"))
+            (gnuplot-format s ", ~a"
+                            minor-scale)))
+        (gnuplot-format s "default"))
     (if rotate
-        (format s " rotate ~a" rotate)
-        (format s " norotate"))
+        (gnuplot-format s " rotate ~a" rotate)
+        (gnuplot-format s " norotate"))
     (if offset
-        (format s " offset ~a" offset)
-        (format s " nooffset"))
+        (gnuplot-format s " offset ~a" offset)
+        (gnuplot-format s " nooffset"))
     (cond
       ((null sampling)
        (when (not manual-labels)
-         (format s " autofreq")))
+         (gnuplot-format s " autofreq")))
       ((listp sampling)
        (destructuring-bind (start incr &optional end)
            sampling
-         (format s " ~a, ~a" start incr)
+         (gnuplot-format s " ~a, ~a" start incr)
          (when end
-           (format s ", ~a" end))))
+           (gnuplot-format s ", ~a" end))))
       (t
-       (format s " ~a" sampling)))
+       (gnuplot-format s " ~a" sampling)))
     (when manual-labels
-      (format s " (")
+      (gnuplot-format s " (")
       (loop
          for ml in manual-labels
          for nleft downfrom (1- (length manual-labels))
          do (destructuring-bind (&key name position level)
                 ml
               (when name
-                (format s "~s " name))
-              (format s "~a" position)
+                (gnuplot-format s "~s " name))
+              (gnuplot-format s "~a" position)
               (when level
                 (let ((level
                        (case level
                          (:major 0)
                          (:minor 1))))
-                  (format s " ~a" level)))
+                  (gnuplot-format s " ~a" level)))
               (when (not (zerop nleft))
-                (format s ","))))
-      (format s ")"))
+                (gnuplot-format s ","))))
+      (gnuplot-format s ")"))
     (when font-face
-      (format s " font \"~a"
-              font-face)
+      (gnuplot-format s " font \"~a"
+                      font-face)
       (when font-size
-        (format s ",~a"
-                font-size))
-      (format s "\""))
+        (gnuplot-format s ",~a"
+                        font-size))
+      (gnuplot-format s "\""))
     (when color
-      (format s " textcolor ~a"
-              color))))
+      (gnuplot-format s " textcolor ~a"
+                      color))))
 
 ;; A line is a single function or data set.  Each line may have its
 ;; own individual name/title.  These may be listed together in a key or
@@ -1464,28 +1497,28 @@ or :cb"
                      (color line-color)
                      (options line-options))
         l
-      (format s "~a with " plot-arg)
-      (format s "~a " style)
+      (gnuplot-format s "~a with " plot-arg)
+      (gnuplot-format s "~a " style)
       (when point-type
-        (format s "pointtype ~a " point-type))
+        (gnuplot-format s "pointtype ~a " point-type))
       (when point-size
-        (format s "pointsize ~a " point-size))
+        (gnuplot-format s "pointsize ~a " point-size))
       (when line-style
-        (format s "linestyle ~a " line-style))
+        (gnuplot-format s "linestyle ~a " line-style))
       (when line-type
-        (format s "linetype ~a " line-type))
+        (gnuplot-format s "linetype ~a " line-type))
       (when line-width
-        (format s "linewidth ~a " line-width))
+        (gnuplot-format s "linewidth ~a " line-width))
       (when fill-style
-        (format s "fillstyle ~a " fill-style)
+        (gnuplot-format s "fillstyle ~a " fill-style)
 	(when (and (equal fill-style "solid")
 		   fill-density)
-	  (format s "~a " fill-density)))
+	  (gnuplot-format s "~a " fill-density)))
       (when color
-        (format s "linecolor rgb '~a' " color))
-      (format s "title '~a'" title)
+        (gnuplot-format s "linecolor rgb '~a' " color))
+      (gnuplot-format s "title '~a'" title)
       (when options
-        (format s "~a " options)))))
+        (gnuplot-format s "~a " options)))))
 
 (defclass data-line (line)
   ((data
@@ -1531,25 +1564,29 @@ or :cb"
                      (let ((ncols pm3d-ncols)
                            (index 0))
                        (lambda (cons)
-                         (format s "~{~a ~}" (car cons))
-                         (format s "~a~%" (cdr cons))
+                         (gnuplot-format s "~{~a ~}"
+                                         (car cons))
+                         (gnuplot-format s "~a~%"
+                                         (cdr cons))
                          (incf index)
                          (when (= index ncols)
-                           (format s "~%")
+                           (gnuplot-format s "~%")
                            (setf index 0))))
                      (if (listp (car (first data)))
                          (lambda (cons)
-                           (format s "~{~a ~}" (car cons))
-                           (format s "~a~%" (cdr cons)))
+                           (gnuplot-format s "~{~a ~}"
+                                           (car cons))
+                           (gnuplot-format s "~a~%"
+                                           (cdr cons)))
                          (lambda (cons)
-                           (format s "~a ~a~%"
-                                   (car cons)
-                                   (cdr cons)))))
+                           (gnuplot-format s "~a ~a~%"
+                                           (car cons)
+                                           (cdr cons)))))
                  (error "Empty data in data-line"))))
         (loop
            for d in data
            do (funcall extractor d))
-        (format s "e~%")))))
+        (gnuplot-format s "e~%")))))
 
 (defclass analytic-line (line)
   ((fn-string
@@ -1568,7 +1605,7 @@ or :cb"
     (setf
      (slot-value line 'plot-arg)
      (with-output-to-string (s)
-       (format s "~a " fn-string)))))
+       (gnuplot-format s "~a " fn-string)))))
 
 (defmethod initialize-instance :after ((l analytic-line) &key)
   (analytic-line-set-plot-arg l))
@@ -1613,61 +1650,61 @@ or :cb"
                  line-style)
   (when (not default)
     (with-output-to-string (s)
-      (format s "set key")
+      (gnuplot-format s "set key")
       (if show
           ;; show legend
           (progn
             (if front-p
-                (format s " opaque")
-                (format s " noopaque"))
-            (format s " ~a"
-                    (string-downcase (mkstr mode)))
+                (gnuplot-format s " opaque")
+                (gnuplot-format s " noopaque"))
+            (gnuplot-format s " ~a"
+                            (string-downcase (mkstr mode)))
             (when location
               (if (symbolp (car location))
-                  (format s " ~a ~a"
-                          (string-downcase
-                           (mkstr (car location)))
-                          (string-downcase
-                           (mkstr (cdr location))))
-                  (format s " at ~a,~a"
-                          (car location)
-                          (cdr location))))
-            (format s " ~a"
-                    (case arrangement
-                      (:vertical
-                       "vertical")
-                      (:horizontal
-                       "horizontal")
-                      (:left
-                       "Left")
-                      (:right
-                       "Right")))
+                  (gnuplot-format s " ~a ~a"
+                                  (string-downcase
+                                   (mkstr (car location)))
+                                  (string-downcase
+                                   (mkstr (cdr location))))
+                  (gnuplot-format s " at ~a,~a"
+                                  (car location)
+                                  (cdr location))))
+            (gnuplot-format s " ~a"
+                            (case arrangement
+                              (:vertical
+                               "vertical")
+                              (:horizontal
+                               "horizontal")
+                              (:left
+                               "Left")
+                              (:right
+                               "Right")))
             (when samplen
-              (format s " samplen ~a"
-                      samplen))
+              (gnuplot-format s " samplen ~a"
+                              samplen))
             (when spacing
-              (format s " spacing ~a"
-                      spacing))
+              (gnuplot-format s " spacing ~a"
+                              spacing))
             (when width-inc
-              (format s " width ~a"
-                      width-inc))
+              (gnuplot-format s " width ~a"
+                              width-inc))
             (when height-inc
-              (format s " height ~a"
-                      height-inc))
+              (gnuplot-format s " height ~a"
+                              height-inc))
             (when title
-              (format s " title \"~a\"" title))
+              (gnuplot-format s " title \"~a\"" title))
             (if box
                 (progn
-                  (format s " box")
+                  (gnuplot-format s " box")
                   (when line-type
-                    (format s " linetype ~a" line-type))
+                    (gnuplot-format s " linetype ~a" line-type))
                   (when line-width
-                    (format s " linewidth ~a" line-width))
+                    (gnuplot-format s " linewidth ~a" line-width))
                   (when line-style
-                    (format s " linestyle ~a" line-style)))
-                (format s " nobox")))
+                    (gnuplot-format s " linestyle ~a" line-style)))
+                (gnuplot-format s " nobox")))
           ;; don't show legend
-          (format s " off")))))
+          (gnuplot-format s " off")))))
 
 ;;; Convenience functions:
 
@@ -1967,10 +2004,10 @@ of up to two double-float arguments."
 ;;; Terminal type functions:
 
 (defun join-strings (&rest objects)
-  (with-output-to-string (s)
+  (with-output-to-string (str)
     (loop
        for o in objects
-       do (format s "~a" o))))
+       do (gnuplot-format str "~a" o))))
 
 (defvar *window-number* 0)
 
@@ -1983,13 +2020,13 @@ of up to two double-float arguments."
     (incf *window-number*))
   (when (not title)
     (setf title
-          (format nil "Page ~a" window-number)))
+          (gnuplot-format nil "Page ~a" window-number)))
   (with-output-to-string (s)
-    (format s "wxt")
-    (format s " ~a" window-number)
-    (format s " title '~a'" title)
+    (gnuplot-format s "wxt")
+    (gnuplot-format s " ~a" window-number)
+    (gnuplot-format s " title '~a'" title)
     (when size
-      (format s " size ~a,~a" (car size) (cdr size)))))
+      (gnuplot-format s " size ~a,~a" (car size) (cdr size)))))
 
 ;; Function for generating the terminal type string of a page for
 ;; images in gnuplot
@@ -2150,10 +2187,10 @@ gnuplot to distinguish eps from ps)"
                      (list 'size (car size) "," (cdr size)))
                    (when font-face
                      (with-output-to-string (s)
-                       (format s "font \"~a" font-face)
+                       (gnuplot-format s "font \"~a" font-face)
                        (if font-size
-                           (format s ",~a\"" font-size)
-                           (format s "\""))))
+                           (gnuplot-format s ",~a\"" font-size)
+                           (gnuplot-format s "\""))))
                    (when line-width
                      (list "linewidth" line-width))
                    (if (not dashed-supplied-p)
@@ -2214,10 +2251,10 @@ gnuplot to distinguish eps from ps)"
                     (list "size" (car size) "," (cdr size)))
                   (when font-face
                     (with-output-to-string (s)
-                      (format s "font \"~a" font-face)
+                      (gnuplot-format s "font \"~a" font-face)
                       (if font-size
-                          (format s ",~a\"" font-size)
-                          (format s "\""))))
+                          (gnuplot-format s ",~a\"" font-size)
+                          (gnuplot-format s "\""))))
                   (when line-width
                     (list "linewidth" line-width))
                   (if (not dashed-supplied-p)
@@ -2234,18 +2271,18 @@ gnuplot to distinguish eps from ps)"
                     "butt")
                   (when palfuncparam-samples
                     (if palfuncparam-maxdeviation
-                        (format nil
-                                "palfuncparam ~a,~a"
-                                palfuncparam-samples
-                                palfuncparam-maxdeviation)
-                        (format nil
-                                "palfuncparam ~a"
-                                palfuncparam-samples)))
+                        (gnuplot-format nil
+                                        "palfuncparam ~a,~a"
+                                        palfuncparam-samples
+                                        palfuncparam-maxdeviation)
+                        (gnuplot-format nil
+                                        "palfuncparam ~a"
+                                        palfuncparam-samples)))
                   (when header-supplied-p
                     (if header
-                        (format nil "header ~s"
-                                header)
-                        (format nil "noheader")))
+                        (gnuplot-format nil "header ~s"
+                                        header)
+                        (gnuplot-format nil "noheader")))
                   (if blacktext-p
                       "blacktext"
                       "colortext")))))))
@@ -2263,22 +2300,22 @@ gnuplot to distinguish eps from ps)"
     (incf *window-number*))
   (when (not title)
     (setf title
-          (format nil "Page ~a" window-number)))
+          (gnuplot-format nil "Page ~a" window-number)))
   (with-output-to-string (s)
-    (format s "~{~a ~}"
-            (remove nil
-                    (list "qt"
-                          (when window-number
-                            (format nil "~a" window-number))
-                          (format nil "size ~a, ~a" (car size) (cdr size))
-                          (when enhanced-p
-                            "enhanced")
-                          (when font
-                            (format nil "font \"~a\"" font))
-                          (when title
-                            (format nil "title \"~a\"" title))
-                          (when persist-p
-                            "persist"))))))
+    (gnuplot-format s "~{~a ~}"
+                    (remove nil
+                            (list "qt"
+                                  (when window-number
+                                    (gnuplot-format nil "~a" window-number))
+                                  (gnuplot-format nil "size ~a, ~a" (car size) (cdr size))
+                                  (when enhanced-p
+                                    "enhanced")
+                                  (when font
+                                    (gnuplot-format nil "font \"~a\"" font))
+                                  (when title
+                                    (gnuplot-format nil "title \"~a\"" title))
+                                  (when persist-p
+                                    "persist"))))))
 
 ;; Special function for outputting PDF plots since it requires precise
 ;; coordination between various functions
@@ -2323,18 +2360,11 @@ to enable math and use the Helvetica font."
              (handler-case (delete-file x)
                (error () (format t "Warning: Error deleting ~a"
                                  x)))))
-      ;; ;; debug
-      ;; (when nil
-      ;;   ;; end debug
       (maybe-delete-file (string-append output-prefix ".aux"))
       (maybe-delete-file (string-append output-prefix "-inc.eps"))
       (maybe-delete-file (string-append output-prefix "-inc-eps-converted-to.pdf"))
       (maybe-delete-file (string-append output-prefix ".log"))
-      (maybe-delete-file (string-append output-prefix ".tex"))
-      ;; ;; debug
-      ;;   )
-      ;; ;; end debug
-      )
+      (maybe-delete-file (string-append output-prefix ".tex")))
     #+sbcl
     (sb-posix:chdir current-dir)
     #+clisp

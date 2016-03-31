@@ -1,3 +1,10 @@
++ It should be possible to build a pass-merge transformation defining
+  system, so that makeres-cpp could be a very simple layer on top of
+  the more general pass-merge transformation.  There are only a few
+  differences between tabletrans and cpptrans which should allow for
+  operator standardization, leaving only context management and final
+  operators for configuration.
+
 + Add grid settings to plot.  Includes adding grid function in same
   spirit as label, tics, etc.  Note that grid settings must be sent to
   gnuplot after tics settings.
