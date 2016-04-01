@@ -614,7 +614,8 @@ layout specified in the page.")
     :initarg :logaxes
     :initform nil
     :accessor plot2d-logaxes
-    :documentation "List of axes which should be in log scale.")
+    :documentation "List of axes which should be in log scale.  Valid
+    axis names are \"x\", \"y\", and \"cb\".")
    (x-range
     :initarg :x-range
     :initform (cons "*" "*")
@@ -894,10 +895,10 @@ initargs from key-args."
           (gnuplot-format s "set xrange [~a:~a]~%"
                           (car x-range) (cdr x-range))
           (gnuplot-format s "set xrange [*:*]~%"))
-      (when y-range
-        (gnuplot-format s "set yrange [~a:~a]~%"
-                        (car y-range) (cdr y-range))
-        (gnuplot-format s "set yrange [*:*]~%"))
+      (if y-range
+          (gnuplot-format s "set yrange [~a:~a]~%"
+                          (car y-range) (cdr y-range))
+          (gnuplot-format s "set yrange [*:*]~%"))
       (if cb-range
           (gnuplot-format s "set cbrange [~a:~a]~%"
                           (car cb-range)
@@ -921,7 +922,8 @@ initargs from key-args."
     :initarg :logaxes
     :initform nil
     :accessor plot3d-logaxes
-    :documentation "List of axes which should be in log scale.")
+    :documentation "List of axes which should be in log scale.  Valid
+    axis names are \"x\", \"y\", and \"z\".")
    (view
        :initarg :view
        :initform nil
@@ -2325,7 +2327,8 @@ formatting.  terminal-keywords are supplied to the epslatex-term used
 in generating the plot.  Header keyword argument needs to enable math,
 so if the user does not supply a :header argument then the default is
 to enable math and use the Helvetica font."
-  (let* ((output
+  (let* ((debug-p t)
+         (output
           (string-append output-prefix ".tex"))
          (terminal
           (apply #'epslatex-term
@@ -2333,7 +2336,11 @@ to enable math and use the Helvetica font."
 
                  (append
                   (when (not (find :header terminal-keywords))
-                    (list :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"))
+                    (list
+                     ;; Old method doesn't have capital greek symbols
+                     ;; :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"
+                     :header "\\usepackage{helvet}\\usepackage[italic]{mathastext}"
+                     ))
                   terminal-keywords)))
          (current-dir
           #+sbcl
@@ -2357,9 +2364,10 @@ to enable math and use the Helvetica font."
                           (list "--shell-escape"
                                 output))
     (flet ((maybe-delete-file (x)
-             (handler-case (delete-file x)
-               (error () (format t "Warning: Error deleting ~a"
-                                 x)))))
+             (when (not debug-p)
+               (handler-case (delete-file x)
+                 (error () (format t "Warning: Error deleting ~a"
+                                   x))))))
       (maybe-delete-file (string-append output-prefix ".aux"))
       (maybe-delete-file (string-append output-prefix "-inc.eps"))
       (maybe-delete-file (string-append output-prefix "-inc-eps-converted-to.pdf"))
