@@ -2327,7 +2327,7 @@ formatting.  terminal-keywords are supplied to the epslatex-term used
 in generating the plot.  Header keyword argument needs to enable math,
 so if the user does not supply a :header argument then the default is
 to enable math and use the Helvetica font."
-  (let* ((debug-p t)
+  (let* ((debug-p nil)
          (output
           (string-append output-prefix ".tex"))
          (terminal
