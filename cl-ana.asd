@@ -62,5 +62,6 @@
                #:cl-ana.makeres-progress
                #:cl-ana.makeres-table
                #:cl-ana.makeres-graphviz
-               #:cl-ana.makeres-branch)
+               #:cl-ana.makeres-branch
+               #:cl-ana.makeres-utils)
   :components ((:file "package")))
