@@ -1,3 +1,9 @@
++ CRITICAL: Upgraded my system to HDF5 1.10 and now HDF5 is
+  complaining that files which I just opened are not file ids.  Will
+  update with working HDF5 versions until bug fix is complete.
+
+  Possibly add Gerd's HDF5 as a cl-ana dependency to fix.
+
 + It should be possible to build a pass-merge transformation defining
   system, so that makeres-cpp could be a very simple layer on top of
   the more general pass-merge transformation.  There are only a few
@@ -10,7 +16,8 @@
   gnuplot after tics settings.
 
 - Resolve define-quantity-methods situation.  As it is now, it suffers
-  from inefficiencies and a previously missed limitation: Methods
+  from inefficiencies and a previously missed limitation: Methods(open-hdf-file (target-path '(cpp (local e1e d-n-pi+ san) deltat pip) "data")
+:direction :input)
   which come with cl-ana cannot know about new quantity types, even if
   defquantity is used.  Either a smarter system is needed, or define a
   default arithmetic method which interprets everything as a quantity

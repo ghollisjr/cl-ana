@@ -153,19 +153,20 @@ file"
   (reset-memo-map #'hdf-type->typespec)
   (let ((nobs (h5fget-obj-count hdf-file +H5F-OBJ-ALL+))
         (ids nil))
-    (with-foreign-object (raw-ids 'hid-t nobs)
-      (h5fget-obj-ids hdf-file
-                      +H5F-OBJ-ALL+
-                      nobs
-                      raw-ids)
-      (setf ids
-            (loop
-               for i below nobs
-               collecting (mem-aref raw-ids 'hid-t i))))
+    (when (plusp nobs)
+      (with-foreign-object (raw-ids 'hid-t nobs)
+        (h5fget-obj-ids hdf-file
+                        +H5F-OBJ-ALL+
+                        nobs
+                        raw-ids)
+        (setf ids
+              (loop
+                 for i below nobs
+                 collecting (mem-aref raw-ids 'hid-t i)))))
     (loop
        for id in ids
        do
-         ;; In the future, detect type instead of trying everything
+       ;; In the future, detect type instead of trying everything
          (h5fclose id)
          (h5dclose id)
          (h5gclose id)
