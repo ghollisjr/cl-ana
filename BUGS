@@ -1,0 +1,3 @@
+* HDF5 1.10 does not seem to work on my system, but HDF5
+  1.8.15-patch1_2 (ARCH Linux version) and below works fine.  Not sure
+  what the source of the problem is.
