@@ -1194,3 +1194,17 @@ logs."
         (loop
            for id in null-stats
            do (format t "~s~%" id)))))
+
+(defun printres (&optional (filter (constantly t)))
+  "Prints the target-table with optional filter function which takes
+two arguments (id and value) to determine which targets to print."
+  (let ((map (mapcar (lambda (cons)
+                       (cons (car cons)
+                             (resfn (car cons))))
+                     (map->alist (target-table)))))
+    (format t "Target Table:~%")
+    (loop
+       for cons in map
+       when (funcall filter (car cons) (cdr cons))
+       do (format t "~a: ~a~%"
+                  (car cons) (cdr cons)))))

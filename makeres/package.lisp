@@ -150,6 +150,7 @@
    ;; Utilities:
    :checkres
    :pruneres
-   :purgeres))
+   :purgeres
+   :printres))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)
