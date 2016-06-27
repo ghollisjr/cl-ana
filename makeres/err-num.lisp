@@ -30,8 +30,7 @@
   ;; (print type)
   (with-open-file (file path
                         :direction :input)
-    (let ((data (read file)))
-      (apply #'+- (rest data)))))
+    (read file)))
 
 (defmethod save-object ((obj err-num) path)
   (with-open-file (file path
