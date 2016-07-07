@@ -22,7 +22,7 @@
 (defpackage #:cl-ana.fitting 
   (:use :cl
         :alexandria
-	:cl-ana.err-prop
+        :cl-ana.err-prop
 	:cl-ana.map)
   (:export :fit
            :residuals

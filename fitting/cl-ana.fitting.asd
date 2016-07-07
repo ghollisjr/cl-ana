@@ -30,6 +30,7 @@
   :depends-on (#:gsll
                #:alexandria
 	       #:cl-ana.generic-math
+               #:cl-ana.math-functions
 	       #:cl-ana.error-propogation
 	       #:cl-ana.map)
   :components ((:file "package")
