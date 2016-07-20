@@ -1,3 +1,8 @@
++ Stabilize logging.  The result logging system (at least the tracking
+  and timestamp system) should be system-independent and backwards
+  compatible, so I need to explicitly design a specification for
+  creating the logs that ensures these two features.
+
 + CRITICAL: Upgraded my system to HDF5 1.10 and now HDF5 is
   complaining that files which I just opened are not file ids.  Will
   update with working HDF5 versions until bug fix is complete.
@@ -11,7 +16,7 @@
   operator standardization, leaving only context management and final
   operators for configuration.
 
-+ Add grid settings to plot.  Includes adding grid function in same
+- Add grid settings to plot.  Includes adding grid function in same
   spirit as label, tics, etc.  Note that grid settings must be sent to
   gnuplot after tics settings.
 
