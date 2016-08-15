@@ -1,3 +1,18 @@
+This file contains both cl-ana bugs as well as issues caused by Lisp
+and other libraries that cl-ana uses.  For upstream bugs, work-arounds
+and supported versions are documented here.
+
+cl-ana:
+
 * HDF5 1.10 does not seem to work on my system, but HDF5
   1.8.15-patch1_2 (ARCH Linux version) and below works fine.  Not sure
   what the source of the problem is.
+
+UPSTREAM:
+
+GSLL:
+
+* GSLL from quicklisp (gsll-master-80875db6-git) fails to process GSL
+  2.1-2 source code with grovel.  It turns out that other libraries
+  are failing to build against GSL as well due to an API change.  GSL
+  1.16 seems to work fine with this GSLL however.
