@@ -1,3 +1,23 @@
++ Add a checkres check with error handling to makeres, so that
+  execution is not attempted if the target table is invalid.
+
++ Add parallel execution of targets to makeres/compres.  Still hashing
+  out the details.  Make sure to allow rules, such as only one table
+  pass operation at a time.  When used with makeres-cpp, the user
+  could allow 2 C++ table passes at a time for example since C++ can
+  be at least twice as fast as Lisp, but this option needs to be
+  available.
+
+  This needs to be added directly to the makeres and/or compres
+  functions, since table transformations are not good at handling
+  runtime constraints, which this would need to use in order to be
+  most efficient.  A bad alternative I considered briefly was to use a
+  transformation that drastically altered the target table so that
+  there is a master target which dispatches parallel jobs, and all
+  results are fed from the master target into the result targets after
+  completion of the master, but this suffers from the lack of recovery
+  of a failed computation.
+
 + Stabilize logging.  The result logging system (at least the tracking
   and timestamp system) should be system-independent and backwards
   compatible, so I need to explicitly design a specification for
