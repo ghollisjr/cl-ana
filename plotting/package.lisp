@@ -95,8 +95,12 @@
            :legend-contents
            :legend-update-strategy
            :legend-update
-           ;; utilities
+           ;; utilities:
            :sample-function
+           ;; plot merging:
+           :pagemerge!
+           :plotmerge!
+           ;; terminal settings:
            :wxt-term
            :png-term
            :jpeg-term

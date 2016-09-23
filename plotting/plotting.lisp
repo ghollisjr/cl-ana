@@ -2378,3 +2378,35 @@ to enable math and use the Helvetica font."
     #+clisp
     (ext:cd current-dir))
   nil)
+
+;; Plot merging functions:
+(defun plotmerge! (&rest plots)
+  "Function which merges the line lists from each plot.  Modifies the
+first plot given, so make sure to create a fresh first plot.  Easiest
+to do by create a fresh page and providing this to pagemerge.  Easily
+creates comparison plots from individual plots, and best utilized by
+using pagemerge!."
+  (let* ((result (first plots))
+         (line-lists
+          (mapcar (lambda (plot)
+                    (copy-list (plot-lines plot)))
+                  plots)))
+    (setf (plot-lines result)
+          (apply #'append line-lists))
+    result))
+
+(defun pagemerge! (&rest pages)
+  "Function which simply maps plotmerge across the plots in each page.
+  Modifies the first page given, so make sure to create a fresh first
+  page.  Easily creates comparison plots from individual pages."
+  (let* ((result (first pages))
+         (plot-lists
+          (mapcar (lambda (page)
+                    (copy-list (page-plots page)))
+                  pages)))
+    (setf (page-plots result)
+          (apply #'mapcar
+                 (lambda (&rest plots)
+                   (apply #'plotmerge! plots))
+                 plot-lists))
+    result))

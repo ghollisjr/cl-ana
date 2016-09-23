@@ -36,6 +36,9 @@
   operator standardization, leaving only context management and final
   operators for configuration.
 
+- Add utilities for merging pages and plots so that comparison plots
+  can be made easily.
+
 - Add grid settings to plot.  Includes adding grid function in same
   spirit as label, tics, etc.  Note that grid settings must be sent to
   gnuplot after tics settings.
