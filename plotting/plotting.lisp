@@ -2410,3 +2410,18 @@ using pagemerge!."
                    (apply #'plotmerge! plots))
                  plot-lists))
     result))
+
+(defun pagejoin! (layout &rest pages)
+  "Function which combines pages by joining the plot lists together.
+  Must supply layout, and the first page is modified so make sure to
+  supply a fresh page as the first argument for safety."
+  (let* ((result (first pages))
+         (plot-lists (mapcar (lambda (page)
+                               (copy-list (page-plots page)))
+                             pages)))
+    (setf (page-plots result)
+          (apply #'append
+                 plot-lists))
+    (setf (page-layout result)
+          layout)
+    result))

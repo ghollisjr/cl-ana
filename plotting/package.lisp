@@ -98,8 +98,9 @@
            ;; utilities:
            :sample-function
            ;; plot merging:
-           :pagemerge!
            :plotmerge!
+           :pagemerge!
+           :pagejoin!
            ;; terminal settings:
            :wxt-term
            :png-term
