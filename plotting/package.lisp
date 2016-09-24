@@ -98,7 +98,7 @@
            ;; utilities:
            :sample-function
            ;; plot merging:
-           :plotmerge!
+           :plotjoin!
            :pagemerge!
            :pagejoin!
            ;; terminal settings:

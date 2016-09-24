@@ -2380,12 +2380,11 @@ to enable math and use the Helvetica font."
   nil)
 
 ;; Plot merging functions:
-(defun plotmerge! (&rest plots)
-  "Function which merges the line lists from each plot.  Modifies the
+(defun plotjoin! (&rest plots)
+  "Function which joins the line lists from each plot.  Modifies the
 first plot given, so make sure to create a fresh first plot.  Easiest
 to do by create a fresh page and providing this to pagemerge.  Easily
-creates comparison plots from individual plots, and best utilized by
-using pagemerge!."
+creates comparison plots from individual plots."
   (let* ((result (first plots))
          (line-lists
           (mapcar (lambda (plot)
@@ -2396,9 +2395,12 @@ using pagemerge!."
     result))
 
 (defun pagemerge! (&rest pages)
-  "Function which simply maps plotmerge across the plots in each page.
-  Modifies the first page given, so make sure to create a fresh first
-  page.  Easily creates comparison plots from individual pages."
+  "Function which maps plotjoin! across the plots in each page,
+joining the nth plots together from each page via plotjoin!.  Modifies
+the first page given, so make sure to create a fresh first page.
+Easily creates comparison plots from individual pages.  Conceptually
+it's preserving the structure of pages but combining the lines from
+each plot together onto the same x-y or x-y-z axes."
   (let* ((result (first pages))
          (plot-lists
           (mapcar (lambda (page)
@@ -2407,14 +2409,14 @@ using pagemerge!."
     (setf (page-plots result)
           (apply #'mapcar
                  (lambda (&rest plots)
-                   (apply #'plotmerge! plots))
+                   (apply #'plotjoin! plots))
                  plot-lists))
     result))
 
 (defun pagejoin! (layout &rest pages)
   "Function which combines pages by joining the plot lists together.
-  Must supply layout, and the first page is modified so make sure to
-  supply a fresh page as the first argument for safety."
+Must supply layout, and the first page is modified so make sure to
+supply a fresh page as the first argument for safety."
   (let* ((result (first pages))
          (plot-lists (mapcar (lambda (page)
                                (copy-list (page-plots page)))
