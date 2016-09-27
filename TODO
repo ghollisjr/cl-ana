@@ -1,4 +1,7 @@
-+ Add target nicknames transformation
++ Add target nicknames functionality.  Transformation doesn't seem
+  adequate since the nicknames should be useful outside of the
+  transformation pipeline, so most likely needs to be a modification
+  to the makeres system.
 
 + Add a checkres check with error handling to makeres, so that
   execution is not attempted if the target table is invalid.

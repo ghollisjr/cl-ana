@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -327,6 +327,52 @@ concatenation of n lists."
             (adjoin el res :test test))
           list
           :initial-value nil))
+
+;; Partitioning a list
+(defun partition (list
+                  &key
+                    (key #'identity)
+                    (test #'eql))
+  "Re-groups the contents of a list into partitions using the test
+function provided.  Guarantees that the elements of each group pass
+test with every member of the partition as long as the test function
+is transitive.  Does not necessarily preserve order of partitions, but
+preserves order of the elements relative to each partition.
+
+This function supports two different conceptual approaches to partitioning:
+
+* By relation: the test function is the equivalence relation operator
+
+* By association: using a key function which maps into a set of index
+  values allows the user to partition according to association with
+  that value."
+  (let* (;; map from partition number to result list
+         (resultht (make-hash-table :test 'equal))
+         ;; number of partitions currently found
+         (nparts 0))
+    (loop
+       for i in list
+       do
+       ;; Find a matching partition
+         (let ((match nil))
+           (loop for n from 1 to nparts
+              when (funcall test
+                            (funcall key i)
+                            (funcall key
+                                     (first (gethash n resultht))))
+              do (setf match n)
+              and return nil)
+           ;; Either add the match or create a new partition
+           (if match
+               (push i
+                     (gethash match resultht))
+               (push i
+                     (gethash (incf nparts)
+                              resultht)))))
+    ;; finally return the list:
+    (loop
+       for i from 1 to nparts
+       collecting (nreverse (gethash i resultht)))))
 
 ;;; Stuff (mostly) from Paul Graham's On Lisp, as well as some of my
 ;;; own improvements.

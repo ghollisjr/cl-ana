@@ -44,6 +44,7 @@
 	   :aref-by-list
 	   :make-offsets
            :ensure-lists
+           :partition
            ;;; alists
            :cars
            :cdrs
