@@ -1,3 +1,5 @@
++ Add target nicknames transformation
+
 + Add a checkres check with error handling to makeres, so that
   execution is not attempted if the target table is invalid.
 

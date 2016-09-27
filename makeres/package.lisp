@@ -103,7 +103,8 @@
    :target-ids
    :fin-target-ids
    ;; INCLUDED TRANSFORMATIONS:
-   :lrestrans ; allows logical results
+   ;; Logical targets:
+   :lrestrans
    :lres
    ;; Transformation utilities:
    :*trans->propogator-fn*
