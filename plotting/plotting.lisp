@@ -2400,7 +2400,12 @@ joining the nth plots together from each page via plotjoin!.  Modifies
 the first page given, so make sure to create a fresh first page.
 Easily creates comparison plots from individual pages.  Conceptually
 it's preserving the structure of pages but combining the lines from
-each plot together onto the same x-y or x-y-z axes."
+each plot together onto the same x-y or x-y-z axes.
+
+Note that this function assumes that all pages contain the same number
+of plots, so if this is not true, you should fill the missing plots in
+your pages with plots containing NIL line lists,
+e.g. (page (list (plot2d nil))) or (page (list (plot3d nil)))."
   (let* ((result (first pages))
          (plot-lists
           (mapcar (lambda (page)
