@@ -17,10 +17,13 @@ GSLL:
   are failing to build against GSL as well due to an API change.  GSL
   1.16 seems to work fine with this GSLL however.
 
+  UPDATE: This might be fixed in the new GSLL now, needs more
+  stringent testing.
+
 flexi-streams:
 
 * flexi-streams needs to have trivial-gray-streams loaded
   independently from quicklisp on the initial load.  I don't have any
   idea when this is loaded, but I did run into an error loading
-  flex-streams while trying to load cl-ana after a system update so
+  flexi-streams while trying to load cl-ana after a system update so
   I'm putting this note here for future reference.
