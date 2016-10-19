@@ -3,7 +3,7 @@
   transformation pipeline, so most likely needs to be a modification
   to the makeres system.
 
-+ Add a checkres check with error handling to makeres, so that
+- Add a checkres check with error handling to makeres, so that
   execution is not attempted if the target table is invalid.
 
 + Add parallel execution of targets to makeres/compres.  Still hashing
@@ -156,7 +156,7 @@
 
   Fixed using unbuffer from expect
 
-+ Need operator mvres which renames a target in the target table and
+- Need operator mvres which renames a target in the target table and
   moves its log as well.  Should take arguments from, to, and &key
   force-p which would force deletion of any conflicting files at the
   destination.

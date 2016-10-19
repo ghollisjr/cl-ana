@@ -152,6 +152,7 @@
    :checkres
    :pruneres
    :purgeres
-   :printres))
+   :printres
+   :mvres))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)

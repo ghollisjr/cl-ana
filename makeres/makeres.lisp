@@ -1087,6 +1087,9 @@ list args"
                      (gethash psym
                               (gethash *project-id*
                                        *makeres-args*))))))
+      ;; Perform sanity check on the target table:
+      (when (not (checkres))
+        (error "Target table fails checkres test"))
       ;; Whenever *makeres-propogate* is non-nil, unset any results
       ;; dependent on null-stat results
       (when *makeres-propogate*
@@ -1134,15 +1137,18 @@ list args"
   (let ((target-table
          (if target-table
              target-table
-             (target-table))))
+             (target-table)))
+        (result t))
     (loop
        for id being the hash-keys in target-table
        for tar being the hash-values in target-table
        do (loop
              for dep in (target-deps tar)
              do (when (not (gethash dep target-table))
+                  (setf result nil)
                   (format t "~s: ~s not present in target-table~%"
-                          id dep))))))
+                          id dep))))
+    result))
 
 ;; Deletes target logs for targets which are not present in the
 ;; target-table.
@@ -1208,3 +1214,106 @@ two arguments (id and value) to determine which targets to print."
        when (funcall filter (car cons) (cdr cons))
        do (format t "~a: ~a~%"
                   (car cons) (cdr cons)))))
+
+;; Utility functions used by mvres:
+(defun replace-id (old new form)
+  "Replaces (res old) with (res new) wherever it occurs in a form."
+  (subst `(res ,new) `(res ,old) form
+         :test #'equal))
+
+(defun replace-log-id (old new path)
+  (let* ((*print-pretty* nil)
+         (oldform
+          (read-from-string
+           (with-open-file (file path
+                                 :direction :input)
+             (read file))))
+         (newform (replace-id old new oldform)))
+    ;; write new form:
+    (with-open-file (file path
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create)
+      (format file "~s~%"
+              (with-output-to-string (s)
+                (format s "~s" newform))))))
+
+(defun mvres (old-id new-id
+              &key quiet-p)
+  "Moves a target from old-id to new-id in the target-table,
+final-target-table, the logged target path, and in any existing logged
+forms.  This process is potentially irreversible, so backups may be
+expedient.
+
+Set quiet-p to non-NIL to disable progress messages."
+  ;; Check if old-id is in the target-table:
+  (when (gethash old-id (target-table))
+    ;; Move in target-table
+    (let* ((tar (gethash old-id (target-table))))
+      ;; Move log
+      (when (not quiet-p)
+        (format t "Moving log...~%"))
+      (rename-file (target-path old-id)
+                   (target-path new-id))
+      (when (not quiet-p)
+        (format t "Moving in target-table...~%"))
+      ;; delete hash-table entry
+      (remhash old-id (target-table))
+      ;; modify target
+      (setf (target-id tar)
+            new-id)
+      ;; Add new target to table:
+      (setf (gethash new-id (target-table))
+            tar))
+    ;; Modify all affected targets:
+    (loop
+       for id being the hash-keys in (target-table)
+       do (symbol-macrolet ((tar
+                             (gethash id (target-table))))
+            (when (member old-id (target-deps tar) :test #'equal)
+              (when (not quiet-p)
+                (format t "Modifying ~a~%" id))
+              (setf (target-deps tar)
+                    (mapcar (lambda (i)
+                              (if (equal i old-id)
+                                  new-id
+                                  i))
+                            (target-deps tar)))
+              (replace-log-id old-id new-id
+                              (target-path id "form"))
+              (setf (target-expr tar)
+                    (replace-id old-id new-id
+                                (target-expr tar))))))
+    ;; Move in final-target-table
+    (symbol-macrolet ((fintab (gethash (project) *fin-target-tables*)))
+      (when (gethash old-id fintab)
+        (when (not quiet-p)
+          (format t "Moving in \"fintab\"...~%"))
+        (let* ((tar (gethash old-id fintab)))
+          ;; delete hash-table entry
+          (remhash old-id fintab)
+          ;; modify target
+          (setf (target-id tar)
+                new-id)
+          ;; Add new target to table:
+          (setf (gethash new-id fintab)
+                tar))
+        ;; Modify all affected targets:
+        (loop
+           for id being the hash-keys in fintab
+           do (symbol-macrolet ((tar
+                                 (gethash id fintab)))
+                (when (member old-id (target-deps tar) :test #'equal)
+                  (when (not quiet-p)
+                    (format t "Modifying ~a~%" id))
+                  (setf (target-deps tar)
+                        (mapcar (lambda (i)
+                                  (if (equal i old-id)
+                                      new-id
+                                      i))
+                                (target-deps tar)))
+                  (replace-log-id old-id new-id
+                                  (target-path id "form"))
+                  (setf (target-expr tar)
+                        (replace-id old-id new-id
+                                    (target-expr tar))))))))))
