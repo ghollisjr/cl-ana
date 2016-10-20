@@ -1317,3 +1317,20 @@ Set quiet-p to non-NIL to disable progress messages."
                   (setf (target-expr tar)
                         (replace-id old-id new-id
                                     (target-expr tar))))))))))
+
+(defun unsetdepsfn (id
+                    &key quiet-p)
+  "Unsets all dependencies of id in the target-table.  Set quiet-p to
+non-NIL to disable progress messages."
+  (when (gethash id (target-table))
+    (let ((graph (transforms-propogate (target-table))))
+      (loop for dep in (res-dependents id graph)
+           
+         do
+           (when (not quiet-p)
+             (format t "Unsetting ~s~%" dep))
+           (unsetresfn dep)))))
+
+(defmacro unsetdeps (id &key quiet-p)
+  "Macro version of unsetresfn.  id is unevaluated, quiet-p is."
+  `(unsetdepsfn ',id :quiet-p ,quiet-p))

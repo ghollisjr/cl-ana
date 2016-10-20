@@ -51,6 +51,7 @@
    :make-target
    :copy-target
    ;; propogation:
+   :transforms-propogate
    :res-dependencies
    :res-dependents
    :makeres-set-auto-propogate
@@ -95,6 +96,8 @@
    :setres
    :unsetresfn
    :unsetres
+   :unsetdeps
+   :unsetdepsfn
    :clrres
    :clrresfn
    :settrans ; set transformation pipeline

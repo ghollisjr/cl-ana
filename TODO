@@ -1,3 +1,14 @@
+- Add macro unsetdeps and function unsetdepsfn which unset any
+  dependencies of a target.  This is needed when attempting load a
+  project but recalculate some results at the same time.
+
+  The sequence of operations would be
+
+  1. (load-project)
+  2. Change definitions or unset some results
+  3. Call (unsetdeps id) for each ID that has been unset
+  4. (makeres)
+
 + Add target nicknames functionality.  Transformation doesn't seem
   adequate since the nicknames should be useful outside of the
   transformation pipeline, so most likely needs to be a modification
