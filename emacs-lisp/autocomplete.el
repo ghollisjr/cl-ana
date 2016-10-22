@@ -5,12 +5,13 @@
 ;; http://auto-complete.org/doc/manual.html#extend
 
 (defun target-id-strings ()
-  (slime-eval
-   `(swank:eval-and-grab-output
-     "(let ((*print-pretty* nil))
+  (rest
+   (slime-eval
+    `(swank:eval-and-grab-output
+      "(let ((*print-pretty* nil))
         (mapcar (lambda (id)
                   (format nil \"(res ~s)\" id))
-                (target-ids)))")))
+                (target-ids)))"))))
 
 (ac-define-source cl-ana-target-table-source
   '((candidates . target-id-strings)

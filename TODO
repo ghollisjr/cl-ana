@@ -1,3 +1,11 @@
++ Create graphical project viewer add-on for Emacs.  The project
+  viewer would include an ID search/auto-complete function, as well as
+  copying IDs to the kill ring, etc.
+
+  At the moment, this is not really necessary since with SLIME,
+  evaluating (target-ids) into the REPL and then a regex I-search
+  backwards lets you find matching target IDs very quickly.
+
 - Add macro unsetdeps and function unsetdepsfn which unset any
   dependencies of a target.  This is needed when attempting load a
   project but recalculate some results at the same time.

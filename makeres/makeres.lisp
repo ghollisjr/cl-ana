@@ -1118,9 +1118,12 @@ list args"
 
 ;;;; Utilities:
 
-(defun target-ids ()
-  "Returns list of ids for defined targets in project"
-  (hash-keys (gethash *project-id* *target-tables*)))
+(defun target-ids (&optional (filter #'identity))
+  "Returns list of IDs for defined targets in project.  filter should
+be a function taking an ID as an argument and returning T for IDs
+which should be shown."
+  (remove-if-not filter
+                 (hash-keys (gethash *project-id* *target-tables*))))
 
 (defun fin-target-ids ()
   "Returns list of ids for defined targets in final target table."

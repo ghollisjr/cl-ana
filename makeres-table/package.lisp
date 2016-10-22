@@ -39,6 +39,9 @@
    ;; progress printing:
    :*print-progress*
    ;; expression utilities:
+   :resform?
+   :unres
+   :mkres
    :table-reduction?
    :tab?
    :ltab?

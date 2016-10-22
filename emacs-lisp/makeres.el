@@ -14,30 +14,6 @@ current slime buffer."
              (local-set-key [f5]
                             'makeres)))
 
-;; Old version, defunct
-;; (defun load-project (&rest args)
-;;   (interactive "sLoad version (default is current): \ncWork files need loading (y/n)? ")
-;;   (let ((version
-;;          (cond
-;;           ((null (first args))
-;;            "current")
-;;           ((equal (first args) "")
-;;            "current")
-;;           (t
-;;            (first args))))
-;;         (work-p
-;;          (cond
-;;           ((eq (second args) ?y)
-;;            t)
-;;           ((eq (second args) ?n)
-;;            nil)
-;;           (t t))))
-;;     (slime-command "(require 'phd)\n(in-package :phd)\n(load-ana "
-;;                    (format "%S" version)
-;;                    " "
-;;                    (format "%S" work-p)
-;;                    ")")))
-
 (defun load-project (&rest args)
   (interactive)
   (slime-command "(load-project) (makeres)"))
@@ -66,3 +42,22 @@ current slime buffer."
           '(lambda ()
              (local-set-key [f7]
                             'save-snapshot)))
+
+;; Target look-up function:
+(defun target-lookup (&rest args)
+  (interactive)
+  (switch-to-buffer (slime-repl))
+  (slime-command "(target-ids)")
+  ;; Simulate keyboard input:
+  (setq unread-command-events
+        (listify-key-sequence "\C-\M-r")))
+
+(add-hook 'lisp-mode-hook
+          '(lambda ()
+             (local-set-key [f12]
+                            'target-lookup)))
+
+(add-hook 'slime-repl-mode-hook
+          '(lambda ()
+             (local-set-key [f12]
+                            'target-lookup)))
