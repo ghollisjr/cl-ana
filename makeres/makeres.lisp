@@ -1254,10 +1254,11 @@ Set quiet-p to non-NIL to disable progress messages."
     ;; Move in target-table
     (let* ((tar (gethash old-id (target-table))))
       ;; Move log
-      (when (not quiet-p)
-        (format t "Moving log...~%"))
-      (rename-file (target-path old-id)
-                   (target-path new-id))
+      (when (not (ignored? old-id))
+        (when (not quiet-p)
+          (format t "Moving log...~%"))
+        (rename-file (target-path old-id)
+                     (target-path new-id)))
       (when (not quiet-p)
         (format t "Moving in target-table...~%"))
       ;; delete hash-table entry
@@ -1282,8 +1283,9 @@ Set quiet-p to non-NIL to disable progress messages."
                                   new-id
                                   i))
                             (target-deps tar)))
-              (replace-log-id old-id new-id
-                              (target-path id "form"))
+              (when (not (ignored? id))
+                (replace-log-id old-id new-id
+                                (target-path id "form")))
               (setf (target-expr tar)
                     (replace-id old-id new-id
                                 (target-expr tar))))))
@@ -1315,8 +1317,6 @@ Set quiet-p to non-NIL to disable progress messages."
                                       new-id
                                       i))
                                 (target-deps tar)))
-                  (replace-log-id old-id new-id
-                                  (target-path id "form"))
                   (setf (target-expr tar)
                         (replace-id old-id new-id
                                     (target-expr tar))))))))))
@@ -1328,7 +1328,7 @@ non-NIL to disable progress messages."
   (when (gethash id (target-table))
     (let ((graph (transforms-propogate (target-table))))
       (loop for dep in (res-dependents id graph)
-           
+
          do
            (when (not quiet-p)
              (format t "Unsetting ~s~%" dep))
