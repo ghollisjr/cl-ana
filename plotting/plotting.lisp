@@ -855,6 +855,13 @@ initargs from key-args."
       p
     (with-output-to-string (s)
       ;; tics
+      ;; Set defaults:
+      (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
+      (gnuplot-format s "~a" (merge-tics :x2 nil))
+      (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
+      (gnuplot-format s "~a" (merge-tics :y2 nil))
+      (gnuplot-format s "~a" (merge-tics :cb (tics)))
+      ;; Custom settings:
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :x2 x2-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
@@ -1082,6 +1089,12 @@ initargs from key-args."
       p
     (with-output-to-string (s)
       ;; tics
+      ;; Set defaults:
+      (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
+      (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
+      (gnuplot-format s "~a" (merge-tics :z (tics :axis-p nil)))
+      (gnuplot-format s "~a" (merge-tics :cb (tics :axis-p nil)))
+      ;; Custom settings:
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
       (gnuplot-format s "~a" (merge-tics :z z-tics))
