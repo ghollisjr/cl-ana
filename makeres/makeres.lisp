@@ -1141,6 +1141,7 @@ which should be shown."
          (if target-table
              target-table
              (target-table)))
+        (*print-pretty* nil)
         (result t))
     (loop
        for id being the hash-keys in target-table
