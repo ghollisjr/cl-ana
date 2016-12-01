@@ -274,7 +274,7 @@ non-ignored sources."
 
 (defun removed-source-dep< (target-table)
   (let ((depmap (make-hash-table :test 'equal)))
-    (labels ((rec (id)
+    (memolet ((rec (id)
                ;; returns full list of dependencies for id, ignoring
                ;; t-stat targets (otherwise we neglect possible
                ;; optimizations)
@@ -300,7 +300,8 @@ non-ignored sources."
                       target-table id)
                      (reduce (lambda (ds d)
                                (adjoin d ds :test #'equal))
-                             (mapcan #'rec
+                             (mapcan (lambda (id)
+                                       (copy-list (rec id)))
                                      (append
                                       ;; immediate dependencies
                                       deps
@@ -406,7 +407,7 @@ non-ignored sources."
 
 (defun removed-ltab-source-dep< (target-table)
   (let ((depmap (make-hash-table :test 'equal)))
-    (labels ((rec (id)
+    (memolet ((rec (id)
                ;; returns full list of dependencies for id, ignoring
                ;; t-stat dependencies (otherwise we neglect possible
                ;; optimizations).
@@ -430,7 +431,8 @@ non-ignored sources."
                       target-table id)
                      (reduce (lambda (ds d)
                                (adjoin d ds :test #'equal))
-                             (mapcan #'rec
+                             (mapcan (lambda (id)
+                                       (copy-list (rec id)))
                                      (append
                                       ;; immediate dependencies
                                       deps

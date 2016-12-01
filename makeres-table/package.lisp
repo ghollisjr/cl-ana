@@ -1,5 +1,6 @@
 (defpackage #:cl-ana.makeres-table
   (:use :cl
+        :cl-ana.memoization
         :cl-ana.list-utils
         :cl-ana.macro-utils
         :cl-ana.table

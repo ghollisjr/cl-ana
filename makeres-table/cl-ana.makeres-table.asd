@@ -25,7 +25,8 @@
   :author "Gary Hollis"
   :description "makeres-table is a graph transformation for makeres"
   :license "GPLv3"
-  :depends-on (#:cl-ana.makeres
+  :depends-on (#:cl-ana.memoization
+               #:cl-ana.makeres
                #:cl-ana.makeres-macro
                #:cl-ana.macro-utils
                #:cl-ana.table

@@ -61,6 +61,7 @@
 (defres proc
   (tab (res src) ()
       (csv-opener (work-path "proc.csv")
+                  :field-names
                   (list "X"
                         "Y"
                         "Z")
@@ -88,7 +89,7 @@
 (defres ult
   (tab (res proc) ()
       (csv-opener (work-path "ult.csv")
-                  (list "X")
+                  :field-names (list "X")
                   :read-from-string t)
     (when (res (src sum))
       (push-fields

@@ -73,8 +73,9 @@ specify how arguments will be looked up."
 
 (defmacro memolet (memo-fns &body body)
   "A macro for defining mutually recursive memoized functions and
-executing body with knowledge of them.  Can access the lookup tables
-via *memoize-map* in the body."
+executing body with knowledge of them.  Cannot access the lookup
+tables via *memoized-map* in the body, since this would prevent
+garbage collection of the memoized function hash tables."
   (with-gensyms (tables lookup-value lookup-stored-p args)
     (let ((tabs (loop for i in memo-fns
                    collecting '(make-hash-table :test 'equal)))
@@ -100,12 +101,12 @@ via *memoize-map* in the body."
                                            (destructuring-bind ,args-list
                                                ,args
                                              ,@body))))))))
-           ,@(loop
-                for gsym in gsyms
-                for mf in memo-fns
-                collecting `(setf (gethash (function ,(first mf))
-                                           *memoized-map*)
-                                  ,gsym))
+           ;; ,@(loop
+           ;;      for gsym in gsyms
+           ;;      for mf in memo-fns
+           ;;      collecting `(setf (gethash (function ,(first mf))
+           ;;                                 *memoized-map*)
+           ;;                        ,gsym))
            ,@body)))))
 
 (defun unmemoize (fn)
