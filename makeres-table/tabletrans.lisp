@@ -149,7 +149,7 @@ otherwise."
         ((ltab? expr)
          (nthcdr 3 tab-form))))))
 
-(defun immediate-reductions (target-table tab)
+(defun-memoized immediate-reductions (target-table tab)
   "Returns list of immediately dependent table reductions for a
 table"
   (remove-if-not (lambda (id)
@@ -208,6 +208,7 @@ connected via a chain of reductions from src."
 
 (defun group-ids-by-pass (target-table src
                           &key
+                            depsorted-ids
                             dep<
                             (test (constantly t)))
   "Groups all ids from target-table according the the pass required
@@ -219,10 +220,19 @@ only targets for which test returns t."
          (chained
           (chained-reductions target-table src))
          (sorted-ids
-          (remove-if-not (lambda (x)
-                           (and (member x chained :test #'equal)
-                                (funcall test x)))
-                         (depsort-graph target-table dep<))))
+          (let ((depsorted
+                 (if (null depsorted-ids)
+                     (depsort-graph target-table dep<)
+                     depsorted-ids)))
+            (remove-if-not (lambda (x)
+                             (and (member x chained :test #'equal)
+                                  (funcall test x)))
+                           depsorted))
+          ;; (remove-if-not (lambda (x)
+          ;;                  (and (member x chained :test #'equal)
+          ;;                       (funcall test x)))
+          ;;                (depsort-graph target-table dep<))
+          ))
     (when sorted-ids
       (let ((pass (list (pop sorted-ids)))
             (result nil))
@@ -1217,6 +1227,8 @@ true when given the key and value from ht."
 
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
+  ;; Reset memo maps:
+  (reset-memo-map #'immediate-reductions)
   ;; Close any open tables needing recomputation:
   (loop
      for id being the hash-keys in target-table
@@ -1248,9 +1260,11 @@ true when given the key and value from ht."
          ;; source.
          (remsrc-dep<
           (removed-source-dep< target-table))
+         (remsrc-depsorted-ids (depsort-graph graph remsrc-dep<))
          ;; special dep< which only adds ltabs sources as dependencies
          ;; when used somewhere other than as the source additionally.
          (remltab-dep< (removed-ltab-source-dep< target-table))
+         (remltab-depsorted-ids (depsort-graph graph remltab-dep<))
          ;; result
          (result-graph
           (copy-target-table target-table))
@@ -1310,6 +1324,7 @@ true when given the key and value from ht."
                                              pass))
                             (group-ids-by-pass
                              graph src
+                             :depsorted-ids remltab-depsorted-ids
                              :dep< remltab-dep<
                              :test
                              (lambda (i)
@@ -1343,6 +1358,7 @@ true when given the key and value from ht."
                               ;; processed reduction targets:
                               graph
                               src
+                              :depsorted-ids remsrc-depsorted-ids
                               :dep< remsrc-dep<
                               :test
                               (lambda (i)
