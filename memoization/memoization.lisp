@@ -30,9 +30,10 @@
 
 (in-package :cl-ana.memoization)
 
-(defvar *memoized-map* (make-hash-table :test 'equal)
-  "Hash table mapping each memoized function to its value hash
-  table.")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *memoized-map* (make-hash-table :test 'equal)
+    "Hash table mapping each memoized function to its value hash
+  table."))
 
 (defun get-memo-map (memo-fn)
   "Returns the memoized function's value hash table."
