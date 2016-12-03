@@ -347,6 +347,10 @@ when the left argument does not depend on the right argument."
 
 ;; depsort-graph functions:
 
+;; Here, dep< means "does not depend".  So, (dep< x y) being T means
+;; that x does not depend on y.  It's like a less-than relationship
+;; because sorting using "does not depend" results in a list sorted
+;; from least dependent to most dependent.
 (defun last-dep (x lst dep<)
   "Returns last dependency of x found in lst and t; if no
 dependencies are found then returns two nil values"

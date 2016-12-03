@@ -170,7 +170,7 @@ table"
                            imms))
                  (list (reverse (cons red chain))))))
     (mapcan (lambda (r)
-              (rec r (list src)))
+              (copy-list (rec r (list src))))
             (immediate-reductions target-table src))))
 
 (defun ltab-chained-reductions (target-table src)
@@ -199,7 +199,8 @@ connected via a chain of reductions from src."
     (when imm-reds
       (append imm-reds
               (mapcan (lambda (red)
-                        (chained-reductions target-table red))
+                        (copy-list
+                         (chained-reductions target-table red)))
                       (remove-if-not
                        (lambda (red)
                          (table-reduction?

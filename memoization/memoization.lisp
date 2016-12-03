@@ -41,7 +41,8 @@
 
 (defun reset-memo-map (memo-fn)
   "Resets the memoization hash table for memo-fn"
-  (clrhash (gethash memo-fn *memoized-map*)))
+  (when (gethash memo-fn *memoized-map*)
+    (clrhash (gethash memo-fn *memoized-map*))))
 
 (defmacro memoize (fn &key (test 'equal))
   "Macro for memoizing any function; test argument allows you to
