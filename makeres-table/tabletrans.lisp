@@ -1364,7 +1364,8 @@ true when given the key and value from ht."
                                                        :test #'equal))
                                              pass))
                             (group-ids-by-pass
-                             chained-edge-map src
+                             chained-edge-map
+                             src
                              remltab-depsorted-ids
                              remltab-dep<
                              :test

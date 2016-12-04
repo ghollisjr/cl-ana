@@ -37,7 +37,7 @@
 (logres-ignore src)
 
 (deflfields src
-    ((|y| (+ (field "x")
+    ((|y| (+ (field |x|)
              1))))
 
 (defres tab
@@ -46,18 +46,20 @@
       (hdf-opener (work-path "lfields-test.h5")
                   (list (cons "x" :int)
                         (cons "y" :int)))
+    (print (field |x|))
+    (print (field |y|))
     (push-fields
-     (|x| (field "x"))
-     (|y| (field "y")))))
+     (|x| (field |x|))
+     (|y| (field |y|)))))
 
 (deflfields tab
-    ((|z| (+ (field "x")
-             (field "y")))))
+    ((|z| (+ (field |x|)
+             (field |y|)))))
 
 (defres (mean tab z)
   (dotab (res tab)
       ((sum 0)
        (count 0))
       (/ sum count)
-    (incf sum (field "z"))
+    (incf sum (field |z|))
     (incf count)))

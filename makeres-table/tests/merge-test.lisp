@@ -38,9 +38,6 @@
 
 (setf *print-progress* nil)
 
-(ensure-table-binding-ops)
-(ensure-table-op-expanders)
-
 (defres src
   (srctab (plist-opener '((:x 1 :y 2)
                           (:x 2 :y 3)))))
