@@ -79,6 +79,11 @@
    :dep<
    :depsort
    :depsort-graph
+   :topological-sort
+   :target-table-edge-map
+   :decompress-edge-map
+   :compress-edge-map
+   :invert-edge-map
    ;; target and parameter macros
    :res
    :resfn

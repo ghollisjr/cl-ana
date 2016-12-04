@@ -345,6 +345,114 @@ when the left argument does not depend on the right argument."
         (not (member y (gethash x depmap)
                      :test #'equal))))))
 
+;; Topological sort functions
+;;
+;; This is the replacement for the inefficient topological sorting
+;; algorithm I called depsort only because I had never heard the term
+;; topological sorting and had never read an actual algorithm.  As
+;; usual, there are much better algorithms than the one I whipped up
+;; in a few minutes.
+
+(defun target-table-edge-map (&optional (target-table (target-table)))
+  "Returns an edge map from the target-table.  This returns an
+inverted dependency graph, with children mapping to parents instead of
+parents mapping to children.  Therefore, the result of this needs to
+be inverted before passing to topological sorting."
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for id being the hash-keys in target-table
+       do (setf (gethash id result)
+                (target-deps (gethash id target-table))))
+    result))
+
+(defun edge-map-ids (edge-map)
+  (let ((edge-map (map->alist edge-map))
+        (traversed (make-hash-table :test 'equal)))
+    (loop
+       for n in edge-map
+       do (destructuring-bind (p . cs) n
+            (when (not (gethash p traversed))
+              (setf (gethash p traversed) t))
+            (loop
+               for c in cs
+               do
+                 (when (not (gethash c traversed))
+                   (setf (gethash c traversed) t)))))
+    (hash-keys traversed)))
+
+(defun decompress-edge-map (edge-map)
+  "Generates an alist of single-dependency edges, the standard
+academic representation of a DAG"
+  (let ((edge-map (map->hash-table edge-map 'equal))
+        (decompressed nil))
+    (loop
+       for parent being the hash-keys in edge-map
+       do
+         (let ((children (gethash parent edge-map)))
+           (loop
+              for c in children
+              do (push (cons parent c)
+                       decompressed))))
+    decompressed))
+
+(defun compress-edge-map (edge-map-alist)
+  "Generates a hash-table of compressed edges, i.e. all direct
+children listed for each parent."
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for (p . c) in edge-map-alist
+       do (push c (gethash p result)))
+    result))
+
+(defun invert-edge-map (edge-map)
+  "Inverts an edge-map.  edge-map represents the edges in a directed
+  acyclic graph with keys being the parent nodes and values being
+  lists of all immediate child nodes."
+  (let* ((edge-map (map->hash-table edge-map 'equal))
+         (decompressed (decompress-edge-map edge-map))
+         (inverted
+          (loop
+             for (c . p) in decompressed
+             collecting (cons p c)))
+         (compressed (compress-edge-map inverted)))
+    compressed))
+
+(defun topological-sort (edge-map)
+  "Topologically sorts an edge-map which represents a directed acyclic
+graph.  edge-map should be a datatype that has a method
+map->hash-table defined.  The keys should be parent nodes, and the
+values should be lists of child nodes.
+
+Since makeres uses the reverse scheme, instead listing nodes as keys
+and their parents as value lists, invert-edge-map needs to be used on
+target-table edge-maps before topologically sorting the values."
+  (let* ((edge-map (map->hash-table edge-map 'equal))
+         ;; Traversed nodes
+         (tset (make-hash-table :test 'equal))
+         ;; List of all nodes
+         (nodes (edge-map-ids edge-map))
+         ;; Sorted ids
+         (sorted nil))
+    ;; Algorithm is very simple
+    ;;
+    ;; 1. Start with the first node in remaining
+    ;; 2. If node is already in tset, do nothing
+    ;; 3. Else, place node into the list of traversed nodes
+    ;; 4. If node has children, then loop over children
+    ;; 5. After looping over children, place node at the top of
+    ;;    sorted and pop out of remaining
+    ;; 6. Continue over remaining until no more nodes are in remaining
+    (labels ((traverse (node)
+               (when (not (gethash node tset))
+                 (setf (gethash node tset)
+                       t)
+                 (let* ((children (gethash node edge-map)))
+                   (when children
+                     (mapcar #'traverse children))
+                   (push node sorted)))))
+      (mapcar #'traverse nodes)
+      sorted)))
+
 ;; depsort-graph functions:
 
 ;; Here, dep< means "does not depend".  So, (dep< x y) being T means
@@ -388,7 +496,8 @@ not transitive in general."
                 (push i result))))
     result))
 
-(defun depsort-graph (target-table &optional dep<)
+;; old depsort graph algorithm
+(defun depsort-graph-old (target-table &optional dep<)
   "Returns dependency-sorted target ids from target-table, if dep<
 is provided then it is used instead of the dep< computed from the
 target-table."
@@ -397,6 +506,13 @@ target-table."
                   (dep< target-table))))
     (depsort (hash-keys target-table)
              dep<)))
+
+(defun depsort-graph (target-table)
+  "Returns dependency-sorted target ids from target-table.  Uses the
+new topological sort algorithm."
+  (topological-sort
+   (invert-edge-map
+    (target-table-edge-map target-table))))
 
 ;; Major function: param-dependents
 ;;

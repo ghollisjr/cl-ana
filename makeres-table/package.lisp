@@ -53,4 +53,24 @@
    ;; Copy utils:
    :copy-lfields
    ;; Utilities:
-   :table-target?))
+   :table-target?
+   ;;; For implementing other tabletrans-like operators:
+   ;; Backbone of the algorithm, grouping ids into passes
+   :group-ids-by-pass
+   ;; source tables, immediate, and necessary reductions
+   :ultimate-source-tables
+   :immediate-reductions
+   :necessary-pass-reductions
+   ;; reduction chains
+   :chained-edge-map
+   :chained-reductions
+   ;; ltab chains
+   :ltab-chain-edge-map
+   :ltab-chained-reductions
+   :ltab-chains
+   ;; Dependency map functions for use with group-ids-by-pass
+   :removed-source-depmap
+   :removed-source-dep<
+   :removed-ltab-source-depmap
+   :removed-ltab-source-dep<
+   ))
