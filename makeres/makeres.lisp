@@ -389,10 +389,13 @@ academic representation of a DAG"
        for parent being the hash-keys in edge-map
        do
          (let ((children (gethash parent edge-map)))
-           (loop
-              for c in children
-              do (push (cons parent c)
-                       decompressed))))
+           (if children
+               (loop
+                  for c in children
+                  do (push (cons parent c)
+                           decompressed))
+               (push (list parent)
+                     decompressed))))
     decompressed))
 
 (defun compress-edge-map (edge-map-alist)
@@ -401,7 +404,12 @@ children listed for each parent."
   (let ((result (make-hash-table :test 'equal)))
     (loop
        for (p . c) in edge-map-alist
-       do (push c (gethash p result)))
+       do
+         (if (null c)
+             (when (not (gethash p result))
+               (setf (gethash p result)
+                     nil))
+             (push c (gethash p result))))
     result))
 
 (defun invert-edge-map (edge-map)
@@ -412,8 +420,12 @@ children listed for each parent."
          (decompressed (decompress-edge-map edge-map))
          (inverted
           (loop
-             for (c . p) in decompressed
-             collecting (cons p c)))
+             for cons in decompressed
+             collecting
+               (if (cdr cons)
+                   (cons (cdr cons)
+                         (car cons))
+                   (list (car cons)))))
          (compressed (compress-edge-map inverted)))
     compressed))
 

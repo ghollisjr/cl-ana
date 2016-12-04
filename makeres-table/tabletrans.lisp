@@ -170,59 +170,108 @@ table"
                                  tab))))
                  (hash-keys target-table)))
 
-(defun ltab-chain-edge-map (target-table
-                            &key
-                              (ltab-test-fn #'ltab?)
-                              (reduction-test-fn #'table-reduction?)
-                              (reduction-source-fn
-                               #'table-reduction-source))
-  "Returns an edge map which only contains ltab-joined edges,
-i.e. either ltabs from a source, ltabs of another ltab, or a reduction
-of an ltab."
-  (let* (;; Create uncompressed edge-map
-         (uncompressed
-          (loop
-             for id being the hash-keys in target-table
-             for tar being the hash-values in target-table
-             when (or (funcall ltab-test-fn
-                               (target-expr tar))
-                      (and (funcall reduction-test-fn
-                                    (target-expr tar))
-                           (funcall
-                            ltab-test-fn
-                            (target-expr
-                             (gethash (unres
-                                       (funcall
-                                        reduction-source-fn
-                                        (target-expr tar)))
-                                      target-table)))))
-             collecting (cons (unres
-                               (funcall reduction-source-fn
-                                        (target-expr tar)))
-                              id))))
-    (compress-edge-map uncompressed)))
+(defun ltab-chains (target-table src
+                    &key
+                      (ltab-test-fn #'ltab?)
+                      (reduction-test-fn
+                       #'table-reduction?)
+                      (reduction-source-fn
+                       #'table-reduction-source))
+  "Returns all ltab chains stemming from src"
+  (labels ((rec (red &optional chain)
+             (if (ltab? (target-expr (gethash red target-table)))
+                 (let* ((imms (immediate-reductions
+                               target-table red
+                               :reduction-test-fn
+                               reduction-test-fn
+                               :reduction-source-fn
+                               reduction-source-fn)))
+                   (mapcan (lambda (r)
+                             (copy-list (rec r (cons red chain))))
+                           imms))
+                 (list (reverse (cons red chain))))))
+    (mapcan (lambda (r)
+              (rec r (list src)))
+            (immediate-reductions
+             target-table src
+             :reduction-test-fn
+             reduction-test-fn
+             :reduction-source-fn
+             reduction-source-fn))))
 
-(defun ltab-chains (ltab-chain-edge-map src)
-  "Returns all ltab chains stemming from src.  A ltab chain is simply
-a list of ltab ids which are chained reductions of either ltabs or the
-source table with id src along with the first non-ltab id which is a
-reduction of the last ltab in the chain."
-  (labels ((chains (s &optional context)
-             (let ((children (gethash s ltab-chain-edge-map)))
-               (if children
-                   (apply #'append
-                          (mapcar (lambda (c)
-                                    (chains c (cons s context)))
-                                  children))
-                   (list (cons s context))))))
-    (mapcar #'reverse (chains src))))
-
-(defun ltab-chained-reductions (ltab-chain-edge-map src)
+(defun ltab-chained-reductions (target-table src
+                                &key
+                                  (ltab-test-fn #'ltab?)
+                                  (reduction-test-fn
+                                   #'table-reduction?)
+                                  (reduction-source-fn
+                                   #'table-reduction-source))
   "Returns all reductions directly from ltab chains stemming from src"
   (mapcar #'alexandria:last-elt
-          (ltab-chains ltab-chain-edge-map src)))
+          (ltab-chains
+           target-table src
+           :ltab-test-fn ltab-test-fn
+           :reduction-test-fn reduction-test-fn
+           :reduction-source-fn reduction-source-fn)))
 
-(defun necessary-pass-reductions (target-table ltab-chain-edge-map tab
+;; NOTE: This does not work as expected because apparently my old
+;; algorithm was more sophisticated than I thought.  Therefore I'm
+;; reverting to the old version until I can figure out exactly what's
+;; going on
+
+;; (defun ltab-chain-edge-map (target-table
+;;                             &key
+;;                               (ltab-test-fn #'ltab?)
+;;                               (reduction-test-fn #'table-reduction?)
+;;                               (reduction-source-fn
+;;                                #'table-reduction-source))
+;;   "Returns an edge map which only contains ltab-joined edges or
+;; immediate reductions, i.e. either ltabs from a source, ltabs of
+;; another ltab, a reduction of an ltab, or an immediate reduction."
+;;   (let* (;; Create uncompressed edge-map
+;;          (uncompressed
+;;           (loop
+;;              for id being the hash-keys in target-table
+;;              for tar being the hash-values in target-table
+;;              when (or (funcall ltab-test-fn
+;;                                (target-expr tar))
+;;                       (and (funcall reduction-test-fn
+;;                                     (target-expr tar))
+;;                            (funcall
+;;                             ltab-test-fn
+;;                             (target-expr
+;;                              (gethash (unres
+;;                                        (funcall
+;;                                         reduction-source-fn
+;;                                         (target-expr tar)))
+;;                                       target-table)))))
+;;              collecting (cons (unres
+;;                                (funcall reduction-source-fn
+;;                                         (target-expr tar)))
+;;                               id))))
+;;     (compress-edge-map uncompressed)))
+
+;; (defun ltab-chains (ltab-chain-edge-map src)
+;;   "Returns all ltab chains stemming from src.  A ltab chain is simply
+;; a list of ltab ids which are chained reductions of either ltabs or the
+;; source table with id src along with the first non-ltab id which is a
+;; reduction of the last ltab in the chain."
+;;   (labels ((chains (s &optional context)
+;;              (let ((children (gethash s ltab-chain-edge-map)))
+;;                (if children
+;;                    (apply #'append
+;;                           (mapcar (lambda (c)
+;;                                     (chains c (cons s context)))
+;;                                   children))
+;;                    (list (cons s context))))))
+;;     (mapcar #'reverse (chains src))))
+
+;; (defun ltab-chained-reductions (ltab-chain-edge-map src)
+;;   "Returns all reductions directly from ltab chains stemming from src"
+;;   (mapcar #'alexandria:last-elt
+;;           (ltab-chains ltab-chain-edge-map src)))
+
+(defun necessary-pass-reductions (target-table tab
                                   &key
                                     (ltab-test-fn #'ltab?)
                                     (reduction-test-fn
@@ -242,7 +291,7 @@ logical tables."
                        target-table tab
                        :reduction-test-fn reduction-test-fn
                        :reduction-source-fn reduction-source-fn))
-           (ltab-chained-reductions ltab-chain-edge-map tab))
+           (ltab-chained-reductions target-table tab))
    #'equal))
 
 (defun chained-edge-map (target-table
@@ -1269,12 +1318,12 @@ true when given the key and value from ht."
                             :reduction-test-fn #'table-reduction?
                             :reduction-source-fn
                             #'table-reduction-source))
-         (ltab-chain-edge-map
-          (ltab-chain-edge-map graph
-                               :ltab-test-fn #'ltab?
-                               :reduction-test-fn #'table-reduction?
-                               :reduction-source-fn
-                               #'table-reduction-source))
+         ;; (ltab-chain-edge-map
+         ;;  (ltab-chain-edge-map graph
+         ;;                       :ltab-test-fn #'ltab?
+         ;;                       :reduction-test-fn #'table-reduction?
+         ;;                       :reduction-source-fn
+         ;;                       #'table-reduction-source))
          
          ;; special dep< for treating reductions as if they did not
          ;; depend on src as a source table, but preserving other
@@ -1327,7 +1376,7 @@ true when given the key and value from ht."
                           (mapcar #'butlast
                                   (mapcar #'rest
                                           (ltab-chains
-                                           ltab-chain-edge-map
+                                           graph
                                            src)))))))
                    (setf processed-srcs
                          (list->set
@@ -1344,7 +1393,7 @@ true when given the key and value from ht."
                              (member k processed-reds
                                      :test #'equal))
                            (necessary-pass-reductions
-                            graph ltab-chain-edge-map src
+                            graph src
                             :ltab-test-fn #'ltab?
                             :reduction-test-fn #'table-reduction?
                             :reduction-source-fn #'table-reduction-source))))
