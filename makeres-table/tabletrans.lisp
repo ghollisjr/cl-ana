@@ -551,18 +551,10 @@ non-ignored sources."
                   (rec id)))
       depmap)))
 
-(defun removed-source-dep<
-    (target-table
-     &key
-       (reduction-test-fn #'table-reduction?)
-       (reduction-source-fn #'table-reduction-source))
-  (let ((depmap (removed-source-depmap
-                 target-table
-                 :reduction-test-fn reduction-test-fn
-                 :reduction-source-fn reduction-source-fn)))
-    (lambda (x y)
-      (not (member y (gethash x depmap)
-                   :test #'equal)))))
+(defun removed-source-dep< (depmap)
+  (lambda (x y)
+    (not (member y (gethash x depmap)
+                 :test #'equal))))
 
 (defun removed-ltab-source-depmap
     (target-table
@@ -642,20 +634,10 @@ non-ignored sources."
                   (rec id)))
       depmap)))
 
-(defun removed-ltab-source-dep<
-    (target-table
-     &key
-       (ltab-test-fn #'ltab?)
-       (reduction-test-fn #'table-reduction?)
-       (reduction-source-fn #'table-reduction-source))
-  (let ((depmap (removed-ltab-source-depmap
-                 target-table
-                 :ltab-test-fn ltab-test-fn
-                 :reduction-test-fn reduction-test-fn
-                 :reduction-source-fn reduction-source-fn)))
-    (lambda (x y)
-      (not (member y (gethash x depmap)
-                   :test #'equal)))))
+(defun removed-ltab-source-dep< (depmap)
+  (lambda (x y)
+    (not (member y (gethash x depmap)
+                 :test #'equal))))
 
 ;;; Table pass expression components
 
@@ -1390,24 +1372,27 @@ true when given the key and value from ht."
          ;; dependencies as a consequence of being a reduction of the
          ;; source.
          
+         (remsrc-depmap (removed-source-depmap graph))
          (remsrc-dep<
           (removed-source-dep<
-           target-table))
+           remsrc-depmap))
          ;; (remsrc-depsorted-ids (depsort-graph graph remsrc-dep<))
          (remsrc-depsorted-ids
           (topological-sort
            (invert-edge-map
-            (removed-source-depmap graph))))
+            remsrc-depmap)))
          
          ;; special dep< which only adds ltabs sources as dependencies
          ;; when used somewhere other than as the source additionally.
-
-         (remltab-dep< (removed-ltab-source-dep< target-table))
+         (remltab-depmap
+          (removed-ltab-source-depmap graph))
+         (remltab-dep<
+          (removed-ltab-source-dep< remltab-depmap))
          ;; (remltab-depsorted-ids (depsort-graph graph remltab-dep<))
          (remltab-depsorted-ids
           (topological-sort
            (invert-edge-map
-            (removed-ltab-source-depmap graph))))
+            remltab-depmap)))
          
          ;; result
          (result-graph
