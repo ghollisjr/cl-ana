@@ -170,49 +170,109 @@ table"
                                  tab))))
                  (hash-keys target-table)))
 
-(defun ltab-chains (target-table src
+;; Testing this new ltab-chains function
+(defun ltab-chains (target-table chain-edge-map src
                     &key
                       (ltab-test-fn #'ltab?)
-                      (reduction-test-fn
-                       #'table-reduction?)
-                      (reduction-source-fn
-                       #'table-reduction-source))
-  "Returns all ltab chains stemming from src"
-  (labels ((rec (red &optional chain)
-             (if (ltab? (target-expr (gethash red target-table)))
-                 (let* ((imms (immediate-reductions
-                               target-table red
-                               :reduction-test-fn
-                               reduction-test-fn
-                               :reduction-source-fn
-                               reduction-source-fn)))
-                   (mapcan (lambda (r)
-                             (copy-list (rec r (cons red chain))))
-                           imms))
-                 (list (reverse (cons red chain))))))
-    (mapcan (lambda (r)
-              (rec r (list src)))
-            (immediate-reductions
-             target-table src
-             :reduction-test-fn
-             reduction-test-fn
-             :reduction-source-fn
-             reduction-source-fn))))
+                      (dotab-test-fn #'dotab?))
+  "Returns all ltab chains stemming from src.  A ltab chain is simply
+a list of ltab ids which are chained reductions of either ltabs or the
+source table with id src along with the first non-ltab id which is a
+reduction of the last ltab in the chain."
+  (labels ((chains (s &optional context)
+             (let* ((children (gethash s chain-edge-map))
+                    (filtered-children
+                     ;; Only accept dotabs and ltabs
+                     (remove-if-not
+                      (lambda (id)
+                        (and (gethash id target-table)
+                             (let ((expr (target-expr
+                                          (gethash id target-table))))
+                               (or (funcall dotab-test-fn expr)
+                                   (funcall ltab-test-fn expr)))))
+                      children)))
+               (if filtered-children
+                   (apply #'append
+                          (mapcar (lambda (c)
+                                    (chains c (cons s context)))
+                                  
+                                  filtered-children))
+                   (list (cons s context))))))
+    (mapcar #'reverse (chains src))))
 
-(defun ltab-chained-reductions (target-table src
-                                &key
-                                  (ltab-test-fn #'ltab?)
-                                  (reduction-test-fn
-                                   #'table-reduction?)
-                                  (reduction-source-fn
-                                   #'table-reduction-source))
+(defun ltab-chained-reductions (target-table ltab-chain-edge-map src)
   "Returns all reductions directly from ltab chains stemming from src"
   (mapcar #'alexandria:last-elt
-          (ltab-chains
-           target-table src
-           :ltab-test-fn ltab-test-fn
-           :reduction-test-fn reduction-test-fn
-           :reduction-source-fn reduction-source-fn)))
+          (ltab-chains target-table ltab-chain-edge-map src)))
+
+(defun necessary-pass-reductions (target-table chain-edge-map tab
+                                  &key
+                                    (ltab-test-fn #'ltab?)
+                                    (reduction-test-fn
+                                     #'table-reduction?)
+                                    (reduction-source-fn
+                                     #'table-reduction-source))
+  "Returns list of reductions of a table which must be computed via a
+pass over the table; equivalent to the union set of all immediate
+non-ltab reductions and any reductions chained directly to tab via
+logical tables."
+  (list->set
+   (append (remove-if (lambda (id)
+                        (funcall ltab-test-fn
+                                 (target-expr
+                                  (gethash id target-table))))
+                      (immediate-reductions
+                       target-table tab
+                       :reduction-test-fn reduction-test-fn
+                       :reduction-source-fn reduction-source-fn))
+           (ltab-chained-reductions target-table
+                                    chain-edge-map
+                                    tab))
+   #'equal))
+
+;; (defun ltab-chains-old (target-table src
+;;                         &key
+;;                           (ltab-test-fn #'ltab?)
+;;                           (reduction-test-fn
+;;                            #'table-reduction?)
+;;                           (reduction-source-fn
+;;                            #'table-reduction-source))
+;;   "Returns all ltab chains stemming from src"
+;;   (labels ((rec (red &optional chain)
+;;              (if (ltab? (target-expr (gethash red target-table)))
+;;                  (let* ((imms (immediate-reductions
+;;                                target-table red
+;;                                :reduction-test-fn
+;;                                reduction-test-fn
+;;                                :reduction-source-fn
+;;                                reduction-source-fn)))
+;;                    (mapcan (lambda (r)
+;;                              (copy-list (rec r (cons red chain))))
+;;                            imms))
+;;                  (list (reverse (cons red chain))))))
+;;     (mapcan (lambda (r)
+;;               (rec r (list src)))
+;;             (immediate-reductions
+;;              target-table src
+;;              :reduction-test-fn
+;;              reduction-test-fn
+;;              :reduction-source-fn
+;;              reduction-source-fn))))
+
+;; (defun ltab-chained-reductions-old (target-table src
+;;                                 &key
+;;                                   (ltab-test-fn #'ltab?)
+;;                                   (reduction-test-fn
+;;                                    #'table-reduction?)
+;;                                   (reduction-source-fn
+;;                                    #'table-reduction-source))
+;;   "Returns all reductions directly from ltab chains stemming from src"
+;;   (mapcar #'alexandria:last-elt
+;;           (ltab-chains
+;;            target-table src
+;;            :ltab-test-fn ltab-test-fn
+;;            :reduction-test-fn reduction-test-fn
+;;            :reduction-source-fn reduction-source-fn)))
 
 ;; NOTE: This does not work as expected because apparently my old
 ;; algorithm was more sophisticated than I thought.  Therefore I'm
@@ -271,28 +331,28 @@ table"
 ;;   (mapcar #'alexandria:last-elt
 ;;           (ltab-chains ltab-chain-edge-map src)))
 
-(defun necessary-pass-reductions (target-table tab
-                                  &key
-                                    (ltab-test-fn #'ltab?)
-                                    (reduction-test-fn
-                                     #'table-reduction?)
-                                    (reduction-source-fn
-                                     #'table-reduction-source))
-  "Returns list of reductions of a table which must be computed via a
-pass over the table; equivalent to the union set of all immediate
-non-ltab reductions and any reductions chained directly to tab via
-logical tables."
-  (list->set
-   (append (remove-if (lambda (id)
-                        (funcall ltab-test-fn
-                                 (target-expr
-                                  (gethash id target-table))))
-                      (immediate-reductions
-                       target-table tab
-                       :reduction-test-fn reduction-test-fn
-                       :reduction-source-fn reduction-source-fn))
-           (ltab-chained-reductions target-table tab))
-   #'equal))
+;; (defun necessary-pass-reductions-old (target-table tab
+;;                                   &key
+;;                                     (ltab-test-fn #'ltab?)
+;;                                     (reduction-test-fn
+;;                                      #'table-reduction?)
+;;                                     (reduction-source-fn
+;;                                      #'table-reduction-source))
+;;   "Returns list of reductions of a table which must be computed via a
+;; pass over the table; equivalent to the union set of all immediate
+;; non-ltab reductions and any reductions chained directly to tab via
+;; logical tables."
+;;   (list->set
+;;    (append (remove-if (lambda (id)
+;;                         (funcall ltab-test-fn
+;;                                  (target-expr
+;;                                   (gethash id target-table))))
+;;                       (immediate-reductions
+;;                        target-table tab
+;;                        :reduction-test-fn reduction-test-fn
+;;                        :reduction-source-fn reduction-source-fn))
+;;            (ltab-chained-reductions target-table tab))
+;;    #'equal))
 
 (defun chained-edge-map (target-table
                          &key
@@ -1377,6 +1437,7 @@ true when given the key and value from ht."
                                   (mapcar #'rest
                                           (ltab-chains
                                            graph
+                                           chained-edge-map
                                            src)))))))
                    (setf processed-srcs
                          (list->set
@@ -1393,7 +1454,7 @@ true when given the key and value from ht."
                              (member k processed-reds
                                      :test #'equal))
                            (necessary-pass-reductions
-                            graph src
+                            graph chained-edge-map src
                             :ltab-test-fn #'ltab?
                             :reduction-test-fn #'table-reduction?
                             :reduction-source-fn #'table-reduction-source))))
