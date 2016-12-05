@@ -466,17 +466,6 @@ non-ignored sources."
 ;; can be returned as a compressed version of the edges of a directed
 ;; acyclic graph.
 
-(defun invert-depmap (target-table depmap)
-  "Creates a dependent map from a dependency map.  Ensures that all
-keys from depmap are also keys in the result."
-  (let* ((keys (hash-keys target-table))
-         (result (invert-edge-map depmap)))
-    (loop
-       for k in keys
-       when (not (gethash k result))
-       do (setf (gethash k result) nil))
-    result))
-
 (defun removed-source-depmap
     (target-table
      &key
@@ -1407,8 +1396,7 @@ true when given the key and value from ht."
          ;; (remsrc-depsorted-ids (depsort-graph graph remsrc-dep<))
          (remsrc-depsorted-ids
           (topological-sort
-           (invert-depmap
-            graph
+           (invert-edge-map
             (removed-source-depmap graph))))
          
          ;; special dep< which only adds ltabs sources as dependencies
@@ -1416,16 +1404,9 @@ true when given the key and value from ht."
 
          (remltab-dep< (removed-ltab-source-dep< target-table))
          ;; (remltab-depsorted-ids (depsort-graph graph remltab-dep<))
-         ;; Broken version:
          (remltab-depsorted-ids
           (topological-sort
            (invert-edge-map
-            (removed-ltab-source-depmap graph))))
-         ;; Attempted fix:
-         (remltab-depsorted-ids
-          (topological-sort
-           (invert-depmap
-            graph
             (removed-ltab-source-depmap graph))))
          
          ;; result

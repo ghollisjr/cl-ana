@@ -361,7 +361,6 @@ be inverted before passing to topological sorting."
   (let ((result (make-hash-table :test 'equal)))
     (loop
        for id being the hash-keys in target-table
-       when (target-deps (gethash id target-table))
        do (setf (gethash id result)
                 (target-deps (gethash id target-table))))
     result))
@@ -413,11 +412,31 @@ children listed for each parent."
              (push c (gethash p result))))
     result))
 
+(defun edge-map-node-set (edge-map)
+  "Returns a hash-table acting as the set of nodes referenced in
+edge-map."
+  (let ((result (make-hash-table :test 'equal)))
+    (flet ((insert (x)
+             (when (not (gethash x result))
+               (setf (gethash x result)
+                     t))))
+      (loop
+         for id being the hash-keys in edge-map
+         for deps being the hash-values in edge-map
+         do
+           (insert id)
+           (loop for d in deps
+              do (insert d))))
+    result))
+
 (defun invert-edge-map (edge-map)
   "Inverts an edge-map.  edge-map represents the edges in a directed
   acyclic graph with keys being the parent nodes and values being
   lists of all immediate child nodes."
   (let* ((edge-map (map->hash-table edge-map 'equal))
+         ;; original node set
+         (edge-map-nodes (edge-map-node-set edge-map))
+         (nodes (hash-keys edge-map))
          (decompressed (decompress-edge-map edge-map))
          (inverted
           (loop
@@ -433,7 +452,14 @@ children listed for each parent."
              ;;           (car cons))
              ;;     (list (car cons)))
                ))
-         (compressed (compress-edge-map inverted)))
+         (compressed (compress-edge-map inverted))
+         (result-nodes (edge-map-node-set compressed)))
+    ;; Add uncaptured nodes back into the result as singletons
+    (loop
+       for k being the hash-keys in edge-map-nodes
+       when (not (gethash k result-nodes))
+       do (setf (gethash k compressed)
+                nil))
     compressed))
 
 (defun topological-sort (edge-map)
