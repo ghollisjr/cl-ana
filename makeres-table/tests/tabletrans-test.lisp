@@ -25,7 +25,7 @@
 
 (defproject tabletrans-test
     "/home/ghollisjr/test/makeres-table/tabletrans-test"
-  (list #'macrotrans #'tabletrans)
+  (list #'macrotrans #'tabletrans #'progresstrans)
   (fixed-cache 5))
 
 (defres source
