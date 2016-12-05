@@ -1,3 +1,7 @@
++ After changing from depsort to topological sort, I've found that the
+  project in tabletrans-test.lisp is not sorted correctly.
+  Investigate and solve this bug.
+
 + Create graphical project viewer add-on for Emacs.  The project
   viewer would include an ID search/auto-complete function, as well as
   copying IDs to the kill ring, etc.
