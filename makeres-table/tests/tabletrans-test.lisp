@@ -28,6 +28,8 @@
   (list #'macrotrans #'tabletrans #'progresstrans)
   (fixed-cache 5))
 
+;; (setf *print-progress* t)
+
 (defres source
   (srctab (plist-opener '((:x 1)
                           (:x 2)

@@ -1,6 +1,15 @@
-+ After changing from depsort to topological sort, I've found that the
++ Make note in the wiki that res forms are no longer supported in a
+  logical field.  Show how equivalent functionality is provided by
+  creating a logical table and loading res forms as init expressions.
+
++ Remove support for res forms in logical fields in makeres-table.
+  This is unnecessary and cumbersome to implement accurately.
+
+- After changing from depsort to topological sort, I've found that the
   project in tabletrans-test.lisp is not sorted correctly.
   Investigate and solve this bug.
+
+  Added invert-depmap to solve this.
 
 + Create graphical project viewer add-on for Emacs.  The project
   viewer would include an ID search/auto-complete function, as well as

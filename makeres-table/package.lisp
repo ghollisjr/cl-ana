@@ -69,6 +69,7 @@
    :ltab-chained-reductions
    :ltab-chains
    ;; Dependency map functions for use with group-ids-by-pass
+   :invert-depmap
    :removed-source-depmap
    :removed-source-dep<
    :removed-ltab-source-depmap

@@ -361,6 +361,7 @@ be inverted before passing to topological sorting."
   (let ((result (make-hash-table :test 'equal)))
     (loop
        for id being the hash-keys in target-table
+       when (target-deps (gethash id target-table))
        do (setf (gethash id result)
                 (target-deps (gethash id target-table))))
     result))
@@ -421,11 +422,17 @@ children listed for each parent."
          (inverted
           (loop
              for cons in decompressed
-             collecting
-               (if (cdr cons)
-                   (cons (cdr cons)
-                         (car cons))
-                   (list (car cons)))))
+             when (cdr cons)
+             collecting (cons (cdr cons)
+                              (car cons))
+               
+             ;; Old version
+             ;; collecting
+             ;; (if (cdr cons)
+             ;;     (cons (cdr cons)
+             ;;           (car cons))
+             ;;     (list (car cons)))
+               ))
          (compressed (compress-edge-map inverted)))
     compressed))
 

@@ -466,6 +466,17 @@ non-ignored sources."
 ;; can be returned as a compressed version of the edges of a directed
 ;; acyclic graph.
 
+(defun invert-depmap (target-table depmap)
+  "Creates a dependent map from a dependency map.  Ensures that all
+keys from depmap are also keys in the result."
+  (let* ((keys (hash-keys target-table))
+         (result (invert-edge-map depmap)))
+    (loop
+       for k in keys
+       when (not (gethash k result))
+       do (setf (gethash k result) nil))
+    result))
+
 (defun removed-source-depmap
     (target-table
      &key
@@ -1396,7 +1407,8 @@ true when given the key and value from ht."
          ;; (remsrc-depsorted-ids (depsort-graph graph remsrc-dep<))
          (remsrc-depsorted-ids
           (topological-sort
-           (invert-edge-map
+           (invert-depmap
+            graph
             (removed-source-depmap graph))))
          
          ;; special dep< which only adds ltabs sources as dependencies
@@ -1404,9 +1416,16 @@ true when given the key and value from ht."
 
          (remltab-dep< (removed-ltab-source-dep< target-table))
          ;; (remltab-depsorted-ids (depsort-graph graph remltab-dep<))
+         ;; Broken version:
          (remltab-depsorted-ids
           (topological-sort
            (invert-edge-map
+            (removed-ltab-source-depmap graph))))
+         ;; Attempted fix:
+         (remltab-depsorted-ids
+          (topological-sort
+           (invert-depmap
+            graph
             (removed-ltab-source-depmap graph))))
          
          ;; result
@@ -1524,16 +1543,6 @@ true when given the key and value from ht."
                          (mapcar (lambda (x y)
                                    y)
                                  nec-passes ult-passes)))
-                   ;; ;; debug
-                   ;; (print 'src)
-                   ;; (print src)
-                   ;; (print 'collapsible-passes)
-                   ;; (print collapsible-passes)
-                   ;; (print 'nec-passes)
-                   ;; (print nec-passes)
-                   ;; (print 'ult-passes)
-                   ;; (print ult-passes)
-                   ;; ;; end debug
                    (dolist (pass collapsible-passes)
                      (dolist (p pass)
                        (push p processed-reds))
@@ -1544,18 +1553,6 @@ true when given the key and value from ht."
                                            target-table
                                            src
                                            pass)))
-                       ;; Add lfield dependencies:
-                       (symbol-macrolet ((deps (target-deps
-                                                (gethash id
-                                                         result-graph))))
-                         (setf deps
-                               (list->set
-                                (append deps
-                                        (mapcan
-                                         (lambda (i)
-                                           (lfield-dependencies graph i))
-                                         pass))
-                                #'equal)))
                        (set-pass-result-targets!
                         result-graph
                         id
@@ -1566,81 +1563,89 @@ true when given the key and value from ht."
     ;; unmodified results are already present, so return result-graph
     result-graph))
 
-(defun lfield-dependencies (graph id)
-  "Returns full list of dependencies caused by lfields"
-  (labels ((lfield-deps (id)
-             ;; Returns the res dependencies directly imposed by
-             ;; reference to an lfield from a table reduction
-             (when (and (not (target-stat (gethash id graph)))
-                        (table-reduction?
-                         (target-expr (gethash id graph))))
-               (let* ((tar (gethash id graph))
-                      (expr (target-expr tar))
-                      (src (unres (table-reduction-source expr)))
-                      (lfields
-                       (gethash src
-                                (gethash (project)
-                                         *proj->tab->lfields*)))
-                      (lfield-map
-                       (let ((result (make-hash-table :test 'eq)))
-                         (loop
-                            for lfield in lfields
-                            do (setf (gethash (first lfield) result)
-                                     `(progn ,@(rest lfield))))
-                         result)))
-                 (labels ((rec (lfield)
-                            ;; finds all lfields referred to by lfield
-                            ;; expression including the lfield itself
-                            (let* ((expr (gethash lfield lfield-map))
-                                   (referred
-                                    (remove-if-not
-                                     (lambda (field)
-                                       (gethash field lfield-map))
-                                     (cl-ana.makeres::find-dependencies
-                                      expr
-                                      'field))))
-                              (when referred
-                                (append referred
-                                        (mapcan #'rec referred))))))
-                   (let* ((lfield-deps
-                           (list->set
-                            (mapcan
-                             #'rec
-                             (remove-if-not
-                              (lambda (field)
-                                (gethash field lfield-map))
-                              (cl-ana.makeres::find-dependencies
-                               expr
-                               'field)))
-                            #'eq))
-                          (lfield-dep-merged-expr
-                           `(progn
-                              ,@(loop
-                                   for ld in lfield-deps
-                                   collecting (gethash ld lfield-map))))
-                          (lfield-res-deps
-                           (cl-ana.makeres::find-dependencies
-                            lfield-dep-merged-expr
-                            'res)))
-                     (remove-if
-                      (lambda (i)
-                        (target-stat (gethash i graph)))
-                      (list->set
-                       lfield-res-deps
-                       #'equal)))))))
-           (lfdrec (id)
-             ;; Finds lfield dependencies to an id both directly and
-             ;; from any possible dependency path
-             (when (not (target-stat (gethash id graph)))
-               (let ((imm-deps
-                      (append (lfield-deps id)
-                              (target-deps (gethash id graph)))))
-                 (list->set
-                  (append imm-deps
-                          (mapcan #'lfdrec
-                                  imm-deps))
-                  #'equal)))))
-    (lfdrec id)))
+;; BUGGY VERSION
+;;
+;; This version attempts to recurse through the lfield maps, but this
+;; is completely unnecessary once the table-pass expression is
+;; available.  All that needs to be done is to find the (res ...)
+;; dependencies in the table-pass body, and add any additional
+;; dependencies to the deps list.
+;; 
+;; (defun lfield-dependencies (graph id)
+;;   "Returns full list of dependencies caused by lfields"
+;;   (labels ((lfield-deps (id)
+;;              ;; Returns the res dependencies directly imposed by
+;;              ;; reference to an lfield from a table reduction
+;;              (when (and (not (target-stat (gethash id graph)))
+;;                         (table-reduction?
+;;                          (target-expr (gethash id graph))))
+;;                (let* ((tar (gethash id graph))
+;;                       (expr (target-expr tar))
+;;                       (src (unres (table-reduction-source expr)))
+;;                       (lfields
+;;                        (gethash src
+;;                                 (gethash (project)
+;;                                          *proj->tab->lfields*)))
+;;                       (lfield-map
+;;                        (let ((result (make-hash-table :test 'eq)))
+;;                          (loop
+;;                             for lfield in lfields
+;;                             do (setf (gethash (first lfield) result)
+;;                                      `(progn ,@(rest lfield))))
+;;                          result)))
+;;                  (labels ((rec (lfield)
+;;                             ;; finds all lfields referred to by lfield
+;;                             ;; expression including the lfield itself
+;;                             (let* ((expr (gethash lfield lfield-map))
+;;                                    (referred
+;;                                     (remove-if-not
+;;                                      (lambda (field)
+;;                                        (gethash field lfield-map))
+;;                                      (cl-ana.makeres::find-dependencies
+;;                                       expr
+;;                                       'field))))
+;;                               (when referred
+;;                                 (append referred
+;;                                         (mapcan #'rec referred))))))
+;;                    (let* ((lfield-deps
+;;                            (list->set
+;;                             (mapcan
+;;                              #'rec
+;;                              (remove-if-not
+;;                               (lambda (field)
+;;                                 (gethash field lfield-map))
+;;                               (cl-ana.makeres::find-dependencies
+;;                                expr
+;;                                'field)))
+;;                             #'eq))
+;;                           (lfield-dep-merged-expr
+;;                            `(progn
+;;                               ,@(loop
+;;                                    for ld in lfield-deps
+;;                                    collecting (gethash ld lfield-map))))
+;;                           (lfield-res-deps
+;;                            (cl-ana.makeres::find-dependencies
+;;                             lfield-dep-merged-expr
+;;                             'res)))
+;;                      (remove-if
+;;                       (lambda (i)
+;;                         (target-stat (gethash i graph)))
+;;                       (list->set
+;;                        lfield-res-deps
+;;                        #'equal)))))))
+;;            (lfdrec (id)
+;;              ;; Finds lfield dependencies to an id both directly and
+;;              ;; from any possible dependency path
+;;              (when (not (target-stat (gethash id graph)))
+;;                (let ((imm-deps
+;;                       (append (lfield-deps id)
+;;                               (target-deps (gethash id graph)))))
+;;                  (list->set
+;;                   (append imm-deps
+;;                           (mapcan #'lfdrec
+;;                                   imm-deps))
+;;                   #'equal)))))
+;;     (lfdrec id)))
 
 ;;; Propogation:
 
