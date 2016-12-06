@@ -328,7 +328,7 @@ target-table."
 can be useful for generating the explicit dependency graph for a
 target table."
   (let ((depmap (make-hash-table :test 'equal)))
-    (labels ((rec (id)
+    (memolet ((rec (id)
                ;; returns full list of dependencies for id
                (let ((tar (gethash id target-table)))
                  (when tar
@@ -336,7 +336,9 @@ target table."
                      (when deps
                        (reduce (lambda (ds d)
                                  (adjoin d ds :test #'equal))
-                               (mapcan #'rec deps)
+                               (mapcan (lambda (i)
+                                         (copy-list (rec i)))
+                                       deps)
                                :initial-value deps)))))))
       (loop
          for id being the hash-keys in target-table
@@ -1080,9 +1082,6 @@ is given."
                  (macrolet ((par (id)
                               id))
                    ,body))))
-        ;; debug
-        (print sorted-ids)
-        ;; end debug
         (symbol-function
          (if *makeres-warnings*
              (compile (compres-fname project-id) comp-form)

@@ -22,6 +22,7 @@
 (defpackage #:cl-ana.makeres
   (:use :cl
         :external-program
+        :cl-ana.memoization
         :cl-ana.error-propogation
         :cl-ana.hdf-utils
         :cl-ana.macro-utils
