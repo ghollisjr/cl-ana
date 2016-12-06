@@ -62,9 +62,11 @@
    :immediate-reductions
    :necessary-pass-reductions
    ;; reduction chains
+   :chainmap
    :chained-edge-map
    :chained-reductions
    ;; ltab chains
+   :ltab-chainmap
    :ltab-chain-edge-map
    :ltab-chained-reductions
    :ltab-chains

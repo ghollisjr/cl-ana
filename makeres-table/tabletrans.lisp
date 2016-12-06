@@ -191,11 +191,21 @@ reduction of the last ltab in the chain."
                                (or (funcall dotab-test-fn expr)
                                    (funcall ltab-test-fn expr)))))
                       children)))
+               ;; ;; debug
+               ;; (print 'chains-s)
+               ;; (print s)
+               ;; (print 'chains-context)
+               ;; (print context)
+               ;; (print 'chains-children)
+               ;; (print children)
+               ;; (print 'chains-filtered-children)
+               ;; (print filtered-children)
+               ;; ;; end debug
                (if filtered-children
                    (apply #'append
                           (mapcar (lambda (c)
                                     (chains c (cons s context)))
-                                  
+
                                   filtered-children))
                    (list (cons s context))))))
     (mapcar #'reverse (chains src))))
@@ -402,6 +412,10 @@ only targets for which test returns t."
                              (and (member x chained :test #'equal)
                                   (funcall test x)))
                            depsorted))))
+    ;; debug
+    (format t "gibp chained=~a~%" chained)
+    (format t "gibp sorted-ids=~a~%" sorted-ids)
+    ;; end debug
     (when sorted-ids
       (let ((pass (list (pop sorted-ids)))
             (result nil))
@@ -466,7 +480,94 @@ non-ignored sources."
 ;; can be returned as a compressed version of the edges of a directed
 ;; acyclic graph.
 
-(defun removed-source-depmap
+;; I'm trying a new version of the removed-*-depmap algorithms that I
+;; think will be much clearer.
+;;
+;; The concept is this:
+;;
+;; When merging reductions, the chain of source tables must not be
+;; considered dependencies of the reductions.
+;;
+;; When merging reductions through logical tables, the contiguous
+;; chain of logical tables back to the first non-logical table must
+;; not be considered dependencies of the reductions.
+;;
+;; Each reduction has a single chain of tables sources, so I should
+;;
+;; 1. Calculate the full dependency map of the relevant subsection of
+;;    the target table
+;;
+;; 2. Calculate the source table chains for the relevant subsection of
+;;    the target table.
+;;
+;; 3. Remove whatever subset of the table chain from the dependency
+;;    map for each reduction
+
+(defun chainmap (target-table
+                 &key
+                   (reduction-test-fn #'table-reduction?)
+                   (reduction-source-fn #'table-reduction-source))
+  "Returns a hash table mapping from reduction to the chain of source
+tables producing the reduction."
+  (memolet (;; Returns full list of sources up the chain
+            (sources (id &optional context)
+                     (let* ((tar (gethash id target-table))
+                            (expr (target-expr tar)))
+                       (if (funcall reduction-test-fn expr)
+                           (let ((src (unres (funcall reduction-source-fn expr))))
+                             (sources src (cons src context)))
+                           context))))
+    (let ((result (make-hash-table :test 'equal)))
+      (loop
+         for id being the hash-keys in target-table
+         for tar being the hash-values in target-table
+         when (funcall reduction-test-fn (target-expr tar))
+         do (setf (gethash id result)
+                  (sources id)))
+      result)))
+
+(defun ltab-chainmap (target-table chainmap
+                      &key
+                        (ltab-test-fn #'ltab?))
+  "Returns the ltab chains for each reduction in the target-table.  An
+ltab-chain is the chain of tables from the reduction to the nearest
+non-logical table source."
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for red being the hash-keys in chainmap
+       do (let* ((chain (gethash red chainmap))
+                 (spos (position-if-not
+                        (lambda (i)
+                          (funcall ltab-test-fn
+                                   (target-expr
+                                    (gethash i target-table))))
+                        chain
+                        :from-end t))
+                 (lchain (subseq chain spos)))
+            (setf (gethash red result)
+                  lchain)))
+    result))
+
+;; I'm trying this without the non-reductions in the table for now
+(defun removed-source-depmap (depmap chainmap)
+  "Returns a new depmap which does not contain the table sources in
+the depmap."
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for id being the hash-keys in depmap
+       do (let* ((deps (gethash id depmap))
+                 (chain (gethash id chainmap)))
+            (when chain
+              ;; debug
+              (format t "deps=~a~%" deps)
+              (format t "chain=~a~%" chain)
+              ;; end debug
+              (setf (gethash id result)
+                    (set-difference deps chain
+                                    :test #'equal)))))
+    result))
+
+(defun removed-source-depmap-old
     (target-table
      &key
        (reduction-test-fn #'table-reduction?)
@@ -487,6 +588,7 @@ non-ignored sources."
                                nil))
                           (deps
                            (remove-if
+                            ;; old code, I think this forgets to remove the source?
                             (lambda (d)
                               (and (not (equal d src))
                                    (target-stat (gethash d target-table))))
@@ -494,44 +596,50 @@ non-ignored sources."
                      ;; (format t "rec-id: ~a, deps: ~a~%"
                      ;;         id deps)
                      (when deps
-                       (list->set
-                        (reduce (lambda (ds d)
-                                  (adjoin d ds :test #'equal))
-                                (mapcan (lambda (id)
-                                          (copy-list (rec id)))
-                                        (list->set
-                                         (append
-                                          ;; immediate dependencies
-                                          deps
-                                          ;; dependencies from source
-                                          (let ((expr
-                                                 (target-expr (gethash id target-table))))
-                                            (when (funcall reduction-test-fn expr)
-                                              (target-deps
-                                               (gethash
-                                                (unres
-                                                 (funcall reduction-source-fn expr))
-                                                target-table)))))
-                                         #'equal))
-                                :initial-value
-                                (let ((expr
-                                       (target-expr (gethash id target-table))))
-                                  (if (funcall reduction-test-fn expr)
-                                      (list->set
-                                       (append
-                                        (destructuring-bind (progn tab-form) expr
-                                          (declare (ignore progn))
-                                          (cl-ana.makeres::find-dependencies
-                                           (cddr tab-form)
-                                           'res))
-                                        (target-deps
-                                         (gethash
-                                          (unres
-                                           (funcall reduction-source-fn expr))
-                                          target-table)))
-                                       #'equal)
-                                      deps)))
-                        #'equal)))))
+                       ;; Old version does not remove the source, I'm
+                       ;; trying it out since it seems like this
+                       ;; should happen
+                       (remove-if
+                        (lambda (i)
+                          (equal i src))
+                        (list->set
+                         (reduce (lambda (ds d)
+                                   (adjoin d ds :test #'equal))
+                                 (mapcan (lambda (id)
+                                           (copy-list (rec id)))
+                                         (list->set
+                                          (append
+                                           ;; immediate dependencies
+                                           deps
+                                           ;; dependencies from source
+                                           (let ((expr
+                                                  (target-expr (gethash id target-table))))
+                                             (when (funcall reduction-test-fn expr)
+                                               (target-deps
+                                                (gethash
+                                                 (unres
+                                                  (funcall reduction-source-fn expr))
+                                                 target-table)))))
+                                          #'equal))
+                                 :initial-value
+                                 (let ((expr
+                                        (target-expr (gethash id target-table))))
+                                   (if (funcall reduction-test-fn expr)
+                                       (list->set
+                                        (append
+                                         (destructuring-bind (progn tab-form) expr
+                                           (declare (ignore progn))
+                                           (cl-ana.makeres::find-dependencies
+                                            (cddr tab-form)
+                                            'res))
+                                         (target-deps
+                                          (gethash
+                                           (unres
+                                            (funcall reduction-source-fn expr))
+                                           target-table)))
+                                        #'equal)
+                                       deps)))
+                         #'equal))))))
       ;; Keeping this old code from cpptrans in here in case I try
       ;; this kind of approach in the future
       ;;
@@ -1137,23 +1245,23 @@ from pass up to src."
                                                          (gethash
                                                           id
                                                           reduction->initsym->gsym)))
-                                                    (when initsym->gsym
-                                                      (loop
-                                                         for s being the hash-keys
-                                                         in initsym->gsym
-                                                         for gsym being the hash-values
-                                                         in initsym->gsym
-                                                         collecting (list s gsym))))
+                                                       (when initsym->gsym
+                                                         (loop
+                                                            for s being the hash-keys
+                                                            in initsym->gsym
+                                                            for gsym being the hash-values
+                                                            in initsym->gsym
+                                                            collecting (list s gsym))))
                                                ,@(let
-                                                     ((expr (target-expr
-                                                             (gethash id graph))))
-                                                   (if
-                                                    (tab? expr)
-                                                    `((push-fields
-                                                       ,@(aref
-                                                          (gethash id content-tab->push-field-vector)
-                                                          content-index)))
-                                                    (table-reduction-body expr)))))
+                                                  ((expr (target-expr
+                                                          (gethash id graph))))
+                                                  (if
+                                                   (tab? expr)
+                                                   `((push-fields
+                                                      ,@(aref
+                                                         (gethash id content-tab->push-field-vector)
+                                                         content-index)))
+                                                   (table-reduction-body expr)))))
                                           (node-content node))
                                          children-exprs)
                                         :test #'equal)))))
@@ -1164,10 +1272,10 @@ from pass up to src."
                                    `(progn
                                       (symbol-macrolet
                                           ,(awhen (gethash c reduction->initsym->gsym)
-                                             (loop
-                                                for s being the hash-keys in it
-                                                for gsym being the hash-values in it
-                                                collecting (list s gsym)))
+                                                  (loop
+                                                     for s being the hash-keys in it
+                                                     for gsym being the hash-values in it
+                                                     collecting (list s gsym)))
                                         ,@(table-reduction-body
                                            (if (tab? expr)
                                                (gethash c tab-expanded-expr)
@@ -1366,12 +1474,12 @@ true when given the key and value from ht."
          ;;                       :reduction-test-fn #'table-reduction?
          ;;                       :reduction-source-fn
          ;;                       #'table-reduction-source))
-         
+
          ;; special dep< for treating reductions as if they did not
          ;; depend on src as a source table, but preserving other
          ;; dependencies as a consequence of being a reduction of the
          ;; source.
-         
+
          (remsrc-depmap (removed-source-depmap graph))
          (remsrc-dep<
           (removed-source-dep<
@@ -1381,7 +1489,7 @@ true when given the key and value from ht."
           (topological-sort
            (invert-edge-map
             remsrc-depmap)))
-         
+
          ;; special dep< which only adds ltabs sources as dependencies
          ;; when used somewhere other than as the source additionally.
          (remltab-depmap
@@ -1393,7 +1501,7 @@ true when given the key and value from ht."
           (topological-sort
            (invert-edge-map
             remltab-depmap)))
-         
+
          ;; result
          (result-graph
           (copy-target-table target-table))
@@ -1536,7 +1644,7 @@ true when given the key and value from ht."
 ;; available.  All that needs to be done is to find the (res ...)
 ;; dependencies in the table-pass body, and add any additional
 ;; dependencies to the deps list.
-;; 
+;;
 ;; (defun lfield-dependencies (graph id)
 ;;   "Returns full list of dependencies caused by lfields"
 ;;   (labels ((lfield-deps (id)

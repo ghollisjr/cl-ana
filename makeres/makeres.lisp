@@ -323,9 +323,10 @@ target-table."
                              :initial-value deps)))))))
     (rec id)))
 
-(defun dep< (target-table)
-  "Returns comparison function from target-table which returns true
-when the left argument does not depend on the right argument."
+(defun depmap (target-table)
+  "Returns the dependency map for a target-table.  Used by dep< and
+can be useful for generating the explicit dependency graph for a
+target table."
   (let ((depmap (make-hash-table :test 'equal)))
     (labels ((rec (id)
                ;; returns full list of dependencies for id
@@ -341,9 +342,16 @@ when the left argument does not depend on the right argument."
          for id being the hash-keys in target-table
          do (setf (gethash id depmap)
                   (rec id)))
+      depmap)))
+  
+
+(defun dep< (target-table)
+  "Returns comparison function from target-table which returns true
+when the left argument does not depend on the right argument."
+  (let ((depmap (depmap target-table)))
       (lambda (x y)
         (not (member y (gethash x depmap)
-                     :test #'equal))))))
+                     :test #'equal)))))
 
 ;; Topological sort functions
 ;;
@@ -1072,6 +1080,9 @@ is given."
                  (macrolet ((par (id)
                               id))
                    ,body))))
+        ;; debug
+        (print sorted-ids)
+        ;; end debug
         (symbol-function
          (if *makeres-warnings*
              (compile (compres-fname project-id) comp-form)

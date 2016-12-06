@@ -76,6 +76,7 @@
    :target-table
    :copy-target-table
    ;; dependency sorting:
+   :depmap
    :dep<
    :depsort
    :depsort-graph
