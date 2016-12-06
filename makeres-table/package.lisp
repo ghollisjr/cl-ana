@@ -63,6 +63,7 @@
    :necessary-pass-reductions
    ;; reduction chains
    :chainmap
+   :invert-chainmap
    :chained-edge-map
    :chained-reductions
    ;; ltab chains

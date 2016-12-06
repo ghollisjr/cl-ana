@@ -169,10 +169,11 @@ table"
                  (hash-keys target-table)))
 
 ;; Testing this new ltab-chains function
-(defun ltab-chains (target-table chain-edge-map src
-                    &key
-                      (ltab-test-fn #'ltab?)
-                      (dotab-test-fn #'dotab?))
+(defun ltab-chains
+    (target-table chain-edge-map src
+     &key
+       (ltab-test-fn #'ltab?)
+       (dotab-test-fn #'dotab?))
   "Returns all ltab chains stemming from src.  A ltab chain is simply
 a list of ltab ids which are chained reductions of either ltabs or the
 source table with id src along with the first non-ltab id which is a
@@ -203,13 +204,14 @@ reduction of the last ltab in the chain."
   (mapcar #'alexandria:last-elt
           (ltab-chains target-table ltab-chain-edge-map src)))
 
-(defun necessary-pass-reductions (target-table chain-edge-map tab
-                                  &key
-                                    (ltab-test-fn #'ltab?)
-                                    (reduction-test-fn
-                                     #'table-reduction?)
-                                    (reduction-source-fn
-                                     #'table-reduction-source))
+(defun necessary-pass-reductions
+    (target-table chain-edge-map tab
+     &key
+       (ltab-test-fn #'ltab?)
+       (reduction-test-fn
+        #'table-reduction?)
+       (reduction-source-fn
+        #'table-reduction-source))
   "Returns list of reductions of a table which must be computed via a
 pass over the table; equivalent to the union set of all immediate
 non-ltab reductions and any reductions chained directly to tab via
@@ -445,6 +447,21 @@ the depmap."
   (lambda (x y)
     (not (member y (gethash x depmap)
                  :test #'equal))))
+
+;; Inverting chainmaps to yield maps from the source to the full
+;; chain:
+
+(defun invert-chainmap (chainmap)
+  "Returns a map from the source table to the list of chains
+associated with that table."
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for red being the hash-keys in chainmap
+       do (let* ((chain (gethash red chainmap))
+                 (src (first chain)))
+            (push chain
+                  (gethash src result))))
+    result))
 
 ;;; Table pass expression components
 
@@ -944,23 +961,23 @@ from pass up to src."
                                                          (gethash
                                                           id
                                                           reduction->initsym->gsym)))
-                                                       (when initsym->gsym
-                                                         (loop
-                                                            for s being the hash-keys
-                                                            in initsym->gsym
-                                                            for gsym being the hash-values
-                                                            in initsym->gsym
-                                                            collecting (list s gsym))))
+                                                    (when initsym->gsym
+                                                      (loop
+                                                         for s being the hash-keys
+                                                         in initsym->gsym
+                                                         for gsym being the hash-values
+                                                         in initsym->gsym
+                                                         collecting (list s gsym))))
                                                ,@(let
-                                                  ((expr (target-expr
-                                                          (gethash id graph))))
-                                                  (if
-                                                   (tab? expr)
-                                                   `((push-fields
-                                                      ,@(aref
-                                                         (gethash id content-tab->push-field-vector)
-                                                         content-index)))
-                                                   (table-reduction-body expr)))))
+                                                     ((expr (target-expr
+                                                             (gethash id graph))))
+                                                   (if
+                                                    (tab? expr)
+                                                    `((push-fields
+                                                       ,@(aref
+                                                          (gethash id content-tab->push-field-vector)
+                                                          content-index)))
+                                                    (table-reduction-body expr)))))
                                           (node-content node))
                                          children-exprs)
                                         :test #'equal)))))
@@ -971,10 +988,10 @@ from pass up to src."
                                    `(progn
                                       (symbol-macrolet
                                           ,(awhen (gethash c reduction->initsym->gsym)
-                                                  (loop
-                                                     for s being the hash-keys in it
-                                                     for gsym being the hash-values in it
-                                                     collecting (list s gsym)))
+                                             (loop
+                                                for s being the hash-keys in it
+                                                for gsym being the hash-values in it
+                                                collecting (list s gsym)))
                                         ,@(table-reduction-body
                                            (if (tab? expr)
                                                (gethash c tab-expanded-expr)
