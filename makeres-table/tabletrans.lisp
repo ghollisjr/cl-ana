@@ -194,20 +194,25 @@ reduction of the last ltab in the chain."
                    (apply #'append
                           (mapcar (lambda (c)
                                     (chains c (cons s context)))
-
                                   filtered-children))
                    (list (cons s context))))))
     (mapcar #'reverse (chains src))))
 
-(defun ltab-chained-reductions (target-table ltab-chain-edge-map src)
+(defun ltab-chained-reductions (target-table ltab-chain-edge-map src
+                                &key
+                                  (ltab-test-fn #'ltab?)
+                                  (dotab-test-fn #'dotab?))
   "Returns all reductions directly from ltab chains stemming from src"
   (mapcar #'alexandria:last-elt
-          (ltab-chains target-table ltab-chain-edge-map src)))
+          (ltab-chains target-table ltab-chain-edge-map src
+                       :ltab-test-fn ltab-test-fn
+                       :dotab-test-fn dotab-test-fn)))
 
 (defun necessary-pass-reductions
     (target-table chain-edge-map tab
      &key
        (ltab-test-fn #'ltab?)
+       (dotab-test-fn #'dotab?)
        (reduction-test-fn
         #'table-reduction?)
        (reduction-source-fn
@@ -227,7 +232,9 @@ logical tables."
                        :reduction-source-fn reduction-source-fn))
            (ltab-chained-reductions target-table
                                     chain-edge-map
-                                    tab))
+                                    tab
+                                    :ltab-test-fn ltab-test-fn
+                                    :dotab-test-fn dotab-test-fn))
    #'equal))
 
 (defun chained-edge-map (target-table
@@ -1243,7 +1250,9 @@ true when given the key and value from ht."
                                           (ltab-chains
                                            graph
                                            chained-edge-map
-                                           src)))))))
+                                           src
+                                           :ltab-test-fn #'ltab?
+                                           :dotab-test-fn #'dotab?)))))))
                    (setf processed-srcs
                          (list->set
                           (append processed-srcs
@@ -1260,6 +1269,7 @@ true when given the key and value from ht."
                                      :test #'equal))
                            (necessary-pass-reductions
                             graph chained-edge-map src
+                            :dotab-test-fn #'dotab?
                             :ltab-test-fn #'ltab?
                             :reduction-test-fn #'table-reduction?
                             :reduction-source-fn #'table-reduction-source))))
