@@ -383,7 +383,7 @@ the necessary subdirectories are present."
     (setf (gethash (project) *proj->lid->sublids*)
           (make-hash-table :test 'equal))))
 
-(defun load-project ()
+(defun load-project (&key ignore-form-p)
   "Searches for log directory for each target in the target-table,
 setting the target-stat to t for any targets which are found in the
 log."
@@ -422,6 +422,7 @@ log."
                       "Warning: ~s is ignored, but log present; skipping.~%"
                       id)))
            ((and (probe-file (target-path id))
+                 (not ignore-form-p)
                  (not (logged-form-equal id)))
             (format t "Warning: ~s logged target expression not equal to~%~
                     expression in target table, unsetting dependents.~%"
