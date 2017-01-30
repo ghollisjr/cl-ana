@@ -329,31 +329,31 @@ can be useful for generating the explicit dependency graph for a
 target table."
   (let ((depmap (make-hash-table :test 'equal)))
     (memolet ((rec (id)
-               ;; returns full list of dependencies for id
-               (let ((tar (gethash id target-table)))
-                 (when tar
-                   (let ((deps (copy-list (target-deps tar))))
-                     (when deps
-                       (reduce (lambda (ds d)
-                                 (adjoin d ds :test #'equal))
-                               (mapcan (lambda (i)
-                                         (copy-list (rec i)))
-                                       deps)
-                               :initial-value deps)))))))
+                   ;; returns full list of dependencies for id
+                   (let ((tar (gethash id target-table)))
+                     (when tar
+                       (let ((deps (copy-list (target-deps tar))))
+                         (when deps
+                           (reduce (lambda (ds d)
+                                     (adjoin d ds :test #'equal))
+                                   (mapcan (lambda (i)
+                                             (copy-list (rec i)))
+                                           deps)
+                                   :initial-value deps)))))))
       (loop
          for id being the hash-keys in target-table
          do (setf (gethash id depmap)
                   (rec id)))
       depmap)))
-  
+
 
 (defun dep< (target-table)
   "Returns comparison function from target-table which returns true
 when the left argument does not depend on the right argument."
   (let ((depmap (depmap target-table)))
-      (lambda (x y)
-        (not (member y (gethash x depmap)
-                     :test #'equal)))))
+    (lambda (x y)
+      (not (member y (gethash x depmap)
+                   :test #'equal)))))
 
 ;; Topological sort functions
 ;;
@@ -454,7 +454,7 @@ edge-map."
              when (cdr cons)
              collecting (cons (cdr cons)
                               (car cons))
-               
+
              ;; Old version
              ;; collecting
              ;; (if (cdr cons)
@@ -1024,6 +1024,109 @@ Returns full transformation list from project after applying op."
 (defparameter *makeres-warnings* t
   "Set to nil if you want to suppress warnings from compilation")
 
+(defun compseq (forms)
+  "Compiles a sequence of forms sequentially"
+  (let ((nforms (length forms)))
+    (loop
+       for i from 1
+       for f in forms
+       do (format t "Compiling ~a/~a~%" i nforms)
+         (compile 'compseqfn `(lambda () ,f)))))
+
+(defun makeres-forms (&optional (project-id *project-id*))
+  "Returns the individual target forms for the makeres computation"
+  (let ((fintab
+         (let ((fns
+                (gethash project-id *transformation-table*))
+               (input (copy-target-table
+                       (gethash project-id *target-tables*))))
+           (if fns
+               (pipe-functions fns input)
+               input))))
+    ;; Update fintab:
+    (setf (gethash project-id *fin-target-tables*)
+          fintab)
+    ;; ensure symbols are defined for fintab
+    (alexandria:with-gensyms (val)
+      (let* ((sorted-ids
+              (depsort-graph fintab))
+             (set-exprs
+              (progn
+                (loop
+                   for id in sorted-ids
+                   when (not (target-stat
+                              (gethash id
+                                       (gethash project-id
+                                                *fin-target-tables*))))
+                   collecting
+                     (let ((tar (gethash id fintab)))
+                       `(let ((,val
+                               ,(target-expr tar)))
+                          (setresfn ',id ,val))))
+                )))
+        set-exprs))))
+
+(defun makeres-form (&optional (project-id *project-id*))
+  "Returns the form for a function which performs the makeres
+computation"
+  (let ((fintab
+         (let ((fns
+                (gethash project-id *transformation-table*))
+               (input (copy-target-table
+                       (gethash project-id *target-tables*))))
+           (if fns
+               (pipe-functions fns input)
+               input))))
+    ;; Update fintab:
+    (setf (gethash project-id *fin-target-tables*)
+          fintab)
+    ;; ensure symbols are defined for fintab
+    (alexandria:with-gensyms (val)
+      (let* ((sorted-ids
+              (depsort-graph fintab))
+             (set-exprs
+              (progn
+                (loop
+                   for id in sorted-ids
+                   when (not (target-stat
+                              (gethash id
+                                       (gethash project-id
+                                                *fin-target-tables*))))
+                   collecting
+                     (let ((tar (gethash id fintab)))
+                       `(let ((,val
+                               ,(target-expr tar)))
+                          (setresfn ',id ,val))))
+                ))
+             (lambda-list (gethash project-id *params-table*))
+             (params (mapcar (lambda (x)
+                               (first (mklist x)))
+                             lambda-list))
+             (body
+              (progn
+                `(progn
+                   ;; Save supplied parameter values:
+                   ,@(loop
+                        for p in params
+                        appending
+                          `((when (not
+                                   (equal ,p
+                                          (gethash ',p
+                                                   (gethash (project) *makeres-args*))))
+                              (setf (gethash ',p
+                                             (gethash (project) *makeres-args*))
+                                    ,p))))
+                   ;; execute computations for targets which need
+                   ;; updating.
+                   ,@set-exprs
+                   nil)))
+             (comp-form
+              `(lambda (&key ,@lambda-list)
+                 (macrolet ((par (id)
+                              id))
+                   ,body))))
+        comp-form))))
+
 (defun compres (&optional (project-id *project-id*))
   "Returns a compiled function which will generate result targets
 given keyword arguments for each project parameter.  If default values
@@ -1041,52 +1144,13 @@ is given."
     (setf (gethash project-id *fin-target-tables*)
           fintab)
     ;; ensure symbols are defined for fintab
-    (alexandria:with-gensyms (val)
-      (let* ((sorted-ids
-              (depsort-graph fintab))
-             (set-exprs
-              (loop
-                 for id in sorted-ids
-                 when (not (target-stat
-                            (gethash id
-                                     (gethash project-id
-                                              *fin-target-tables*))))
-                 collecting
-                   (let ((tar (gethash id fintab)))
-                     `(let ((,val
-                             ,(target-expr tar)))
-                        (setresfn ',id ,val)))))
-             (lambda-list (gethash project-id *params-table*))
-             (params (mapcar (lambda (x)
-                               (first (mklist x)))
-                             lambda-list))
-             (body
-              `(progn
-                 ;; Save supplied parameter values:
-                 ,@(loop
-                      for p in params
-                      appending
-                        `((when (not
-                                 (equal ,p
-                                        (gethash ',p
-                                                 (gethash (project) *makeres-args*))))
-                            (setf (gethash ',p
-                                           (gethash (project) *makeres-args*))
-                                  ,p))))
-                 ;; execute computations for targets which need
-                 ;; updating.
-                 ,@set-exprs
-                 nil))
-             (comp-form
-              `(lambda (&key ,@lambda-list)
-                 (macrolet ((par (id)
-                              id))
-                   ,body))))
-        (symbol-function
-         (if *makeres-warnings*
-             (compile (compres-fname project-id) comp-form)
-             (suppress-output
-               (compile (compres-fname project-id) comp-form))))))))
+    (let ((comp-form
+           (makeres-form project-id)))
+      (symbol-function
+       (if *makeres-warnings*
+           (compile (compres-fname project-id) comp-form)
+           (suppress-output
+             (compile (compres-fname project-id) comp-form)))))))
 
 ;; Defunct
 (defun added-dep-graph (graph)
@@ -1269,7 +1333,7 @@ list args"
       ;; dependent on null-stat results
       (when *makeres-propogate*
         (makeres-propogate!))
-
+      
       (let ((comp (compres)))
         ;; Write computation status file:
         (let ((*print-pretty* nil))

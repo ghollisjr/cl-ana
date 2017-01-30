@@ -108,6 +108,7 @@
    :clrres
    :clrresfn
    :settrans ; set transformation pipeline
+   :makeres-form ; returns the lambda form to perform the computation
    :makeres ; compile and call result generator
    ;; project utilities
    :target-ids
