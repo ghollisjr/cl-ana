@@ -58,7 +58,10 @@
          (setf file nil)
          (setf table
                (wrap-for-reuse
-                (open-hdf-table-chain (list path) group)))
+                (open-hdf-table-chain (list path) group)
+                `(hdf-opener ',path ',fields-specs
+                             :buffer-size ',buffer-size
+                             :group ',group)))
          table)
         (:write
          (when (and table
@@ -92,7 +95,8 @@ nil for writing."
            (table-close table))
          (setf table
                (wrap-for-reuse
-                (open-hdf-table-chain paths group)))
+                (open-hdf-table-chain paths group)
+                `(hdf-chain-opener ',paths :group ',group)))
          table)
         (:write nil)))))
 
@@ -110,7 +114,8 @@ nil for writing."
            (table-close table))
          (setf table
                (wrap-for-reuse
-                (open-ntuple-table path fields-specs)))
+                (open-ntuple-table path fields-specs)
+                `(ntuple-opener ',path ',fields-specs)))
          table)
         (:write
          (when (and table
@@ -141,7 +146,11 @@ nil for writing."
                (wrap-for-reuse
                 (open-csv-table path
                                 :read-from-string read-from-string
-                                :delimeter delimeter)))
+                                :delimeter delimeter)
+                `(csv-opener ',path
+                             :field-names ',field-names
+                             :read-from-string ',read-from-string
+                             :delimeter ',delimeter)))
          table)
         (:write
          (when (and table
@@ -155,8 +164,10 @@ nil for writing."
 
 (defun plist-opener (plists)
   (let* ((plists plists)
+         (opener-form `(plist-opener ',plists))
          (table (wrap-for-reuse
-                 (open-plist-table plists)))
+                 (open-plist-table plists)
+                 opener-form))
          (field-names
           (mapcar #'first
                   (group (first plists) 2))))
@@ -174,7 +185,8 @@ nil for writing."
                        'list))
          (setf table
                (wrap-for-reuse
-                (open-plist-table plists)))
+                (open-plist-table plists)
+                opener-form))
          table)
         (:write
          (when (and table

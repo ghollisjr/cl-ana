@@ -25,4 +25,5 @@
   (:export :wrap-for-reuse
            :reusable-table
            :make-reusable-table
-           :internal-table))
+           :internal-table
+           :reusable-table-opener-form))

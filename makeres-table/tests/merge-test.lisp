@@ -34,7 +34,7 @@
 
 (defproject merge-test "/home/ghollisjr/test/merge-test"
   (list #'macrotrans #'tabletrans #'progresstrans)
-  (fixed-cache 5))
+  (fixed-cache 1))
 
 (setf *print-progress* nil)
 
@@ -48,12 +48,12 @@
       sum
     (incf sum (+ (field x)
                  (field y)))))
-(logres-ignore (src sum))
+;;(logres-ignore (src sum))
 
 (defres (src sum2)
   (expt (res (src sum))
         2))
-(logres-ignore (src sum2))
+;;(logres-ignore (src sum2))
 
 (defres proc
   (tab (res src) ()
@@ -76,12 +76,12 @@
     (incf sum (+ (field x)
                  (field y)
                  (field z)))))
-(logres-ignore (proc sum))
+;;(logres-ignore (proc sum))
 
 (defres (proc sum2)
   (expt (res (proc sum))
         2))
-(logres-ignore (proc sum2))
+;;(logres-ignore (proc sum2))
 
 (defres ult
   (tab (res proc) ()
@@ -97,4 +97,4 @@
       ((sum 0))
       sum
     (incf sum (field x))))
-(logres-ignore (ult sum))
+;;(logres-ignore (ult sum))

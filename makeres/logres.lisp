@@ -72,8 +72,10 @@
   "Loads a target given the target id."
   (let ((*print-pretty* nil))
     (cond
-      ((not (gethash id
-                     (target-table)))
+      ((not (or (gethash id
+                         (target-table))
+                (gethash id (gethash *project-id*
+                                     *fin-target-tables*))))
        (format t "Warning: ~s not found in target table~%"
                id)
        nil)
@@ -89,6 +91,10 @@
             (funcall load id)
             (setf (target-load-stat (gethash id (target-table)))
                   t)
+            (setf (target-load-stat (gethash id
+                                             (gethash *project-id*
+                                                      *fin-target-tables*)))
+                  t)
             (return nil)
           finally (return t))
        ;; Default execution when no specific method found:
@@ -101,18 +107,39 @@
            (let ((type (read-from-path (target-path id "type")))
                  ;; (form (read-from-path (target-path id "form")))
                  (timestamp (read-from-path (target-path id "timestamp"))))
-             (if (not (logged-form-equal id))
+             (if (and (gethash id (target-table))
+                      (not (logged-form-equal id)))
                  (format t
                          "Warning: ~s logged target expression not equal to~%~
                        expression in target table, skipping.~%"
                          id)
                  (progn
-                   (setf (target-val (gethash id (target-table)))
+                   ;; final target value
+                   (setf (target-val (gethash id
+                                              (gethash *project-id*
+                                                       *fin-target-tables*)))
                          (load-object type (target-path id "data")))
-                   (setf (target-load-stat (gethash id (target-table)))
+                   (setf (target-load-stat
+                          (gethash id
+                                   (gethash *project-id*
+                                            *fin-target-tables*)))
                          t)
-                   (setf (target-timestamp (gethash id (target-table)))
-                         timestamp)))))))
+                   (setf (target-timestamp
+                          (gethash id
+                                   (gethash *project-id*
+                                            *fin-target-tables*)))
+                         timestamp)
+                   (when (gethash id (target-table))
+                     (setf (target-val (gethash id (target-table)))
+                           (target-val
+                            (gethash
+                            id
+                            (gethash *project-id* *fin-target-tables*))))
+                     (setf (target-load-stat (gethash id (target-table)))
+                           t)
+                     (setf (target-timestamp (gethash id (target-table)))
+                           timestamp))
+                   ))))))
       (t nil))))
 
 (defun save-target (id)
@@ -121,8 +148,11 @@
   ;; debug: trying nil for now
   (let ((*print-pretty* nil))
     (cond
-      ((not (gethash id
-                     (target-table)))
+      ((not (or (gethash id
+                         (target-table))
+                (gethash id
+                         (gethash *project-id*
+                                  *fin-target-tables*))))
        (format t "Warning: ~s not found in target table~%"
                id)
        nil)
@@ -142,15 +172,21 @@
             (ensure-directories-exist (target-path id))
             (let ((destruct-on-save?
                    (destruct-on-save?
-                    (target-val (gethash id (target-table))))))
-
+                    (target-val (or (gethash id (target-table))
+                                    (gethash id
+                                             (gethash *project-id*
+                                                      *fin-target-tables*)))))))
+              
               (flet ((write-to-path (object path)
                        (with-open-file (file path
                                              :direction :output
                                              :if-does-not-exist :create
                                              :if-exists :supersede)
                          (format file "~s~%" object))))
-                (let ((tar (gethash id (target-table))))
+                (let ((tar (or (gethash id (target-table))
+                               (gethash id
+                                        (gethash *project-id*
+                                                 *fin-target-tables*)))))
                   (write-to-path (target-type (target-val tar))
                                  (target-path id "type"))
                   (with-open-file (form-file (target-path id "form")
@@ -176,14 +212,21 @@
                                   :recursive t))
        (ensure-directories-exist (target-path id))
        (let ((destruct-on-save?
-              (destruct-on-save? (target-val (gethash id (target-table))))))
+              (destruct-on-save?
+               (target-val (or (gethash id (target-table))
+                               (gethash id
+                                        (gethash *project-id*
+                                                 *fin-target-tables*)))))))
          (flet ((write-to-path (object path)
                   (with-open-file (file path
                                         :direction :output
                                         :if-does-not-exist :create
                                         :if-exists :supersede)
                     (format file "~s~%" object))))
-           (let ((tar (gethash id (target-table))))
+           (let ((tar (or (gethash id (target-table))
+                          (gethash id
+                                   (gethash *project-id*
+                                            *fin-target-tables*)))))
              (write-to-path (target-type (target-val tar))
                             (target-path id "type"))
              (with-open-file (form-file (target-path id "form")
@@ -347,9 +390,17 @@ t (filter can use target table to get information from id)"
           (remove filter filters))))
 
 (defun function-target? (id)
-  (let ((tar (gethash id (target-table))))
-    (and (target-stat tar)
-         (functionp (target-val tar)))))
+  (symbol-macrolet ((tar (gethash id (target-table)))
+                    (fintar
+                     (gethash id
+                              (gethash *project-id*
+                                       *fin-target-tables*))))
+    (or (and tar
+             (target-stat tar)
+             (functionp (target-val tar)))
+        (and fintar
+             (target-stat fintar)
+             (functionp (target-val fintar))))))
 
 (defun ignored? (id)
   "Returns true if a result target is ignored by logres"

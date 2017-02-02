@@ -624,7 +624,10 @@ target table."
         cache-fn))
 
 (defun cacheres (id)
-  (when (and (gethash id (target-table))
+  (when (and (or (gethash id (target-table))
+                 (gethash id
+                          (gethash *project-id*
+                                   *fin-target-tables*)))
              (not (ignored? id)))
     (let ((cache-fn (gethash (project) *cache-table*)))
       (if cache-fn
@@ -635,22 +638,43 @@ target table."
 
 (defun open-cache (id)
   "Caching which assumes infinite cache size"
-  (let* ((tar (gethash id (target-table)))
-         (load-stat (target-load-stat tar)))
-    (when (not load-stat)
-      (load-target id))))
+  (symbol-macrolet ((tar (gethash id (target-table)))
+                    (fintar (gethash id
+                                     (gethash *project-id*
+                                              *fin-target-tables*))))
+    (let ((load-stat
+           (target-load-stat
+            (or tar fintar))))
+      (when (not load-stat)
+        (load-target id)))))
 
 (defun singleton-cache (id)
   "Caching which only allows a single target to be loaded at a time.
 Minimal memory use, maximal strain on hard drive."
-  (let* ((tar (gethash id (target-table)))
-         (load-stat (target-load-stat tar)))
-    (when (not load-stat)
-      (loop
-         for unload-id being the hash-keys in (target-table)
-         for unload-tar being the hash-values in (target-table)
-         do (unload-target id))
-      (load-target id))))
+  (let* ((fintab (gethash *project-id* *fin-target-tables*)))
+    (symbol-macrolet ((tar (gethash id (target-table)))
+                      (fintar (gethash id
+                                       (gethash *project-id*
+                                                *fin-target-tables*))))
+      (let ((load-stat
+             (cond
+               (tar (target-load-stat tar))
+               (fintar (target-load-stat fintar)))))
+        (when (not load-stat)
+          ;; Unload target table ids
+          (loop
+             for unload-id being the hash-keys in (target-table)
+             for unload-tar being the hash-values in (target-table)
+             do (unload-target id))
+          ;; Unload final target table ids
+          ;;
+          ;; Technically double-unloads target table ids, but it
+          ;; doesn't cost much time.
+          (loop
+             for unload-id being the hash-keys in fintab
+             for unload-tar being the hash-values in fintab
+             do (unload-target unload-id))
+          (load-target id))))))
 
 (defun fixed-cache (size)
   "Returns a caching function which limits the number of in-memory
@@ -658,24 +682,41 @@ targets to size."
   (let ((cache (make-array size :initial-element nil))
         (i 0))
     (lambda (id)
-      (let* ((tar (gethash id (target-table)))
-             (load-stat (target-load-stat tar)))
-        (when (not load-stat)
-          ;; this technically excludes NIL from being a target id
-          (when (aref cache i)
-            (unload-target (aref cache i)))
-          (load-target id)
-          (setf (aref cache i) id)
-          (setf i
-                (mod (+ i 1)
-                     size)))))))
+      (symbol-macrolet ((tar (gethash id (target-table)))
+                        (fintar (gethash id
+                                         (gethash *project-id*
+                                                  *fin-target-tables*))))
+        (let ((load-stat (target-load-stat
+                          (or tar
+                              fintar))))
+          (when (not load-stat)
+            ;; this technically excludes NIL from being a target id
+            (when (aref cache i)
+              (unload-target (aref cache i)))
+            (load-target id)
+            (setf (aref cache i) id)
+            (setf i
+                  (mod (+ i 1)
+                       size))))))))
 
 ;; Caching utility functions:
 
 (defun unload-target (id)
-  (awhen (gethash id (target-table))
-    (setf (target-val it) nil)
-    (setf (target-load-stat it) nil)))
+  (symbol-macrolet ((tar
+                     (gethash id (target-table)))
+                    (fintar
+                     (gethash id
+                              (gethash *project-id*
+                                       *fin-target-tables*))))
+    (cond
+      (tar
+       (setf (target-val tar) nil)
+       (setf (target-load-stat tar) nil)
+       (setf (target-val fintar) nil)
+       (setf (target-load-stat fintar) nil))
+      (fintar
+       (setf (target-val fintar) nil)
+       (setf (target-load-stat fintar) nil)))))
 
 ;; Result retrieval
 
@@ -915,23 +956,24 @@ is present.  Creates new target in final target table if one is not
 present."
   ;; *target-tables*:
   (when (gethash id
-                 (gethash *project-id* *target-tables*))
+                 (target-table))
     (setf (target-stat
            (gethash id
-                    (gethash *project-id* *target-tables*)))
+                    (target-table)))
           t)
     (setf (target-timestamp
            (gethash id
-                    (gethash *project-id* *target-tables*)))
+                    (target-table)))
           (if timestamp
               timestamp
               (get-universal-time)))
     (setf (target-val
            (gethash id
-                    (gethash *project-id* *target-tables*)))
+                    (target-table)))
           value)
     ;; Caching
-    (save-target id))
+    (save-target id)
+    (cacheres id))
   ;; *fin-target-tables*:
   (when (gethash id
                  (gethash *project-id* *fin-target-tables*))
@@ -950,7 +992,11 @@ present."
     (setf (target-val
            (gethash id
                     (gethash *project-id* *fin-target-tables*)))
-          value)))
+          value)
+    ;; Caching
+    (when (not (gethash id (target-table)))
+      (save-target id)
+      (cacheres id))))
 
 (defmacro setres (id value)
   "Sets target value of id in project to value and the status to t so
@@ -1361,7 +1407,17 @@ list args"
                       timestamp
                       to-compute))))
         (apply comp args)
-        (delete-file (computation-stat-path))))))
+        (delete-file (computation-stat-path))
+        ;; NOTE: I'm not sure if tables which are in the final target
+        ;; table which get unloaded and then reloaded will cause
+        ;; memory leaks.  In the future, it might be necessary to
+        
+        ;; Prune the targets not present in the target table
+        ;;
+        ;; NOTE: In the future, it might be nicer to just remove final
+        ;; targets not present in the target table instead of pruning
+        ;; the whole log, but right now this is a good substitute
+        (pruneres t)))))
 
 ;;;; Utilities:
 

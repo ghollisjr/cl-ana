@@ -50,67 +50,92 @@
 ;;;; makeres-table to avoid circular dependencies.  logres-table will
 ;;;; then be absorbed into makeres-table.
 
-(define-load-target-method table id
-    (or (cl-ana.makeres-table::tab?
-         (target-expr (gethash id (target-table))))
-        (cl-ana.makeres-table::srctab?
-         (target-expr (gethash id (target-table)))))
-  (let* ((tar (gethash id (target-table)))
-         (expr (target-expr tar))
-         (opener
-          (eval
-           (if (cl-ana.makeres-table::srctab?
-                (target-expr (gethash id (target-table))))
-               (destructuring-bind (progn (srctab opener
-                                                  &optional bootstrap)) expr
-                 opener)
-               (destructuring-bind (progn
-                                     (tab source inits opener &rest body))
-                   expr
-                 opener)))))
-    (setf (target-val tar)
-          (funcall opener :read))))
+;; (define-load-target-method table id
+;;     (or (cl-ana.makeres-table::tab?
+;;          (target-expr (gethash id (target-table))))
+;;         (cl-ana.makeres-table::srctab?
+;;          (target-expr (gethash id (target-table)))))
+;;   (let* ((tar (gethash id (target-table)))
+;;          (expr (target-expr tar))
+;;          (opener
+;;           (eval
+;;            (if (cl-ana.makeres-table::srctab?
+;;                 (target-expr (gethash id (target-table))))
+;;                (destructuring-bind (progn (srctab opener
+;;                                                   &optional bootstrap)) expr
+;;                  opener)
+;;                (destructuring-bind (progn
+;;                                      (tab source inits opener &rest body))
+;;                    expr
+;;                  opener)))))
+;;     (setf (target-val tar)
+;;           (funcall opener :read))))
 
-(defmethod save-object ((tab table) path)
-  (table-close tab))
+;; (defmethod save-object ((tab table) path)
+;;   (table-close tab))
 
-(defmethod load-object ((type (eql 'table)) path)
-  nil)
+;; (defmethod load-object ((type (eql 'table)) path)
+;;   nil)
 
-(defmethod destruct-on-save? ((tab table))
-  t)
+;; (defmethod destruct-on-save? ((tab table))
+;;   t)
 
-(defmethod cleanup ((tab table))
-  (table-close tab))
+;; (defmethod cleanup ((tab table))
+;;   (table-close tab))
 
 ;; reusable-table technically not a table:
 
-(define-load-target-method reusable-table id
-    (or (cl-ana.makeres-table::tab?
-         (target-expr (gethash id (target-table))))
-        (cl-ana.makeres-table::srctab?
-         (target-expr (gethash id (target-table)))))
-  (let* ((tar (gethash id (target-table)))
-         (expr (target-expr tar))
-         (opener
-          (eval
-           (if (cl-ana.makeres-table::srctab?
-                (target-expr (gethash id (target-table))))
-               (destructuring-bind (progn (srctab opener
-                                                  &optional bootstrap)) expr
-                 opener)
-               (destructuring-bind (progn
-                                     (tab source inits opener &rest body))
-                   expr
-                 opener)))))
-    (setf (target-val tar)
-          (funcall opener :read))))
+;; (define-load-target-method reusable-table id
+;;     (or (cl-ana.makeres-table::tab?
+;;          (target-expr (gethash id (target-table))))
+;;         (cl-ana.makeres-table::srctab?
+;;          (target-expr (gethash id (target-table)))))
+;;   (let* ((tar (gethash id (target-table)))
+;;          (expr (target-expr tar))
+;;          (opener
+;;           (eval
+;;            (if (cl-ana.makeres-table::srctab?
+;;                 (target-expr (gethash id (target-table))))
+;;                (destructuring-bind (progn (srctab opener
+;;                                                   &optional bootstrap)) expr
+;;                  opener)
+;;                (destructuring-bind (progn
+;;                                      (tab source inits opener &rest body))
+;;                    expr
+;;                  opener)))))
+;;     (setf (target-val tar)
+;;           (funcall opener :read))))
+
+;; Old versions:
+;; (defmethod save-object ((tab reusable-table) path)
+;;   (table-close tab))
+
+;; (defmethod load-object ((type (eql 'reusable-table)) path)
+;;   nil)
+
+;; New versions:
+
+(defmethod printable ((tab reusable-table))
+  nil)
 
 (defmethod save-object ((tab reusable-table) path)
+  ;; Write opener form to file:
+  (with-open-file (file path
+                        :direction :output
+                        :if-does-not-exist :create
+                        :if-exists :supersede)
+    (let ((opener-form
+           (reusable-table-opener-form tab)))
+      (format file "~s~%" opener-form)))
   (table-close tab))
 
 (defmethod load-object ((type (eql 'reusable-table)) path)
-  nil)
+  (let* ((opener-form
+         (with-open-file (file path
+                               :direction :input)
+           (read file)))
+         (opener (eval opener-form)))
+    (funcall opener :read)))
 
 (defmethod destruct-on-save? ((tab reusable-table))
   t)

@@ -38,6 +38,13 @@
     :initform nil
     :accessor reusable-table-creation-fn
     :documentation "Function which creates the table being wrapped.")
+   (creation-fn-form
+    :initarg :opener-form
+    :initform nil
+    :accessor reusable-table-opener-form
+    :documentation "Lisp form which returns the table opener function
+    when evaluated.  A table opener An optional field which assists in serializing
+    reusable tables.")
    (raw-table
     :initarg :raw-table
     :initform nil
@@ -49,7 +56,7 @@
     :documentation "Boolean which tells the wrapper when it needs to
     close and re-open the table.")))
 
-(defun make-reusable-table (creation-fn)
+(defun make-reusable-table (creation-fn &optional opener-form)
   "Returns result of creation-fn if reusable-table, else returns
 reusable-table which will make use of creation-fn to generate new
 copies when needed."
@@ -58,9 +65,10 @@ copies when needed."
         tab
         (make-instance 'reusable-table
                        :creation-fn creation-fn
+                       :opener-form opener-form
                        :raw-table tab))))
         
-(defmacro wrap-for-reuse (table-creation-form)
+(defmacro wrap-for-reuse (table-creation-form &optional opener-form)
   "Creates a reusable (when table-creation-from does not return a
 reusable-table) table which places the table-creation-form into a
 closure which will be evaluated each time the table gets re-read from
@@ -68,7 +76,8 @@ the beginning.  If the creation form returns a reusable-table, simply
 returns the table."
   (let ((lambda-form
          `(lambda () ,table-creation-form)))
-    `(make-reusable-table ,lambda-form)))
+    `(make-reusable-table ,lambda-form
+                          ,opener-form)))
 
 (defmethod table-load-next-row ((table reusable-table))
   (with-slots (raw-table creation-fn needs-reloading)

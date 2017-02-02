@@ -25,7 +25,10 @@
   nil)
 
 (define-save-target-method function id
-  (functionp (target-val (gethash id (target-table))))
+    (functionp (target-val (or (gethash id (target-table))
+                               (gethash id
+                                        (gethash *project-id*
+                                                 *fin-target-tables*)))))
   nil)
 
 (defmethod save-object ((fn function) path)
