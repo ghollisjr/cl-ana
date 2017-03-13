@@ -1,3 +1,8 @@
++ Investigate feasibility of adding MySQL databases as table data
+  sources.  cl-ana.makeres-table might be already capable of handling
+  this if an appropriate table type is made, or another software
+  project might be necessary to perform this task efficiently.
+
 + Make note in the wiki that res forms are no longer supported in a
   logical field.  Show how equivalent functionality is provided by
   creating a logical table and loading res forms as init expressions.
