@@ -500,6 +500,12 @@ layout specified in the page.")
     :initform nil
     :accessor plot-title-offset
     :documentation "A cons pair denoting the offset of the plot title")
+   (tics-layer
+    :initarg :tics-layer
+    :initform :front
+    :accessor plot-tics-layer
+    :documentation "Either :front or :back, denoting the layer of the
+    tics for all axes")
    (legend
     :initarg :legend
     :initform (legend)
@@ -838,7 +844,8 @@ initargs from key-args."
        ))
 
 (defmethod plot-cmd ((p plot2d))
-  (with-slots (x-range
+  (with-slots (tics-layer
+               x-range
                x-tics
                x-mtics
                x2-tics
@@ -862,6 +869,11 @@ initargs from key-args."
       (gnuplot-format s "~a" (merge-tics :y2 nil))
       (gnuplot-format s "~a" (merge-tics :cb (tics)))
       ;; Custom settings:
+      ;; Custom settings:
+      (gnuplot-format s "set tics ~a~%"
+                      (case tics-layer
+                        (:front "front")
+                        (:back "back")))
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :x2 x2-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
@@ -1070,7 +1082,8 @@ initargs from key-args."
                 logaxes))))))
 
 (defmethod plot-cmd ((p plot3d))
-  (with-slots (x-range
+  (with-slots (tics-layer
+               x-range
                x-tics
                x-mtics
                y-range
@@ -1095,6 +1108,10 @@ initargs from key-args."
       (gnuplot-format s "~a" (merge-tics :z (tics :axis-p nil)))
       (gnuplot-format s "~a" (merge-tics :cb (tics :axis-p nil)))
       ;; Custom settings:
+      (gnuplot-format s "set tics ~a~%"
+                      (case tics-layer
+                        (:front "front")
+                        (:back "back")))
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
       (gnuplot-format s "~a" (merge-tics :z z-tics))
@@ -1361,6 +1378,10 @@ or :cb"
                     (if axis-p
                         "axis"
                         "border"))
+    ;; (gnuplot-format s " ~a"
+    ;;                 (if front-p
+    ;;                     "front"
+    ;;                     "back"))
     (gnuplot-format s " ~a"
                     (if mirror-p
                         "mirror"
