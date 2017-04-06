@@ -2385,6 +2385,7 @@ to enable math and use the Helvetica font."
           (namestring
            (make-pathname :directory
                           (pathname-directory output)))))
+    (ensure-directories-exist destdir)
     (setf (page-output page)
           output)
     (setf (page-terminal page)

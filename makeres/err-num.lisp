@@ -24,7 +24,9 @@
 (in-package :cl-ana.makeres)
 
 (defmethod printable ((obj err-num))
-  nil)
+  ;; Checking if this works:
+  ;; nil
+  t)
 
 (defmethod load-object ((type (eql 'err-num)) path)
   ;; (print type)
