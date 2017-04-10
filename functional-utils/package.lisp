@@ -30,4 +30,5 @@
            :max-by
            :maximum
            :iterate
-           :iterate-collect))
+           :iterate-collect
+           :safe-funcall))

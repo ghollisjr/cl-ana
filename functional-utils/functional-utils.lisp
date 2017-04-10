@@ -97,3 +97,10 @@ the full list of results."
         (fnval initial (funcall fn fnval))
         (result nil (cons fnval result)))
        ((> i count) (nreverse result))))
+
+(defun safe-funcall (key-args &rest args)
+  "Only calls a function when it is in fact a function, and returns
+all other objects."
+  (if (functionp key-args)
+      (apply key-args args)
+      key-args))
