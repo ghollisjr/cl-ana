@@ -64,6 +64,7 @@
            :getslice
 	   :hist-insert
            :hist-insert-list
+           :hist-absorb
 	   :hist-index-ref ; setf-able
 	   :hist-point-ref ; setf-able
 	   :hist-bin-values

@@ -400,6 +400,14 @@ data as either atom for 1-D or lists for any dimensionality."
                     count))
               hist)))
 
+(defun hist-absorb (h1 h2)
+  "Absorbs the contents of h2 into h1 by filling the contents of h2
+into h1"
+  (loop
+     for cons in (map->alist h2)
+     do (hist-insert h1 (car cons) (cdr cons)))
+  h1)
+
 ;; ease of use function:
 (defun bin (data
             &key
