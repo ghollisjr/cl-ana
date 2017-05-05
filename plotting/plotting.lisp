@@ -1937,7 +1937,6 @@ of up to two double-float arguments."
 
 ;; histogram plotting:
 
-;; still need to allow for error bars
 (defmethod line ((histogram rectangular-histogram)
                  &rest other-keys
                  &key
@@ -1954,10 +1953,10 @@ of up to two double-float arguments."
                     (let ((bin-center (car datum-cons))
                           (bin-value (cdr datum-cons)))
                       (cons (if (listp bin-center)
-                                (mapcar (alexandria:rcurry #'float 0d0)
+                                (mapcar #'->double-float
                                         bin-center)
-                                (float bin-center 0d0))
-                            (float bin-value 0d0))))
+                                (->double-float bin-center))
+                            (->double-float bin-value))))
                   (map->alist hist)))
          (first-independent (car (first bin-data))))
     (case ndims
@@ -1984,15 +1983,23 @@ of up to two double-float arguments."
        (if (or (not (consp first-independent))
                (not (length-equal first-independent 2)))
            (error "Must be 2-d independent variable")
-           (apply #'make-instance 'data-line
-                  :title title
-                  :data bin-data
-                  :style (if style-supplied-p
-                             style
-                             "image")
-                  :color color
-                  :allow-other-keys t
-                  other-keys)))
+           (let ((first-dependent (cdr (first bin-data))))
+             (apply #'make-instance 'data-line
+                    :title title
+                    :data
+                    (if (typep first-dependent 'err-num)
+                        (mapcar (lambda (x)
+                                  (destructuring-bind (xs . y) x
+                                    (cons xs (err-num-value y))))
+
+                                bin-data)
+                        bin-data)
+                    :style (if style-supplied-p
+                               style
+                               "image")
+                    :color color
+                    :allow-other-keys t
+                    other-keys))))
       (otherwise (error "Can only plot 1-D or 2-D histograms")))))
 
 ;;; Variable binning histograms

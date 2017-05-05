@@ -22,7 +22,8 @@
 
 (defpackage #:cl-ana.error-propogation 
   (:nicknames #:cl-ana.err-prop)
-  (:use :cl)
+  (:use :cl
+        :cl-ana.math-functions)
   (:export :*err-num-pretty-print* ; for print style
 	   :err-num
 	   :+-

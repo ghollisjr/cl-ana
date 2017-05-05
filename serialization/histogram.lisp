@@ -315,7 +315,21 @@ sparse-histogram respectively."
                (h5tget-member-name data-datatype 1)))
           (if (equal second-field-name
                      "count-error")
-              (setf n-count-vars 2)
+              (progn
+                (setf n-count-vars 2)
+                (if (eq type :sparse)
+                    (setf hist
+                          (make-sparse-hist
+                           binspecs
+                           :empty-bin-value
+                           (+- 0 0)
+                           :default-increment (+- 1 1)))
+                    (setf hist
+                          (make-contiguous-hist
+                           binspecs
+                           :empty-bin-value
+                           (+- 0 0)
+                           :default-increment (+- 1 1)))))
               (setf n-count-vars 1)))
         (setf data-row-size
               (h5tget-size data-datatype))
@@ -371,6 +385,13 @@ sparse-histogram respectively."
                                              data-datatype 0)))
                                :double))
                            (2 (+- (mem-aref
+                                   (mem-aptr
+                                    buffer
+                                    :char
+                                    (+ buffer-index
+                                       (h5tget-member-offset data-datatype 0)))
+                                   :double)
+                                  (mem-aref
                                    (mem-aptr
                                     buffer
                                     :char

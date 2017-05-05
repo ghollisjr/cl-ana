@@ -25,6 +25,7 @@
   :description "Implements error propogation inside the generic-math
   framework."
   :license "GPLv3"
-  :depends-on (#:cl-ana.generic-math)
+  :depends-on (#:cl-ana.generic-math
+               #:cl-ana.math-functions)
   :components ((:file "package")
 	       (:file "error-propogation")))

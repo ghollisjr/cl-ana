@@ -290,3 +290,9 @@ structure allows for errors in errors to arbitrary depth."
      (apply #'+
             (mapcar (lambda (x) (expt x 2))
                     xs)))))
+
+;;;; Utility functions
+
+(defmethod ->double-float ((x err-num))
+  (+- (->double-float (err-num-value x))
+      (->double-float (err-num-error x))))

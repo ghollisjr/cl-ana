@@ -271,14 +271,14 @@ and third elements respectively."
               (when (and (<= low-bound this-axis)
                          (< this-axis high-bound))
                 (setf (gethash (except-nth key axis) result)
-                      (cl:+ (gethash (except-nth key axis) result empty-bin-value)
-                            val))))))
+                      (+ (gethash (except-nth key axis) result empty-bin-value)
+                         val))))))
 	;; handle the unbounded case
 	(let ((axis index-spec))
 	  (iter:iter
             (iter:for (key val) in-hashtable value-map)
             (setf (gethash (except-nth key axis) result)
-                  (cl:+ (gethash (except-nth key axis) result empty-bin-value)
+                  (+ (gethash (except-nth key axis) result empty-bin-value)
                         val)))))
     result))
 

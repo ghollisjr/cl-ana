@@ -31,7 +31,11 @@ is dangerous in cases where sparse histograms are actually necessary."
              (bin-values
               (hist-bin-values histogram))
              (hist
-              (make-contiguous-hist dim-spec-plists)))
+              (make-contiguous-hist dim-spec-plists
+                                    :empty-bin-value
+                                    (hist-empty-bin-value histogram)
+                                    :default-increment
+                                    (hist-default-increment histogram))))
         (loop
            for datum in bin-values
            do (hist-insert hist (rest datum) (first datum)))
