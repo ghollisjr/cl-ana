@@ -277,26 +277,39 @@ nil if the point is not inside the histogram domain."
 (defmethod unary-div ((h1 contiguous-histogram))
   (map-contiguous-hist #'unary-div h1))
 
+;; NOTE: This method differs from the usage of other protected-div
+;; methods in that histograms have a default bin value.  For this
+;; reason, the default bin value for the first histogram is used by
+;; default instead of 0.
 (defmethod protected-div ((h1 contiguous-histogram)
 			  (h2 contiguous-histogram)
 			  &key
-			    (protected-value 0))
-  (map-contiguous-hist
-   (lambda (x y) (protected-div
-                  x y
-                  :protected-value
-                  protected-value))
-   h1 h2))
+			    protected-value)
+  (let ((protected-value
+         (if protected-value
+             protected-value
+             (hist-empty-bin-value h1))))
+    (map-contiguous-hist
+     (lambda (x y) (protected-div
+                    x y
+                    :protected-value
+                    protected-value))
+     h1 h2)))
 
+;; See notes on protected-div
 (defmethod protected-unary-div ((h contiguous-histogram)
 				&key
-				  (protected-value 0))
-  (map-contiguous-hist
+				  protected-value)
+  (let ((protected-value
+         (if protected-value
+             protected-value
+             (hist-empty-bin-value h))))
+    (map-contiguous-hist
    (lambda (x) (protected-unary-div
                 x
                 :protected-value
                 protected-value))
-   h))
+   h)))
 
 ;;; Internal-usage functions
 

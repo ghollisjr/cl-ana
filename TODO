@@ -1,3 +1,8 @@
++ Fix plotting so that lists of data which heterogenously contain
+  err-num and numerical values are promoted up to err-num only.
+
+- Update handling of err-num for histograms.
+
 + Investigate feasibility of adding MySQL databases as table data
   sources.  cl-ana.makeres-table might be already capable of handling
   this if an appropriate table type is made, or another software

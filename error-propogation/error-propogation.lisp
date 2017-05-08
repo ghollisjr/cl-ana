@@ -128,16 +128,30 @@ structure allows for errors in errors to arbitrary depth."
           (* result-value
              (sum-in-quadrature
               relative-errors)))))
-
+  ;; OLD VERSION
+  ;;
+  ;; This version suffers from lack of foresight, although it is
+  ;; mathematically beautiful.  The relative error does not exist when
+  ;; the value is zero, so I have to resort to the ugly formula for
+  ;; the calculation instead.
+  ;;
+  ;; (defmethod mult ((x err-num) (y err-num))
+  ;;   (let* ((values (mapcar #'err-num-value (list x y)))
+  ;;          (errors (mapcar #'err-num-error (list x y)))
+  ;;          (relative-errors (mapcar #'div errors values))
+  ;;          (result-value (apply #'mult values)))
+  ;;     (+- result-value
+  ;;         (mult result-value
+  ;;               (sum-in-quadrature
+  ;;                relative-errors)))))
   (defmethod mult ((x err-num) (y err-num))
     (let* ((values (mapcar #'err-num-value (list x y)))
            (errors (mapcar #'err-num-error (list x y)))
-           (relative-errors (mapcar #'div errors values))
            (result-value (apply #'mult values)))
       (+- result-value
-          (mult result-value
-                (sum-in-quadrature
-                 relative-errors)))))
+          (sum-in-quadrature
+           (list (* (first values) (second errors))
+                 (* (second values) (first errors)))))))
 
   (defmethod-commutative mult ((x err-num) (y number))
     (mult x (+- y 0)))
@@ -152,16 +166,33 @@ structure allows for errors in errors to arbitrary depth."
              (sum-in-quadrature
               relative-errors)))))
 
+  ;; OLD VERSION
+  ;;
+  ;; As noted in the mult method above, this doesn't work for zero
+  ;; values even in the numerator.  The relative error needs a
+  ;; non-zero value.  So, I have to resort to the full expression
+  ;; instead.
+  ;;
+  ;; (defmethod div ((x err-num) (y err-num))
+  ;;   (let* ((arglist (list x y))
+  ;;          (values (mapcar #'err-num-value arglist))
+  ;;          (errors (mapcar #'err-num-error arglist))
+  ;;          (relative-errors (mapcar #'div errors values))
+  ;;          (result-value (apply #'div values)))
+  ;;     (+- result-value
+  ;;         (* result-value
+  ;;            (sum-in-quadrature
+  ;;             relative-errors)))))
   (defmethod div ((x err-num) (y err-num))
     (let* ((arglist (list x y))
            (values (mapcar #'err-num-value arglist))
            (errors (mapcar #'err-num-error arglist))
-           (relative-errors (mapcar #'div errors values))
            (result-value (apply #'div values)))
       (+- result-value
-          (* result-value
-             (sum-in-quadrature
-              relative-errors)))))
+          (sum-in-quadrature
+           (list (/ (first errors) (second values))
+                 (/ (* (first values) (second errors))
+                    (expt (second values) 2)))))))
 
   (defmethod div ((x err-num) (y number))
     (div x (+- y 0)))
@@ -173,8 +204,22 @@ structure allows for errors in errors to arbitrary depth."
     (let ((result-value (unary-div (err-num-value x))))
       (+- result-value
           (mult result-value (err-num-error x)))))
+  
+  (defmethod protected-div ((x err-num) (y number) 
+                            &key
+                              (protected-value 0))
+    (if (zerop y)
+        protected-value
+        (div x y)))
 
   (defmethod protected-div ((x number) (y err-num)
+                            &key
+                              (protected-value 0))
+    (if (zerop (err-num-value y))
+        protected-value
+        (div x y)))
+
+  (defmethod protected-div ((x err-num) (y err-num)
                             &key
                               (protected-value 0))
     (if (zerop (err-num-value y))

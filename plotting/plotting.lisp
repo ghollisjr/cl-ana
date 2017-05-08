@@ -1573,10 +1573,27 @@ or :cb"
     standard formatting is used.  If a numerical value, controls the
     number of columns in the data.")))
 
+(defun promote-err-num (alist)
+  "Searches through the list of data, and if any value is an err-num,
+all values are promoted to err-num as well with an error of 0."
+  (if (some (lambda (cons)
+              (typep (cdr cons) 'err-num))
+            alist)
+      (mapcar (lambda (cons)
+                (destructuring-bind (xs . y) cons
+                  (cons xs
+                        (if (typep y 'err-num)
+                            y
+                            (+- y 0)))))
+              alist)
+      alist))
+
 (defmethod initialize-instance :after ((l data-line) &key)
   (with-slots (data plot-arg style)
       l
     (setf plot-arg "'-'")
+    ;; Promote data to err-num
+    (setf data (promote-err-num data))
     (let ((first-dependent (cdr (first data))))
       (when (subtypep (type-of first-dependent) 'err-num)
         (setf data

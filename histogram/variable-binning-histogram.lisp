@@ -236,15 +236,23 @@ dimension names)."
               (hins result indices (div count1 count2)))))
     result))
 
+;; NOTE: This method differs from the usage of other protected-div
+;; methods in that histograms have a default bin value.  For this
+;; reason, the default bin value for the first histogram is used by
+;; default instead of 0.
 (defmethod protected-div ((h1 variable-binning-histogram)
                           (h2 variable-binning-histogram)
-                          &key (protected-value 0))
-  (let ((h1-content
-         (variable-binning-histogram-content h1))
-        (h2-content
-         (variable-binning-histogram-content h2))
-        (result
-         (copy-hist h1 t)))
+                          &key protected-value)
+  (let* ((protected-value
+          (if protected-value
+              protected-value
+              (hist-empty-bin-value h1)))
+         (h1-content
+          (variable-binning-histogram-content h1))
+         (h2-content
+          (variable-binning-histogram-content h2))
+         (result
+          (copy-hist h1 t)))
     (loop
        for indices being the hash-keys in h1-content
        for count1 being the hash-values in h1-content

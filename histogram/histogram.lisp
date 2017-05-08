@@ -368,18 +368,26 @@ data as either atom for 1-D or lists for any dimensionality."
 
 (defhistmaths)
 
+;; NOTE: This method differs from the usage of other protected-div
+;; methods in that histograms have a default bin value.  For this
+;; reason, the default bin value for the first histogram is used by
+;; default instead of 0.
 (defmethod protected-div ((a histogram) (b histogram)
                           &key (protected-value 0))
-  (let ((all-centers
-         (cl-ana.histogram::set->list
-          (let ((res (cl-ana.histogram::empty-set)))
-            (reduce #'cl-ana.histogram::set-insert
-                    (mapcar #'cdr (hbv a))
-                    :initial-value res)
-            (reduce #'cl-ana.histogram::set-insert
-                    (mapcar #'cdr (hbv b))
-                    :initial-value res))))
-        (result (copy-hist a t)))
+  (let* ((protected-value
+          (if protected-value
+              protected-value
+              (hist-empty-bin-value a)))
+         (all-centers
+          (cl-ana.histogram::set->list
+           (let ((res (cl-ana.histogram::empty-set)))
+             (reduce #'cl-ana.histogram::set-insert
+                     (mapcar #'cdr (hbv a))
+                     :initial-value res)
+             (reduce #'cl-ana.histogram::set-insert
+                     (mapcar #'cdr (hbv b))
+                     :initial-value res))))
+         (result (copy-hist a t)))
     (loop
        for centers in all-centers
        do (hist-insert result
