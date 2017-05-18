@@ -1,3 +1,6 @@
++ Rename makeres-propogate! to makeres-propagate!, and fix Emacs
+  scripts as well.  Helps to check spelling every now and then.
+
 + Fix plotting so that lists of data which heterogenously contain
   err-num and numerical values are promoted up to err-num only.
 
