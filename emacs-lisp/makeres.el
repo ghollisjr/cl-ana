@@ -1,8 +1,8 @@
 (defun makeres (&rest args)
-  "Executes makeres-propogate! and makeres with arguments in
+  "Executes makeres-propagate! and makeres with arguments in
 current slime buffer."
   (interactive)
-  (slime-command "(makeres-propogate!) (makeres)"))
+  (slime-command "(makeres-propagate!) (makeres)"))
 
 (add-hook 'lisp-mode-hook
           '(lambda ()

@@ -30,7 +30,7 @@
 
 ;; To perform this test, redefine a and call
 ;;
-;; (makeres-propogate!) and then
+;; (makeres-propagate!) and then
 ;; (makeres)
 ;;
 ;; to see if b gets recalculated

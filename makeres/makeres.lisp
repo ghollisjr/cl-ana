@@ -195,14 +195,14 @@ symbol)"
                  :timestamp (target-timestamp target)
                  :load-stat (target-load-stat target)))
 
-(defparameter *makeres-propogate* nil
+(defparameter *makeres-propagate* nil
   "Set to t if you want dependents of uncomputed results to have
 their statuses set to nil")
 
-(defun makeres-set-auto-propogate (stat)
-  "nil stat means don't propogate need-to-recompute to dependents of
-results needing computation, non-nil stat means do propogate."
-  (setf *makeres-propogate* stat))
+(defun makeres-set-auto-propagate (stat)
+  "nil stat means don't propagate need-to-recompute to dependents of
+results needing computation, non-nil stat means do propagate."
+  (setf *makeres-propagate* stat))
 
 (defvar *compiled-generators*
   (make-hash-table :test 'equal)
@@ -768,7 +768,7 @@ trans should be a graph transformation function.
 fn should be a function accepting one argument, a target graph, and
 returning a modified graph with each target having sufficiently many
 additional dependencies induced by the transformation to allow
-propogration via makeres-propogate!."
+propogration via makeres-propagate!."
   `(setf (gethash ,trans *trans->added-deps-fn*)
          ,fn))
 
@@ -786,8 +786,8 @@ trans should be a graph transformation function.
 fn should be a function accepting one argument, a target graph, and
 returning a modified graph with each target having sufficiently many
 additional dependencies induced by the transformation to allow
-propogration via makeres-propogate!, as well as having the target
-status for each target be appropriate for makeres-propogate!, as the
+propogration via makeres-propagate!, as well as having the target
+status for each target be appropriate for makeres-propagate!, as the
 result graph is what will be checked, not the original target table."
   `(setf (gethash ,trans *trans->propogator-fn*)
          ,fn))
@@ -1218,8 +1218,8 @@ is given."
                           trans-list))))
     (pipe-functions added-fns graph)))
 
-(defun transforms-propogate (graph)
-  "Propogates as makeres-propogate! would but for special cases which
+(defun transforms-propagate (graph)
+  "Propagates as makeres-propagate! would but for special cases which
 graph transformations must individually manage."
   (let* ((trans-list
           (gethash (project)
@@ -1231,8 +1231,8 @@ graph transformations must individually manage."
                           trans-list))))
     (pipe-functions propogators graph)))
 
-(defun makeres-propogate! ()
-  (let ((graph (transforms-propogate (target-table))))
+(defun makeres-propagate! ()
+  (let ((graph (transforms-propagate (target-table))))
     (loop
        for id being the hash-keys in graph
        for tar being the hash-values in graph
@@ -1383,10 +1383,10 @@ list args"
       ;; Perform sanity check on the target table:
       (when (not (checkres))
         (error "Target table fails checkres test"))
-      ;; Whenever *makeres-propogate* is non-nil, unset any results
+      ;; Whenever *makeres-propagate* is non-nil, unset any results
       ;; dependent on null-stat results
-      (when *makeres-propogate*
-        (makeres-propogate!))
+      (when *makeres-propagate*
+        (makeres-propagate!))
 
       (let ((comp (compres)))
         ;; Write computation status file:
@@ -1630,7 +1630,7 @@ Set quiet-p to non-NIL to disable progress messages."
   "Unsets all dependencies of id in the target-table.  Set quiet-p to
 non-NIL to disable progress messages."
   (when (gethash id (target-table))
-    (let ((graph (transforms-propogate (target-table))))
+    (let ((graph (transforms-propagate (target-table))))
       (loop for dep in (res-dependents id graph)
 
          do

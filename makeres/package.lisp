@@ -52,11 +52,11 @@
    :make-target
    :copy-target
    ;; propogation:
-   :transforms-propogate
+   :transforms-propagate
    :res-dependencies
    :res-dependents
-   :makeres-set-auto-propogate
-   :makeres-propogate!
+   :makeres-set-auto-propagate
+   :makeres-propagate!
    :makeres-set-sticky-pars
    ;; hash tables (these are for debugging only
    :*symbol-tables
