@@ -24,6 +24,7 @@
   (:use :cl
         :cl-ana.pathname-utils
         :cl-ana.math-functions
+        :cl-ana.functional-utils
         :cl-ana.error-propogation
         :cl-ana.gnuplot-interface
 	:cl-ana.map

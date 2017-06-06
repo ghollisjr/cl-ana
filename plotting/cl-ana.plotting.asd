@@ -29,6 +29,7 @@
   :depends-on (#:cl-ana.pathname-utils
                #:cl-ana.generic-math
                #:cl-ana.math-functions
+               #:cl-ana.functional-utils
                #:cl-ana.error-propogation
                #:cl-ana.gnuplot-interface
                #:cl-ana.map

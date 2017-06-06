@@ -2438,7 +2438,33 @@ to enable math and use the Helvetica font."
     (ext:cd current-dir))
   nil)
 
+(defgeneric plot-x-range (plot)
+  (:documentation "Gets the x-range for a 2-D or 3-D plot")
+  (:method ((p plot2d))
+    (plot2d-x-range p))
+  (:method ((p plot3d))
+    (plot3d-x-range p)))
+
+(defgeneric plot-y-range (plot)
+  (:documentation "Gets the x-range for a 2-D or 3-D plot")
+  (:method ((p plot2d))
+    (plot2d-y-range p))
+  (:method ((p plot3d))
+    (plot3d-y-range p)))
+
 ;; Plot merging functions:
+
+;; utility function
+(defun widest-range (ranges)
+  (let* ((mins (remove "*" (cars ranges)))
+         (maxs (remove "*" (cdrs ranges))))
+    (cons (if mins
+              (minimum mins)
+              "*")
+          (if maxs
+              (maximum maxs)
+              "*"))))
+
 (defun plotjoin! (&rest plots)
   "Function which joins the line lists from each plot.  Modifies the
 first plot given, so make sure to create a fresh first plot.  Easiest
@@ -2451,6 +2477,26 @@ creates comparison plots from individual plots."
                   plots)))
     (setf (plot-lines result)
           (apply #'append line-lists))
+    ;; Handle axis limits: The widest limits should win.
+    ;;
+    ;; I only do this for X and Y right now because I haven't decided
+    ;; what to do in the case of mixed pages.
+    (let* ((x-ranges
+            (mapcar #'plot-x-range plots))
+           (y-ranges
+            (mapcar #'plot-y-range plots)))
+      (cond
+        ((typep result 'plot2d)
+         (setf (plot2d-x-range result)
+               (widest-range x-ranges))
+         (setf (plot2d-y-range result)
+               (widest-range y-ranges)))
+        ((typep result 'plot3d)
+         (setf (plot3d-x-range result)
+               (widest-range x-ranges))
+         (setf (plot3d-y-range result)
+               (widest-range y-ranges)))
+        (t nil)))
     result))
 
 (defun pagemerge! (&rest pages)
