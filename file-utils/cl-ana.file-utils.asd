@@ -28,4 +28,5 @@
   :components ((:file "package")
 	       (:file "read-utils")
                (:file "write-utils")
-               (:file "stat-utils")))
+               (:file "stat-utils")
+               (:file "sha")))

@@ -35,4 +35,5 @@
    ;; stat-utils
    :file-last-changed
    ;; sha
-   :sha1))
+   :sha1
+   :sha1-from-pathname))

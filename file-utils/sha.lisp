@@ -21,7 +21,20 @@
 
 (in-package :cl-ana.file-utils)
 
-(defun sha1 (pathname-or-string)
+(defun sha1 (string)
+  "Returns the sha1 sum of a string of text."
+  (with-input-from-string
+      (str
+       (with-output-to-string (s)
+         (with-input-from-string (text string)
+           (run "sha1sum"
+                (list "-")
+                :input text
+                :output s))))
+    (first (split-sequence #\space
+                           (read-line str)))))
+
+(defun sha1-from-pathname (pathname-or-string)
   "Returns sha1 sum of file located at pathname-or-string."
   (with-input-from-string
       (str

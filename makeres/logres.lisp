@@ -133,8 +133,8 @@
                      (setf (target-val (gethash id (target-table)))
                            (target-val
                             (gethash
-                            id
-                            (gethash *project-id* *fin-target-tables*))))
+                             id
+                             (gethash *project-id* *fin-target-tables*))))
                      (setf (target-load-stat (gethash id (target-table)))
                            t)
                      (setf (target-timestamp (gethash id (target-table)))
@@ -176,7 +176,7 @@
                                     (gethash id
                                              (gethash *project-id*
                                                       *fin-target-tables*)))))))
-              
+
               (flet ((write-to-path (object path)
                        (with-open-file (file path
                                              :direction :output
@@ -508,6 +508,50 @@ loaded into the Lisp image"
                      (format s "~s"
                              (target-expr (gethash id (target-table)))))))))))
 
+(defun write-form-sha1 (id)
+  (print 'write-form-sha1)
+  (let* ((current-form
+          (with-output-to-string (s)
+            (format s "~s"
+                    (target-expr (gethash id (target-table)))))))
+    (write-lines-to-pathname
+     (list (sha1 current-form))
+     (target-path id "form.sha1")
+     :if-exists :supersede
+     :if-does-not-exist :create)))
+
+(defun logged-form-equal-sha1 (id)
+  "Checks to see if logged expression for id is the same as the one
+loaded into the Lisp image using a sha1 sum."
+  (let ((*print-pretty* nil))
+    (when (probe-file (target-path id "form"))
+      (let* ((sha-equal nil)
+             (sha-available nil)
+             (current-form
+              (with-output-to-string (s)
+                (format s "~s"
+                        (target-expr (gethash id (target-table)))))))
+        ;; sha1sum already computed for log
+        (when (probe-file (target-path id "form.sha1"))
+          (setf sha-available t)
+          (setf
+           sha-equal
+           (string= (sha1 current-form)
+                    (first (read-lines-from-pathname
+                            (target-path id "form.sha1"))))))
+        (if (or (not sha-available)
+                sha-equal)
+            (progn
+              ;; Create sha1 sum:
+              (write-form-sha1 id)
+              ;; Check file directly
+              (with-open-file (form-file (target-path id "form")
+                                         :direction :input)
+                (let ((form (read form-file)))
+                  (string= form
+                           current-form))))
+            nil)))))
+  
 (defun project-path ()
   "Returns path for current project, nil when not set or in nil
 project"
