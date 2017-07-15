@@ -131,3 +131,51 @@ interval around val using key."
                                  hi)
                             (values (cons tval hi) nil)))))))))
     (rec tree val)))
+
+;;;; Utilities based on binary trees
+
+(defun interpolate-fn (alist
+                       &key
+                         overflow-val
+                         underflow-val)
+  "Returns a function which interpolates the alist of points.  Default
+overflow and underflow behavior is to return the last value present in
+the alist in that direction.  Set overflow-val or underflow-val to a
+value or a function to allow specification of the out-of-bounds
+behavior."
+  (let ((tree
+         (make-balanced-tree alist
+                             :key #'car))
+        (overflow-fn (if overflow-val
+                         (if (functionp overflow-val)
+                             overflow-val
+                             (constantly overflow-val))
+                         (constantly (cdr (maximum alist :key #'car)))))
+        (underflow-fn (if underflow-val
+                          (if (functionp underflow-val)
+                              underflow-val
+                              (constantly underflow-val))
+                          (constantly (cdr (minimum alist :key #'car))))))
+    (lambda (point)
+      (multiple-value-bind (bounds match-p)
+          (bref tree point :key #'car)
+        (if match-p
+            (cdr bounds)
+            (if (or (null (car bounds))
+                    (null (cdr bounds)))
+                (if (null (car bounds))
+                    ;; underflow
+                    (funcall underflow-fn
+                             point)
+                    ;; overflow
+                    (funcall overflow-fn
+                             point))
+                (destructuring-bind
+                      ((leftx . lefty) .
+                       (rightx . righty))
+                    bounds
+                  (let ((slope (/ (- righty lefty)
+                                  (- rightx leftx))))
+                    (+ lefty
+                       (* slope
+                          (- point leftx)))))))))))

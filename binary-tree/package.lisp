@@ -22,10 +22,12 @@
 (defpackage #:cl-ana.binary-tree 
   (:use #:cl
         #:cl-ana.macro-utils
-	#:cl-ana.list-utils)
+	#:cl-ana.list-utils
+        #:cl-ana.functional-utils)
   (:export :make-balanced-tree
            :node-leaf-p
 	   :node-value
 	   :node-left-child
 	   :node-right-child
-           :bref))
+           :bref
+           :interpolate-fn))

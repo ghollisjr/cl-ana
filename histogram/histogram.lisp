@@ -533,6 +533,28 @@ histogram if present."
                do (hins result (mklist d)))
             result))))))
 
+;; Utility for normalizing histogram intelligently:
+(defun normalize-histogram (h &optional (norm :integral))
+  "Normalizes a histogram using either the integral or setting a
+point's value to 1.  Set norm to be a bin point value to choose a
+specific point, or to NIL for no normalization."
+  (flet ((hnorm (h) (/ h (htint h)))
+         (hpnorm (h p)
+           (/ h (hpref h (list p)))))
+    (let ((normfn
+           (cond
+             ;; no normalization
+             ((null norm)
+              #'identity)
+             ;; normalization by integral
+             ((eq norm :integral)
+              #'hnorm)
+             ;; normalization by W point
+             (t
+              (lambda (h)
+                (hpnorm h norm))))))
+      (funcall normfn h))))
+
 ;;;; Internal use:
 
 (defun condense-indices (indices)

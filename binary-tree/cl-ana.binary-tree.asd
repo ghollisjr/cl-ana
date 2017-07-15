@@ -26,6 +26,7 @@
   :description "Simple binary-tree implementation, not meant for
   high-performance code."
   :depends-on (#:cl-ana.list-utils
-               #:cl-ana.macro-utils)
+               #:cl-ana.macro-utils
+               #:cl-ana.functional-utils)
   :components ((:file "package")
 	       (:file "binary-tree")))

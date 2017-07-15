@@ -83,6 +83,7 @@
            :hdn ;; hist-dim-names
            :hds ;; hist-dim-specs
            :hbw
+           :normalize-histogram
            ;; For generating discrete dim-specs
            :discrete-dim-spec
            :dds
