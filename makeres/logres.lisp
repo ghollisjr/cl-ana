@@ -145,7 +145,6 @@
 (defun save-target (id)
   "Saves a target given the target id.  When destruct-on-save? is T
   for result value, reloads the result value after saving."
-  ;; debug: trying nil for now
   (let ((*print-pretty* nil))
     (cond
       ((not (or (gethash id
@@ -434,10 +433,34 @@ the necessary subdirectories are present."
     (setf (gethash (project) *proj->lid->sublids*)
           (make-hash-table :test 'equal))))
 
-(defun load-project (&key ignore-form-p)
+(defun commit-form (id)
+  "Commits an ID's form to the log.  To commit a form means to write
+the form to the log.  This is dangerous, breaking the logic of the
+makeres system, and should only be done when you know for a fact that
+the value of the result would not be changed by the changes to the
+form that you are committing."
+  (when (probe-file (target-path id))
+    (let* ((*print-pretty* nil)
+           (tar (gethash id (target-table))))
+      (with-open-file (form-file (target-path id "form")
+                                 :direction :output
+                                 :if-does-not-exist :create
+                                 :if-exists :supersede)
+        (format form-file "~s~%"
+                (with-output-to-string (s)
+                  (format s "~s" (target-expr tar))))))))
+
+(defun load-project (&key
+                       ignore-form-p
+                       commit-form-p)
   "Searches for log directory for each target in the target-table,
 setting the target-stat to t for any targets which are found in the
-log."
+log.
+
+Set ignore-form-p to T to simply ignore the form differences.
+
+Set commit-form-p to T to ignore the difference and then save the new
+form values to disk, preserving the values."
   (let ((unset (make-hash-table :test 'equal)))
     (when (probe-file (computation-stat-path))
       (format t "Warning: Previous computation failed, recovering~%")
@@ -474,16 +497,21 @@ log."
                       id)))
            ((and (probe-file (target-path id))
                  (not ignore-form-p)
+                 (not commit-form-p)
                  (not (logged-form-equal id)))
             (format t "Warning: ~s logged target expression not equal to~%~
                     expression in target table, unsetting dependents.~%"
                     id)
-            ;; (unsetresfn id)
             (loop
                for r in (cons id (res-dependents id (target-table)))
                do (setf (gethash r unset)
                         t))
             nil)
+           ((and (probe-file (target-path id))
+                 (not (logged-form-equal id)))
+            (format t "Committing ~s~%" id)
+            (commit-form id)
+            (setf (target-stat tar) t))
            ((and (probe-file (target-path id))
                  (not (gethash id unset)))
             (setf (target-stat tar) t))

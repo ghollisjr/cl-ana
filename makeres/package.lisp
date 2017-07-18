@@ -125,6 +125,7 @@
    :save-target
    :load-target
    :unload-target
+   :commit-form
    :define-save-target-method
    :define-load-target-method
    :load-object
