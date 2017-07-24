@@ -508,6 +508,7 @@ form values to disk, preserving the values."
                         t))
             nil)
            ((and (probe-file (target-path id))
+                 commit-form-p
                  (not (logged-form-equal id)))
             (format t "Committing ~s~%" id)
             (commit-form id)
