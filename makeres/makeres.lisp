@@ -1076,8 +1076,15 @@ Returns full transformation list from project after applying op."
      for i from 1
      for f in forms
      collecting
-       (symbol-function
-        (compile 'compseqfn `(lambda () ,f)))))
+       (progn
+         ;; debug
+         (print i)
+         ;; (print f)
+         ;; end debug
+
+         (symbol-function
+
+          (compile 'compseqfn `(lambda () ,f))))))
 
 (defun makeres-forms (fintab &optional (project-id *project-id*))
   "Returns the individual target forms for the makeres computation"
@@ -1089,10 +1096,15 @@ Returns full transformation list from project after applying op."
             (progn
               (loop
                  for id in sorted-ids
-                 when (not (target-stat
-                            (gethash id
-                                     (gethash project-id
-                                              *fin-target-tables*))))
+                 when
+                 ;; old
+                 ;; (not (target-stat
+                 ;;       (gethash id
+                 ;;                (gethash project-id
+                 ;;                         *fin-target-tables*))))
+                 ;; new
+                   (not (target-stat
+                         (gethash id fintab)))
                  collecting
                    (let ((tar (gethash id fintab)))
                      `(let ((,val
@@ -1172,6 +1184,10 @@ is given."
     ;; Update fintab:
     (setf (gethash project-id *fin-target-tables*)
           fintab)
+    ;; debug
+    (format t "# functions=~a~%"
+            (length (makeres-forms fintab)))
+    ;; end debug
     ;; ensure symbols are defined for fintab
     (let ((target-fns
            (if *makeres-warnings*
@@ -1411,7 +1427,7 @@ list args"
         ;; NOTE: I'm not sure if tables which are in the final target
         ;; table which get unloaded and then reloaded will cause
         ;; memory leaks.  In the future, it might be necessary to
-        
+
         ;; Prune the targets not present in the target table
         ;;
         ;; NOTE: In the future, it might be nicer to just remove final
