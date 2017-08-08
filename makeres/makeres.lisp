@@ -1076,15 +1076,8 @@ Returns full transformation list from project after applying op."
      for i from 1
      for f in forms
      collecting
-       (progn
-         ;; debug
-         (print i)
-         ;; (print f)
-         ;; end debug
-
-         (symbol-function
-
-          (compile 'compseqfn `(lambda () ,f))))))
+       (symbol-function
+        (compile 'compseqfn `(lambda () ,f)))))
 
 (defun makeres-forms (fintab &optional (project-id *project-id*))
   "Returns the individual target forms for the makeres computation"
@@ -1184,10 +1177,6 @@ is given."
     ;; Update fintab:
     (setf (gethash project-id *fin-target-tables*)
           fintab)
-    ;; debug
-    (format t "# functions=~a~%"
-            (length (makeres-forms fintab)))
-    ;; end debug
     ;; ensure symbols are defined for fintab
     (let ((target-fns
            (if *makeres-warnings*
