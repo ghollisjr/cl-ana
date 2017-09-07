@@ -20,6 +20,19 @@ GSLL:
   UPDATE: This might be fixed in the new GSLL now, needs more
   stringent testing.
 
+* There is a bug in this file in gsll:
+
+  solve-minimize-fit/nonlinear-least-squares.lisp
+
+  The function ls-covariance is not supplying the jacobian function
+  with a result matrix.  I've modified this file and will try to
+  contact upstream about the solution.  My modification is found under
+
+  upstream/gsll/solve-minimize-fit/nonlinear-least-squares.lisp
+
+  If all else fails, you can copy this file directly into your
+  quicklisp version of GSLL in the mean time.
+
 flexi-streams:
 
 * flexi-streams needs to have trivial-gray-streams loaded

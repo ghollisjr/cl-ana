@@ -181,7 +181,7 @@ The return values of fit are:
 	       finally
 		 (progn
 		   (setf covariance (gsll:ls-covariance fit 0.0d0 covariance))
-		   (setf num-iterations iter)))
+                   (setf num-iterations iter)))
 	    (let* ((chi (gsll::norm-f fit))
 		   (dof (- n-data n-params))
 					;(c (max 1.0d0 (/ chi (sqrt dof))))) ;; not sure why
