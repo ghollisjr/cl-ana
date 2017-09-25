@@ -356,6 +356,13 @@ practical way to use this method for macros."
 (defmacro suppress-output (&body body)
   "suppress-output redirects all output to /dev/null, thus silencing
 any messages printed to *standard-output*."
+  `(let ((*standard-output* (make-broadcast-stream)))
+     (let ((*error-output* *standard-output*))
+       ,@body)))
+
+(defmacro suppress-output-old (&body body)
+  "suppress-output redirects all output to /dev/null, thus silencing
+any messages printed to *standard-output*."
   `(with-open-file (*standard-output* "/dev/null"
                                       :direction :output
                                       :if-exists :supersede
