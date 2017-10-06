@@ -124,6 +124,7 @@
    ;; logres:
    :save-target
    :load-target
+   :load-target-manual
    :unload-target
    :commit-form
    :define-save-target-method

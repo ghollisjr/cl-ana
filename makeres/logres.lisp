@@ -290,6 +290,16 @@
      'array)
     (t (type-of object))))
 
+;; Utility function for loading a target manually without needing to
+;; fully reconstruct a target table:
+(defun load-target-manual (id)
+  (load-object (flet ((read-from-path (path)
+                        (with-open-file (file path
+                                              :direction :input)
+                          (read file))))
+                 (read-from-path (target-path id "type")))
+               (target-path id "data")))
+
 (defvar *project-paths*
   (make-hash-table :test 'equal)
   "Map from project name to output path")
