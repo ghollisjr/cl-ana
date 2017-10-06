@@ -381,3 +381,32 @@ the first index of B."
                                              contracted-index))
                                   ref-fns))))))
     result))
+
+;; Flatten a tensor into a rank 0 or 1 tensor
+(defun tensor-flatten (x)
+  "Returns a flattened tensor along with the dimensions of original
+tensor so that unflattening is possible."
+  (if (atom x)
+      (values x nil)
+      (let* ((dims (tensor-dimensions x))
+             (size (product dims))
+             (result (make-tensor (list size) :type (type-of x))))
+        (loop
+           for i from 0 below size
+           do (setf (tensor-ref result i)
+                    (tensor-flat-ref x i)))
+        (values result
+                dims))))
+
+;; Unflatten a tensor
+(defun tensor-unflatten (x dims)
+  "Restores a flattened tensor to its original dimensionality."
+  (if (atom x)
+      x
+      (let* ((size (length x))
+             (result (make-tensor dims :type (type-of x))))
+        (loop
+           for i from 0 below size
+           do (setf (tensor-flat-ref result i)
+                    (tensor-ref x i)))
+        result)))

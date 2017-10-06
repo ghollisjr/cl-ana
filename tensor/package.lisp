@@ -41,6 +41,8 @@
 	   :tensor-rank
 	   :tensor-dimensions
 	   :sequencep
-	   :tensor-contract))
+	   :tensor-contract
+           :tensor-flatten
+           :tensor-unflatten))
 
 (cl-ana.gmath:use-gmath :cl-ana.tensor)
