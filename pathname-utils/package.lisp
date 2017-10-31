@@ -5,4 +5,5 @@
            :->absolute-pathname
            :directory-pathname-p
            :basename
-           :mkdirpath))
+           :mkdirpath
+           :subpath))

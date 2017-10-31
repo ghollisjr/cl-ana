@@ -64,3 +64,33 @@ while this utility function preserves it."
      pathname
      (make-pathname :directory
                     (pathname-directory pathname)))))
+
+(defun subpath (directory path-or-format-recipe &rest args)
+  "Returns namestring for a path under directory.
+path-or-format-recipe can be a pathname directly, in which case the
+rest of the arguments are unused.  Or, it can be a format string which
+when format is supplied with both the recipe and the rest of the
+arguments should return a namestring for a valid pathname.  In either
+case, ensure-directories-exist will be called to ensure that the path
+is ready for use.
+
+If for whatever reason subpath is given an absolute pathname, it will
+be returned as-is.  If the result of a format processing a format
+string and the rest of the arguments is an absolute pathname, this
+will be returned."
+  (let ((*print-pretty* nil))
+    (let ((namestring
+           (namestring
+            (cond
+              ((stringp path-or-format-recipe)
+               (subpath
+                directory
+                (pathname (apply #'format nil path-or-format-recipe args))))
+              ((pathnamep path-or-format-recipe)
+               (if (pathname-absolute-p path-or-format-recipe)
+                   path-or-format-recipe
+                   (merge-pathnames path-or-format-recipe
+                                    (mkdirpath directory))))
+              (t (error "work-path accepts strings or pathnames only for first argument"))))))
+      (ensure-directories-exist namestring)
+      namestring)))
