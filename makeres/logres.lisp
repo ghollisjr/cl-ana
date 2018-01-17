@@ -461,6 +461,7 @@ form that you are committing."
                   (format s "~s" (target-expr tar))))))))
 
 (defun load-project (&key
+                       (update-form-test (constantly t))
                        ignore-form-p
                        commit-form-p)
   "Searches for log directory for each target in the target-table,
@@ -470,7 +471,11 @@ log.
 Set ignore-form-p to T to simply ignore the form differences.
 
 Set commit-form-p to T to ignore the difference and then save the new
-form values to disk, preserving the values."
+form values to disk, preserving the values.
+
+Set update-form-test to a function which returns T for targets you
+want to update, and NIL for targets you don't want to update if their
+form is different."
   (let ((unset (make-hash-table :test 'equal)))
     (when (probe-file (computation-stat-path))
       (format t "Warning: Previous computation failed, recovering~%")
