@@ -520,7 +520,7 @@ histogram if present."
                                            (+ ma (* 0.5 delta))))))
                            (list :low real-min
                                  :high real-max
-                                 :nbins n
+                                 :nbins (floor n)
                                  :name name)))))
                  (result
                   (apply #'make-sparse-hist
