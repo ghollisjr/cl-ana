@@ -149,13 +149,14 @@ otherwise."
 ;; Needs to have its memo map reset periodically to free space.  Best
 ;; practice is to place the reset at the top of your transformation if
 ;; you use this function.
-(defun-memoized immediate-reductions (target-table
-                                      tab
-                                      &key
-                                      (reduction-test-fn
-                                       #'table-reduction?)
-                                      (reduction-source-fn
-                                       #'table-reduction-source))
+(defun-memoized immediate-reductions-old
+    (target-table
+     tab
+     &key
+     (reduction-test-fn
+      #'table-reduction?)
+     (reduction-source-fn
+      #'table-reduction-source))
   "Returns list of immediately dependent table reductions for a
 table"
   (remove-if-not (lambda (id)
@@ -167,6 +168,44 @@ table"
                                            expr))
                                  tab))))
                  (hash-keys target-table)))
+
+(defun-memoized immediate-reductions-map
+    (target-table
+     &key
+     (reduction-test-fn
+      #'table-reduction?)
+     (reduction-source-fn
+      #'table-reduction-source))
+  "Returns a hash-table mapping from table to reductions.  It's much
+more efficient to use a single map than looping over the entire target
+table repeatedly."
+  (let* ((result (make-hash-table :test 'equal)))
+    (loop
+       for id being the hash-keys in target-table
+       do (let* ((tar (gethash id target-table))
+                 (expr (target-expr tar)))
+            (when (funcall reduction-test-fn expr)
+              (let* ((tab (unres
+                           (funcall reduction-source-fn
+                                    expr))))
+                (push id (gethash tab result))))))
+    result))
+
+(defun immediate-reductions
+    (target-table
+     tab
+     &rest key-args
+     &key
+       (reduction-test-fn
+        #'table-reduction?)
+       (reduction-source-fn
+        #'table-reduction-source))
+  "Returns list of immediately dependent table reductions for a
+table"
+  (let* ((ht (apply #'immediate-reductions-map
+                    target-table
+                    key-args)))
+    (gethash tab ht)))
 
 ;; Testing this new ltab-chains function
 (defun ltab-chains
@@ -1158,7 +1197,10 @@ true when given the key and value from ht."
 (defun tabletrans (target-table)
   "Performs necessary graph transformations for table operators"
   ;; Reset memo maps:
-  (reset-memo-map #'immediate-reductions)
+  ;; old
+  ;; (reset-memo-map #'immediate-reductions)
+  ;; new
+  (reset-memo-map #'immediate-reductions-map)
   ;; Close any open tables needing recomputation:
   (loop
      for id being the hash-keys in target-table
@@ -1184,7 +1226,6 @@ true when given the key and value from ht."
   ;; save lfield definitions
   (save-lfields)
   (let* ((graph (copy-target-table target-table))
-
          ;; chained reduction and ltab chain edge maps
          (chained-edge-map
           (chained-edge-map graph

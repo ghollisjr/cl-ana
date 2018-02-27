@@ -60,6 +60,7 @@
    ;; source tables, immediate, and necessary reductions
    :ultimate-source-tables
    :immediate-reductions
+   :immediate-reductions-map
    :necessary-pass-reductions
    ;; reduction chains
    :chainmap

@@ -266,8 +266,10 @@ target-table."
   initial input or from the output of the previous function in the
   list fns"
   (let ((val (copy-target-table input)))
-    (dolist (f fns)
-      (setf val (funcall f val)))
+    (loop
+       for f in fns
+       do (setf val
+                (funcall f val)))
     val))
 
 ;; Major function: res-dependencies
@@ -323,7 +325,7 @@ target-table."
                              :initial-value deps)))))))
     (rec id)))
 
-(defun depmap (target-table)
+(defun depmap-old (target-table)
   "Returns the dependency map for a target-table.  Used by dep< and
 can be useful for generating the explicit dependency graph for a
 target table."
@@ -346,6 +348,114 @@ target table."
                   (rec id)))
       depmap)))
 
+;; A simple set library
+(defun mkset (lst)
+  (declare (list lst))
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for x in lst
+       do (setf (gethash x result)
+                t))
+    result))
+
+(defun set* (x y)
+  (declare (hash-table x)
+           (hash-table y))
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for k being the hash-keys in x
+       for vy = (gethash k y)
+       when vy
+       do
+         (setf (gethash k result) t))
+    result))
+
+(defun set+ (x y)
+  (declare (hash-table x)
+           (hash-table y))
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for k being the hash-keys in x
+       do (setf (gethash k result) t))
+    (loop
+       for k being the hash-keys in y
+       when (not (gethash k result))
+       do (setf (gethash k result) t))
+    result))
+
+(defun set- (x y)
+  "Returns the elements in x that aren't in y"
+  (declare (hash-table x)
+           (hash-table y))
+  (let ((result (make-hash-table :test 'equal)))
+    (loop
+       for k being the hash-keys in x
+       when (not (gethash k y))
+       do (setf (gethash k result) t))
+    result))
+
+(defun set^ (x y)
+  "Returns set XOR of x and y"
+  (declare (hash-table x)
+           (hash-table y))
+  (set+ (set- x y)
+        (set- y x)))
+
+(defun set-empty? (x)
+  (declare (hash-table x))
+  (zerop (hash-table-count x)))
+
+(defun set-equal? (x y)
+  (declare (hash-table x)
+           (hash-table y))
+  (set-empty? (set^ x y)))
+
+(defun set-member (s x)
+  (declare (hash-table s))
+  (gethash x s))
+
+(defun set->list (x)
+  (declare (hash-table x))
+  (loop
+     for k being the hash-keys in x
+     collecting k))
+
+(defun depmap (target-table)
+  "Returns the dependency map for a target-table.  Used by dep< and
+can be useful for generating the explicit dependency graph for a
+target table."
+  (let ((depmap (make-hash-table :test 'equal)))
+    (memolet ((rec (id)
+                   ;; returns full set of dependencies for id
+                   (let ((tar (gethash id target-table)))
+                     (if tar
+                         (let ((deps (copy-list (target-deps tar))))
+                           (if deps
+                               (reduce #'set+
+                                       (mapcar #'rec
+                                               deps)
+                                       :initial-value (mkset deps))
+                               (mkset nil)))
+                         (mkset nil)))))
+      (loop
+         for id being the hash-keys in target-table
+         do (setf (gethash id depmap)
+                  (set->list (rec id))))
+      depmap)))
+
+(defun testdepmap (x y)
+  "Should return true if two depmaps contain identical information.
+Used to test depmap upgrade."
+  (loop
+     for k being the hash-keys in x
+     for vx being the hash-values in x
+     do (multiple-value-bind (vy vy-p) (gethash k y)
+          (let* ((vx (mkset vx))
+                 (vy (mkset vy)))
+            (when (or (not vy-p)
+                      (not (set-equal? vx vy)))
+              (return-from testdepmap nil)))))
+  (return-from testdepmap t))
 
 (defun dep< (target-table)
   "Returns comparison function from target-table which returns true
@@ -1186,7 +1296,8 @@ is given."
       (lambda (&rest args)
         (loop
            for fn in target-fns
-           do (funcall fn))))))
+           do
+             (funcall fn))))))
 
 ;; Old version of compres.  Compiles a single form, but this started
 ;; to cost an insane amount of memory.  SBCL doesn't handle the large
@@ -1392,7 +1503,6 @@ list args"
       ;; dependent on null-stat results
       (when *makeres-propagate*
         (makeres-propagate!))
-
       (let ((comp (compres)))
         ;; Write computation status file:
         (let ((*print-pretty* nil))
