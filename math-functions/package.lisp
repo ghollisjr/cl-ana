@@ -37,6 +37,7 @@
    :binomial
    :multinomial
    ;; utils:
-   :->double-float))
+   :->double-float
+   :periodic-shift))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)

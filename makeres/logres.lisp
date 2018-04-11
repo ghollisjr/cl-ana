@@ -300,6 +300,10 @@
                  (read-from-path (target-path id "type")))
                (target-path id "data")))
 
+;; Macro for using the manual target loading function easier:
+(defmacro mres (id)
+  `(load-target-manual ',id))
+
 (defvar *project-paths*
   (make-hash-table :test 'equal)
   "Map from project name to output path")

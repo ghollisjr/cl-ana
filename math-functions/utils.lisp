@@ -31,3 +31,11 @@
   (:method ((x complex))
     (complex (float (realpart x) 0d0)
              (float (imagpart x) 0d0))))
+
+(defun periodic-shift (x lo hi)
+  "Shifts x into the range [lo, hi] through interval multiples of (-
+hi lo).  Useful for shifting angles into a different range or working
+with periodic quantities in general."
+  (let* ((range (- hi lo))
+         (k (ceiling (/ (- lo x) range))))
+    (+ x (* k range))))
