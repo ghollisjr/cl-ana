@@ -69,7 +69,7 @@ The main principles of the project are:
    to drink.  Conceptual clarity refers to the way in which code is
    written and the way in which algorithms are implemented: A slightly
    slower but easier to understand implementation is favored above a
-   clusterfuck of bit shifts.  Documentation should always be provided
+   labrynth of bit shifts.  Documentation should always be provided
    for any feature along with example usages--ESPECIALLY with example
    usages, as these are sometimes more helpful than the actual
    documentation.
