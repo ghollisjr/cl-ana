@@ -23,9 +23,11 @@
 
 (defun dot-compile (path &key
                            (if-exists :error)
-                           (target-table (target-table)))
+                           (target-table (target-table))
+                           posts)
   "Writes target graph into a file located at path.  Returns path of
-dot output file."
+dot output file.  posts is a list of lines to append to the end of the
+dot commands without semicolons."
   (let ((*print-pretty* nil))
     (with-open-file (file path
                           :direction :output
@@ -40,6 +42,9 @@ dot output file."
                  for d in deps
                  do (format file "  \"~a\" -> \"~a\";~%"
                             d id))))
+      (loop
+         for p in posts
+         do (format file "~a;~%" p))
       (format file "}~%")
       path)))
 
