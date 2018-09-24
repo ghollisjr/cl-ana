@@ -1,3 +1,20 @@
++ Further optimize tabletrans via optimizing the depmap function.  At
+  the moment, depmap constructs a dependency map for the entire target
+  table even if there is no direct need for this.  The depmap
+  hash-table could be changed into a function which uses the same
+  memoized recursive algorithm as it does currently, but instead would
+  only look up depmap values on demand and then store those values for
+  later use.  It would be a kind of lazy evaluation scheme which
+  should allow far faster target-table transformation times.  However,
+  this would likely mean modifying quite a few functions which make
+  use of the depmap so that they will run efficiently in this new
+  scheme.  I already noticed that removed-source-depmap and
+  removed-source-dep< are using the entire depmap since it was assumed
+  that it would be efficient to do so.  This has turuned out not to be
+  the case.  It may well be the case that I need to find a more
+  sophisticated algorithm overall if I am to avoid the 4 second or so
+  calculation time that it currently takes.
+
 - Rename makeres-propogate! to makeres-propagate!, and fix Emacs
   scripts as well.  Helps to check spelling every now and then.
 
