@@ -98,7 +98,7 @@ files.
 
 inits are used for bindings outside the table-pass loop.
 
-body will be placed in a macrolet which macrolets push-field,
+body will be placed in a macrolet which macrolets push-fields,
 accepting all arguments to table-push-field minus the destination
 table (will be supplied the result table)."
   (let ((closure (gsym 'tabletrans))

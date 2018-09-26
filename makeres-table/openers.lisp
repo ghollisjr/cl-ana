@@ -145,7 +145,6 @@ nil for writing."
          (setf table
                (wrap-for-reuse
                 (open-csv-table path
-                                :field-names field-names
                                 :read-from-string read-from-string
                                 :delimeter delimeter)
                 `(csv-opener ',path
