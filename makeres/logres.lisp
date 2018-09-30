@@ -304,6 +304,12 @@
 (defmacro mres (id)
   `(load-target-manual ',id))
 
+;; Utility macro for macrolet binding all res forms to mres forms
+(defmacro with-mres (&body body)
+  `(macrolet ((res (&rest args)
+                `(mres ,@args)))
+     ,@body))
+
 (defvar *project-paths*
   (make-hash-table :test 'equal)
   "Map from project name to output path")

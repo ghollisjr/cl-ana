@@ -92,6 +92,7 @@
    :par
    :parfn
    :mres
+   :with-mres
    ;; project macros
    :defproject
    :in-project
