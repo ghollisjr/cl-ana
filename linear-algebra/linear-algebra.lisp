@@ -98,12 +98,13 @@
             (- (* ax by)
                (* bx ay)))))
 
-;; Solving linear equations via Gaussian Elimination Of course this is
-;; not the most efficient algorithm, but all the generally available
-;; linear algebra libraries are focused on floating point arithmetic.
-;; This simple implementation of Gaussian Elimination will represent
-;; data as integers, rational values, or floating point values
-;; depending on the input given.
+;; Solving linear equations via Gauss-Jordan Elimination.  Of course
+;; this is not the most efficient algorithm, but all the generally
+;; available linear algebra libraries are focused on floating point
+;; arithmetic.  This simple implementation of Gaussian Elimination
+;; will represent data as integers, rational values, or floating point
+;; values depending on the input given, which is useful for
+;; academic/educatonal examples.
 (defun linsolve (A B)
   "Solves the linear equation A x = B for x using Gaussian
 Elimination.  A should be a 2-D tensor containing the coefficients,
@@ -150,7 +151,7 @@ solution is possible, e.g. singular matrix."
                  ;; eliminates row using the (normalized) basis row for col
                  (let* ((ratio (tensor-ref coefs row col)))
                    (loop
-                      for j below ncols
+                      for j upfrom col below ncols
                       do (setf (tensor-ref coefs row j)
                                (- (tensor-ref coefs row j)
                                   (* ratio (tensor-ref coefs basis j)))))
@@ -187,3 +188,35 @@ solution is possible, e.g. singular matrix."
                   (eliminate-row i j leading))
              (swap-rows j leading))
         (coerce rhs 'list)))))
+
+;; Frontend to GSLL's lu-solve:
+(defun lu-solve (A B)
+  "Frontend to GSL.  A should be a list of lists, and B should be a
+list."
+  (let* ((matA
+          (grid:make-foreign-array
+           'double-float
+           :initial-contents (->double-float A)))
+         (matB
+          (grid:make-foreign-array
+           'double-float
+           :initial-contents
+           (->double-float
+            B))))
+    (multiple-value-bind (matrix perm)
+        (gsll:lu-decomposition matA)
+      (let* ((solution
+              (gsll:lu-solve matrix matB perm)))
+        (coerce (grid:cl-array solution)
+                'list)))))
+
+;; Frontend to GSLL's LU-determinant
+(defun lu-determinant (matrix)
+  "Frontend to GSL.  matrix should be a list of lists."
+  (let* ((mat
+          (grid:make-foreign-array
+           'double-float
+           :initial-contents (->double-float matrix))))
+    (multiple-value-bind (matrix perm signum)
+        (gsll:lu-decomposition mat)
+      (gsll:lu-determinant matrix signum))))

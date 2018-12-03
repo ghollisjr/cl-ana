@@ -22,7 +22,8 @@
 (defpackage #:cl-ana.linear-algebra 
   (:use #:cl
 	#:cl-ana.tensor
-	#:cl-ana.list-utils)
+	#:cl-ana.list-utils
+        #:cl-ana.math-functions)
   (:export :make-vector
 	   :make-matrix
 	   :vector->matrix
@@ -34,6 +35,8 @@
            :phi
            :theta
            :cross-product
-           :linsolve))
+           :linsolve
+           :lu-solve
+           :lu-determinant))
 
 (cl-ana.gmath:use-gmath :cl-ana.linear-algebra)

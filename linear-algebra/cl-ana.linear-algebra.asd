@@ -28,6 +28,8 @@
   :license "GPLv3"
   :depends-on (#:cl-ana.generic-math
 	       #:cl-ana.tensor
-	       #:cl-ana.list-utils)
+	       #:cl-ana.list-utils
+               #:cl-ana.math-functions
+               #:gsll)
   :components ((:file "package")
 	       (:file "linear-algebra")))
