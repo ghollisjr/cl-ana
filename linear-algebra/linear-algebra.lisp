@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -97,3 +97,93 @@
                   (* bx az)))
             (- (* ax by)
                (* bx ay)))))
+
+;; Solving linear equations via Gaussian Elimination Of course this is
+;; not the most efficient algorithm, but all the generally available
+;; linear algebra libraries are focused on floating point arithmetic.
+;; This simple implementation of Gaussian Elimination will represent
+;; data as integers, rational values, or floating point values
+;; depending on the input given.
+(defun linsolve (A B)
+  "Solves the linear equation A x = B for x using Gaussian
+Elimination.  A should be a 2-D tensor containing the coefficients,
+and B should be a 2-D column tensor or a 1-D tensor of values for the
+right-hand-side.
+
+Returns a list of the solution values x if solvable, or nil if no
+solution is possible, e.g. singular matrix."
+  (when (and A B)
+    (let* ((coefs (map 'vector
+                       (lambda (x)
+                         (coerce x 'vector))
+                       A))
+           (rhs (coerce (if (= (tensor-rank B) 1)
+                            (loop
+                               for i below (length B)
+                               collecting (tensor-ref B i))
+                            (loop
+                               for i below (length B)
+                               collecting (tensor-ref B i 0)))
+                        'vector))
+           (dims (tensor-dimensions A))
+           (nrows (first dims))
+           (ncols (second dims)))
+      (labels ((leading (col)
+                 ;; returns index to first row with non-zero entry at col dimension
+                 (loop
+                    for i upfrom col below nrows
+                    when (not (zerop (tensor-ref coefs i col)))
+                    do (return i)
+                    finally (return nil)))
+               (normalize-row (row col)
+                 ;; normalizes row using value at col
+                 (let* ((val (tensor-ref coefs row col)))
+                   (loop
+                      for i below ncols
+                      do (setf (tensor-ref coefs row i)
+                               (/ (tensor-ref coefs row i)
+                                  val)))
+                   (setf (aref rhs row)
+                         (/ (aref rhs row)
+                            val))))
+               (eliminate-row (row col basis)
+                 ;; eliminates row using the (normalized) basis row for col
+                 (let* ((ratio (tensor-ref coefs row col)))
+                   (loop
+                      for j below ncols
+                      do (setf (tensor-ref coefs row j)
+                               (- (tensor-ref coefs row j)
+                                  (* ratio (tensor-ref coefs basis j)))))
+                   (setf (aref rhs row)
+                         (- (aref rhs row)
+                            (* ratio (aref rhs basis))))))
+               (swap-rows (r1 r2)
+                 ;; swaps rows r1 and r2
+                 (when (not (= r1 r2))
+                   (loop
+                      for j below ncols
+                      for tmp = (tensor-ref coefs r1 j)
+                      do
+                        (setf (tensor-ref coefs r1 j)
+                              (tensor-ref coefs r2 j))
+                        (setf (tensor-ref coefs r2 j)
+                              tmp))
+                   (let* ((tmp (aref rhs r1)))
+                     (setf (aref rhs r1)
+                           (aref rhs r2))
+                     (setf (aref rhs r2)
+                           tmp)))))
+        (loop
+           for j below ncols
+           for leading = (leading j)
+           do
+             (when (null leading) ; singular matrix
+               (return-from linsolve nil))
+             (normalize-row leading j)
+             (loop
+                for i below nrows
+                when (not (= i leading))
+                do
+                  (eliminate-row i j leading))
+             (swap-rows j leading))
+        (coerce rhs 'list)))))

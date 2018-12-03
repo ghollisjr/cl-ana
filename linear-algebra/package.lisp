@@ -33,6 +33,7 @@
            :matrix-mult
            :phi
            :theta
-           :cross-product))
+           :cross-product
+           :linsolve))
 
 (cl-ana.gmath:use-gmath :cl-ana.linear-algebra)
