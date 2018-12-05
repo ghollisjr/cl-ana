@@ -37,6 +37,8 @@
            :cross-product
            :linsolve
            :lu-solve
-           :lu-determinant))
+           :lu-invert
+           :lu-determinant
+           :eigen-decomposition))
 
 (cl-ana.gmath:use-gmath :cl-ana.linear-algebra)

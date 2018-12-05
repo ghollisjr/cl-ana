@@ -189,9 +189,22 @@ solution is possible, e.g. singular matrix."
              (swap-rows j leading))
         (coerce rhs 'list)))))
 
+(defun lisp-2d-array->tensor (arr)
+  (let* ((dims (array-dimensions arr))
+         (n (product dims))
+         (result (make-tensor dims)))
+    (loop
+       for i below n
+       do (setf (tensor-flat-ref result i)
+                (apply #'aref arr (cl-ana.tensor::unflatten-index i dims))))
+    (map 'list
+         (lambda (x)
+           (coerce x 'list))
+         result)))
+
 ;; Frontend to GSLL's lu-solve:
 (defun lu-solve (A B)
-  "Frontend to GSL.  A should be a list of lists, and B should be a
+  "Frontend to GSLL.  A should be a list of lists, and B should be a
 list."
   (let* ((matA
           (grid:make-foreign-array
@@ -210,9 +223,25 @@ list."
         (coerce (grid:cl-array solution)
                 'list)))))
 
+;; Frontend to GSLL's lu-invert:
+(defun lu-invert (matrix)
+  "Frontend to GSLL.  matrix should be a list of lists."
+  (let* ((mat
+          (grid:make-foreign-array
+           'double-float
+           :initial-contents (->double-float matrix))))
+    (multiple-value-bind (matrix perm)
+        (gsll:lu-decomposition mat)
+      (let* ((result
+              (gsll:lu-invert matrix perm)))
+        (map 'list
+             (lambda (x)
+               (coerce x 'list))
+             (lisp-2d-array->tensor (grid:cl-array result)))))))
+
 ;; Frontend to GSLL's LU-determinant
 (defun lu-determinant (matrix)
-  "Frontend to GSL.  matrix should be a list of lists."
+  "Frontend to GSLL.  matrix should be a list of lists."
   (let* ((mat
           (grid:make-foreign-array
            'double-float
@@ -220,3 +249,25 @@ list."
     (multiple-value-bind (matrix perm signum)
         (gsll:lu-decomposition mat)
       (gsll:lu-determinant matrix signum))))
+
+;; Eigendecomposition:
+(defun eigen-decomposition (matrix)
+  "Returns eigen values and eigen vectors of the matrix.  Frontend to
+GSLL.
+
+Returns:
+
+* eigenvalue list
+* eigenvector list"
+  (let* ((mat (grid:make-foreign-array 'double-float
+                                       :dimensions (tensor-dimensions matrix)
+                                       :initial-contents matrix)))
+    (multiple-value-bind (values vectors)
+        (gsll:eigenvalues-eigenvectors-nonsymm mat)
+      (values (coerce (grid:cl-array values) 'list)
+              (transpose
+               (map 'list
+                    (lambda (x)
+                      (coerce x 'list))
+                    (lisp-2d-array->tensor
+                     (grid:cl-array vectors))))))))
