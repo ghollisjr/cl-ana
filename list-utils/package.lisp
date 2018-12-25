@@ -45,6 +45,7 @@
 	   :make-offsets
            :ensure-lists
            :partition
+           :tree-flatten
            ;;; alists
            :cars
            :cdrs

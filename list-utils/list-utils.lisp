@@ -374,6 +374,19 @@ This function supports two different conceptual approaches to partitioning:
        for i from 1 to nparts
        collecting (nreverse (gethash i resultht)))))
 
+;; Collects all non-nil atoms inside a tree
+(defun tree-flatten (tree)
+  "Collects all non-nil atoms in a tree and returns the list of them
+as encountered during a depth-first search."
+  (cond
+    ((null tree)
+     nil)
+    ((atom tree)
+     (list tree))
+    (t
+     (append (tree-flatten (car tree))
+             (tree-flatten (cdr tree))))))
+
 ;;; Stuff (mostly) from Paul Graham's On Lisp, as well as some of my
 ;;; own improvements.
 
@@ -560,3 +573,4 @@ of the same name as the field symbol but in the current package."
        (do-plist (,fs ,fv ,lst)
          (set (intern (lispify ,fs)) ,fv))
        ,@body)))
+
