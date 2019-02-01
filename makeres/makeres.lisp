@@ -1597,8 +1597,7 @@ which should be shown."
                 (progn
                   (format t "Deleting ~a~%"
                           logged-id)
-                  (sb-ext:delete-directory logged-path
-                                           :recursive t))
+                  (uiop:delete-directory-tree logged-path))
                 (format t "~a not tracked~%"
                         logged-id))))))
 
@@ -1617,8 +1616,7 @@ logs."
            for id in null-stats
            do (progn
                 (format t "Deleting ~s~%" id)
-                (sb-ext:delete-directory (target-path id)
-                                         :recursive t)))
+                (uiop:delete-directory-tree (target-path id))))
         (loop
            for id in null-stats
            do (format t "~s~%" id)))))

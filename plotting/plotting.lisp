@@ -94,11 +94,8 @@ transfers and can lead to hard to diagnose bugs.")
                                         i)
                                 (make-pathname :directory
                                                (namestring plotdir)))))
-        #+sbcl
-        (sb-ext:delete-directory plotdir)
-        #+clisp
-        (ext:delete-dir (make-pathname :directory
-                                       (namestring plotdir)))))))
+	(uiop:delete-directory-tree plotdir)))))
+
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
   (when (not *plotting-exit-hook-p*)
@@ -106,6 +103,8 @@ transfers and can lead to hard to diagnose bugs.")
     (push #'plotting-exit-hook sb-ext:*exit-hooks*)
     #+clisp
     (push #'plotting-exit-hook custom:*fini-hooks*)
+    #+clozure
+    (push #'plotting-exit-hook ccl:*lisp-cleanup-functions*)
     (setf *plotting-exit-hook-p* t)))
 (ensure-exit-hook)
 
@@ -120,6 +119,8 @@ transfers and can lead to hard to diagnose bugs.")
   (sb-posix:getpid)
   #+clisp
   (system::process-id)
+  #+clozure
+  (ccl::getpid)
   ;; Can't seem to find information on how to do this for other
   ;; implementations
   )
@@ -149,8 +150,7 @@ transfers and can lead to hard to diagnose bugs.")
               (when (probe-file pn)
                 (delete-file pn))))
       (when (probe-file dir)
-        #+sbcl
-        (sb-ext:delete-directory dir))
+	(uiop:delete-directory-tree dir))
       (setf *gnuplot-file-io-index* 0))))
 
 (defun next-data-path ()

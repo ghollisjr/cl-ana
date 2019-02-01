@@ -165,9 +165,7 @@
           do
           ;; delete save-path recursively
             (when (probe-file (target-path id))
-              #+sbcl
-              (sb-ext:delete-directory (target-path id)
-                                       :recursive t))
+              (uiop:delete-directory-tree (target-path id)))
             (ensure-directories-exist (target-path id))
             (let ((destruct-on-save?
                    (destruct-on-save?
@@ -206,9 +204,7 @@
           finally (return t))
        ;; delete save-path recursively
        (when (probe-file (target-path id))
-         #+sbcl
-         (sb-ext:delete-directory (target-path id)
-                                  :recursive t))
+         (uiop:delete-directory-tree (target-path id)))
        (ensure-directories-exist (target-path id))
        (let ((destruct-on-save?
               (destruct-on-save?
@@ -696,8 +692,7 @@ to this project."
           (:supersede
            ;; delete save-path recursively
            #+sbcl
-           (sb-ext:delete-directory save-path
-                                    :recursive t))))
+           (uiop:delete-directory-tree save-path))))
       ;; need save-path to exist before writing:
       (ensure-directories-exist save-path)
       ;; allocate indices when necessary:
@@ -791,7 +786,7 @@ to this project."
             (work-from-path (merge-pathnames "work/"
                                              project-path)))
         (when (probe-file work-to-path)
-          #+sbcl (sb-ext:delete-directory work-to-path :recursive t))
+          (uiop:delete-directory-tree work-to-path))
         (format t "Saving work/ files~%")
         (run-prog "/usr/bin/cp"
                   (list "-r"
@@ -994,7 +989,7 @@ will be returned."
     (when (probe-file destpath)
       (format t "Overwriting old snapshot at ~a~%"
               destpath)
-      (sb-ext:delete-directory destpath :recursive t))
+      (uiop:delete-directory-tree destpath))
     (format t "Copying ~a to ~a~%"
             (current-path) destpath)
     (run "cp" (list "-r"
@@ -1031,11 +1026,11 @@ does not backup if backup is NIL."
                                            :directory (list :relative backup))
                                           (project-path)))
         (when (probe-file backuppath)
-          (sb-ext:delete-directory backuppath :recursive t))
+          (uiop:delete-directory-tree backuppath))
         (run-prog "/usr/bin/cp" (list "-r"
                                       (current-path)
                                       backuppath))))
-    (sb-ext:delete-directory (current-path) :recursive t)
+    (uiop:delete-directory-tree (current-path))
     (run-prog "/usr/bin/cp" (list "-r"
                                   sourcepath
                                   (current-path)))
