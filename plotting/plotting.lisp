@@ -67,7 +67,7 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
-(defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
+(defvar *gnuplot-file-io* (list "tmp" "cl-ana.plotting")
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
 be used for data transfer, but this is potentially unsafe for large
@@ -126,11 +126,7 @@ transfers and can lead to hard to diagnose bugs.")
   )
 
 (defun plotdir ()
-  (mkdirpath (->absolute-pathname
-              (string-append
-               (namestring *gnuplot-file-io*)
-               "/"
-               (mkstr (getpid))))))
+  (make-pathname :directory `(:relative ,@*gnuplot-file-io* ,(mkstr (getpid)))))
 
 (defun reset-data-path ()
   (when *gnuplot-file-io*
