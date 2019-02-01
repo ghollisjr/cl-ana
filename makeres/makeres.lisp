@@ -1597,7 +1597,7 @@ which should be shown."
                 (progn
                   (format t "Deleting ~a~%"
                           logged-id)
-                  (uiop:delete-directory-tree logged-path))
+                  (uiop:delete-directory-tree logged-path :validate t))
                 (format t "~a not tracked~%"
                         logged-id))))))
 
@@ -1616,7 +1616,7 @@ logs."
            for id in null-stats
            do (progn
                 (format t "Deleting ~s~%" id)
-                (uiop:delete-directory-tree (target-path id))))
+                (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id))) :validate t)))
         (loop
            for id in null-stats
            do (format t "~s~%" id)))))

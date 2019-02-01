@@ -94,7 +94,7 @@ transfers and can lead to hard to diagnose bugs.")
                                         i)
                                 (make-pathname :directory
                                                (namestring plotdir)))))
-	(uiop:delete-directory-tree plotdir)))))
+	(uiop:delete-directory-tree plotdir :validate t)))))
 
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
@@ -150,7 +150,7 @@ transfers and can lead to hard to diagnose bugs.")
               (when (probe-file pn)
                 (delete-file pn))))
       (when (probe-file dir)
-	(uiop:delete-directory-tree dir))
+	(uiop:delete-directory-tree dir :validate t))
       (setf *gnuplot-file-io-index* 0))))
 
 (defun next-data-path ()

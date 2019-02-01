@@ -165,7 +165,7 @@
           do
           ;; delete save-path recursively
             (when (probe-file (target-path id))
-              (uiop:delete-directory-tree (target-path id)))
+              (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id)) :validate t)))
             (ensure-directories-exist (target-path id))
             (let ((destruct-on-save?
                    (destruct-on-save?
@@ -204,7 +204,7 @@
           finally (return t))
        ;; delete save-path recursively
        (when (probe-file (target-path id))
-         (uiop:delete-directory-tree (target-path id)))
+         (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id))) :validate t))
        (ensure-directories-exist (target-path id))
        (let ((destruct-on-save?
               (destruct-on-save?
@@ -691,8 +691,7 @@ to this project."
           (nil (return-from save-project nil))
           (:supersede
            ;; delete save-path recursively
-           #+sbcl
-           (uiop:delete-directory-tree save-path))))
+           (uiop:delete-directory-tree save-path :validate t))))
       ;; need save-path to exist before writing:
       (ensure-directories-exist save-path)
       ;; allocate indices when necessary:
@@ -786,7 +785,7 @@ to this project."
             (work-from-path (merge-pathnames "work/"
                                              project-path)))
         (when (probe-file work-to-path)
-          (uiop:delete-directory-tree work-to-path))
+          (uiop:delete-directory-tree work-to-path :validate t))
         (format t "Saving work/ files~%")
         (run-prog "/usr/bin/cp"
                   (list "-r"
@@ -989,7 +988,7 @@ will be returned."
     (when (probe-file destpath)
       (format t "Overwriting old snapshot at ~a~%"
               destpath)
-      (uiop:delete-directory-tree destpath))
+      (uiop:delete-directory-tree destpath :validate t))
     (format t "Copying ~a to ~a~%"
             (current-path) destpath)
     (run "cp" (list "-r"
@@ -1026,11 +1025,11 @@ does not backup if backup is NIL."
                                            :directory (list :relative backup))
                                           (project-path)))
         (when (probe-file backuppath)
-          (uiop:delete-directory-tree backuppath))
+          (uiop:delete-directory-tree backuppath :validate t))
         (run-prog "/usr/bin/cp" (list "-r"
                                       (current-path)
                                       backuppath))))
-    (uiop:delete-directory-tree (current-path))
+    (uiop:delete-directory-tree (current-path) :validate t)
     (run-prog "/usr/bin/cp" (list "-r"
                                   sourcepath
                                   (current-path)))
