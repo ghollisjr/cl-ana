@@ -46,9 +46,11 @@
 
 (defun linear-coefs (xname yname)
   "line-name is a keywordified symbol"
-  (gethash (cons (keywordify xname)
-                 (keywordify yname))
-           *linear-fn-coefs*))
+  (if (eq xname yname)
+      (list 0d0 1d0)
+      (gethash (cons (keywordify xname)
+                     (keywordify yname))
+               *linear-fn-coefs*)))
 
 (defun linear-composition-chain (&rest var-chain)
   "Takes a chain of variables and returns the linear function as a
