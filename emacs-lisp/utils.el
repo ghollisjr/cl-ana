@@ -22,5 +22,5 @@
     (walk-windows (lambda (w)
                     (when (equal w win)
                       (setf result count))
-                    (incf count)))
+                    (setf count (+ 1 count))))
     result))

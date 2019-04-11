@@ -2,7 +2,7 @@
   "Executes (require 'system) (in-package system)"
   (interactive "sLoad system: ")
   (let ((system
-         (first args)))
+         (car args)))
     (slime-command (format "(require '%s) (in-package :%s)"
                            system system))))
 

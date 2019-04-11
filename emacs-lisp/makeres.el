@@ -30,7 +30,7 @@ current slime buffer."
 
 (defun save-snapshot (&rest args)
   (interactive "sSave snapshot as (no quotes): ")
-  (let ((path (first args)))
+  (let ((path (car args)))
     (slime-command (format "(save-snapshot %S)" path))))
 
 (add-hook 'lisp-mode-hook
