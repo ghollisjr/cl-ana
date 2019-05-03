@@ -165,7 +165,7 @@
           do
           ;; delete save-path recursively
             (when (probe-file (target-path id))
-              (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id)) :validate t)))
+              (uiop:delete-directory-tree (make-pathname :directory `(:absolute ,(target-path id))) :validate t))
             (ensure-directories-exist (target-path id))
             (let ((destruct-on-save?
                    (destruct-on-save?
@@ -204,7 +204,7 @@
           finally (return t))
        ;; delete save-path recursively
        (when (probe-file (target-path id))
-         (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id))) :validate t))
+         (uiop:delete-directory-tree (make-pathname :directory `(:absolute ,(target-path id))) :validate t))
        (ensure-directories-exist (target-path id))
        (let ((destruct-on-save?
               (destruct-on-save?
@@ -757,8 +757,7 @@ to this project."
                    (path (merge-pathnames (mkstr lid)
                                           save-path)))
               (format t "Saving ~a~%" id)
-              (save-object lid
-                           (resfn id)
+              (save-object (resfn id)
                            path)))
       ;; and for parameters
       ;;
@@ -773,8 +772,7 @@ to this project."
                                                     *proj->par->lid*)
          do (let ((pval (parfn pid)))
               (format t "Saving parameter ~a~%" pid)
-              (save-object plid
-                           pval
+              (save-object pval
                            (merge-pathnames (mkstr plid)
                                             save-path))))
 

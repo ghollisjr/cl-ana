@@ -918,6 +918,8 @@ result graph is what will be checked, not the original target table."
   "Defines a makeres project.  id is unevaluated whereas all other
 arguments are evaluated.
 
+path should be an absolute path.
+
 warnings-p controls whether warnings are printed during compilation.
 
 ignore-functions-p should be set to T unless you find a way to log
@@ -1616,7 +1618,10 @@ logs."
            for id in null-stats
            do (progn
                 (format t "Deleting ~s~%" id)
-                (uiop:delete-directory-tree (make-pathname :directory `(:relative ,(target-path id))) :validate t)))
+                (uiop:delete-directory-tree
+                 (make-pathname :directory
+                                `(:absolute ,(target-path id)))
+                 :validate t)))
         (loop
            for id in null-stats
            do (format t "~s~%" id)))))
