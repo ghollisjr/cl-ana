@@ -80,12 +80,14 @@
 ;;; Reading methods:
 
 (defun smart-read-from-string (s)
-  (multiple-value-bind (read-value read-index)
-      (read-from-string s)
-    (if (equal (length s)
-               read-index)
-        read-value
-        s)))
+  (handler-case
+      (multiple-value-bind (read-value read-index)
+          (read-from-string s)
+        (if (equal (length s)
+                   read-index)
+            read-value
+            s))
+    (error nil nil)))
 
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)

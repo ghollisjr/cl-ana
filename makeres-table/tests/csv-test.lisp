@@ -28,7 +28,7 @@
 (defun csv-test ()
   (let* ((opener
           (csv-opener "/home/ghollisjr/test.csv"
-                      (list "a")
+                      :field-names (list "a")
                       :read-from-string t))
          tab)
     (setf tab
@@ -66,14 +66,14 @@
 
 (defres src
   (srctab (csv-opener (work-path "src.csv")
-                      (list "X" "Y" "Z")
+                      :field-names (list "X" "Y" "Z")
                       :read-from-string t)
           (res bootstrap)))
 
 (defres proc
   (tab (res src) ()
       (csv-opener (work-path "proc.csv")
-                  (list "X" "Y" "Z" "W" "Q")
+                  :field-names (list "X" "Y" "Z" "W" "Q")
                   :read-from-string t)
     (when (< (field x) 50)
       (push-fields
@@ -90,7 +90,7 @@
 (defres subset
   (tab (res proc) ()
       (csv-opener (work-path "subset.csv")
-                  (list "X" "Y")
+                  :field-names (list "X" "Y")
                   :read-from-string t)
     (when (< (field x) 4)
       (push-fields
