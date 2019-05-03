@@ -67,7 +67,7 @@
 ;;;; but a suggestion to a similar concern was to use multiple
 ;;;; sessions so I'll see what happens.
 
-(defvar *gnuplot-file-io* "/tmp/cl-ana.plotting/"
+(defvar *gnuplot-file-io* (list "tmp" "cl-ana.plotting")
   "Set to a directory path to use files for data to be transferred to
 gnuplot via files instead of pipes.  Value of NIL indicates pipe IO to
 be used for data transfer, but this is potentially unsafe for large
@@ -94,11 +94,8 @@ transfers and can lead to hard to diagnose bugs.")
                                         i)
                                 (make-pathname :directory
                                                (namestring plotdir)))))
-        #+sbcl
-        (sb-ext:delete-directory plotdir)
-        #+clisp
-        (ext:delete-dir (make-pathname :directory
-                                       (namestring plotdir)))))))
+	(uiop:delete-directory-tree plotdir :validate t)))))
+
 (defparameter *plotting-exit-hook-p* nil)
 (defun ensure-exit-hook ()
   (when (not *plotting-exit-hook-p*)
@@ -106,6 +103,8 @@ transfers and can lead to hard to diagnose bugs.")
     (push #'plotting-exit-hook sb-ext:*exit-hooks*)
     #+clisp
     (push #'plotting-exit-hook custom:*fini-hooks*)
+    #+clozure
+    (push #'plotting-exit-hook ccl:*lisp-cleanup-functions*)
     (setf *plotting-exit-hook-p* t)))
 (ensure-exit-hook)
 
@@ -120,16 +119,14 @@ transfers and can lead to hard to diagnose bugs.")
   (sb-posix:getpid)
   #+clisp
   (system::process-id)
+  #+clozure
+  (ccl::getpid)
   ;; Can't seem to find information on how to do this for other
   ;; implementations
   )
 
 (defun plotdir ()
-  (mkdirpath (->absolute-pathname
-              (string-append
-               (namestring *gnuplot-file-io*)
-               "/"
-               (mkstr (getpid))))))
+  (make-pathname :directory `(:relative ,@*gnuplot-file-io* ,(mkstr (getpid)))))
 
 (defun reset-data-path ()
   (when *gnuplot-file-io*
@@ -149,8 +146,7 @@ transfers and can lead to hard to diagnose bugs.")
               (when (probe-file pn)
                 (delete-file pn))))
       (when (probe-file dir)
-        #+sbcl
-        (sb-ext:delete-directory dir))
+	(uiop:delete-directory-tree dir :validate t))
       (setf *gnuplot-file-io-index* 0))))
 
 (defun next-data-path ()
