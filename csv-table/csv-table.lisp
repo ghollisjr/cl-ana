@@ -1,5 +1,6 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2019 Katherine Cox-Buday
 ;;;;
 ;;;; This file is part of cl-ana.
 ;;;;
@@ -80,14 +81,14 @@
 ;;; Reading methods:
 
 (defun smart-read-from-string (s)
-  (handler-case
-      (multiple-value-bind (read-value read-index)
-          (read-from-string s)
-        (if (equal (length s)
-                   read-index)
-            read-value
-            s))
-    (error nil nil)))
+  (multiple-value-bind (read-value read-index)
+      (read-from-string s nil nil)
+    ;; If we don't read the entire string like we expect to, assume
+    ;; the field is a string and return the entire thing.
+    (if (equal (length s)
+               read-index)
+        read-value
+        s)))
 
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)
