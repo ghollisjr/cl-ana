@@ -1,5 +1,5 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
-;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2019 Gary Hollis
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -18,20 +18,19 @@
 ;;;;
 ;;;; You may contact Gary Hollis (me!) via email at
 ;;;; ghollisjr@gmail.com
-;;;; statistics.asd
 
-(asdf:defsystem #:cl-ana.statistics
-  :serial t
-  :description "Various statistical functions integrated into the
-  generic-math framework."
-  :author "Gary Hollis"
-  :license "GPLv3"
-  :depends-on (#:cl-ana.generic-math
-               #:cl-ana.macro-utils
-               #:cl-ana.map
-               #:cl-ana.list-utils
-               #:cl-ana.histogram
-               #:cl-ana.math-functions
-               #:cl-ana.math-functions)
-  :components ((:file "package")
-	       (:file "statistics")))
+(defpackage #:cl-ana.statistical-learning
+  (:use :cl
+        :cl-ana.macro-utils
+        :cl-ana.map
+        :cl-ana.list-utils
+        :cl-ana.functional-utils
+        :cl-ana.histogram
+        :cl-ana.math-functions
+        :cl-ana.statistics
+        :cl-ana.linear-algebra)
+  (:export :k-means-cluster
+           :anderson-darling-normality-test
+           :g-means-cluster))
+
+(cl-ana.gmath:use-gmath :cl-ana.statistical-learning)

@@ -233,3 +233,39 @@ defined."
                                  (- x mean))
                                ys)
                        2)))))))
+
+;; Anderson-Darling normality test
+(defun anderson-darling-normality-test (data
+                                        &key (critical 2.492))
+  "Applies Anderson-Darling test for normality.  Returns true if
+normal, or NIL if not.
+
+Critical selects the critical value.  Common values are:
+
+1.621 for 15%
+1.933 for 10%
+2.492 for 5%
+3.070 for 2.5%
+3.878 for 1%"
+  (let* ((cv critical)
+         (z-scores (sort (standard-scores data)
+                         #'<))
+         (n (length data))
+         (sum (loop
+                 for i from 1
+                 for z in z-scores
+                 summing (+ (* (- (* 2 i)
+                                  1)
+                               (log (normal-cdf z)))
+                            (* (+ (* 2 (- n i)) 1)
+                               (log (- 1
+                                       (normal-cdf z)))))))
+         (test
+          (+ (- n)
+             (- (/ sum
+                   (->double-float n))))))
+    ;; debug
+    ;; (print test)
+    ;; end debug
+    (values (<= test cv)
+            test)))

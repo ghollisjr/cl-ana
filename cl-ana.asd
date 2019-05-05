@@ -48,6 +48,7 @@
                #:cl-ana.fitting
                #:cl-ana.file-utils
                #:cl-ana.statistics
+               #:cl-ana.statistical-learning
                #:cl-ana.plotting
                #:cl-ana.table-viewing
                #:cl-ana.int-char

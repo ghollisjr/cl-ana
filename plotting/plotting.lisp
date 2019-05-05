@@ -126,7 +126,7 @@ transfers and can lead to hard to diagnose bugs.")
   )
 
 (defun plotdir ()
-  (make-pathname :directory `(:relative ,@*gnuplot-file-io* ,(mkstr (getpid)))))
+  (make-pathname :directory `(:absolute ,@*gnuplot-file-io* ,(mkstr (getpid)))))
 
 (defun reset-data-path ()
   (when *gnuplot-file-io*

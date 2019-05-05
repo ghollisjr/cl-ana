@@ -24,7 +24,8 @@
         :cl-ana.macro-utils
         :cl-ana.map
         :cl-ana.list-utils
-        :cl-ana.histogram)
+        :cl-ana.histogram
+        :cl-ana.math-functions)
   (:shadow :mean
            :standard-deviation)
   (:export :mean
@@ -41,6 +42,7 @@
            :quantiles
            :percentiles
            :qq-plot
-           :determination-coefficient))
+           :determination-coefficient
+           :anderson-darling-normality-test))
 
 (cl-ana.gmath:use-gmath :cl-ana.statistics)

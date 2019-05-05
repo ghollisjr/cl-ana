@@ -56,6 +56,7 @@
         :cl-ana.plotting
         :cl-ana.reusable-table
         :cl-ana.statistics
+        :cl-ana.statistical-learning
         :cl-ana.string-utils
         :cl-ana.symbol-utils
         :cl-ana.symbol-utils
