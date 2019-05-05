@@ -30,6 +30,8 @@
    :normal-pdf
    :normal-cdf
    :normal-cdf-inv
+   :uniform-cdf
+   :uniform-cdf-inv
    ;; combinatorics:
    :factorial
    :npermutations

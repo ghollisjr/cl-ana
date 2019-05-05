@@ -269,3 +269,8 @@ Critical selects the critical value.  Common values are:
     ;; end debug
     (values (<= test cv)
             test)))
+
+;;;; Generating random data:
+(defun shaped-random (inverse-cdf)
+  "Generates 1-D random data using the inverse-cdf to provide the shape."
+  (funcall inverse-cdf (random 1d0)))

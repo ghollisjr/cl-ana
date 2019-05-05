@@ -29,7 +29,19 @@
         :cl-ana.math-functions
         :cl-ana.statistics
         :cl-ana.linear-algebra)
-  (:export :k-means-cluster
-           :g-means-cluster))
+  (:export
+   ;; Clustering
+   :k-means-cluster
+   :g-means-cluster
+   ;; Least squares
+   :linear-least-squares
+   :ridge-regression
+   :data->polynomial-x
+   :fit-polynomial-least-squares
+   ;; Kernel methods
+   :gaussian-kernel
+   :make-gaussian-kernel
+   :kernel-method
+   :kernel-polynomial-method))
 
 (cl-ana.gmath:use-gmath :cl-ana.statistical-learning)

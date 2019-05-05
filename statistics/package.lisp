@@ -43,6 +43,7 @@
            :percentiles
            :qq-plot
            :determination-coefficient
-           :anderson-darling-normality-test))
+           :anderson-darling-normality-test
+           :shaped-random))
 
 (cl-ana.gmath:use-gmath :cl-ana.statistics)

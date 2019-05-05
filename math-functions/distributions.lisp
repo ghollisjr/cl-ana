@@ -43,3 +43,21 @@
   (:documentation "Inverse of normal CDF")
   (:method ((x number))
     (gsll:gaussian-pinv (->double-float x) 1d0)))
+
+(defmath uniform-cdf (x lo hi)
+  (:documentation "CDF of uniform distribution between lo and hi.")
+  (:method ((x number) (lo number) (hi number))
+    (cond
+      ((< x lo)
+       0)
+      ((> x hi)
+       1)
+      (t
+       (/ (- x lo)
+          (- hi lo))))))
+(defmath uniform-cdf-inv (x lo hi)
+  (:documentation "Inverse CDF of uniform distribution between lo and hi.  Assumes x
+is between 0 and 1.")
+  (:method ((x number) (lo number) (hi number))
+    (+ lo
+       (* x (- hi lo)))))
