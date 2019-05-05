@@ -30,7 +30,6 @@
         :cl-ana.statistics
         :cl-ana.linear-algebra)
   (:export :k-means-cluster
-           :anderson-darling-normality-test
            :g-means-cluster))
 
 (cl-ana.gmath:use-gmath :cl-ana.statistical-learning)
