@@ -40,6 +40,7 @@
                #:cl-ana.tensor
                #:external-program
                #:split-sequence
+               #:uiop
                #:alexandria
                #+sbcl
                #:sb-posix)
