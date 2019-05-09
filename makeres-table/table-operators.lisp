@@ -226,3 +226,38 @@ the histogram."
                        for f in source-lfields
                        when (member (car f) lfields :test #'eq)
                        collect f))))))
+
+;;;; Res-macros:
+(define-res-macro dotab-nrows (src)
+  "Counts the number of rows in table."
+  `(dotab ,src
+       ((count 0))
+       count
+     (incf count)))
+
+(define-res-macro dotab-mean (src expr)
+  "Computes mean for some expression in the table.  Set protected to
+some numerical value to use protected-div with that value."
+  `(dotab ,src
+       ((count 0)
+        (sum 0))
+       (handler-case (/ sum count)
+         (error nil nil))
+     (incf count)
+     (incf sum ,expr)))
+
+(define-res-macro dotab-standard-deviation (src expr)
+  "Computes single pass standard deviation for some expression in the
+table.  Set protected to some numerical value to use protected-div
+with that value."
+  `(dotab ,src
+       ((count 0)
+        (sum 0)
+        (ssum 0))
+       (handler-case
+           (sqrt (/ (- ssum (/ (expt sum 2) count))
+                    (1- count))))
+     (let ((expr ,expr))
+       (incf count)
+       (incf sum expr)
+       (incf ssum (expt expr 2)))))

@@ -78,4 +78,8 @@
    :removed-source-dep<
    :removed-ltab-source-depmap
    :removed-ltab-source-dep<
+   ;; res-macros that are commonly useful
+   :dotab-nrows
+   :dotab-mean
+   :dotab-standard-deviation
    ))

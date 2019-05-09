@@ -165,7 +165,7 @@
           do
           ;; delete save-path recursively
             (when (probe-file (target-path id))
-              (uiop:delete-directory-tree (make-pathname :directory `(:absolute ,(target-path id))) :validate t))
+              (uiop:delete-directory-tree (pathname (target-path id)) :validate t))
             (ensure-directories-exist (target-path id))
             (let ((destruct-on-save?
                    (destruct-on-save?
@@ -204,7 +204,7 @@
           finally (return t))
        ;; delete save-path recursively
        (when (probe-file (target-path id))
-         (uiop:delete-directory-tree (make-pathname :directory `(:absolute ,(target-path id))) :validate t))
+         (uiop:delete-directory-tree (pathname (target-path id)) :validate t))
        (ensure-directories-exist (target-path id))
        (let ((destruct-on-save?
               (destruct-on-save?
