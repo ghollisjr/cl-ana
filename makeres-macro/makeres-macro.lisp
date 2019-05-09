@@ -39,6 +39,18 @@
      (defmacro ,name ,lambda-list
        ,@body)))
 
+(defun ensure-default-macros ()
+  "All default res-macros will be defined by cl-ana with project ID of
+NIL, so these are copied to the current project by this function."
+  (let* ((defaults (gethash nil *proj->res-macros*)))
+    (symbol-macrolet ((macros (gethash (project) *proj->res-macros*)))
+      (loop
+         for name in defaults
+         do 
+           (setf macros
+                 (adjoin name macros
+                         :test #'eq))))))
+
 (defparameter *cl-let-ops*
   (list 'let
         'let*
@@ -249,6 +261,7 @@ in a lambda form when e.g. mapping."
 (defun macrotrans (target-table)
   "Implements macro expansion transformation"
   ;; initialize *proj->binding-ops* for project if necessary:
+  (ensure-default-macros)
   (ensure-binding-ops)
   (ensure-op-expanders)
   (let ((result

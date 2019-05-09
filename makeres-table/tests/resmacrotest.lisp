@@ -7,6 +7,8 @@
   (list #'macrotrans #'tabletrans #'progresstrans)
   (fixed-cache 5))
 
+(setf *print-progress* 100)
+
 ;; Source data
 (defres npoints
   1000)
