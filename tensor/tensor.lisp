@@ -120,6 +120,27 @@
 (defun sequencep (x)
   (typep x 'sequence))
 
+(defun tensor-simple-type (type)
+  (if (atom type)
+      type
+      (first type)))
+
+;; This version does not handle type constraints on arrays, but I'm
+;; keeping it here until testing is complete
+;;
+;; (defun make-tensor (dimension-list &key
+;;                                      (type 'vector)
+;;                                      (initial-element 0d0))
+;;   "Creates a tensor with each dimension in dimension-list denoting the
+;; length of the sequence at that dimension with the type of the
+;; sequences given by the optional type argument."
+;;   (if (single dimension-list)
+;;       (make-sequence type (first dimension-list) :initial-element initial-element)
+;;       (map type
+;; 	   (lambda (&rest xs)
+;;              (make-tensor (rest dimension-list) :type type :initial-element initial-element))
+;; 	   (make-sequence type (first dimension-list)))))
+
 (defun make-tensor (dimension-list &key
                                      (type 'vector)
                                      (initial-element 0d0))
@@ -127,11 +148,11 @@
 length of the sequence at that dimension with the type of the
 sequences given by the optional type argument."
   (if (single dimension-list)
-      (make-sequence type (first dimension-list) :initial-element initial-element)
+      (make-sequence (tensor-simple-type type) (first dimension-list) :initial-element initial-element)
       (map type
 	   (lambda (&rest xs)
              (make-tensor (rest dimension-list) :type type :initial-element initial-element))
-	   (make-sequence type (first dimension-list)))))
+	   (make-sequence (tensor-simple-type type) (first dimension-list)))))
 
 (defun function->tensor (dimension-list fn &key
                                              (type 'vector))
