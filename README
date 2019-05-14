@@ -12,7 +12,7 @@ Example code for using some of the functionality is contained in
 various test.lisp files throughout the project; the full documentation
 is located on the wiki page: http://github.com/ghollisjr/cl-ana/wiki
 
-There is a Matrix.org live chat for cl-ana located here:
+There is a Matrix live chat for cl-ana located here:
 https://matrix.to/#/!LmTgHWPBTpFUmYybOs:matrix.org?via=matrix.org
 
 Whenever possible, features are implemented via generic functions so
