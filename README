@@ -14,6 +14,7 @@ is located on the wiki page: http://github.com/ghollisjr/cl-ana/wiki
 
 There is a Matrix live chat for cl-ana located here:
 https://matrix.to/#/!LmTgHWPBTpFUmYybOs:matrix.org?via=matrix.org
+Public address: #cl-ana:matrix.org
 
 Whenever possible, features are implemented via generic functions so
 that users can extend cl-ana to whatever they want to do.
