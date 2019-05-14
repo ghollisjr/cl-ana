@@ -83,13 +83,24 @@
             (mapcar (lambda (x)
                       `(,x sequence))
                     tensor-args))
+           (nil-specialized-args
+            (mapcar (lambda (x)
+                      `(,x (eql NIL)))
+                    tensor-args))
            (arg-specs
             (remove-if-not
              (lambda (x) (some #'listp x))
              (apply #'cartesian-product
                     (mapcar #'list
                             tensor-args
-                            tensor-specialized-args)))))
+                            tensor-specialized-args))))
+           (nil-arg-specs
+            (remove-if-not
+             (lambda (x) (some #'listp x))
+             (apply #'cartesian-product
+                    (mapcar #'list
+                            tensor-args
+                            nil-specialized-args)))))
       (loop
          for a in arg-specs
          do
@@ -110,7 +121,26 @@
                   (lambda (,@specialized)
                     (apply (function ,fname) ,@tensor-args
                            (list ,@key-applied-args)))
-                  ,@specialized))))))))
+                  ,@specialized)))))
+      ;; NIL methods:
+      (loop
+         for n in nil-arg-specs
+         do
+           (multiple-value-bind (unspecialized specialized)
+               (loop for i in n
+                  if (symbolp i)
+                  collect i into unspecialized
+                  else collect (first i) into specialized
+                  finally (return (values unspecialized
+                                          specialized)))
+             ;; this seems to be a necessary use of eval
+             (eval
+              `(defmethod ,fname
+                   (,@n
+                    ,@(when key-args
+                        (cons '&key key-args)))
+                 nil))))
+      )))
 
 ;; Define tensor methods; note that this should be done after all
 ;; generic math functions have been defined with defmath.
