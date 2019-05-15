@@ -30,7 +30,8 @@ field-names are specified, then all fields will be present in the
 result.
 
 Note that the resulting plists will occur in the reverse order as they
-occur in the table for efficiency."
+occur in the table if reverse-p is NIL; this is not the default option
+but is more efficient."
   (when (not field-names)
     (setf field-names
           (table-field-names table)))
