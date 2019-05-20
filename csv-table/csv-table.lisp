@@ -81,14 +81,16 @@
 ;;; Reading methods:
 
 (defun smart-read-from-string (s)
-  (multiple-value-bind (read-value read-index)
-      (read-from-string s nil nil)
-    ;; If we don't read the entire string like we expect to, assume
-    ;; the field is a string and return the entire thing.
-    (if (equal (length s)
-               read-index)
-        read-value
-        s)))
+  (handler-case
+      (multiple-value-bind (read-value read-index)
+          (read-from-string s nil nil)
+        ;; If we don't read the entire string like we expect to, assume
+        ;; the field is a string and return the entire thing.
+        (if (equal (length s)
+                   read-index)
+            read-value
+            s))
+    (error nil s)))
 
 (defmethod table-load-next-row ((table csv-table))
   (with-accessors ((file csv-table-file)
