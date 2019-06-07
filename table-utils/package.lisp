@@ -1,5 +1,6 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
+;;;; Copyright 2019 Katherine Cox-Buday
 ;;;; 
 ;;;; This file is part of cl-ana.
 ;;;; 
@@ -23,7 +24,17 @@
   (:use :cl
         :cl-ana.symbol-utils
         :cl-ana.string-utils
-        :cl-ana.table)
+        :cl-ana.table
+        :cl-ana.statistics
+        :cl-ana.generic-math
+        :cl-ana.symbol-utils
+        :cl-ana.string-utils
+        :cl-ana.hash-table-utils)
   (:export :table->plists
            :table-row->plist
-           :table-copy))
+           :table-copy
+           :table-field-values
+           :table-summarize
+           :table-value-counts
+           :table-correlation-matrix
+           :table-subset))
