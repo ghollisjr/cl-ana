@@ -26,6 +26,11 @@
   :description "Utilities for working with tables"
   :depends-on (#:cl-ana.string-utils
                #:cl-ana.symbol-utils
-               #:cl-ana.table)
+               #:cl-ana.table
+               #:cl-ana.statistics
+               #:cl-ana.generic-math
+               #:cl-ana.symbol-utils
+               #:cl-ana.string-utils
+               #:cl-ana.hash-table-utils)
   :components ((:file "package")
                (:file "table-utils")))
