@@ -64,5 +64,6 @@
                #:cl-ana.makeres-table
                #:cl-ana.makeres-graphviz
                #:cl-ana.makeres-branch
-               #:cl-ana.makeres-utils)
+               #:cl-ana.makeres-utils
+               #:cl-ana.columnar-table)
   :components ((:file "package")))
