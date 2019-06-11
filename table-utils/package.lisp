@@ -26,7 +26,7 @@
         :cl-ana.string-utils
         :cl-ana.table
         :cl-ana.statistics
-        :cl-ana.generic-math
+        ;; :cl-ana.generic-math
         :cl-ana.symbol-utils
         :cl-ana.string-utils
         :cl-ana.hash-table-utils)
@@ -38,3 +38,5 @@
            :table-value-counts
            :table-correlation-matrix
            :table-subset))
+
+(cl-ana.gmath:use-gmath :cl-ana.table-utils)
