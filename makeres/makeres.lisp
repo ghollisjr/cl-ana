@@ -325,7 +325,7 @@ target-table."
                              :initial-value deps)))))))
     (rec id)))
 
-(defun depmap-old (target-table)
+(defun depmap-old-old (target-table)
   "Returns the dependency map for a target-table.  Used by dep< and
 can be useful for generating the explicit dependency graph for a
 target table."
@@ -429,12 +429,13 @@ target table."
                    ;; returns full set of dependencies for id
                    (let ((tar (gethash id target-table)))
                      (if tar
-                         (let ((deps (copy-list (target-deps tar))))
+                         (let ((deps (target-deps tar)))
                            (if deps
                                (reduce #'set+
                                        (mapcar #'rec
                                                deps)
                                        :initial-value (mkset deps))
+
                                (mkset nil)))
                          (mkset nil)))))
       (loop
@@ -442,6 +443,78 @@ target table."
          do (setf (gethash id depmap)
                   (set->list (rec id))))
       depmap)))
+
+(defun compressed-table (target-table)
+  (let* ((maxid 0)
+         (idmap (make-hash-table :test 'equal))
+         (result (make-hash-table)))
+    (declare (integer maxid))
+    (memolet ((id (x)
+                  (setf (gethash x idmap) maxid)
+                  (incf maxid)
+                  ;; (1- maxid)
+                  ;; (mkstr x)
+                  (intern (mkstr x) :keyword)
+                  ;; x
+                  ))
+      (loop
+         for id being the hash-keys in target-table
+         do (setf (gethash (id id) result)
+                  (mapcar #'id (target-deps (gethash id target-table))))))
+    result))
+
+(defun keyword-compressed-table (target-table)
+  (let* ((reverse-map (make-hash-table))
+         (result (make-hash-table)))
+    (flet ((id (x)
+             (let ((sym (intern (mkstr x) :keyword)))
+               (setf (gethash sym reverse-map)
+                     x)
+               sym)
+             ;; x
+             ))
+      (loop
+         for id being the hash-keys in target-table
+         for tar being the hash-values in target-table
+         do (setf (gethash (id id) result)
+                  (mapcar #'id (target-deps tar)))))
+    (values result reverse-map)))
+
+(defun depmap-compressed (compressed)
+  "Returns the dependency map for a target-table.  Used by dep< and
+can be useful for generating the explicit dependency graph for a
+target table."
+  (let ((depmap (make-hash-table)))
+    (memolet ((rec (id)
+                   ;; returns full set of dependencies for id
+                   (let ((deps (gethash id compressed)))
+                     (if deps
+                         (reduce #'set+
+                                 (mapcar #'rec
+                                         deps)
+                                 :initial-value (mkset deps))
+
+                         (mkset nil)))))
+      (loop
+         for id being the hash-keys in compressed
+         do (setf (gethash id depmap)
+                  (set->list (rec id))))
+      depmap)))
+
+(defun depmap-new (target-table)
+  (multiple-value-bind (compressed reverse-map)
+      (keyword-compressed-table target-table)
+    (let* ((compressed-result (depmap-compressed compressed))
+           (result (make-hash-table :test 'equal)))
+      (loop
+         for k being the hash-keys in compressed-result
+         for v being the hash-values in compressed-result
+         do (setf (gethash (gethash k reverse-map)
+                           result)
+                  (mapcar (lambda (x)
+                            (gethash x reverse-map))
+                          v)))
+      result)))
 
 (defun testdepmap (x y)
   "Should return true if two depmaps contain identical information.

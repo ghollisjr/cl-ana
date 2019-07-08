@@ -15,6 +15,33 @@
   sophisticated algorithm overall if I am to avoid the 4 second or so
   calculation time that it currently takes.
 
+  UPDATE: Compressing the target-table such that all ids are integers
+  results in an order of magnitude better performance, as demonstrated
+  by #'depmap-compressed in cl-ana.makeres when compared to raw depmap
+  (given a table compressed with #'compressed-table).  This suggests
+  that it would be far better to create and maintain multiple tables,
+  one using integers for dependency and topological operations, and
+  others connecting those integers to the IDs, target expressions,
+  etc.
+
+  UPDATE: Even more interestingly, replacing IDs with string encodings
+  of those IDs improves performance by roughly half an order of
+  magnitude (factor of 6 for ~30k targets with lists as names).  It
+  looks like lists as hash table keys are not as efficient as strings
+  even.
+
+  UPDATE: I might have found the best immediate performance
+  improvement: Producing a compressed table where IDs are replaced
+  with KEYWORD package symbol equivalents of their IDs leads to almost
+  the same performance as using integers.  This opens the possibility
+  of easily having a one-to-one map between compressed ID and raw ID
+  so that minimal modifications need to be done in order to enjoy
+  better performance.
+
+  UPDATE: Currently the combination of depmap-compressed and
+  keyword-compressed-table in cl-ana.makeres are yielding a combined
+  12x speed up over raw depmap.
+
 - Rename makeres-propogate! to makeres-propagate!, and fix Emacs
   scripts as well.  Helps to check spelling every now and then.
 
