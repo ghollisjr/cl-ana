@@ -21,6 +21,33 @@
 
 (in-package :cl-ana.hdf-typespec)
 
+;;; hdf-cffi interface utilities:
+
+(defparameter *hdf-cffi-type-map*
+  (list
+   (cons hdf5:+H5T-NATIVE-CHAR+ :char)
+   (cons hdf5:+H5T-NATIVE-UCHAR+ :uchar)
+   (cons hdf5:+H5T-NATIVE-SHORT+ :short)
+   (cons hdf5:+H5T-NATIVE-USHORT+ :ushort)
+   (cons hdf5:+H5T-NATIVE-INT+ :int)
+   (cons hdf5:+H5T-NATIVE-UINT+ :uint)
+   (cons hdf5:+H5T-NATIVE-LLONG+ :long-long)
+   (cons hdf5:+H5T-NATIVE-ULLONG+ :ullong)
+   (cons hdf5:+H5T-NATIVE-FLOAT+ :float)
+   (cons hdf5:+H5T-NATIVE-DOUBLE+ :double)))
+
+(defun cffi-native-type (hdf-native-type)
+  (cdr (find hdf-native-type *hdf-cffi-type-map*
+	     :key #'car
+	     :test (lambda (t1 t2)
+                     (let ((cmp (h5tequal t1 t2)))
+                       (if (zerop cmp)
+                           nil
+                           t))))))
+
+(defun hdf-native-type (cffi-native-type)
+  (car (rassoc cffi-native-type *hdf-cffi-type-map*)))
+
 ;; defines the structure as an hdf type if necessary from the typespec.
 
 (defun-memoized typespec->hdf-type (typespec)
@@ -50,7 +77,7 @@
 		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
-		(compound-tid (h5tcreate +H5T-COMPOUND+ (foreign-type-size cstruct))))
+		(compound-tid (h5tcreate :H5T-COMPOUND (foreign-type-size cstruct))))
 	   (loop
 	      for name in names
 	      for offset in offsets
@@ -61,6 +88,12 @@
       (hdf-native-type typespec)))
 
 ;; Construct typespec from hdf type:
+(defun h5tget-member-name-as-lisp-string (hdf-type i)
+  (let* ((name (h5tget-member-name hdf-type i))
+         (lisp-name (cffi:foreign-string-to-lisp name)))
+    (cffi:foreign-free name)
+    lisp-name))
+
 (defun-memoized hdf-type->typespec (hdf-type)
   ;; (defun hdf-type->typespec (hdf-type)
   ;; may need cleaning up
@@ -87,10 +120,12 @@
        (let* ((nmembers (h5tget-nmembers hdf-type))
 	      (names
 	       (loop for i from 0 to (1- nmembers)
-                  collecting (h5tget-member-name hdf-type i)))
+                  collecting (h5tget-member-name-as-lisp-string hdf-type i)))
 	      (member-typespecs
 	       (loop for i from 0 to (1- nmembers)
                   collecting (hdf-type->typespec
                               (h5tget-member-type hdf-type i))))
 	      (names-specs (zip names member-typespecs)))
 	 (cons :compound names-specs))))))
+
+

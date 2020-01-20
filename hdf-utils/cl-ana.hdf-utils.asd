@@ -27,12 +27,12 @@
   :license "GPLv3"
   :depends-on (#:cffi
                #:alexandria
+               #:hdf5-cffi
                #:cl-ana.pathname-utils
                #:cl-ana.memoization
                #:cl-ana.typespec
                #:cl-ana.hdf-typespec
                #:cl-ana.string-utils
-               #:cl-ana.macro-utils
-               #:cl-ana.hdf-cffi)
+               #:cl-ana.macro-utils)
   :components ((:file "package")
 	       (:file "hdf-utils")))

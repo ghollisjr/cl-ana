@@ -40,7 +40,6 @@
         :cl-ana.functional-utils
         :cl-ana.gnuplot-interface
         :cl-ana.gsl-cffi
-        :cl-ana.hdf-cffi
         :cl-ana.hdf-table
         :cl-ana.hdf-typespec
         :cl-ana.hdf-utils

@@ -23,9 +23,9 @@
   (:use #:cl
 	#:cffi
         #:alexandria
+        #:hdf5
         #:cl-ana.list-utils
 	#:cl-ana.hdf-utils
-	#:cl-ana.hdf-cffi
 	#:cl-ana.table
 	#:cl-ana.typed-table
 	#:cl-ana.typespec

@@ -23,11 +23,11 @@
 (defpackage #:cl-ana.hdf-typespec 
   (:use :cl
 	:cffi
+        :hdf5
 	:cl-ana.list-utils
 	:cl-ana.string-utils
         :cl-ana.symbol-utils
 	:cl-ana.memoization
-	:cl-ana.hdf-cffi
 	:cl-ana.typespec
 	:alexandria)
   (:export :typespec->hdf-type

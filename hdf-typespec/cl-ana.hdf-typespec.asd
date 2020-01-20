@@ -32,7 +32,6 @@
 	       #:cl-ana.string-utils
                #:cl-ana.symbol-utils
 	       #:cl-ana.memoization
-               #:cl-ana.hdf-cffi
 	       #:cl-ana.typespec)
   :components ((:file "package")
 	       (:file "hdf-typespec")))

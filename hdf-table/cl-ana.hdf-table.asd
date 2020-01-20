@@ -26,7 +26,6 @@
   :author "Gary Hollis"
   :license "GPLv3"
   :depends-on (#:cl-ana.list-utils
-	       #:cl-ana.hdf-cffi
 	       #:cl-ana.hdf-utils
 	       #:cl-ana.table
 	       #:cl-ana.typed-table
