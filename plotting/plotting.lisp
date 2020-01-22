@@ -2080,9 +2080,9 @@ of up to two double-float arguments."
   (with-output-to-string (s)
     (gnuplot-format s "wxt")
     (gnuplot-format s " ~a" window-number)
-    (gnuplot-format s " title '~a'" title)
+    (gnuplot-format s " title \"~a\"" title)
     (when size
-      (gnuplot-format s " size ~a,~a" (car size) (cdr size)))))
+      (gnuplot-format s " size ~a, ~a" (car size) (cdr size)))))
 
 ;; Function for generating the terminal type string of a page for
 ;; images in gnuplot
