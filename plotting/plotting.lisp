@@ -1485,6 +1485,11 @@ or :cb"
     :initarg :line-width
     :accessor line-line-width
     :documentation "Thickness of line when appropriate.")
+   (dash-type
+    :initform nil
+    :initarg :dash-type
+    :accessor line-dash-type
+    :documentation "dash type (from gnuplot 5.0 onwards)")
    (fill-style
     :initform nil
     :initarg :fill-style
@@ -1523,6 +1528,7 @@ or :cb"
                      (point-size line-point-size)
                      (line-type line-line-type)
                      (line-width line-line-width)
+                     (dash-type line-dash-type)
                      (fill-style line-fill-style)
                      (fill-density line-fill-density)
                      (plot-arg line-plot-arg)
@@ -1541,6 +1547,8 @@ or :cb"
         (gnuplot-format s "linetype ~a " line-type))
       (when line-width
         (gnuplot-format s "linewidth ~a " line-width))
+      (when dash-type
+        (gnuplot-format s "dashtype ~a " dash-type))
       (when fill-style
         (gnuplot-format s "fillstyle ~a " fill-style)
 	(when (and (equal fill-style "solid")
@@ -1815,6 +1823,7 @@ denoting the page initargs."
                    (style "lines")
                    line-type
                    line-width
+                   dash-type
                    color
                    &allow-other-keys)
   (apply #'make-instance 'analytic-line
@@ -1823,6 +1832,7 @@ denoting the page initargs."
          :color color
          :line-type line-type
          :line-width line-width
+         :dash-type dash-type
          :allow-other-keys t
          (append (if title-given-p
                      (list :title title)
@@ -1839,6 +1849,7 @@ denoting the page initargs."
                    point-size
                    line-type
                    line-width
+                   dash-type
                    color
                    &allow-other-keys)
   "Assumes"
@@ -1852,6 +1863,7 @@ denoting the page initargs."
            :point-size point-size
            :line-type line-type
            :line-width line-width
+           :dash-type dash-type
            :color color
            :allow-other-keys t
            other-keys)))
@@ -1903,6 +1915,7 @@ that point."
                    point-size
                    line-type
                    line-width
+                   dash-type
                    color
                    &allow-other-keys)
   "Samples your function based on the keyword arguments and creates a
@@ -1945,6 +1958,7 @@ of up to two double-float arguments."
            :point-size point-size
            :line-type line-type
            :line-width line-width
+           :dash-type dash-type
            :color color
            other-keys)))
 
