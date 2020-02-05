@@ -169,6 +169,8 @@
    :pruneres
    :purgeres
    :printres
-   :mvres))
+   :mvres
+   :evres
+   :evresfn))
 
 (cl-ana.gmath:use-gmath :cl-ana.makeres)

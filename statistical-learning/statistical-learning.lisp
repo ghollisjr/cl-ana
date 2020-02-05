@@ -139,7 +139,6 @@ Returns:
                       (loop
                          for cluster in clusters
                          collecting (g-test cluster))))
-                ;; (print k)
                 (when (every #'identity g-tests)
                   (return (values clusters centroid k)))))))))
 
@@ -266,8 +265,8 @@ basis."
                        (- (funcall fn params x) y)))))
            (fit-results
             (suppress-output
-             (multiple-value-list
-              (fit ndata nfn init-params))))
+              (multiple-value-list
+               (fit ndata nfn init-params))))
            (fit-params (second fit-results)))
       (funcall fn fit-params x))))
 

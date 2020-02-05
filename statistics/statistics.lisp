@@ -235,8 +235,10 @@ defined."
                        2)))))))
 
 ;; Anderson-Darling normality test
-(defun anderson-darling-normality-test (data
-                                        &key (critical 2.492))
+(defun anderson-darling-normality-test
+    (data
+     &key
+       (critical 2.492))
   "Applies Anderson-Darling test for normality.  Returns true if
 normal, or NIL if not.
 
@@ -264,9 +266,6 @@ Critical selects the critical value.  Common values are:
           (+ (- n)
              (- (/ sum
                    (->double-float n))))))
-    ;; debug
-    ;; (print test)
-    ;; end debug
     (values (<= test cv)
             test)))
 

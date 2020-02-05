@@ -882,6 +882,48 @@ targets to size."
                   (mod (+ i 1)
                        size))))))))
 
+(defun fixed-mem-cache (maxmem)
+  "Returns a caching function which limits the number of in-memory
+targets based on how much total memory is currently consumed by the
+Lisp image in bytes.  Uses size of log file as a heuristic for
+estimating the size needed in active memory, which isn't true for
+compressed storage, but alas."
+  (flet (;; current memory usage in bytes
+         (mem ()
+           #+sbcl
+           (sb-kernel:dynamic-usage))
+         (logged-size (id)
+           (handler-case
+               (with-open-file (f (target-path id "data")
+                                  :direction :input)
+                 ;; file-length returns KB
+                 (* 1000
+                    (file-length f)))
+             (error nil nil))))
+    (let ((cache nil))
+      (lambda (id)
+        (symbol-macrolet ((tar (gethash id (target-table)))
+                          (fintar (gethash id
+                                           (gethash *project-id*
+                                                    *fin-target-tables*))))
+          (let ((load-stat (target-load-stat
+                            (or tar
+                                fintar))))
+            ;; this technically excludes NIL from being a target id
+            (when (not load-stat)
+              ;; Clear as much memory as needed, but always try to
+              ;; load.
+              (let* ((size (logged-size id)))
+                (loop
+                   for mem = (mem)
+                   for total = (+ size mem)
+                   while (and cache
+                              (> total maxmem))
+                   do (unload-target (pop cache))))
+              (load-target id)
+              (setf (cdr (last cache))
+                    (list id)))))))))
+
 ;; Caching utility functions:
 
 (defun unload-target (id)
@@ -1832,3 +1874,12 @@ non-NIL to disable progress messages."
 (defmacro unsetdeps (id &key quiet-p)
   "Macro version of unsetresfn.  id is unevaluated, quiet-p is."
   `(unsetdepsfn ',id :quiet-p ,quiet-p))
+
+;; Utility macro which evaluates the expression for a given target:
+(defmacro evres (id)
+  (target-expr
+   (gethash id (target-table))))
+
+;; and the function
+(defun evresfn (id)
+  (eval `(evres ,id)))
