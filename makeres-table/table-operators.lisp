@@ -198,11 +198,14 @@ targets manually (usually more conceptually clear incidentally)."
 ;;;; Special operators
 
 (defmacro defhist (id src expr init
-                   &key (test nil test-supplied-p))
+                   &key
+                     (test nil test-supplied-p)
+                     weight)
   "Defines a histogram reduction of table src with expr inserted into
 the result histogram.  test is a form which, when evaluated in the
 table pass body should return non-nil for events to be inserted into
-the histogram."
+the histogram.  Supply expression for weight when events need
+reweighting."
   (alexandria:with-gensyms (hist)
     `(defres ,id
        (dotab (res ,src)
@@ -210,8 +213,10 @@ the histogram."
            ,hist
          ,(if test-supplied-p
               `(when ,test
-                 (hins ,hist ,expr))
-              `(hins ,hist ,expr))))))
+                 (hins ,hist ,expr
+                       ,@(when weight `(weight))))
+              `(hins ,hist ,expr
+                     ,@(when weight `(weight))))))))
 
 ;;;; Copy utils:
 (defun copy-lfields (source dest &optional lfields)

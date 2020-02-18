@@ -1883,3 +1883,14 @@ non-NIL to disable progress messages."
 ;; and the function
 (defun evresfn (id)
   (eval `(evres ,id)))
+
+;; Utility function to naively compute all targets which haven't been
+;; evaluated yet without using the transformation pipeline.
+(defun makeres-naive ()
+  (loop
+     for id being the hash-keys in (target-table)
+     for tar being the hash-values in (target-table)
+     when (not (target-stat tar))
+     do
+       (setresfn id
+                 (evresfn id))))

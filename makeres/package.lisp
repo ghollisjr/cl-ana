@@ -113,6 +113,7 @@
    :transform-target-table ; transforms table via pipeline
    :makeres-form ; returns the lambda form to perform the computation
    :makeres ; compile and call result generator
+   :makeres-naive ; makeres without any transformation pipeline
    ;; project utilities
    :target-ids
    :fin-target-ids

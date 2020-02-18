@@ -115,20 +115,28 @@
                          id)
                  (progn
                    ;; final target value
-                   (setf (target-val (gethash id
-                                              (gethash *project-id*
-                                                       *fin-target-tables*)))
-                         (load-object type (target-path id "data")))
-                   (setf (target-load-stat
-                          (gethash id
-                                   (gethash *project-id*
-                                            *fin-target-tables*)))
-                         t)
-                   (setf (target-timestamp
-                          (gethash id
-                                   (gethash *project-id*
-                                            *fin-target-tables*)))
-                         timestamp)
+                   ;; Add entry to fintab if necessary
+                   (when (and (gethash id (target-table))
+                              (not (gethash id (gethash *project-id*
+                                                        *fin-target-tables*))))
+                     (setf (gethash id (gethash *project-id*
+                                                *fin-target-tables*))
+                           (copy-target (gethash id (target-table)))))
+                   (progn
+                     (setf (target-val (gethash id
+                                                (gethash *project-id*
+                                                         *fin-target-tables*)))
+                           (load-object type (target-path id "data")))
+                     (setf (target-load-stat
+                            (gethash id
+                                     (gethash *project-id*
+                                              *fin-target-tables*)))
+                           t)
+                     (setf (target-timestamp
+                            (gethash id
+                                     (gethash *project-id*
+                                              *fin-target-tables*)))
+                           timestamp))
                    (when (gethash id (target-table))
                      (setf (target-val (gethash id (target-table)))
                            (target-val
@@ -601,7 +609,7 @@ loaded into the Lisp image using a sha1 sum."
                   (string= form
                            current-form))))
             nil)))))
-  
+
 (defun project-path ()
   "Returns path for current project, nil when not set or in nil
 project"
