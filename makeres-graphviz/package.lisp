@@ -27,4 +27,5 @@
    ;; project graph -> dot code:
    :dot-compile
    :dot->ps
-   :dot->png))
+   :dot->png
+   :dot->pdf))
