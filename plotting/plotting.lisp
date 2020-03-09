@@ -2415,7 +2415,6 @@ to enable math and use the Helvetica font."
          (terminal
           (apply #'epslatex-term
                  :standalone-p t
-
                  (append
                   (when (not (find :header terminal-keywords))
                     (list
