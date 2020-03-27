@@ -771,7 +771,8 @@ initargs from key-args."
               "unset y2tics"
               "set nologscale x"
               "set nologscale y"
-              "set nologscale zcb")
+              "set nologscale zcb"
+              )
         ;; x
         (when x-title
           (list (string-append
