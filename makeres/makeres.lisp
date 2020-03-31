@@ -1886,11 +1886,14 @@ non-NIL to disable progress messages."
 
 ;; Utility function to naively compute all targets which haven't been
 ;; evaluated yet without using the transformation pipeline.
-(defun makeres-naive ()
-  (loop
-     for id being the hash-keys in (target-table)
-     for tar being the hash-values in (target-table)
-     when (not (target-stat tar))
-     do
-       (setresfn id
-                 (evresfn id))))
+(defun makeres-naive (&optional ids)
+  (let* ((ids (if ids
+                  ids
+                  (hash-keys (target-table)))))
+    (loop
+     for id in ids
+       for tar = (gethash id (target-table))
+       when (not (target-stat tar))
+       do
+         (setresfn id
+                   (evresfn id)))))
