@@ -211,6 +211,7 @@ table"
 (defun ltab-chains
     (target-table chain-edge-map src
      &key
+       (tab-test-fn #'tab?)
        (ltab-test-fn #'ltab?)
        (dotab-test-fn #'dotab?))
   "Returns all ltab chains stemming from src.  A ltab chain is simply
@@ -226,7 +227,8 @@ reduction of the last ltab in the chain."
                         (and (gethash id target-table)
                              (let ((expr (target-expr
                                           (gethash id target-table))))
-                               (or (funcall dotab-test-fn expr)
+                               (or (funcall tab-test-fn expr)
+                                   (funcall dotab-test-fn expr)
                                    (funcall ltab-test-fn expr)))))
                       children)))
                (if filtered-children
@@ -239,17 +241,20 @@ reduction of the last ltab in the chain."
 
 (defun ltab-chained-reductions (target-table ltab-chain-edge-map src
                                 &key
+                                  (tab-test-fn #'tab?)
                                   (ltab-test-fn #'ltab?)
                                   (dotab-test-fn #'dotab?))
   "Returns all reductions directly from ltab chains stemming from src"
   (mapcar #'alexandria:last-elt
           (ltab-chains target-table ltab-chain-edge-map src
+                       :tab-test-fn tab-test-fn
                        :ltab-test-fn ltab-test-fn
                        :dotab-test-fn dotab-test-fn)))
 
 (defun necessary-pass-reductions
     (target-table chain-edge-map tab
      &key
+       (tab-test-fn #'tab?)
        (ltab-test-fn #'ltab?)
        (dotab-test-fn #'dotab?)
        (reduction-test-fn
@@ -272,6 +277,7 @@ logical tables."
            (ltab-chained-reductions target-table
                                     chain-edge-map
                                     tab
+                                    :tab-test-fn tab-test-fn
                                     :ltab-test-fn ltab-test-fn
                                     :dotab-test-fn dotab-test-fn))
    #'equal))
@@ -372,6 +378,39 @@ non-ignored sources."
                 (when (not (member src
                                    ignore
                                    :test #'equal))
+                  (push id reds)
+                  (setf srcs
+                        (adjoin src
+                                srcs
+                                :test #'equal)))))))
+    (set-difference srcs reds :test #'equal)))
+
+(defun ultimate-source-tables-new (target-table
+                                   &key
+                                     ignore
+                                     (reduction-test-fn
+                                      #'table-reduction?)
+                                     (reduction-source-fn
+                                      #'table-reduction-source))
+  "Returns list of source table ids which are not table reductions of
+non-ignored sources."
+  (let ((srcs nil)
+        (reds nil))
+    (loop
+       for id being the hash-keys in target-table
+       for tar being the hash-values in target-table
+       do (let ((expr (target-expr tar)))
+            (when (funcall reduction-test-fn expr)
+              (let* ((raw-src (funcall reduction-source-fn expr))
+                     (src (if (and (listp raw-src)
+                                   (eq (first raw-src) 'res))
+                              (second raw-src)
+                              raw-src))
+                     (srcexpr (target-expr (gethash src target-table))))
+                (when (and (not (member src
+                                        ignore
+                                        :test #'equal))
+                           (not (ltab? srcexpr)))
                   (push id reds)
                   (setf srcs
                         (adjoin src
@@ -1293,11 +1332,13 @@ true when given the key and value from ht."
                                            chained-edge-map
                                            src
                                            :ltab-test-fn #'ltab?
-                                           :dotab-test-fn #'dotab?)))))))
+                                           :dotab-test-fn #'dotab?))))))
+                       )
                    (setf processed-srcs
                          (list->set
                           (append processed-srcs
-                                  ltabs))))
+                                  ltabs)))
+                   )
                  (let* (;; reductions which must be computed via a
                         ;; pass over src
                         (nec-reds
