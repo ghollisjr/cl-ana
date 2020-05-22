@@ -1872,15 +1872,15 @@ denoting the page initargs."
 (defmethod line ((data-array array) &rest other-args)
   (let* ((dim (array-dimension data-array 1))
          (data-alist
-           (case dim
-             (2 (loop for i below (array-dimension data-array 0)
-                      collect (cons (aref data-array i 0)
-                                    (aref data-array i 1))))
-             (3 (loop for i below (array-dimension data-array 0)
-                      collect (cons (list  (aref data-array i 0)
-                                           (aref data-array i 1))
-                                    (aref data-array i 2))))
-             (otherwise (error "Data array has ~a columns, must be 2 or 3." dim)))))
+          (case dim
+            (2 (loop for i below (array-dimension data-array 0)
+                  collect (cons (aref data-array i 0)
+                                (aref data-array i 1))))
+            (3 (loop for i below (array-dimension data-array 0)
+                  collect (cons (list  (aref data-array i 0)
+                                       (aref data-array i 1))
+                                (aref data-array i 2))))
+            (otherwise (error "Data array has ~a columns, must be 2 or 3." dim)))))
     (apply #'line data-alist other-args)))
 
 (defun sample-function (fn lower-bounds upper-bounds nsamples)
