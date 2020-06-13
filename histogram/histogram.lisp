@@ -537,8 +537,12 @@ histogram if present."
 (defun normalize-histogram (h &optional (norm :integral))
   "Normalizes a histogram using either the integral or setting a
 point's value to 1.  Set norm to be a bin point value to choose a
-specific point, or to NIL for no normalization."
+specific point, or to NIL for no normalization.  Set norm to a
+function to normalize via an integral over a filtered subset of a
+histogram."
   (flet ((hnorm (h) (/ h (htint h)))
+         (hinorm (h f)
+           (/ h (htint (hist-filter f h))))
          (hpnorm (h p)
            (/ h (hpref h (list p)))))
     (let ((normfn
@@ -549,6 +553,10 @@ specific point, or to NIL for no normalization."
              ;; normalization by integral
              ((eq norm :integral)
               #'hnorm)
+             ;; normalization by filtered integral
+             ((functionp norm)
+              (lambda (h)
+                (hinorm h norm)))
              ;; normalization by W point
              (t
               (lambda (h)
