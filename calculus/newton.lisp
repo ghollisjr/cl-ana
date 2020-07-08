@@ -22,6 +22,7 @@
 (in-package :cl-ana.calculus)
 
 (defun newton (fn guess &key
+                          (step-scale 1)
                           (value 0)
                           (maxtries 50)
                           (prec 1d-4)
@@ -46,8 +47,9 @@ via diff."
         (func (lambda (x) (- (funcall fn x)
                              value))))
     (do ((x guess (- x
-                     (/ (funcall func x)
-                        (funcall df x))))
+                     (* step-scale
+                        (/ (funcall func x)
+                           (funcall df x)))))
          (i 0 (1+ i))
          (difference (* 10 prec) (abs (funcall func x))))
         ((or (<= difference prec)
