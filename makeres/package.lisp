@@ -93,6 +93,7 @@
    :parfn
    :mres
    :with-mres
+   :remakeres
    ;; project macros
    :defproject
    :in-project

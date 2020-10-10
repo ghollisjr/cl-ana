@@ -314,6 +314,26 @@
                 `(mres ,@args)))
      ,@body))
 
+;; Re-makes a list of targets in the order supplied, referring to the
+;; values they acquire through the recomputation.  Does not affect
+;; target table, but does perform side-effects.
+(defmacro remakeres (&rest targets)
+  "Evaluates a list of targets in the order given, looking up values
+of these targets as they've been recomputed rather than what is stored
+in the target table."
+  (let* ((mapsym (gensym)))
+    `(macrolet ((res (id)
+                  `(if (gethash ',id ,',mapsym)
+                       (gethash ',id ,',mapsym)
+                       (mres ,id))))
+       (let* ((,mapsym (make-hash-table :test 'equal)))
+         ,@(loop
+              for id in targets
+              appending `((let ((*print-pretty* nil))
+                            (format t "Computing ~s~%" ',id))
+                          (setf (gethash ',id ,mapsym)
+                                ,(macroexpand-1 `(evres ,id)))))))))
+
 (defvar *project-paths*
   (make-hash-table :test 'equal)
   "Map from project name to output path")
