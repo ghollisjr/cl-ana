@@ -528,6 +528,8 @@ layout specified in the page.")
 
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
+                   (x-format plot2d-x-format)
+                   (y-format plot2d-y-format)
                    (title-offset plot-title-offset)
                    (lines plot-lines)
                    (labels plot-labels)
@@ -554,6 +556,14 @@ layout specified in the page.")
            for label in labels
            do (gnuplot-format s "set label ~a ~a~%"
                               i label))
+        (if x-format
+            (gnuplot-format s "set format x ~s~%" x-format)
+            (gnuplot-format s "unset format x~%")
+            )
+        (if y-format
+            (gnuplot-format s "set format y ~s~%" y-format)
+            (gnuplot-format s "unset format y~%")
+            )
         (gnuplot-format s "~a " (plot-cmd p))
         (loop
            for line-index from 0
@@ -624,6 +634,11 @@ layout specified in the page.")
     :accessor plot2d-x-range
     :documentation "Sets the domain for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (x-format
+    :initarg :x-format
+    :initform nil
+    :accessor plot2d-x-format
+    :documentation "Sets the x-axis numeric tic format via a format string.")
    (x-tics
     :initarg :x-tics
     :initform nil
@@ -658,6 +673,11 @@ layout specified in the page.")
     :accessor plot2d-y-range
     :documentation "Sets the range for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (y-format
+    :initarg :y-format
+    :initform nil
+    :accessor plot2d-y-format
+    :documentation "Sets the y-axis numeric tic format via a format string.")
    (y-tics
     :initarg :y-tics
     :initform nil
