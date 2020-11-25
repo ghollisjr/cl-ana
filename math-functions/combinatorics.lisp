@@ -31,18 +31,32 @@
       (rec x))))
 
 (defmath npermutations (n r)
-  (:documentation"Returns nPr, the number of permutations of n objects
-taken r at a time without repetition.")
+  (:documentation "Returns nPr, the number of permutations of n objects
+taken r at a time without repetition.  Assumes reasonable values of n
+and r.  Returns 1 for nP0.")
   (:method ((n number) (r number))
-    (/ (factorial n)
-       (factorial (- n r)))))
+    (loop
+       for k from (- n r) upto n
+       for result = 1 then (* result k)
+       finally (return result))))
 
 (defmath ncombinations (n r)
   (:documentation "Returns nCr, the number of combinations of n
-  objects taken r at a time without repetition.")
+  objects taken r at a time without repetition.  Assumes reasonable
+  values of n and r.")
   (:method ((n number) (r number))
-    (/ (npermutations n r)
-       (factorial r))))
+    (cond
+      ((zerop r)
+       1)
+      ((= n r)
+       1)
+      (t
+       (let ((result 1))
+         (do ((num n (1- num))
+              (den 1 (1+ den)))
+             ((> den r) result)
+           (setf result (* result num))
+           (setf result (truncate result den))))))))
 
 (defun binomial (n r)
   "Nickname for ncombinations; returns the binomial coefficient of n
@@ -54,3 +68,39 @@ taken r at a time without repetition.")
 taken to be the number of objects of a single type."
   (/ (factorial (sum ms))
      (product (mapcar #'factorial ms))))
+
+;;;; Useful macros for working with combinatorics
+;;; Loop over all nPr permutations.  E.g.,
+;;;
+;;; (for-permutations (indices 5 2) (print indices))
+;;;
+;;; would print out all of the possible 20 permutation index arrays.
+;;;
+;;; Note that for nP0, a single iteration of body is evaluated with an
+;;; empty index array.
+(defmacro for-permutations ((var n r) &body body)
+  "Iterates over all permutations of r objects taken from n total,
+binding an array of r index values to var and evaluating body with
+that binding."
+  (alexandria:with-gensyms (npr nn rr i j norder x k)
+    `(let* ((,nn ,n)
+            (,rr ,r)
+            (,npr (npermutations ,nn ,rr))
+            (,var (make-array ,rr :initial-element 0)))
+       (loop
+          for ,i below ,npr
+          do
+            (loop
+               for ,j below ,rr
+               do
+                 (let* ((,norder (- ,nn ,j))
+                        (,x (mod ,i ,norder)))
+                   (setf (aref ,var ,j)
+                         ,x)
+                   (loop
+                      for ,k below ,j
+                      when (>= ,x
+                               (aref ,var ,k))
+                      do (incf (aref ,var ,j)))))
+            (progn
+              ,@body)))))

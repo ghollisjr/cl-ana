@@ -40,6 +40,9 @@
    :multinomial
    ;; utils:
    :->double-float
-   :periodic-shift))
+   :periodic-shift
+   ;; macros:
+   :for-permutations
+   ))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)
