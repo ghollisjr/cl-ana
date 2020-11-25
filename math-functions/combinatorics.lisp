@@ -81,12 +81,14 @@ taken to be the number of objects of a single type."
 (defmacro for-permutations ((var n r) &body body)
   "Iterates over all permutations of r objects taken from n total,
 binding an array of r index values to var and evaluating body with
-that binding."
+that binding.  If you want to actually permute objects in a
+list/array/sequence, use the bound index array to find permutations of
+those objects."
   (alexandria:with-gensyms (npr nn rr i j norder x k)
     `(let* ((,nn ,n)
             (,rr ,r)
             (,npr (npermutations ,nn ,rr))
-            (,var (make-array ,rr :initial-element 0)))
+            (,var (make-array ,rr :element-type 'integer :initial-element 0)))
        (loop
           for ,i below ,npr
           do
