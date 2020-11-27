@@ -43,6 +43,7 @@
    :periodic-shift
    ;; macros:
    :for-permutations
+   :for-combinations
    ))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)
