@@ -420,3 +420,53 @@ symbol-macrolet."
                              args
                              `(cdr ,args)))))
             ds)))))
+
+;; Looping over Cartesian product
+(defmacro for-cartesian (binding xss &body body)
+  "Effectively iterates over every element of the Cartesian product of
+xss, which is a sequence of (xs ys ...) to be Cartesian-multiplied.
+If binding is an atom, then the Cartesian product element will be set
+to that variable as a list.  If it is a list of symbols, then each
+symbol will be bound to its corresponding element from the Cartesian
+product element."
+  (alexandria:with-gensyms (sets setdims nsets
+                                 index
+                                 continue
+                                 incr dim)
+    `(let* ((,sets ,xss)
+            (,nsets (length ,sets))
+            (,setdims (map 'vector #'length ,sets))
+            (,index (make-array ,nsets :initial-element 0))
+            (,continue t))
+       (loop
+          while ,continue
+          do
+          ;; execute body
+            ,(if (atom binding)
+                 `(let ((,binding (map 'list #'elt
+                                       ,sets
+                                       ,index)))
+                    ,@body)
+                 `(destructuring-bind ,binding
+                      (map 'list #'elt
+                           ,sets
+                           ,index)
+                    ,@body))
+          ;; iterate
+            (let* ((,incr t)
+                   (,dim 0))
+              (loop
+                 while ,incr
+                 do
+                   (if (>= ,dim ,nsets)
+                       (progn
+                         (setf ,incr nil)
+                         (setf ,continue nil))
+                       (progn
+                         (incf (aref ,index ,dim))
+                         (if (>= (aref ,index ,dim)
+                                 (aref ,setdims ,dim))
+                             (progn
+                               (setf (aref ,index ,dim) 0)
+                               (incf ,dim))
+                             (setf ,incr nil))))))))))

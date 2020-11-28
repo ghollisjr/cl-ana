@@ -62,4 +62,7 @@
            ;; once-only let macro
            :olet
            ;; dlambda (dispatching lambda) from let over lambda
-           :dlambda))
+           :dlambda
+           ;; Looping over Cartesian product
+           :for-cartesian
+           ))

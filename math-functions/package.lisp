@@ -35,7 +35,9 @@
    ;; combinatorics:
    :factorial
    :npermutations
+   :npermutations-repeating
    :ncombinations
+   :ncombinations-repeating
    :binomial
    :multinomial
    ;; utils:
@@ -43,7 +45,9 @@
    :periodic-shift
    ;; macros:
    :for-permutations
+   :for-permutations-repeating
    :for-combinations
+   :for-combinations-repeating
    ))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)
