@@ -148,8 +148,9 @@ branch, (branch branch-id) is replaced to all levels"
             :test #'equal)))
 
 (defun branchtrans (graph)
-  (let* ((result
-          (cl-ana.makeres:copy-target-table graph))
+  (let* ((result (if *copy-target-table-p*
+                     (cl-ana.makeres:copy-target-table graph)
+                     graph))
          (branch-chains
           (branch-chains graph))
          (source-branch-ids (mapcar #'first branch-chains))

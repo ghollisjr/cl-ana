@@ -194,10 +194,25 @@ symbol)"
                  :stat (copy-tree (target-stat target))
                  :timestamp (target-timestamp target)
                  :load-stat (target-load-stat target)))
+(defun copy-target-test (target)
+  (make-instance 'target
+                 :id (target-id target)
+                 :expr (copy-tree (target-expr target))
+                 :deps (target-deps target)
+                 :pdeps (target-pdeps target)
+                 :val (copy-tree (target-val target))
+                 :stat (target-stat target)
+                 :timestamp (target-timestamp target)
+                 :load-stat (target-load-stat target)))
 
 (defparameter *makeres-propagate* nil
   "Set to t if you want dependents of uncomputed results to have
 their statuses set to nil")
+
+(defparameter *copy-target-table-p* t
+  "This is T by default so that transformations know to not modify
+their input arguments, but can be set to NIL by other functions once
+the graph has been copied once.")
 
 (defun makeres-set-auto-propagate (stat)
   "nil stat means don't propagate need-to-recompute to dependents of
@@ -1386,10 +1401,11 @@ computation"
 (defun transform-target-table (&optional (project-id *project-id*))
   "Returns the fully transformed target table by passing it through
 the transformation pipeline."
-  (let ((fns
-         (gethash project-id *transformation-table*))
-        (input (copy-target-table
-                (gethash project-id *target-tables*))))
+  (let* ((*copy-target-table-p* nil)
+         (fns
+          (gethash project-id *transformation-table*))
+         (input (copy-target-table
+                 (gethash project-id *target-tables*))))
     (if fns
         (pipe-functions fns input)
         input)))

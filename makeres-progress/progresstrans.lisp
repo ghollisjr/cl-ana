@@ -59,5 +59,7 @@ target-table and the project target table unless
                                   :stat (target-stat target)
                                   :timestamp (target-timestamp target))))
              (setf (gethash id result-table)
-                   (copy-target (gethash id target-table)))))
+                   (if *copy-target-table-p*
+                       (copy-target (gethash id target-table))
+                       (gethash id target-table)))))
     result-table))

@@ -1264,7 +1264,9 @@ true when given the key and value from ht."
           (make-hash-table :test 'equal)))
   ;; save lfield definitions
   (save-lfields)
-  (let* ((graph (copy-target-table target-table))
+  (let* ((graph (if *copy-target-table-p*
+                    (copy-target-table target-table)
+                    target-table))
          ;; chained reduction and ltab chain edge maps
          (chained-edge-map
           (chained-edge-map graph

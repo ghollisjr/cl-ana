@@ -46,7 +46,7 @@ NIL, so these are copied to the current project by this function."
     (symbol-macrolet ((macros (gethash (project) *proj->res-macros*)))
       (loop
          for name in defaults
-         do 
+         do
            (setf macros
                  (adjoin name macros
                          :test #'eq))))))
@@ -264,8 +264,9 @@ in a lambda form when e.g. mapping."
   (ensure-default-macros)
   (ensure-binding-ops)
   (ensure-op-expanders)
-  (let ((result
-         (copy-target-table target-table)))
+  (let ((result (if *copy-target-table-p*
+                    (copy-target-table target-table)
+                    target-table)))
     (loop
        for id being the hash-keys in result
        for tar being the hash-values in result

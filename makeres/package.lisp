@@ -124,6 +124,7 @@
    :lres
    ;; Transformation utilities:
    :*trans->propogator-fn*
+   :*copy-target-table-p*
    :defpropogator
    ;; logres:
    :save-target
