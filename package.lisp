@@ -32,6 +32,7 @@
         :cl-ana.csv-table
         :cl-ana.math-functions
         :cl-ana.calculus
+        :cl-ana.spline
         :cl-ana.tensor
         :cl-ana.error-propogation
         :cl-ana.quantity

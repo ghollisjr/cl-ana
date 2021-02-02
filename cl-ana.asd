@@ -36,6 +36,7 @@
                #:cl-ana.tensor
                #:cl-ana.error-propogation
                #:cl-ana.quantity
+               #:cl-ana.spline
                #:cl-ana.table
                #:cl-ana.table-utils
                #:cl-ana.hdf-table
