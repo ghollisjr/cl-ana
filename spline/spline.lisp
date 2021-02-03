@@ -28,11 +28,24 @@
 (defparameter +GSL-CONTINUE+ -2) ; from gsl_errno.h
 (defparameter +GSL-SUCCESS+ 0) ; from gsl_errno.h
 
-(defparameter +GSL-ITERSOLVE-GMRES+
+(defun GSL-ITERSOLVE-GMRES ()
   (cffi:foreign-symbol-pointer
    "gsl_splinalg_itersolve_gmres"))
 
-(cffi:use-foreign-library gsll::libgsl)
+;; I want to use this, but on my system this causes strange memory
+;; bugs.
+;;
+;; (cffi:use-foreign-library gsll::libgsl)
+;;
+;; So instead I do this:
+(cffi:define-foreign-library gsl
+  (:windows (:or "libgsl-0.dll" "cyggsl-0.dll"))
+  (:unix (:or
+          "libgsl.so.25"
+          "libgsl.so.0" "libgsl.so"))
+  (t (:default "libgsl")))
+
+(cffi:use-foreign-library gsl)
 
 ;; Vectors
 (cffi:defcfun "gsl_vector_alloc" :pointer
@@ -105,7 +118,7 @@
 
 ;; Utility/Helper Functions
 (defun make-splinalg-workspace (nrows &optional (subspacerows 0))
-  (gsl-splinalg-itersolve-alloc (cffi:mem-ref +GSL-ITERSOLVE-GMRES+
+  (gsl-splinalg-itersolve-alloc (cffi:mem-ref (GSL-ITERSOLVE-GMRES)
                                               :pointer 0)
                                 nrows
                                 subspacerows))
@@ -156,7 +169,7 @@
   (loop
      for i from 0
      for xlow across xs
-     when (>= xlow x)
+     when (> xlow x)
      do (return (1- i))
      finally (return (1- (length xs)))))
 
@@ -252,8 +265,6 @@
              (xhi (if (minusp sign)
                       xlo
                       xhi))
-             ;; (x0 (elt xs 0))
-             ;; (xN (elt xs (1- N)))
              (xlowbin
               (awhen (loop
                         for i from 0
@@ -483,8 +494,8 @@ it for at least the cubic spline."
   (let* ((points (sort (copy-list points)
                        #'<
                        :key #'car))
-         (xmin (minimum (cars points)))
-         (xmax (maximum (cars points)))
+         (xmin (apply #'min (cars points)))
+         (xmax (apply #'max (cars points)))
          (xs (grid:make-foreign-array 'double-float
                                       :initial-contents
                                       (cars points)))
