@@ -6,11 +6,11 @@
         :cl-ana.tensor
         :cl-ana.math-functions)
   (:export
-   :natural-spline ; supports arbitrary order
+   :polynomial-spline ; supports polynomial splines of arbitrary order
    :gsl-spline ; supports splines provided by GSL via GSLL
-   :evaluate-natural-spline
-   :evaluate-natural-spline-derivative ; derivatives to any degree
-   :evaluate-natural-spline-integral ; definite integral
+   :evaluate-polynomial-spline
+   :evaluate-polynomial-spline-derivative ; derivatives to any degree
+   :evaluate-polynomial-spline-integral ; definite integral
    ))
 
 (cl-ana.gmath:use-gmath :cl-ana.spline)

@@ -157,7 +157,7 @@
        for i below (length vector)
        collecting (gsl-vector-get res i))))
 
-(defstruct spline
+(defstruct polynomial-spline
   degree ;integer
   coefs ;2-D array
   xs ;vector
@@ -173,7 +173,7 @@
      do (return (1- i))
      finally (return (1- (length xs)))))
 
-(defun evaluate-natural-spline
+(defun evaluate-polynomial-spline
     (spline x
      &key
        ;; set to T to maintain final value outside
@@ -221,7 +221,7 @@
                        x)))
     (- (pint xhi) (pint xlo))))
 
-(defun evaluate-natural-spline-derivative (spline x deg)
+(defun evaluate-polynomial-spline-derivative (spline x deg)
   (with-slots (coefs deltas xs degree) spline
     (labels ((ev (index x)
                (* (expt (aref deltas index) deg)
@@ -241,7 +241,7 @@
           (t
            (ev index x)))))))
 
-(defun evaluate-natural-spline-integral (spline xlo xhi)
+(defun evaluate-polynomial-spline-integral (spline xlo xhi)
   "Evaluates definite integral of natural spline."
   (with-slots (xs deltas coefs degree) spline
     (labels ((binparams (xbin)
@@ -322,6 +322,201 @@
                       summing
                         (wholebinint i))))))))))
 
+(defun polynomial-spline (points
+                          &key
+                            derivatives
+                            (degree 3)
+                            (tolerance 1d-5))
+  "Creates polynomial spline of arbitrary degree and adjustable
+derivative constraints.
+
+Polynomial splines have most degrees of freedom constrained by
+requiring continuity of all but one non-zero derivative.  Natural
+splines set the remaining degrees of freedom by mandating derivatives
+of sufficient order at the first and last domain points be zero.
+
+By leaving the derivatives argument NIL, natural polynomial splines
+will be produced.  If you set derivatives to a list of degree-1
+numerical values, these will be used as values for the remaining
+derivatives.  The order is as follows:
+
+For even degree:
+First degree/2 values are first-point derivatives,
+Last degree/2-1 values are last-point derivatives.
+
+For odd degree:
+First (degree-1)/2 are first-point,
+Last (degree-1)/2 are last-point.
+
+Perhaps even more flexibility should be added to this function, but
+there are arbitrarily many constraints one might impose on splines,
+and so I encourage such creative users of this library to create
+modified functions to support whatever constraints they specifically
+need."
+  (let* ((derivatives
+          (coerce (aif derivatives
+                       (->double-float it)
+                       (loop for i below (1- degree)
+                          collecting 0d0))
+                  'vector))
+         (npoints (length points))
+         (N (1- npoints))
+         (nrows (* (1+ degree) N))
+         (coefs (gsl-spmatrix-alloc nrows
+                                    nrows))
+         (vec (gsl-vector-alloc (* (1+ degree) N)))
+         (equation-index 0)
+         (xs (coerce (cars points) 'vector))
+         (ys (coerce (cdrs points) 'vector))
+         (deltas (- (subseq xs 1) xs))
+         (w (make-splinalg-workspace nrows nrows))
+         (tol (->double-float tolerance))
+         (res (gsl-vector-alloc nrows))
+         (sp (make-polynomial-spline :coefs (make-array (list N (1+ degree)))
+                                     :degree degree
+                                     :xs xs
+                                     :deltas deltas)))
+    ;;; coefficients matrix
+    ;;;
+    ;;; Five constraint types:
+    ;;; 1. Left boundaries.
+    ;;; 2. Right boundaries.
+    ;;; 3. Continuity.
+    ;;; 4. Left natural derivatives.
+    ;;; 5. Right natural derivatives.
+
+    ;; 1. Left boundaries.
+    (loop
+       for i below N
+       for j = (* (1+ degree) i)
+       do
+       ;; coefs
+         (gsl-spmatrix-set coefs i j
+                           1d0)
+       ;; vector
+         (gsl-vector-set vec i (->double-float (aref ys i))))
+    (incf equation-index N)
+    ;; 2. Right boundaries
+    (loop
+       for i below N
+       for ii = (+ equation-index i)
+       do
+       ;; coefs
+         (loop
+            for j to degree
+            for jj = (+ j (* (1+ degree) i))
+            do (gsl-spmatrix-set coefs ii jj
+                                 1d0))
+       ;; vector
+         (gsl-vector-set vec ii
+                         (->double-float
+                          (aref ys (1+ i)))))
+    (incf equation-index N)
+    ;; Continuity
+    (loop
+       for L from 1 below degree ; degree-1 fold
+       do
+         (loop
+            for i below (1- N)
+            for ii = (+ equation-index
+                        (* (- L 1) (1- N))
+                        i)
+            do
+            ;; coefs
+            ;; rhs
+              (gsl-spmatrix-set coefs ii (+ (* (1+ degree)
+                                               (1+ i))
+                                            L)
+                                -1d0)
+            ;; lhs
+              (loop
+                 for j from L to degree
+                 for jj = (+ (* (1+ degree)
+                                i)
+                             j)
+                 do (gsl-spmatrix-set coefs ii jj
+                                      (->double-float
+                                       (* (binomial j L)
+                                          (expt (/ (aref deltas (1+ i))
+                                                   (aref deltas i))
+                                                L)))))
+            ;; vec
+              (gsl-vector-set vec ii 0d0)))
+    (incf equation-index (* (1- degree) (1- N)))
+    ;; natural derivatives
+    (cond
+      ((= degree 2)
+       (gsl-spmatrix-set coefs
+                         equation-index
+                         2
+                         1d0)
+       ;; vec
+       (gsl-vector-set vec equation-index 0d0))
+      (t
+       (let* ((leftstart (if (evenp degree)
+                             (floor degree 2)
+                             (floor (+ degree 1) 2)))
+              (rightstart (if (evenp degree)
+                              (+ (floor degree 2) 1)
+                              (floor (+ degree 1) 2))))
+         ;; 4. left
+         (loop
+            for i from 0
+            for L from leftstart below degree
+            for ii = (+ equation-index i)
+            do
+            ;; coefs
+              (gsl-spmatrix-set coefs
+                                ii
+                                L
+                                1d0)
+            ;; vec
+              (gsl-vector-set vec ii (aref derivatives i)))
+         (incf equation-index (- degree leftstart))
+         ;; 5. right
+         (loop
+            for i from 0
+            for L from rightstart below degree
+            for ii = (+ equation-index i)
+            do
+            ;; coefs
+              (loop
+                 for j from L to degree
+                 for jj = (+ j
+                             (* (1+ degree)
+                                (- npoints 2)))
+                 do
+                   (gsl-spmatrix-set coefs ii jj
+                                     (->double-float
+                                      (npermutations j L))))
+            ;; vec
+              (gsl-vector-set vec ii (aref derivatives (+ i (- degree leftstart))))))))
+    ;; solve
+    (let* ((m (gsl-spmatrix-ccs coefs))
+           (stat +GSL-CONTINUE+))
+      (loop
+         while (= stat +GSL-CONTINUE+)
+         do (setf stat
+                  (gsl-splinalg-itersolve-iterate
+                   m vec
+                   tol res
+                   w)))
+      (loop
+         for i below nrows
+         for ii = (floor i (1+ degree))
+         for jj = (mod i (1+ degree))
+         do (setf (aref (polynomial-spline-coefs sp) ii jj)
+                  (gsl-vector-get res i)))
+      ;; cleanup
+      (gsl-spmatrix-free m)
+      (gsl-spmatrix-free coefs)
+      (gsl-vector-free vec)
+      (gsl-vector-free res)
+      (gsl-splinalg-itersolve-free w))
+    (values (lambda (x)
+              (evaluate-polynomial-spline sp x))
+            sp)))
+
 (defun natural-spline (points
                        &key
                          (degree 3)
@@ -339,10 +534,10 @@
          (w (make-splinalg-workspace nrows nrows))
          (tol (->double-float tolerance))
          (res (gsl-vector-alloc nrows))
-         (sp (make-spline :coefs (make-array (list N (1+ degree)))
-                          :degree degree
-                          :xs xs
-                          :deltas deltas)))
+         (sp (make-polynomial-spline :coefs (make-array (list N (1+ degree)))
+                                     :degree degree
+                                     :xs xs
+                                     :deltas deltas)))
     ;;; coefficients matrix
     ;;;
     ;;; Five constraint types:
@@ -472,7 +667,7 @@
          for i below nrows
          for ii = (floor i (1+ degree))
          for jj = (mod i (1+ degree))
-         do (setf (aref (spline-coefs sp) ii jj)
+         do (setf (aref (polynomial-spline-coefs sp) ii jj)
                   (gsl-vector-get res i)))
       ;; cleanup
       (gsl-spmatrix-free m)
@@ -481,7 +676,7 @@
       (gsl-vector-free res)
       (gsl-splinalg-itersolve-free w))
     (values (lambda (x)
-              (evaluate-natural-spline sp x))
+              (evaluate-polynomial-spline sp x))
             sp)))
 
 (defun gsl-spline (points
