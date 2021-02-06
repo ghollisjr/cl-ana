@@ -322,9 +322,57 @@
                       summing
                         (wholebinint i))))))))))
 
+(defun polynomial-spline-constraint
+    (poly-degree npoints bin value
+     &key
+       (side :left) ; can be :right
+       (derivative 1))
+  "Generates a constraint list for the polynomial-spline function.
+Poly-degree sets the polynomial degree, nbins specifies the number of
+points in the spline, bin determines the spline polynomial to
+constrain (0 through npoints-2), value sets the value for the RHS
+vector, and derivative selects the degree of derivative which the
+constraint applies to.
+
+This can be used to create more complex constraints by using value=0
+and adding together whatever linear combinations of constraints you
+need, finally setting the last element to whatever constraint value
+you need.  Set side to :right to constrain a polynomial using the
+right point of the bin rather than the left point.
+
+CAUTION: You can use this function to generate nonsensical constraints
+that are incompatible with the rest of the spline, which will lead to
+failure to solve the system of equations.  Derivatives are generally
+safe to set, whereas values are already constrained by the nature of
+the spline, which is why the derivative argument defaults to 1 rather
+than 0."
+  (let* ((nbins (1- npoints))
+         (ncoefs (* (1+ poly-degree)
+                    nbins))
+         (result (make-array (1+ ncoefs) :initial-element 0d0)))
+    (case side
+      (:left
+       (setf (aref result
+                   (+ derivative
+                      (* (1+ poly-degree)
+                         bin)))
+             (->double-float (factorial derivative))))
+      (:right
+       (loop
+          for i from derivative to poly-degree
+          for ii = (+ (* (1+ poly-degree)
+                         bin)
+                      i)
+          do (setf (aref result ii)
+                   (->double-float
+                    (npermutations i derivative))))))
+    (setf (aref result ncoefs) value)
+    (coerce result 'list)))
+
 (defun polynomial-spline (points
                           &key
                             derivatives
+                            constraints
                             (degree 3)
                             (tolerance 1d-5))
   "Creates polynomial spline of arbitrary degree and adjustable
@@ -348,11 +396,11 @@ For odd degree:
 First (degree-1)/2 are first-point,
 Last (degree-1)/2 are last-point.
 
-Perhaps even more flexibility should be added to this function, but
-there are arbitrarily many constraints one might impose on splines,
-and so I encourage such creative users of this library to create
-modified functions to support whatever constraints they specifically
-need."
+For ultimate flexibility, use the constraints argument as a list of
+linear equation lists where all elements except the last are a row of
+the coefficient matrix and the last element is the RHS vector value.
+The utility function polynomial-spline-constraint assists in
+generating these."
   (let* ((derivatives
           (coerce (aif derivatives
                        (->double-float it)
@@ -443,54 +491,69 @@ need."
             ;; vec
               (gsl-vector-set vec ii 0d0)))
     (incf equation-index (* (1- degree) (1- N)))
-    ;; natural derivatives
-    (cond
-      ((= degree 2)
-       (gsl-spmatrix-set coefs
-                         equation-index
-                         2
-                         1d0)
-       ;; vec
-       (gsl-vector-set vec equation-index 0d0))
-      (t
-       (let* ((leftstart (if (evenp degree)
-                             (floor degree 2)
-                             (floor (+ degree 1) 2)))
-              (rightstart (if (evenp degree)
-                              (+ (floor degree 2) 1)
-                              (floor (+ degree 1) 2))))
-         ;; 4. left
-         (loop
-            for i from 0
-            for L from leftstart below degree
-            for ii = (+ equation-index i)
-            do
-            ;; coefs
-              (gsl-spmatrix-set coefs
-                                ii
-                                L
-                                1d0)
-            ;; vec
-              (gsl-vector-set vec ii (aref derivatives i)))
-         (incf equation-index (- degree leftstart))
-         ;; 5. right
-         (loop
-            for i from 0
-            for L from rightstart below degree
-            for ii = (+ equation-index i)
-            do
-            ;; coefs
-              (loop
-                 for j from L to degree
-                 for jj = (+ j
-                             (* (1+ degree)
-                                (- npoints 2)))
-                 do
-                   (gsl-spmatrix-set coefs ii jj
-                                     (->double-float
-                                      (npermutations j L))))
-            ;; vec
-              (gsl-vector-set vec ii (aref derivatives (+ i (- degree leftstart))))))))
+    ;; either natural derivatives or explicit constraints:
+    (if (and constraints
+             (length-equal constraints (1- degree)))
+        (loop
+           for i from equation-index
+           for constraint in constraints
+           do
+             (loop
+                for j from 0
+                for c in (butlast constraint)
+                do (gsl-spmatrix-set coefs i j
+                                     (->double-float c)))
+             (gsl-vector-set vec i
+                             (->double-float
+                              (first (last constraint)))))
+        ;; natural derivatives
+        (cond
+          ((= degree 2)
+           (gsl-spmatrix-set coefs
+                             equation-index
+                             2
+                             1d0)
+           ;; vec
+           (gsl-vector-set vec equation-index 0d0))
+          (t
+           (let* ((leftstart (if (evenp degree)
+                                 (floor degree 2)
+                                 (floor (+ degree 1) 2)))
+                  (rightstart (if (evenp degree)
+                                  (+ (floor degree 2) 1)
+                                  (floor (+ degree 1) 2))))
+             ;; 4. left
+             (loop
+                for i from 0
+                for L from leftstart below degree
+                for ii = (+ equation-index i)
+                do
+                ;; coefs
+                  (gsl-spmatrix-set coefs
+                                    ii
+                                    L
+                                    1d0)
+                ;; vec
+                  (gsl-vector-set vec ii (aref derivatives i)))
+             (incf equation-index (- degree leftstart))
+             ;; 5. right
+             (loop
+                for i from 0
+                for L from rightstart below degree
+                for ii = (+ equation-index i)
+                do
+                ;; coefs
+                  (loop
+                     for j from L to degree
+                     for jj = (+ j
+                                 (* (1+ degree)
+                                    (- npoints 2)))
+                     do
+                       (gsl-spmatrix-set coefs ii jj
+                                         (->double-float
+                                          (npermutations j L))))
+                ;; vec
+                  (gsl-vector-set vec ii (aref derivatives (+ i (- degree leftstart)))))))))
     ;; solve
     (let* ((m (gsl-spmatrix-ccs coefs))
            (stat +GSL-CONTINUE+))

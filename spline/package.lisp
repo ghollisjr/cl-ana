@@ -8,6 +8,7 @@
   (:export
    :polynomial-spline ; supports polynomial splines of arbitrary order
    :gsl-spline ; supports splines provided by GSL via GSLL
+   :polynomial-spline-constraint ; generate consraint equations
    :evaluate-polynomial-spline
    :evaluate-polynomial-spline-derivative ; derivatives to any degree
    :evaluate-polynomial-spline-integral ; definite integral
