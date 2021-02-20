@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -110,18 +110,18 @@ dataset-path"
          (with-open-hdf-file (file
                               filename
                               :direction :input)
-           (let* ((dataset (h5dopen2 file dset-path +H5P-DEFAULT+))
-                  (dataspace (h5dget-space dataset))
+           (let* ((dataset (hdf5:h5dopen2 file dset-path hdf5:+H5P-DEFAULT+))
+                  (dataspace (hdf5:h5dget-space dataset))
                   (result
                    (with-foreign-objects ((space-dim 'hsize-t 1)
                                           (space-max-dim 'hsize-t 1))
-                     (h5sget-simple-extent-dims
+                     (hdf5:h5sget-simple-extent-dims
                       dataspace
                       space-dim
                       space-max-dim)
                      (mem-aref space-dim 'hsize-t 0))))
-             (h5sclose dataspace)
-             (h5dclose dataset)
+             (hdf5:h5sclose dataspace)
+             (hdf5:h5dclose dataset)
              result)))
        (get-field-names (filename dataset-path)
 	 (with-open-hdf-file (hdf-file
@@ -143,7 +143,7 @@ dataset-path"
 	     result))))
     (let* ((file-nrows (mapcar
                         (lambda (filename)
-                            (get-nrows filename dataset-path))
+                          (get-nrows filename dataset-path))
                         filename-list))
 	   (offsets (make-offsets file-nrows))
 	   (index-binary-tree
@@ -151,8 +151,8 @@ dataset-path"
            (table
             (make-instance 'hdf-table-chain
                            :field-names (get-field-names
-                                          (first filename-list)
-                                          dataset-path)
+                                         (first filename-list)
+                                         dataset-path)
                            ;; :field-specs (get-field-specs
                            ;;                (first filename-list)
                            ;;                dataset-path)

@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013-2015 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -92,27 +92,27 @@
 (defun open-hdf-table (hdf-file dataset-name &key buffer-size)
   (labels ((get-dataset-length (dataset)
 	     (with-open-dataspace (dataspace dataset)
-               (let ((rank (h5sget-simple-extent-ndims dataspace)))
+               (let ((rank (hdf5:h5sget-simple-extent-ndims dataspace)))
                  (with-foreign-objects ((dims 'hsize-t rank)
                                         (maxdims 'hsize-t rank))
-                   (h5sget-simple-extent-dims dataspace dims maxdims)
+                   (hdf5:h5sget-simple-extent-dims dataspace dims maxdims)
                    (mem-aref dims 'hsize-t 0))))))
     (with-foreign-string (cdataset-name dataset-name)
-      (let* ((dataset (h5dopen2 hdf-file cdataset-name +H5P-DEFAULT+))
+      (let* ((dataset (hdf5:h5dopen2 hdf-file cdataset-name hdf5:+H5P-DEFAULT+))
 	     (typespec (dataset-read-typespec dataset))
 	     (cstruct (typespec->cffi-type typespec))
-	     (hdf-row-type (h5dget-type dataset))
+	     (hdf-row-type (hdf5:h5dget-type dataset))
 	     (buffer-size
 	      (if (null buffer-size)
 		  ;; get buffer-size from the dataset
 		  ;; chunk-size:
                   ;; this needs cleaning up
-		  (let* ((create-plist (h5dget-create-plist dataset)))
+		  (let* ((create-plist (hdf5:h5dget-create-plist dataset)))
 		    (with-foreign-object (chunkdims 'hsize-t 1)
                       ;; this needs cleaning up
-		      (h5pget-chunk create-plist
-				    1
-				    chunkdims)
+		      (hdf5:h5pget-chunk create-plist
+				         1
+				         chunkdims)
 		      (mem-aref chunkdims 'hsize-t 0)))
 		  buffer-size))
 	     (row-buffer
@@ -143,8 +143,8 @@
   (let* ((typespec (cons :compound names-specs))
 	 (cstruct (typespec->cffi-type typespec))
 	 (row-buffer ;; (foreign-alloc cstruct
-		     ;;    	    :count
-		     ;;    	    buffer-size)
+	  ;;    	    :count
+	  ;;    	    buffer-size)
           (typespec-foreign-alloc typespec buffer-size))
 	 (hdf-type (typespec->hdf-type typespec))
 	 (dataset
@@ -154,18 +154,18 @@
 		  ((chunkdims 'hsize-t 1)
 		   (dims 'hsize-t 1)
 		   (maxdims 'hsize-t 1))
-		(setf cparms (h5pcreate +H5P-DATASET-CREATE+))
+		(setf cparms (hdf5:h5pcreate hdf5:+H5P-DATASET-CREATE+))
 		(setf (mem-aref chunkdims 'hsize-t 0) buffer-size)
 		(setf (mem-aref dims 'hsize-t 0) 0)
-		(setf (mem-aref maxdims 'hsize-t 0) +H5S-UNLIMITED+)
-		(h5pset-chunk cparms 1 chunkdims)
+		(setf (mem-aref maxdims 'hsize-t 0) hdf5:+H5S-UNLIMITED+)
+		(hdf5:h5pset-chunk cparms 1 chunkdims)
                 ;; this needs cleaning up
 		(with-create-dataspace (dataspace 1 dims maxdims)
-                  (h5dcreate1 hdf-file
-                              dataset-path
-                              hdf-type
-                              dataspace
-                              cparms)))))))
+                  (hdf5:h5dcreate1 hdf-file
+                                   dataset-path
+                                   hdf-type
+                                   dataspace
+                                   cparms)))))))
     (make-instance 'hdf-table
 		   :row-cstruct cstruct
                    :row-pointer
@@ -207,36 +207,36 @@ the dataset."
                                (dataspace-maxdims 'hsize-t 1)
                                (memdims 'hsize-t 1)
                                (memmaxdims 'hsize-t 1))
-	    (setf (mem-aref start 'hsize-t 0)
-                  (* buffer-size chunk-index))
-	    (setf (mem-aref stride 'hsize-t 0) 1)
-	    (setf (mem-aref count 'hsize-t 0) 1)
-	    (setf (mem-aref blck 'hsize-t 0) row-buffer-index)
-            (with-open-dataspace (dataspace dataset)
-              (h5sget-simple-extent-dims
-               dataspace dataspace-dims dataspace-maxdims)
-              (incf (mem-aref dataspace-dims 'hsize-t 0)
-                    row-buffer-index)
-              (h5dset-extent dataset dataspace-dims))
-            (with-open-dataspace (dataspace dataset)
-              (setf (mem-aref memdims 'hsize-t 0) row-buffer-index)
-              (setf (mem-aref memmaxdims 'hsize-t 0) row-buffer-index)
-              (with-create-dataspace (memspace 1 memdims memmaxdims)
-                (h5sselect-hyperslab
-                 dataspace :H5S-SELECT-SET start stride count blck)
-                (h5dwrite
-                 dataset hdf-type memspace
-                 dataspace +H5P-DEFAULT+ row-buffer))))))
+	  (setf (mem-aref start 'hsize-t 0)
+                (* buffer-size chunk-index))
+	  (setf (mem-aref stride 'hsize-t 0) 1)
+	  (setf (mem-aref count 'hsize-t 0) 1)
+	  (setf (mem-aref blck 'hsize-t 0) row-buffer-index)
+          (with-open-dataspace (dataspace dataset)
+            (hdf5:h5sget-simple-extent-dims
+             dataspace dataspace-dims dataspace-maxdims)
+            (incf (mem-aref dataspace-dims 'hsize-t 0)
+                  row-buffer-index)
+            (hdf5:h5dset-extent dataset dataspace-dims))
+          (with-open-dataspace (dataspace dataset)
+            (setf (mem-aref memdims 'hsize-t 0) row-buffer-index)
+            (setf (mem-aref memmaxdims 'hsize-t 0) row-buffer-index)
+            (with-create-dataspace (memspace 1 memdims memmaxdims)
+              (hdf5:h5sselect-hyperslab
+               dataspace :H5S-SELECT-SET start stride count blck)
+              (hdf5:h5dwrite
+               dataset hdf-type memspace
+               dataspace hdf5:+H5P-DEFAULT+ row-buffer))))))
     ;; no type closing for now, it's a complete headache and is
     ;; causing problems with memoization etc.
-    ;;(h5tclose hdf-type)
+    ;;(hdf5:h5tclose hdf-type)
     ;; (let ((typespec (cons :compound fields-specs)))
     ;;   (print 'typespec->hdf-type)
     ;;   (print (typespec->hdf-type :int))
     ;;   (remhash (list typespec) (get-memo-map #'typespec->hdf-type)))
     ;; (print 'hdf-type->typespec)
     ;; (remhash (list hdf-type) (get-memo-map #'hdf-type->typespec))
-    (h5dclose dataset)
+    (hdf5:h5dclose dataset)
     (foreign-free row-buffer)))
 
 (defmethod table-commit-row ((table hdf-table))
@@ -264,10 +264,10 @@ the dataset."
                              (memdims 'hsize-t 1)
                              (memmaxdims 'hsize-t 1))
         (with-open-dataspace (dataspace dataset)
-          (h5sget-simple-extent-dims
+          (hdf5:h5sget-simple-extent-dims
            dataspace dataspace-dims dataspace-maxdims)
           (incf (mem-aref dataspace-dims 'hsize-t 0) buffer-size)
-          (h5dset-extent dataset dataspace-dims))
+          (hdf5:h5dset-extent dataset dataspace-dims))
         (with-open-dataspace (dataspace dataset)
           (setf (mem-aref start 'hsize-t 0)
                 (* buffer-size chunk-index))
@@ -277,12 +277,12 @@ the dataset."
           (setf (mem-aref memdims 'hsize-t 0) buffer-size)
           (setf (mem-aref memmaxdims 'hsize-t 0) buffer-size)
           (with-create-dataspace (memspace 1 memdims memmaxdims)
-            (h5sselect-hyperslab dataspace
-                                 :H5S-SELECT-SET
-                                 start stride count blck)
-            (h5dwrite dataset hdf-type
-                      memspace dataspace
-                      +H5P-DEFAULT+ row-buffer))))
+            (hdf5:h5sselect-hyperslab dataspace
+                                      :H5S-SELECT-SET
+                                      start stride count blck)
+            (hdf5:h5dwrite dataset hdf-type
+                           memspace dataspace
+                           hdf5:+H5P-DEFAULT+ row-buffer))))
       (incf chunk-index)
       (setf row-buffer-index 0))))
 
@@ -368,20 +368,20 @@ the dataset."
                       (setf (mem-aref memdims 'hsize-t 0) chunk-size)
                       (setf (mem-aref memmaxdims 'hsize-t 0) chunk-size)
                       (with-open-dataspace (dataspace dataset)
-                        (h5sselect-hyperslab dataspace
-                                             :H5S-SELECT-SET
-                                             start
-                                             stride
-                                             count
-                                             blck)
+                        (hdf5:h5sselect-hyperslab dataspace
+                                                  :H5S-SELECT-SET
+                                                  start
+                                                  stride
+                                                  count
+                                                  blck)
                         (with-create-dataspace
                             (memspace 1 memdims memmaxdims)
-                          (h5dread dataset
-                                   row-hdf-type
-                                   memspace
-                                   dataspace
-                                   +H5P-DEFAULT+
-                                   row-buffer))
+                          (hdf5:h5dread dataset
+                                        row-hdf-type
+                                        memspace
+                                        dataspace
+                                        hdf5:+H5P-DEFAULT+
+                                        row-buffer))
                         (setf (hdf-table-row-buffer table) row-buffer)
                         (setf (hdf-table-chunk-index table) chunk-index))))))
               t)

@@ -27,7 +27,7 @@
   :license "GPLv3"
   :depends-on (#:cffi
                #:alexandria
-               #:hdf5-cffi
+               #:cl-ana.hdf-cffi
                #:cl-ana.pathname-utils
                #:cl-ana.memoization
                #:cl-ana.typespec

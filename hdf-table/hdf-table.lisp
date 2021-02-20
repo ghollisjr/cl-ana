@@ -92,26 +92,26 @@
 (defun open-hdf-table (hdf-file dataset-name &key buffer-size)
   (labels ((get-dataset-length (dataset)
              (with-open-dataspace (dataspace dataset)
-               (let ((rank (h5sget-simple-extent-ndims dataspace)))
+               (let ((rank (hdf5:h5sget-simple-extent-ndims dataspace)))
                  (with-foreign-objects ((dims 'hsize-t rank)
                                         (maxdims 'hsize-t rank))
-                   (h5sget-simple-extent-dims dataspace dims maxdims)
+                   (hdf5:h5sget-simple-extent-dims dataspace dims maxdims)
                    (mem-aref dims 'hsize-t 0))))))
-    (let* ((dataset (h5dopen2 hdf-file dataset-name +H5P-DEFAULT+))
+    (let* ((dataset (hdf5:h5dopen2 hdf-file dataset-name hdf5:+H5P-DEFAULT+))
            (typespec (dataset-read-typespec dataset))
            (cstruct (typespec->cffi-type typespec))
-           (hdf-row-type (h5dget-type dataset))
+           (hdf-row-type (hdf5:h5dget-type dataset))
            (buffer-size
             (if (null buffer-size)
                 ;; get buffer-size from the dataset
                 ;; chunk-size:
                 ;; this needs cleaning up
-                (let* ((create-plist (h5dget-create-plist dataset)))
+                (let* ((create-plist (hdf5:h5dget-create-plist dataset)))
                   (with-foreign-object (chunkdims 'hsize-t 1)
                     ;; this needs cleaning up
-                    (h5pget-chunk create-plist
-                                  1
-                                  chunkdims)
+                    (hdf5:h5pget-chunk create-plist
+                                       1
+                                       chunkdims)
                     (mem-aref chunkdims 'hsize-t 0)))
                 buffer-size))
            (row-buffer
@@ -154,18 +154,18 @@
 		  ((chunkdims 'hsize-t 1)
 		   (dims 'hsize-t 1)
 		   (maxdims 'hsize-t 1))
-		(setf cparms (h5pcreate +H5P-DATASET-CREATE+))
+		(setf cparms (hdf5:h5pcreate hdf5:+H5P-DATASET-CREATE+))
 		(setf (mem-aref chunkdims 'hsize-t 0) buffer-size)
 		(setf (mem-aref dims 'hsize-t 0) 0)
-		(setf (mem-aref maxdims 'hsize-t 0) +H5S-UNLIMITED+)
-		(h5pset-chunk cparms 1 chunkdims)
+		(setf (mem-aref maxdims 'hsize-t 0) hdf5:+H5S-UNLIMITED+)
+		(hdf5:h5pset-chunk cparms 1 chunkdims)
                 ;; this needs cleaning up
 		(with-create-dataspace (dataspace 1 dims maxdims)
-                  (h5dcreate1 hdf-file
-                              dataset-path
-                              hdf-type
-                              dataspace
-                              cparms)))))))
+                  (hdf5:h5dcreate1 hdf-file
+                                   dataset-path
+                                   hdf-type
+                                   dataspace
+                                   cparms)))))))
     (make-instance 'hdf-table
 		   :row-cstruct cstruct
                    :row-pointer
@@ -213,23 +213,23 @@ the dataset."
           (setf (mem-aref count 'hsize-t 0) 1)
           (setf (mem-aref blck 'hsize-t 0) row-buffer-index)
           (with-open-dataspace (dataspace dataset)
-            (h5sget-simple-extent-dims
+            (hdf5:h5sget-simple-extent-dims
              dataspace dataspace-dims dataspace-maxdims)
             (incf (mem-aref dataspace-dims 'hsize-t 0)
                   row-buffer-index)
-            (h5dset-extent dataset dataspace-dims))
+            (hdf5:h5dset-extent dataset dataspace-dims))
           (with-open-dataspace (dataspace dataset)
             (setf (mem-aref memdims 'hsize-t 0) row-buffer-index)
             (setf (mem-aref memmaxdims 'hsize-t 0) row-buffer-index)
             (with-create-dataspace (memspace 1 memdims memmaxdims)
-              (h5sselect-hyperslab
+              (hdf5:h5sselect-hyperslab
                dataspace :H5S-SELECT-SET start stride count blck)
-              (h5dwrite
+              (hdf5:h5dwrite
                dataset hdf-type memspace
-               dataspace +H5P-DEFAULT+ row-buffer))))))
+               dataspace hdf5:+H5P-DEFAULT+ row-buffer))))))
     ;; no type closing for now, it's a complete headache and is
     ;; causing problems with memoization etc.
-    
+
     ;; (let ((typespec (cons :compound fields-specs)))
     ;;   (print 'typespec->hdf-type)
     ;;   (print (typespec->hdf-type :int))
@@ -263,10 +263,10 @@ the dataset."
                              (memdims 'hsize-t 1)
                              (memmaxdims 'hsize-t 1))
         (with-open-dataspace (dataspace dataset)
-          (h5sget-simple-extent-dims
+          (hdf5:h5sget-simple-extent-dims
            dataspace dataspace-dims dataspace-maxdims)
           (incf (mem-aref dataspace-dims 'hsize-t 0) buffer-size)
-          (h5dset-extent dataset dataspace-dims))
+          (hdf5:h5dset-extent dataset dataspace-dims))
         (with-open-dataspace (dataspace dataset)
           (setf (mem-aref start 'hsize-t 0)
                 (* buffer-size chunk-index))
@@ -276,12 +276,12 @@ the dataset."
           (setf (mem-aref memdims 'hsize-t 0) buffer-size)
           (setf (mem-aref memmaxdims 'hsize-t 0) buffer-size)
           (with-create-dataspace (memspace 1 memdims memmaxdims)
-            (h5sselect-hyperslab dataspace
-                                 :H5S-SELECT-SET
-                                 start stride count blck)
-            (h5dwrite dataset hdf-type
-                      memspace dataspace
-                      +H5P-DEFAULT+ row-buffer))))
+            (hdf5:h5sselect-hyperslab dataspace
+                                      :H5S-SELECT-SET
+                                      start stride count blck)
+            (hdf5:h5dwrite dataset hdf-type
+                           memspace dataspace
+                           hdf5:+H5P-DEFAULT+ row-buffer))))
       (incf chunk-index)
       (setf row-buffer-index 0))))
 
@@ -367,20 +367,20 @@ the dataset."
                       (setf (mem-aref memdims 'hsize-t 0) chunk-size)
                       (setf (mem-aref memmaxdims 'hsize-t 0) chunk-size)
                       (with-open-dataspace (dataspace dataset)
-                        (h5sselect-hyperslab dataspace
-                                             :H5S-SELECT-SET
-                                             start
-                                             stride
-                                             count
-                                             blck)
+                        (hdf5:h5sselect-hyperslab dataspace
+                                                  :H5S-SELECT-SET
+                                                  start
+                                                  stride
+                                                  count
+                                                  blck)
                         (with-create-dataspace
                             (memspace 1 memdims memmaxdims)
-                          (h5dread dataset
-                                   row-hdf-type
-                                   memspace
-                                   dataspace
-                                   +H5P-DEFAULT+
-                                   row-buffer))
+                          (hdf5:h5dread dataset
+                                        row-hdf-type
+                                        memspace
+                                        dataspace
+                                        hdf5:+H5P-DEFAULT+
+                                        row-buffer))
                         (setf (hdf-table-row-buffer table) row-buffer)
                         (setf (hdf-table-chunk-index table) chunk-index))))))
               t)

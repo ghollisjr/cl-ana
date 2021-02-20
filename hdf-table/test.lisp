@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -64,7 +64,7 @@
     (let ((result 0)
 	  (last-row-index 0))
       (setf *table-typespec* (typed-table->typespec *table*))
-      (setf *hdf-size* (h5tget-size (hdf-table-row-type *table*)))
+      (setf *hdf-size* (hdf5:h5tget-size (hdf-table-row-type *table*)))
       (setf *hdf-typespec* (hdf-type->typespec (hdf-table-row-type *table*)))
       (setf *cstruct-size* (foreign-type-size (typed-table-row-cstruct *table*)))
       (do-table (row-index *table*)
@@ -81,9 +81,9 @@
 		       :if-exists :supersede)
     (let* ((table
             (create-hdf-table file
-                            "/test"
-                            (list (cons "x" :int)
-                                  (cons "y" :float)))))
+                              "/test"
+                              (list (cons "x" :int)
+                                    (cons "y" :float)))))
       ;;(print (typed-table-type-map table))
       (dotimes (i 1000000)
 	(table-set-field table :|x| i)
@@ -107,8 +107,8 @@
 			       :direction :output
 			       :if-exists :supersede)
     (let ((output-table (create-hdf-table outfile "/output-dataset"
-                                        (zip (list "x" "y")
-                                             (list :int :float))))
+                                          (zip (list "x" "y")
+                                               (list :int :float))))
           (input-table
            (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
       ;;(open-hdf-table infile "/test")))
@@ -117,7 +117,7 @@
         ;; (format t "~a ~a; ~a ~a~%"
         ;;         row-index (sqrt row-index)
         ;;         x y)
-        
+
         (when (> row-index (hdf-table-chain-nrows input-table))
           (when (zerop (mod row-index 1000))
             (print row-index)))
@@ -133,8 +133,8 @@
 			       :direction :output
 			       :if-exists :supersede)
     (let ((output-table (create-hdf-table outfile "/output-dataset"
-					(zip (list "x" "y")
-					     (list :int :float))))
+					  (zip (list "x" "y")
+					       (list :int :float))))
 	  (input-table
 	   (open-hdf-table-chain (list "/home/ghollisjr/hdfwork/test.h5") "/test")))
       (do-table (row-index input-table)

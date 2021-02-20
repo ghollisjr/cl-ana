@@ -66,22 +66,22 @@ will be given the symbol as the sole argument."
 (defmacro with-open-dataspace ((dataspace dataset) &body body)
   "Safely work with dataspace taken from dataset"
   `(with-cleanup
-       ((,dataspace (h5dget-space ,dataset)
-                    #'h5sclose))
+       ((,dataspace (hdf5:h5dget-space ,dataset)
+                    #'hdf5:h5sclose))
      ,@body))
 
 (defmacro with-create-dataspace ((dataspace rank dims maxdims)
                                  &body body)
   "Creates a new dataspace and cleans up after it"
   `(with-cleanup
-       ((,dataspace (h5screate-simple ,rank ,dims ,maxdims)
-                    #'h5sclose))
+       ((,dataspace (hdf5:h5screate-simple ,rank ,dims ,maxdims)
+                    #'hdf5:h5sclose))
      ,@body))
 
 (defmacro with-dataset-type ((type dataset) &body body)
   `(with-cleanup
-       ((,type (h5dget-type ,dataset)
-               #'h5tclose))
+       ((,type (hdf5:h5dget-type ,dataset)
+               #'hdf5:h5tclose))
      ,@body))
 
 ;;;; File utilities:
@@ -90,8 +90,8 @@ will be given the symbol as the sole argument."
     (filename &key direction
 		(if-exists nil if-exists-supplied-p)
 		(if-does-not-exist nil if-does-not-exist-supplied-p)
-		(read-access-parameters +H5P-DEFAULT+)
-		(write-access-parameters (list +H5P-DEFAULT+ +H5P-DEFAULT+)))
+		(read-access-parameters hdf5:+H5P-DEFAULT+)
+		(write-access-parameters (list hdf5:+H5P-DEFAULT+ hdf5:+H5P-DEFAULT+)))
   "Opens an hdf file, returning a handle to the file (hid-t).
 
 direction can be :input or :output.
@@ -110,7 +110,7 @@ if-does-not-exist can be :create :error nil"
          (setf if-does-not-exist :error))
        (let ((file-exists-p (probe-file filename)))
          (if file-exists-p
-             (h5fopen filename +H5F-ACC-RDONLY+ read-access-parameters)
+             (hdf5:h5fopen filename hdf5:+H5F-ACC-RDONLY+ read-access-parameters)
              (case if-does-not-exist
                (:error (error "File does not exist"))
                (nil nil)))))
@@ -131,18 +131,25 @@ if-does-not-exist can be :create :error nil"
                (nil nil)
                (:supersede
                 (delete-file filename)
-                (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
+                (apply #'hdf5:h5fcreate
+                       filename hdf5:+H5F-ACC-TRUNC+
+                       write-access-parameters))
                (:rename
                 (progn
                   ;; rename "file" to "file.bak"
                   ;; then create new file
                   (rename-file filename (concatenate 'string filename ".bak"))
-                  (apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters)))
+                  (apply #'hdf5:h5fcreate
+                         filename hdf5:+H5F-ACC-TRUNC+
+                         write-access-parameters)))
                (:append
-                (h5fopen filename +H5F-ACC-RDWR+ read-access-parameters)))
+                (hdf5:h5fopen filename
+                              hdf5:+H5F-ACC-RDWR+
+                              read-access-parameters)))
 	     (case if-does-not-exist
 	       (:create
-		(apply #'h5fcreate filename +H5F-ACC-TRUNC+ write-access-parameters))
+		(apply #'hdf5:h5fcreate filename
+                       hdf5:+H5F-ACC-TRUNC+ write-access-parameters))
 	       (:error (error "file does not exist"))
 	       (nil nil))))))))
 
@@ -151,14 +158,14 @@ if-does-not-exist can be :create :error nil"
 file"
   (reset-memo-map #'typespec->hdf-type)
   (reset-memo-map #'hdf-type->typespec)
-  (let ((nobs (h5fget-obj-count hdf-file +H5F-OBJ-ALL+))
+  (let ((nobs (hdf5:h5fget-obj-count hdf-file hdf5:+H5F-OBJ-ALL+))
         (ids nil))
     (when (plusp nobs)
       (with-foreign-object (raw-ids 'hid-t nobs)
-        (h5fget-obj-ids hdf-file
-                        +H5F-OBJ-ALL+
-                        nobs
-                        raw-ids)
+        (hdf5:h5fget-obj-ids hdf-file
+                             hdf5:+H5F-OBJ-ALL+
+                             nobs
+                             raw-ids)
         (setf ids
               (loop
                  for i below nobs
@@ -167,12 +174,12 @@ file"
        for id in ids
        do
        ;; In the future, detect type instead of trying everything
-         (h5fclose id)
-         (h5dclose id)
-         (h5gclose id)
-         (h5tclose id)
-         (h5aclose id)))
-  (h5fclose hdf-file))
+         (hdf5:h5fclose id)
+         (hdf5:h5dclose id)
+         (hdf5:h5gclose id)
+         (hdf5:h5tclose id)
+         (hdf5:h5aclose id)))
+  (hdf5:h5fclose hdf-file))
 
 (defmacro with-open-hdf-file ((hdf-file
 			       file-path-or-string
@@ -180,8 +187,9 @@ file"
 			       direction
 			       (if-exists nil if-exists-supplied-p)
 			       (if-does-not-exist nil if-does-not-exist-supplied-p)
-			       (read-access-parameters +H5P-DEFAULT+)
-			       (write-access-parameters (list +H5P-DEFAULT+ +H5P-DEFAULT+)))
+			       (read-access-parameters hdf5:+H5P-DEFAULT+)
+			       (write-access-parameters (list hdf5:+H5P-DEFAULT+
+                                                              hdf5:+H5P-DEFAULT+)))
 			      &body body)
 
   "Macro providing lispy access to hdf (HDF5) files.  Use just like
@@ -206,12 +214,12 @@ handle inside of the macro body."
     `(let ((,hdf-file
             (open-hdf-file ,file-path-or-string
                            ,@(when-keywords
-                              direction
-                              if-exists
-                              if-does-not-exist
-                              read-access-parameters
-                              (:write-access-parameters
-                               (cons 'list write-access-parameters))))))
+                               direction
+                               if-exists
+                               if-does-not-exist
+                               read-access-parameters
+                               (:write-access-parameters
+                                (cons 'list write-access-parameters))))))
        ,body-with-close)))
 
 (defun hdf-mkgroup (file group-name)
@@ -221,5 +229,5 @@ to group with final '/' included."
          (if (not (equal (last-elt group-name) #\/))
              group-name
              (subseq group-name 0 (1- (length group-name))))))
-    (h5gclose (h5gcreate1 file group-name 0))
+    (hdf5:h5gclose (hdf5:h5gcreate1 file group-name 0))
     (string-append group-name "/")))

@@ -127,6 +127,13 @@ names or none of them do."
                 (|high| (->double-float (getf plist :high))))))
       (table-close bin-spec-table))))
 
+;; utility function
+(defun h5tget-member-name-as-lisp-string (hdf-type i)
+  (let* ((name (hdf5:h5tget-member-name hdf-type i))
+         (lisp-name (cffi:foreign-string-to-lisp name)))
+    (cffi:foreign-free name)
+    lisp-name))
+
 ;; new version which uses raw HDF5 functions
 (defun read-histogram (file hdf-path &optional (type :sparse))
   "Reads a histogram from an hdf-table with file and path.
@@ -141,19 +148,19 @@ sparse-histogram respectively."
     (let* ((binspec-path
             (subpath *histogram-bin-spec-path*))
            (binspec-dataset
-            (h5dopen2 file binspec-path +H5P-DEFAULT+))
+            (hdf5:h5dopen2 file binspec-path hdf5:+H5P-DEFAULT+))
            (binspec-datatype
-            (h5dget-type binspec-dataset))
+            (hdf5:h5dget-type binspec-dataset))
            (binspec-dataspace
-            (h5dget-space binspec-dataset))
+            (hdf5:h5dget-space binspec-dataset))
            (data-path
             (subpath *histogram-data-path*))
            (data-dataset
-            (h5dopen2 file data-path +H5P-DEFAULT+))
+            (hdf5:h5dopen2 file data-path hdf5:+H5P-DEFAULT+))
            (data-datatype
-            (h5dget-type data-dataset))
+            (hdf5:h5dget-type data-dataset))
            (data-dataspace
-            (h5dget-space data-dataset))
+            (hdf5:h5dget-space data-dataset))
 
            binspec-chunk-size
            nrows
@@ -180,21 +187,22 @@ sparse-histogram respectively."
                              (memspace-dims 'hdf5:hsize-t)
                              (memspace-maxdims 'hdf5:hsize-t))
         (let ((create-plist
-               (h5dget-create-plist binspec-dataset)))
-          (h5pget-chunk create-plist 1 binspec-chunk-dims))
+               (hdf5:h5dget-create-plist binspec-dataset)))
+          (hdf5:h5pget-chunk create-plist 1 binspec-chunk-dims))
         (setf binspec-chunk-size
               (mem-aref binspec-chunk-dims 'hdf5:hsize-t))
-        (h5sget-simple-extent-dims binspec-dataspace
-                                   binspec-dataset-dims
-                                   (null-pointer))
+        (hdf5:h5sget-simple-extent-dims binspec-dataspace
+                                        binspec-dataset-dims
+                                        (null-pointer))
         (setf ndims
               (mem-aref binspec-dataset-dims 'hdf5:hsize-t))
-        (h5tget-array-dims2 (h5tget-member-type binspec-datatype
-                                                0)
-                            binspec-name-dims)
+        (hdf5:h5tget-array-dims2
+         (hdf5:h5tget-member-type binspec-datatype
+                                  0)
+         binspec-name-dims)
 
         (setf binspec-row-size
-              (h5tget-size binspec-datatype))
+              (hdf5:h5tget-size binspec-datatype))
         (setf binspec-buffer-size
               (* binspec-chunk-size binspec-row-size))
         (with-foreign-object (buffer :char binspec-buffer-size)
@@ -226,20 +234,20 @@ sparse-histogram respectively."
                        1)
                  (setf (mem-aref blck 'hdf5:hsize-t)
                        (mem-aref memspace-dims 'hdf5:hsize-t))
-                 (h5sselect-hyperslab binspec-dataspace
-                                      :H5S-SELECT-SET
-                                      start
-                                      stride
-                                      cnt
-                                      blck)
+                 (hdf5:h5sselect-hyperslab binspec-dataspace
+                                           :H5S-SELECT-SET
+                                           start
+                                           stride
+                                           cnt
+                                           blck)
                  (setf memspace
-                       (h5screate-simple 1 memspace-dims memspace-maxdims))
-                 (h5dread binspec-dataset
-                          binspec-datatype
-                          memspace
-                          binspec-dataspace
-                          +H5P-DEFAULT+
-                          buffer)
+                       (hdf5:h5screate-simple 1 memspace-dims memspace-maxdims))
+                 (hdf5:h5dread binspec-dataset
+                               binspec-datatype
+                               memspace
+                               binspec-dataspace
+                               hdf5:+H5P-DEFAULT+
+                               buffer)
                  (loop
                     for i from 0 below (mem-aref memspace-dims 'hdf5:hsize-t)
                     do (let* ((buffer-index
@@ -248,8 +256,8 @@ sparse-histogram respectively."
                               (name-length
                                (mem-aref
                                 (mem-aptr buffer :char
-                                          (+ (h5tget-member-offset binspec-datatype
-                                                                   1)
+                                          (+ (hdf5:h5tget-member-offset binspec-datatype
+                                                                        1)
                                              buffer-index))
                                 :int))
                               (name
@@ -262,7 +270,7 @@ sparse-histogram respectively."
                                             (int-char
                                              (mem-aref
                                               buffer :char
-                                              (+ (h5tget-member-offset
+                                              (+ (hdf5:h5tget-member-offset
                                                   binspec-datatype 0)
                                                  buffer-index
                                                  j)))))
@@ -270,21 +278,21 @@ sparse-histogram respectively."
                               (nbins
                                (mem-aref
                                 (mem-aptr buffer :char
-                                          (+ (h5tget-member-offset
+                                          (+ (hdf5:h5tget-member-offset
                                               binspec-datatype 2)
                                              buffer-index))
                                 :int))
                               (low
                                (mem-aref
                                 (mem-aptr buffer :char
-                                          (+ (h5tget-member-offset
+                                          (+ (hdf5:h5tget-member-offset
                                               binspec-datatype 3)
                                              buffer-index))
                                 :double))
                               (high
                                (mem-aref
                                 (mem-aptr buffer :char
-                                          (+ (h5tget-member-offset
+                                          (+ (hdf5:h5tget-member-offset
                                               binspec-datatype 4)
                                              buffer-index))
                                 :double)))
@@ -301,18 +309,18 @@ sparse-histogram respectively."
                            (make-sparse-hist binspecs)
                            (make-contiguous-hist binspecs))))))
         (let ((create-plist
-               (h5dget-create-plist data-dataset)))
-          (h5pget-chunk create-plist 1 data-chunk-dims))
+               (hdf5:h5dget-create-plist data-dataset)))
+          (hdf5:h5pget-chunk create-plist 1 data-chunk-dims))
         (setf data-chunk-size
               (mem-aref data-chunk-dims 'hdf5:hsize-t))
-        (h5sget-simple-extent-dims data-dataspace
-                                   data-dataset-dims
-                                   (null-pointer))
+        (hdf5:h5sget-simple-extent-dims data-dataspace
+                                        data-dataset-dims
+                                        (null-pointer))
         (setf nrows
               (mem-aref data-dataset-dims
                         'hdf5:hsize-t))
         (let ((second-field-name
-               (h5tget-member-name data-datatype 1)))
+               (h5tget-member-name-as-lisp-string data-datatype 1)))
           (if (equal second-field-name
                      "count-error")
               (progn
@@ -332,7 +340,7 @@ sparse-histogram respectively."
                            :default-increment (+- 1 1)))))
               (setf n-count-vars 1)))
         (setf data-row-size
-              (h5tget-size data-datatype))
+              (hdf5:h5tget-size data-datatype))
 
         (setf data-buffer-size
               (* data-row-size
@@ -354,22 +362,22 @@ sparse-histogram respectively."
                   1)
             (setf (mem-aref blck 'hdf5:hsize-t)
                   (mem-aref memspace-dims 'hdf5:hsize-t))
-            (h5sselect-hyperslab data-dataspace
-                                 :H5S-SELECT-SET
-                                 start
-                                 stride
-                                 cnt
-                                 blck)
+            (hdf5:h5sselect-hyperslab data-dataspace
+                                      :H5S-SELECT-SET
+                                      start
+                                      stride
+                                      cnt
+                                      blck)
             (setf memspace
-                  (h5screate-simple 1
-                                    memspace-dims
-                                    memspace-maxdims))
-            (h5dread data-dataset
-                     data-datatype
-                     memspace
-                     data-dataspace
-                     +H5P-DEFAULT+
-                     buffer)
+                  (hdf5:h5screate-simple 1
+                                         memspace-dims
+                                         memspace-maxdims))
+            (hdf5:h5dread data-dataset
+                          data-datatype
+                          memspace
+                          data-dataspace
+                          hdf5:+H5P-DEFAULT+
+                          buffer)
             (loop
                for i below (mem-aref memspace-dims 'hdf5:hsize-t)
                do
@@ -381,7 +389,7 @@ sparse-histogram respectively."
                                (mem-aptr buffer
                                          :char
                                          (+ buffer-index
-                                            (h5tget-member-offset
+                                            (hdf5:h5tget-member-offset
                                              data-datatype 0)))
                                :double))
                            (2 (+- (mem-aref
@@ -389,14 +397,14 @@ sparse-histogram respectively."
                                     buffer
                                     :char
                                     (+ buffer-index
-                                       (h5tget-member-offset data-datatype 0)))
+                                       (hdf5:h5tget-member-offset data-datatype 0)))
                                    :double)
                                   (mem-aref
                                    (mem-aptr
                                     buffer
                                     :char
                                     (+ buffer-index
-                                       (h5tget-member-offset data-datatype 1)))
+                                       (hdf5:h5tget-member-offset data-datatype 1)))
                                    :double)))))
                         (xs
                          (loop
@@ -405,7 +413,7 @@ sparse-histogram respectively."
                               (mem-aref (mem-aptr buffer
                                                   :char
                                                   (+ buffer-index
-                                                     (h5tget-member-offset
+                                                     (hdf5:h5tget-member-offset
                                                       data-datatype
                                                       (+ n-count-vars dim))))
                                         :double))))

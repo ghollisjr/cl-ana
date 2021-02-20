@@ -40,7 +40,7 @@
   (cdr (find hdf-native-type *hdf-cffi-type-map*
 	     :key #'car
 	     :test (lambda (t1 t2)
-                     (let ((cmp (h5tequal t1 t2)))
+                     (let ((cmp (hdf5:h5tequal t1 t2)))
                        (if (zerop cmp)
                            nil
                            t))))))
@@ -66,7 +66,7 @@
                 for d in dim-list
                 for i from 0
                 do (setf (mem-aref dims 'hsize-t i) d))
-	     (h5tarray-create2 type rank dims))))
+	     (hdf5:h5tarray-create2 type rank dims))))
 	(:compound
 	 (let* ((names (typespec-compound-field-names typespec))
 		(specs (typespec-compound-field-specs typespec))
@@ -77,19 +77,20 @@
 		(cstruct (typespec->cffi-type typespec))
 		(offsets (mapcar (lambda (x) (foreign-slot-offset cstruct x))
 				 slot-symbols))
-		(compound-tid (h5tcreate :H5T-COMPOUND (foreign-type-size cstruct))))
+		(compound-tid (hdf5:h5tcreate
+                               :H5T-COMPOUND (foreign-type-size cstruct))))
 	   (loop
 	      for name in names
 	      for offset in offsets
 	      for type in hdf-types
-	      do (h5tinsert compound-tid name offset type))
+	      do (hdf5:h5tinsert compound-tid name offset type))
 	   compound-tid)))
       ;; return the hdf type corresponding to the cffi type:
       (hdf-native-type typespec)))
 
 ;; Construct typespec from hdf type:
 (defun h5tget-member-name-as-lisp-string (hdf-type i)
-  (let* ((name (h5tget-member-name hdf-type i))
+  (let* ((name (hdf5:h5tget-member-name hdf-type i))
          (lisp-name (cffi:foreign-string-to-lisp name)))
     (cffi:foreign-free name)
     lisp-name))
@@ -97,18 +98,18 @@
 (defun-memoized hdf-type->typespec (hdf-type)
   ;; (defun hdf-type->typespec (hdf-type)
   ;; may need cleaning up
-  (let ((hdf-class (h5tget-class hdf-type)))
+  (let ((hdf-class (hdf5:h5tget-class hdf-type)))
     (case hdf-class
       (:H5T-INTEGER
-       (cffi-native-type (h5tget-native-type hdf-type :H5T-DIR-DEFAULT)))
+       (cffi-native-type (hdf5:h5tget-native-type hdf-type :H5T-DIR-DEFAULT)))
       (:H5T-FLOAT
-       (cffi-native-type (h5tget-native-type hdf-type :H5T-DIR-DEFAULT)))
+       (cffi-native-type (hdf5:h5tget-native-type hdf-type :H5T-DIR-DEFAULT)))
       (:H5T-ARRAY
-       (let* ((base-type (h5tget-super hdf-type))
-	      (native-base-type (h5tget-native-type base-type :H5T-DIR-DEFAULT))
-	      (array-rank (h5tget-array-ndims hdf-type)))
+       (let* ((base-type (hdf5:h5tget-super hdf-type))
+	      (native-base-type (hdf5:h5tget-native-type base-type :H5T-DIR-DEFAULT))
+	      (array-rank (hdf5:h5tget-array-ndims hdf-type)))
 	 (with-foreign-object (array-dims-pointer 'hsize-t array-rank)
-	   (h5tget-array-dims2 hdf-type array-dims-pointer)
+	   (hdf5:h5tget-array-dims2 hdf-type array-dims-pointer)
 	   (let (array-dims)
 	     (dotimes (index array-rank)
 	       (push (mem-aref array-dims-pointer 'hsize-t index)
@@ -117,15 +118,13 @@
                      (list (cffi-native-type native-base-type))
                      array-dims)))))
       (:H5T-COMPOUND
-       (let* ((nmembers (h5tget-nmembers hdf-type))
+       (let* ((nmembers (hdf5:h5tget-nmembers hdf-type))
 	      (names
 	       (loop for i from 0 to (1- nmembers)
                   collecting (h5tget-member-name-as-lisp-string hdf-type i)))
 	      (member-typespecs
 	       (loop for i from 0 to (1- nmembers)
                   collecting (hdf-type->typespec
-                              (h5tget-member-type hdf-type i))))
+                              (hdf5:h5tget-member-type hdf-type i))))
 	      (names-specs (zip names member-typespecs)))
 	 (cons :compound names-specs))))))
-
-
