@@ -172,23 +172,23 @@ sparse-histogram respectively."
            n-count-vars
 
            hist)
-      (with-foreign-objects ((binspec-dataset-dims 'hsize-t)
-                             (binspec-chunk-dims 'hsize-t)
-                             (binspec-name-dims 'hsize-t)
-                             (data-dataset-dims 'hsize-t)
-                             (data-chunk-dims 'hsize-t)
-                             (memspace-dims 'hsize-t)
-                             (memspace-maxdims 'hsize-t))
+      (with-foreign-objects ((binspec-dataset-dims 'hdf5:hsize-t)
+                             (binspec-chunk-dims 'hdf5:hsize-t)
+                             (binspec-name-dims 'hdf5:hsize-t)
+                             (data-dataset-dims 'hdf5:hsize-t)
+                             (data-chunk-dims 'hdf5:hsize-t)
+                             (memspace-dims 'hdf5:hsize-t)
+                             (memspace-maxdims 'hdf5:hsize-t))
         (let ((create-plist
                (h5dget-create-plist binspec-dataset)))
           (h5pget-chunk create-plist 1 binspec-chunk-dims))
         (setf binspec-chunk-size
-              (mem-aref binspec-chunk-dims 'hsize-t))
+              (mem-aref binspec-chunk-dims 'hdf5:hsize-t))
         (h5sget-simple-extent-dims binspec-dataspace
                                    binspec-dataset-dims
                                    (null-pointer))
         (setf ndims
-              (mem-aref binspec-dataset-dims 'hsize-t))
+              (mem-aref binspec-dataset-dims 'hdf5:hsize-t))
         (h5tget-array-dims2 (h5tget-member-type binspec-datatype
                                                 0)
                             binspec-name-dims)
@@ -207,25 +207,25 @@ sparse-histogram respectively."
                       (- ndims
                          (* chunk-index binspec-chunk-size))))
                  (if (< remaining-rows binspec-chunk-size)
-                     (setf (mem-aref memspace-dims 'hsize-t 0)
+                     (setf (mem-aref memspace-dims 'hdf5:hsize-t 0)
                            remaining-rows)
-                     (setf (mem-aref memspace-dims 'hsize-t 0)
+                     (setf (mem-aref memspace-dims 'hdf5:hsize-t 0)
                            binspec-chunk-size)))
-               (setf (mem-aref memspace-maxdims 'hsize-t)
-                     (mem-aref memspace-dims 'hsize-t))
-               (with-foreign-objects ((start 'hsize-t)
-                                      (stride 'hsize-t)
-                                      (cnt 'hsize-t)
-                                      (blck 'hsize-t))
-                 (setf (mem-aref start 'hsize-t)
+               (setf (mem-aref memspace-maxdims 'hdf5:hsize-t)
+                     (mem-aref memspace-dims 'hdf5:hsize-t))
+               (with-foreign-objects ((start 'hdf5:hsize-t)
+                                      (stride 'hdf5:hsize-t)
+                                      (cnt 'hdf5:hsize-t)
+                                      (blck 'hdf5:hsize-t))
+                 (setf (mem-aref start 'hdf5:hsize-t)
                        (* chunk-index
                           binspec-chunk-size))
-                 (setf (mem-aref stride 'hsize-t)
+                 (setf (mem-aref stride 'hdf5:hsize-t)
                        1)
-                 (setf (mem-aref cnt 'hsize-t)
+                 (setf (mem-aref cnt 'hdf5:hsize-t)
                        1)
-                 (setf (mem-aref blck 'hsize-t)
-                       (mem-aref memspace-dims 'hsize-t))
+                 (setf (mem-aref blck 'hdf5:hsize-t)
+                       (mem-aref memspace-dims 'hdf5:hsize-t))
                  (h5sselect-hyperslab binspec-dataspace
                                       :H5S-SELECT-SET
                                       start
@@ -241,7 +241,7 @@ sparse-histogram respectively."
                           +H5P-DEFAULT+
                           buffer)
                  (loop
-                    for i from 0 below (mem-aref memspace-dims 'hsize-t)
+                    for i from 0 below (mem-aref memspace-dims 'hdf5:hsize-t)
                     do (let* ((buffer-index
                                (+ (* i binspec-row-size)
                                   (* binspec-chunk-size chunk-index)))
@@ -304,13 +304,13 @@ sparse-histogram respectively."
                (h5dget-create-plist data-dataset)))
           (h5pget-chunk create-plist 1 data-chunk-dims))
         (setf data-chunk-size
-              (mem-aref data-chunk-dims 'hsize-t))
+              (mem-aref data-chunk-dims 'hdf5:hsize-t))
         (h5sget-simple-extent-dims data-dataspace
                                    data-dataset-dims
                                    (null-pointer))
         (setf nrows
               (mem-aref data-dataset-dims
-                        'hsize-t))
+                        'hdf5:hsize-t))
         (let ((second-field-name
                (h5tget-member-name data-datatype 1)))
           (if (equal second-field-name
@@ -336,24 +336,24 @@ sparse-histogram respectively."
 
         (setf data-buffer-size
               (* data-row-size
-                 (mem-aref data-dataset-dims 'hsize-t)))
+                 (mem-aref data-dataset-dims 'hdf5:hsize-t)))
         (with-foreign-object (buffer :char data-buffer-size)
-          (setf (mem-aref memspace-dims 'hsize-t)
-                (mem-aref data-dataset-dims 'hsize-t))
-          (setf (mem-aref memspace-maxdims 'hsize-t)
-                (mem-aref memspace-dims 'hsize-t))
-          (with-foreign-objects ((start 'hsize-t)
-                                 (stride 'hsize-t)
-                                 (cnt 'hsize-t)
-                                 (blck 'hsize-t))
-            (setf (mem-aref start 'hsize-t)
+          (setf (mem-aref memspace-dims 'hdf5:hsize-t)
+                (mem-aref data-dataset-dims 'hdf5:hsize-t))
+          (setf (mem-aref memspace-maxdims 'hdf5:hsize-t)
+                (mem-aref memspace-dims 'hdf5:hsize-t))
+          (with-foreign-objects ((start 'hdf5:hsize-t)
+                                 (stride 'hdf5:hsize-t)
+                                 (cnt 'hdf5:hsize-t)
+                                 (blck 'hdf5:hsize-t))
+            (setf (mem-aref start 'hdf5:hsize-t)
                   0)
-            (setf (mem-aref stride 'hsize-t)
+            (setf (mem-aref stride 'hdf5:hsize-t)
                   1)
-            (setf (mem-aref cnt 'hsize-t)
+            (setf (mem-aref cnt 'hdf5:hsize-t)
                   1)
-            (setf (mem-aref blck 'hsize-t)
-                  (mem-aref memspace-dims 'hsize-t))
+            (setf (mem-aref blck 'hdf5:hsize-t)
+                  (mem-aref memspace-dims 'hdf5:hsize-t))
             (h5sselect-hyperslab data-dataspace
                                  :H5S-SELECT-SET
                                  start
@@ -371,7 +371,7 @@ sparse-histogram respectively."
                      +H5P-DEFAULT+
                      buffer)
             (loop
-               for i below (mem-aref memspace-dims 'hsize-t)
+               for i below (mem-aref memspace-dims 'hdf5:hsize-t)
                do
                  (let* ((buffer-index
                          (* i data-row-size))

@@ -25,7 +25,6 @@
         :cl-ana.histogram
         :cl-ana.int-char
         :cl-ana.hdf-utils
-        :cl-ana.hdf-cffi
         :cl-ana.error-propogation
         :cl-ana.macro-utils
         :cl-ana.typespec
