@@ -28,6 +28,7 @@
   :license "GPLv3"
   :depends-on (#:cffi
                #:alexandria
+               #:cl-ana.hdf-cffi
                #:cl-ana.list-utils
 	       #:cl-ana.string-utils
                #:cl-ana.symbol-utils
