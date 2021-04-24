@@ -29,4 +29,5 @@
   :components ((:file "package")
                (:file "utils")
                (:file "distributions")
-               (:file "combinatorics")))
+               (:file "combinatorics")
+               (:file "misc")))

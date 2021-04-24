@@ -40,6 +40,9 @@
    :ncombinations-repeating
    :binomial
    :multinomial
+   ;; misc
+   :logistic
+   :logistic-derivative
    ;; utils:
    :->double-float
    :periodic-shift

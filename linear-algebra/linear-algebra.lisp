@@ -204,8 +204,8 @@ solution is possible, e.g. singular matrix."
 
 ;; Frontend to GSLL's lu-solve:
 (defun lu-solve (A B)
-  "Frontend to GSLL.  A should be a list of lists, and B should be a
-list."
+  "Frontend to GSLL.  Solves linear equation A x = B.  A should be a
+list of lists, and B should be a list."
   (let* ((matA
           (grid:make-foreign-array
            'double-float
@@ -225,7 +225,8 @@ list."
 
 ;; Frontend to GSLL's lu-invert:
 (defun lu-invert (matrix)
-  "Frontend to GSLL.  matrix should be a list of lists."
+  "Frontend to GSLL.  Inverts matrix.  matrix should be a list of
+lists."
   (let* ((mat
           (grid:make-foreign-array
            'double-float
