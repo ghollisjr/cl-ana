@@ -65,6 +65,12 @@ while this utility function preserves it."
      (make-pathname :directory
                     (pathname-directory pathname)))))
 
+(defun dirname (pathname)
+  "Returns directory name of pathname."
+  (namestring 
+   (make-pathname
+    :directory (pathname-directory (pathname x)))))
+
 (defun subpath (directory path-or-format-recipe &rest args)
   "Returns namestring for a path under directory.
 path-or-format-recipe can be a pathname directly, in which case the
