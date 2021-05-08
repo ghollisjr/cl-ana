@@ -528,16 +528,30 @@ layout specified in the page.")
 
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
-                   (x-format plot2d-x-format)
-                   (y-format plot2d-y-format)
                    (title-offset plot-title-offset)
                    (lines plot-lines)
                    (labels plot-labels)
                    (legend plot-legend))
       p
-    (let ((lines (remove-if #'null lines))
-          (line-index->data-path
-           (make-hash-table :test 'equal)))
+    (let* ((x-format (cond
+                       ((typep p 'plot2d)
+                        (plot2d-x-format p))
+                       ((typep p 'plot3d)
+                        (plot3d-x-format p))
+                       (t NIL)))
+           (y-format (cond
+                       ((typep p 'plot2d)
+                        (plot2d-y-format p))
+                       ((typep p 'plot3d)
+                        (plot3d-y-format p))
+                       (t NIL)))
+           (z-format (cond
+                       ((typep p 'plot3d)
+                        (plot3d-z-format p))
+                       (t NIL)))
+           (lines (remove-if #'null lines))
+           (line-index->data-path
+            (make-hash-table :test 'equal)))
       (with-output-to-string (s)
         (gnuplot-format s "set title '~a'" title)
         (when title-offset
@@ -563,6 +577,10 @@ layout specified in the page.")
         (if y-format
             (gnuplot-format s "set format y ~s~%" y-format)
             (gnuplot-format s "unset format y~%")
+            )
+        (if z-format
+            (gnuplot-format s "set format z ~s~%" z-format)
+            (gnuplot-format s "unset format z~%")
             )
         (gnuplot-format s "~a " (plot-cmd p))
         (loop
@@ -972,6 +990,11 @@ initargs from key-args."
     :accessor plot3d-x-range
     :documentation "Sets the x-domain for the plot; a cons where the car
     is the lower bound and the cdr is the upper bound.")
+   (x-format
+    :initarg :x-format
+    :initform nil
+    :accessor plot3d-x-format
+    :documentation "Sets the x-axis numeric tic format via a format string.")
    (x-tics
     :initarg :x-tics
     :initform nil
@@ -992,6 +1015,11 @@ initargs from key-args."
     :accessor plot3d-y-range
     :documentation "Sets the y-domain for the plot; a cons where the
     car is the lower bound and the cdr is the upper bound.")
+   (y-format
+    :initarg :y-format
+    :initform nil
+    :accessor plot3d-y-format
+    :documentation "Sets the y-axis numeric tic format via a format string.")
    (y-tics
     :initarg :y-tics
     :initform nil
@@ -1010,6 +1038,11 @@ initargs from key-args."
     :accessor plot3d-z-range
     :documentation "Sets the z-range for the plot; a cons where the
     car is the lower bound and the cdr is the upper bound.")
+   (z-format
+    :initarg :y-format
+    :initform nil
+    :accessor plot3d-z-format
+    :documentation "Sets the z-axis numeric tic format via a format string.")
    (z-tics
     :initarg :z-tics
     :initform nil
