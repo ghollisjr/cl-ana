@@ -35,6 +35,7 @@
 	   :sinusoid
            ;; distributions:
 	   :gaussian
+           :skewed-gaussian
            :gauss-amp
            :poisson
            :poisson-alist))

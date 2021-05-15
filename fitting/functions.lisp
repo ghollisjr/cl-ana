@@ -93,6 +93,15 @@ f(x) = A/(sigma*sqrt(2*pi)) * exp(-((x-mu)/sigma)^2/2)
 			2)
 		  2))))))
 
+(defun skewed-gaussian (params x)
+  "Skewed Gaussian fit function.  Parameters are (A mu sigma gamma)
+where gamma controls the skewing."
+  (destructuring-bind (A mu sigma gamma) params
+    (* (gaussian (list A mu sigma) x)
+       (+ 1d0
+          (gsll:erf (/ (* gamma (- x mu))
+                       (* sigma (sqrt 2d0))))))))
+
 ;; a helper function for guessing the appropriate value of the
 ;; gaussian amplitude:
 (defun gauss-amp (peak sigma)
