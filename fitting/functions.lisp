@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -93,14 +93,24 @@ f(x) = A/(sigma*sqrt(2*pi)) * exp(-((x-mu)/sigma)^2/2)
 			2)
 		  2))))))
 
+(defun gaussian-skew-factor (x mu sigma skew)
+  "Factor which skews a Gaussian or any function convoluted with a
+Gaussian using the mean and standard deviation of the Gaussian
+component along with a skewing parameter skew.
+
+Multiplying a Gaussian or Gaussian-convoluted function with this skew
+factor preserves normalization."
+  (+ 1d0
+     (gsll:erf (/ (* skew (- x mu))
+                  (* sigma (sqrt 2d0))))))
+
 (defun skewed-gaussian (params x)
-  "Skewed Gaussian fit function.  Parameters are (A mu sigma gamma)
-where gamma controls the skewing."
-  (destructuring-bind (A mu sigma gamma) params
+  "Skewed Gaussian fit function.  Parameters are (A mu sigma skew)
+where skew controls the skewing.  Changing skew does not change
+normalization."
+  (destructuring-bind (A mu sigma skew) params
     (* (gaussian (list A mu sigma) x)
-       (+ 1d0
-          (gsll:erf (/ (* gamma (- x mu))
-                       (* sigma (sqrt 2d0))))))))
+       (gaussian-skew-factor x mu sigma skew))))
 
 ;; a helper function for guessing the appropriate value of the
 ;; gaussian amplitude:

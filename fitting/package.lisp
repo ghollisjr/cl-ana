@@ -36,6 +36,7 @@
            ;; distributions:
 	   :gaussian
            :skewed-gaussian
+           :gaussian-skew-factor
            :gauss-amp
            :poisson
            :poisson-alist))
