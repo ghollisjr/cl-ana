@@ -26,4 +26,5 @@
   :depends-on (#:cl-ana.generic-math)
   :components ((:file "package")
                (:file "differentiation")
-               (:file "newton")))
+               (:file "newton")
+               (:file "rk4")))

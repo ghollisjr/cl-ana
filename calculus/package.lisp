@@ -23,6 +23,7 @@
   (:use :cl)
   (:export :diff
            :newton
-           :invert))
+           :invert
+           :rk4))
 
 (cl-ana.gmath:use-gmath :cl-ana.calculus)
