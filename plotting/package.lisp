@@ -105,11 +105,13 @@
            ;; terminal settings:
            :wxt-term
            :png-term
+           :pngcairo-term
            :jpeg-term
            :ps-term
            :eps-term
            :pdf-term
            :epslatex-term
-           :qt-term))
+           :qt-term
+           :canvas-term))
 
 (cl-ana.gmath:use-gmath :cl-ana.plotting)

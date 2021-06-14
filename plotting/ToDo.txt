@@ -1,3 +1,8 @@
++ Fix plotting fonts.  It seems gnuplot updated its font specification
+  for at least the png and pngcairo terminals, which means at the
+  bare minimum font names need quotes or single quotes around them.
+  Font sizes also seem to be specified differently.
+
 + Should be able to plot functions in 3-d, but currently the sampled
   function data is always interpreted as linear parametrizations
   instead of planar.  Need to allow choice of interpretation.

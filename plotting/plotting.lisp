@@ -979,10 +979,10 @@ initargs from key-args."
     :documentation "List of axes which should be in log scale.  Valid
     axis names are \"x\", \"y\", and \"z\".")
    (view
-       :initarg :view
-       :initform nil
-       :accessor plot3d-view
-       :documentation "Sets the view for the 3-d plot.  Set to :map or
+    :initarg :view
+    :initform nil
+    :accessor plot3d-view
+    :documentation "Sets the view for the 3-d plot.  Set to :map or
        \"map\" for contour plots.")
    (x-range
     :initarg :x-range
@@ -1301,7 +1301,7 @@ initargs from key-args."
 ;; Labels
 (defun label (text
               &key
-                position
+                position ; must be a list
                 coordinate-system ; coordinate system for position,
                                         ; see gnuplot manual
                 (justification :center) ; :left, :center, or :right
@@ -2168,6 +2168,8 @@ of up to two double-float arguments."
 
 ;; Function for generating the terminal type string of a page for
 ;; images in gnuplot
+
+;; should probably use pngcairo-term below, but including this
 (defun png-term (&key
                    (size (cons 800 600))
                    (font-face "arial")
@@ -2193,7 +2195,52 @@ of up to two double-float arguments."
                      (list 'size (car size) "," (cdr size)))
                    (when font-face
                      (list "font"
-                           font-face
+                           (format nil "'~a'"
+                                   font-face)
+                           (when font-point-size
+                             font-point-size)))
+                   (when (not font-point-size)
+                     font-size)
+                   (when transparent
+                     "transparent")
+                   (when interlace
+                     "interlace")
+                   (when truecolor
+                     "truecolor")
+                   (when (not rounded)
+                     "butt")
+                   (when enhanced
+                     "enhanced")
+                   (when colors
+                     colors))))))))
+
+(defun pngcairo-term (&key
+                        (size (cons 800 600))
+                        (font-face "arial")
+                        font-point-size
+                        ;; fontsize can be :tiny, :small, :medium, :large, :giant
+                        (font-size :medium)
+                        transparent
+                        interlace
+                        truecolor
+                        (rounded t)
+                        enhanced
+                        colors)
+  "Generates the type string for a png terminal with options"
+  (string-downcase
+   (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "pngcairo"
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (list "font"
+                           (format nil "'~a'"
+                                   font-face)
                            (when font-point-size
                              font-point-size)))
                    (when (not font-point-size)
@@ -2234,7 +2281,7 @@ of up to two double-float arguments."
                      (list 'size (car size) "," (cdr size)))
                    (when font-face
                      (list "font"
-                           font-face
+                           (format nil "'~a'" font-face)
                            (when font-point-size
                              font-point-size)))
                    (when (not font-point-size)
@@ -2454,6 +2501,63 @@ gnuplot to distinguish eps from ps)"
                                     (gnuplot-format nil "title \"~a\"" title))
                                   (when persist-p
                                     "persist"))))))
+
+;;;; HTML/JavaScript Canvas terminal
+(defun canvas-term (&key
+                      (size (cons 800 600))
+                      background
+                      (font-face "arial")
+                      font-point-size
+                      ;; fontsize can be :tiny, :small, :medium, :large, :giant
+                      (font-size :medium)
+                      interlace
+                      truecolor
+                      (rounded t)
+                      (standalone-p t)
+                      (mousing-p t)
+                      name
+                      enhanced
+                      jsdir
+                      title
+                      colors)
+      "Generates the type string for a png terminal with options"
+      (string-downcase
+       (apply #'join-strings
+              (intersperse
+               " "
+               (remove-if-not
+                #'identity
+                (alexandria:flatten
+                 (list "canvas"
+                       (with-output-to-string (s)
+                         (when standalone-p
+                           (format s "standalone")
+                           (when mousing-p
+                             (format s " mousing"))))
+                       (when jsdir
+                         (format nil "jsdir '~a'" jsdir))
+                       (when title
+                         (format nil "title '~a'" title))
+                       (when size
+                         (list 'size (car size) "," (cdr size)))
+                       (when font-face
+                         (list "font"
+                               (format nil "'~a'"
+                                       font-face)
+                               (when font-point-size
+                                 font-point-size)))
+                       (when (not font-point-size)
+                         font-size)
+                       (when interlace
+                         "interlace")
+                       (when truecolor
+                         "truecolor")
+                       (when (not rounded)
+                         "butt")
+                       (when enhanced
+                         "enhanced")
+                       (when colors
+                         colors))))))))
 
 ;; Special function for outputting PDF plots since it requires precise
 ;; coordination between various functions
