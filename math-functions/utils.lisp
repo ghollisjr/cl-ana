@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -39,3 +39,38 @@ with periodic quantities in general."
   (let* ((range (- hi lo))
          (k (ceiling (/ (- lo x) range))))
     (+ x (* k range))))
+
+;;;; Solving 1-D problems with interval bisection
+(defun solve-interval-bisection (fn interval
+                                 &key
+                                   (value 0d0)
+                                   (prec 1d-4))
+  (flet ((exists (x y)
+           (minusp (* (signum (- (funcall fn x) value))
+                      (signum (- (funcall fn y) value)))))
+         (middle (x y)
+           (* 0.5d0 (+ x y))))
+    (let* ((xlo (car interval))
+           (xhi (cdr interval))
+           (diff (- xhi xlo)))
+      (cond
+        ((zerop (- (funcall fn xlo) value))
+         xlo)
+        ((zerop (- (funcall fn xhi) value))
+         xhi)
+        (t
+         (when (exists xlo xhi)
+           (let* ((iter 0))
+             (loop
+                while (> diff prec)
+                do (let* ((xm (middle xlo xhi)))
+                     (incf iter)
+                     (if (zerop (- (funcall fn xm) value))
+                         (return-from solve-interval-bisection
+                           xm)
+                         (if (exists xlo xm)
+                             (setf xhi xm)
+                             (setf xlo xm)))
+                     (setf diff (- xhi xlo))))
+             (values (middle xlo xhi)
+                     iter))))))))

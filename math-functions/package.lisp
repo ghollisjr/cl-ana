@@ -46,6 +46,7 @@
    ;; utils:
    :->double-float
    :periodic-shift
+   :solve-interval-bisection
    ;; macros:
    :for-permutations
    :for-permutations-repeating
