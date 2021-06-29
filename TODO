@@ -1,3 +1,6 @@
++ Add restarts to makeres-generated functions so that errors don't
+  require starting the entire calculation over again.
+
 + Further optimize tabletrans via optimizing the depmap function.  At
   the moment, depmap constructs a dependency map for the entire target
   table even if there is no direct need for this.  The depmap
