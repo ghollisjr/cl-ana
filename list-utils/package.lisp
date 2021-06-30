@@ -71,4 +71,8 @@
            :before
            :after
            :duplicate
-           :permute))
+           :permute
+           ;; miscellaneous
+           :groupby
+           :reduceby
+           ))

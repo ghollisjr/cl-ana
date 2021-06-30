@@ -574,3 +574,36 @@ of the same name as the field symbol but in the current package."
          (set (intern (lispify ,fs)) ,fv))
        ,@body)))
 
+;; Grouping and reducing by keys
+;;
+;; These support any sequences, but generate lists.
+(defun groupby (data
+                &key
+                  (groupkey #'identity)
+                  (valuekey #'identity)
+                  (test 'equal))
+  "Groups data using a hash-table and the group and value key
+functions provided.  Return value is an alist of keys and the grouped
+values for each key."
+  (let* ((ht (make-hash-table :test test)))
+    (map nil
+         (lambda (d)
+           (let* ((k (funcall groupkey d)))
+             (push (funcall valuekey d)
+                   (gethash k ht))))
+         data)
+    (loop
+       for k being the hash-keys in ht
+       for v being the hash-values in ht
+       collecting (cons k v))))
+
+(defun reduceby (data fn
+                 &rest groupby-args)
+  "Groups using groupby and then reduces each group using the
+reduction function provided."
+  (let* ((grouped (apply #'groupby data groupby-args)))
+    (map 'list
+         (lambda (x)
+           (destructuring-bind (type &rest amounts) x
+             (list type (reduce fn amounts))))
+         grouped)))
