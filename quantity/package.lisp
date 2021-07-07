@@ -88,7 +88,7 @@
    :+k-boltzmann+
    :+R+
    :+stefan-boltzmann+
-   :+graviational-acceleration+
+   :+gravitational-acceleration+
    :+vsound+
    :+T0+
    ;; Misc.

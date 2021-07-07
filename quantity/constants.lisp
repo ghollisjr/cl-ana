@@ -125,7 +125,7 @@
            (expt +c+ 2))))
   "Stefan-Boltzmann Constant")
 
-(defvar +graviational-acceleration+
+(defvar +gravitational-acceleration+
   (* 9.80665d0 :meter (expt :second -2))
   "Standard Gravitational Acceleration")
 
