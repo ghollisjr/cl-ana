@@ -80,8 +80,25 @@ and r.  Returns 1 for nP0.")
 (defun multinomial (&rest ms)
   "Returns the multinomial coefficient where each element of ms is
 taken to be the number of objects of a single type."
-  (/ (factorial (sum ms))
-     (product (mapcar #'factorial ms))))
+  (let* ((n (sum ms))
+         (m NIL)
+         (j NIL)
+         (result 1))
+    (loop
+       while ms
+       do
+         (when (not m)
+           (setf m (first ms))
+           (setf j 1)
+           (setf ms (rest ms)))
+         (cond
+           ((null ms) nil)
+           ((< m j)
+            (setf m nil))
+           (t
+            (setf result (* result (1+ (decf n))))
+            (setf result (/ result (1- (incf j)))))))
+    result))
 
 ;;;; Useful macros for working with combinatorics
 ;;; Loop over all nPr permutations.  E.g.,
