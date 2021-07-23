@@ -45,6 +45,9 @@
   keyword-compressed-table in cl-ana.makeres are yielding a combined
   12x speed up over raw depmap.
 
+  UPDATE: It might be more efficient to create an array version of the
+  target-table so that key lookup is just array indexing.
+
 - Rename makeres-propogate! to makeres-propagate!, and fix Emacs
   scripts as well.  Helps to check spelling every now and then.
 

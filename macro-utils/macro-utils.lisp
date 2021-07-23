@@ -470,3 +470,54 @@ product element."
                                (setf (aref ,index ,dim) 0)
                                (incf ,dim))
                              (setf ,incr nil))))))))))
+
+;; Looping over array
+(defmacro for-array (binding dimensions &body body)
+  "Iterates over every possible index for an array with supplied
+dimensions.  If binding is an atom, then the index list will be set to
+that variable as a list.  If it is a list of symbols, then each symbol
+will be bound to its corresponding element from the Cartesian product
+element."
+  (alexandria:with-gensyms (sets dims setdims nsets
+                                 index
+                                 continue
+                                 incr dim)
+    `(let* ((,dims ,dimensions)
+            (,nsets (if (atom ,dims)
+                        1
+                        (length ,dims)))
+            (,setdims (if (atom ,dims)
+                          (vector ,dims)
+                          (map 'vector #'identity ,dims)))
+            (,index (make-array ,nsets :initial-element 0))
+            (,continue t))
+       (loop
+          while ,continue
+          do
+          ;; execute body
+            ,(if (atom binding)
+                 `(let ((,binding (map 'list #'identity
+                                       ,index)))
+                    ,@body)
+                 `(destructuring-bind ,binding
+                      (map 'list #'identity
+                           ,index)
+                    ,@body))
+          ;; iterate
+            (let* ((,incr t)
+                   (,dim 0))
+              (loop
+                 while ,incr
+                 do
+                   (if (>= ,dim ,nsets)
+                       (progn
+                         (setf ,incr nil)
+                         (setf ,continue nil))
+                       (progn
+                         (incf (aref ,index ,dim))
+                         (if (>= (aref ,index ,dim)
+                                 (aref ,setdims ,dim))
+                             (progn
+                               (setf (aref ,index ,dim) 0)
+                               (incf ,dim))
+                             (setf ,incr nil))))))))))
