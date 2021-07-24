@@ -47,6 +47,7 @@
         :cl-ana.histogram
         :cl-ana.linear-algebra
         :cl-ana.list-utils
+        :cl-ana.array-utils
         :cl-ana.lorentz
         :cl-ana.macro-utils
         :cl-ana.map

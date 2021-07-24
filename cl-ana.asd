@@ -31,6 +31,8 @@
                #:cl-ana.math-functions
                #:cl-ana.calculus
                #:cl-ana.binary-tree
+               #:cl-ana.list-utils
+               #:cl-ana.array-utils
                ;; Make sure to place tensor after defining all gmath
                ;; generic functions
                #:cl-ana.tensor
