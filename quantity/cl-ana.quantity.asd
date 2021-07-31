@@ -29,7 +29,8 @@
                #:cl-ana.macro-utils
                #:cl-ana.symbol-utils
                #:cl-ana.generic-math
-               #:cl-ana.error-propogation)
+               #:cl-ana.error-propogation
+               #:cl-ana.math-functions)
   :components ((:file "package")
                (:file "unit")
                (:file "macros")

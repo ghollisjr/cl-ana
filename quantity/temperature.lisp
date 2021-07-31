@@ -86,7 +86,7 @@ linear function and its inverse based on coefs."
           (finvname (trans yname xname))
           (xsym (keywordify xname))
           (ysym (keywordify yname)))
-      (with-gensyms (invcs cs)
+      (alexandria:with-gensyms (invcs cs)
         `(let* ((,cs ,coefs)
                 (,invcs (invert-linear ,cs)))
            (setf (gethash (cons ,xsym ,ysym)

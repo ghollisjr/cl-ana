@@ -133,7 +133,7 @@
 
   (defmacro define-unit (unit-symbol quantity)
     "Defines a derived unit."
-    (with-gensyms (x)
+    (alexandria:with-gensyms (x)
       `(defmethod quantity ((,x (eql ,unit-symbol)))
          ,quantity)))
 
@@ -210,7 +210,22 @@
                      :scale (div scalel scaler)
                      :unit (unit-div unitl unitr))))
 
-  ;; Could provide the protected-div functions, but I'm lazy right now.
+  (defmethod protected-unary-div (q &key (protected-value 0))
+    (with-quantities ((scale unit q))
+      (make-instance 'quantity
+                     :scale (protected-unary-div
+                             scale
+                             :protected-value protected-value)
+                     :unit (unit-div 1 unit))))
+
+  (defmethod protected-div (ql qr &key (protected-value 0))
+    (with-quantities ((scalel unitl ql)
+                      (scaler unitr qr))
+      (make-instance 'quantity
+                     :scale (protected-div
+                             scalel scaler
+                             :protected-value protected-value)
+                     :unit (unit-div unitl unitr))))
 
   ;; Note that expt treats x as a pure number, ignoring the unit for it
   ;; as a quantity.
@@ -225,6 +240,11 @@
   
   (defmethod sqrt (q)
     (expt q 1/2))
+
+  (defmethod ->double-float ((q quantity))
+    (make-instance 'quantity
+                   :scale (->double-float (quantity-scale q))
+                   :unit (quantity-unit q)))
   
 ;;; Metric prefixes (e.g. mega, micro, kilo, ...)
   

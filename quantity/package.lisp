@@ -21,11 +21,12 @@
 
 (defpackage #:cl-ana.quantity
   (:use :cl
-        :alexandria
+        ;; :alexandria
         :cl-ana.list-utils
         :cl-ana.macro-utils
         :cl-ana.symbol-utils
-        :cl-ana.error-propogation)
+        :cl-ana.error-propogation
+        :cl-ana.math-functions)
   (:export
    ;; Unit:
    :define-unit
