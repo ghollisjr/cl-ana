@@ -60,6 +60,6 @@ y can have numerical values or sequence values."
                     (incf x h)
                     (push (cons x y) result))))
          (loop
-            for i below N
+            for i below (1- N)
             do (stepfn))
          (nreverse result))))))
