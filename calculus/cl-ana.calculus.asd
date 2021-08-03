@@ -23,7 +23,8 @@
   :serial t
   :license "GPLv3"
   :description "A few numerical and/or symbolic calculus functions."
-  :depends-on (#:cl-ana.generic-math)
+  :depends-on (#:cl-ana.generic-math
+               #:cl-ana.linear-algebra)
   :components ((:file "package")
                (:file "differentiation")
                (:file "newton")

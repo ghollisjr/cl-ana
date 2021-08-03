@@ -1,18 +1,18 @@
 ;;;; cl-ana is a Common Lisp data analysis library.
 ;;;; Copyright 2013, 2014 Gary Hollis
-;;;; 
+;;;;
 ;;;; This file is part of cl-ana.
-;;;; 
+;;;;
 ;;;; cl-ana is free software: you can redistribute it and/or modify it
 ;;;; under the terms of the GNU General Public License as published by
 ;;;; the Free Software Foundation, either version 3 of the License, or
 ;;;; (at your option) any later version.
-;;;; 
+;;;;
 ;;;; cl-ana is distributed in the hope that it will be useful, but
 ;;;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;;;; General Public License for more details.
-;;;; 
+;;;;
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with cl-ana.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
@@ -79,3 +79,74 @@ diff-prec is the precision to give to diff during Newton's method."
             :value x
             :prec newton-prec
             :diff-prec diff-prec)))
+
+(defun multinewton (fn guess &key
+                               (step-scale 1)
+                               (value 0)
+                               (maxtries 50)
+                               (prec 1d-4)
+                               (diff-prec 1d-9)
+                               (metric :max))
+  "Multi-dimensional Newton's method for solving an equation.
+
+Dimensionality of inputs and outputs is handled as per multidiff.
+
+If the method converges, returns the values of x_sol, fn(x_sol), and
+the number of iterations it took to converge.
+
+If the method does not converge, returns the values of nil and the
+number of iterations on failure.
+
+value is the value that fn should evaluate to.
+
+maxtries is the maximum number of iterations to attempt a solution.
+
+prec is the precision in the residue, below which convergence is assumed.
+
+diff-prec is the precision to use in calculating the derivative of fn
+via diff.
+
+metric can be one of:
+
+:max for maximum of differences
+:norm for euclidean-norm
+:norm2 for euclidean-norm2"
+  (let* ((mfn (case metric
+                (:max
+                 (lambda (x)
+                   (reduce #'max
+                           (map 'list #'abs x))))
+                (:norm
+                 (lambda (x)
+                   (sqrt
+                    (reduce #'+
+                            (map 'list (lambda (y)
+                                         (expt y 2))
+                                 x)))))
+                (:norm2
+                 (lambda (x)
+                   (reduce #'+
+                           (map 'list (lambda (y)
+                                        (expt y 2))
+                                x))))))
+         (df (multidiff fn :prec diff-prec))
+         (inverse (lambda (v)
+                    (lu-invert
+                     (lisp-2d-array->tensor
+                      (funcall df v)))))
+         (func (lambda (x) (- (funcall fn x)
+                              value))))
+    (do ((x guess (- x
+                     (* step-scale
+                        (matrix-mult (funcall inverse x)
+                                     (funcall func x)))))
+         (i 0 (1+ i))
+         (difference (* 10 prec)
+                     (funcall mfn (funcall func x))))
+        ((or (<= difference prec)
+             (>= i maxtries))
+         (if (> difference prec)
+             (values nil i)
+             (values x
+                     (funcall fn x)
+                     i))))))

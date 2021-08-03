@@ -27,11 +27,37 @@
                     (funcall fn x))
                  prec)))
 
-;; (defun diffn (fn &key
-;;                    (prec 1d-9)
-;;                    (n 0))
-;;   (if (<= n 0)
-;;       fn
-;;       (diffn (diff fn :prec prec)
-;;              :prec prec
-;;              :n (1- n))))
+(defun multidiff (fn
+                  &key
+                    (prec 1d-9))
+  "Returns function to compute the matrix of derivatives of a
+many-valued function of multiple inputs.  Assumes fn uses the same
+input and output sequence types.  Return type of the generated
+function is a 2-D array."
+  (lambda (v)
+    (let* ((type (type-of v))
+           (len (length v))
+           (deltas
+            (loop
+               for i below len
+               collecting
+                 (let* ((s (make-sequence type len
+                                          :initial-element 0d0)))
+                   (setf (elt s i) prec)
+                   s)))
+           (base (funcall fn v))
+           (outlen (length base))
+           (result (make-array (list outlen len)
+                               :element-type 'double-float)))
+      (loop
+         for j below len
+         for delta in deltas
+         do
+           (let* ((y (funcall fn (+ v delta)))
+                  (diff (/ (- y base)
+                           prec)))
+             (loop
+                for i below outlen
+                do (setf (aref result i j)
+                         (elt diff i)))))
+      result)))

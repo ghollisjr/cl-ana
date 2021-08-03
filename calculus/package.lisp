@@ -20,9 +20,12 @@
 ;;;; ghollisjr@gmail.com
 
 (defpackage #:cl-ana.calculus
-  (:use :cl)
+  (:use :cl
+        :cl-ana.linear-algebra)
   (:export :diff
+           :multidiff
            :newton
+           :multinewton
            :invert
            :rk4))
 

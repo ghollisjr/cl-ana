@@ -27,6 +27,7 @@
   (:export :make-vector
 	   :make-matrix
 	   :vector->matrix
+           :lisp-2d-array->tensor
 	   :euclidean-dot
 	   :euclidean-norm
 	   :euclidean-norm2
