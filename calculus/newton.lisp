@@ -87,7 +87,7 @@ diff-prec is the precision to give to diff during Newton's method."
                                (prec 1d-4)
                                (diff-prec 1d-9)
                                (metric :max))
-  "Multi-dimensional Newton's method for solving an equation.
+  "Multi-dimensional Newton's method for solving a system of equations.
 
 Dimensionality of inputs and outputs is handled as per multidiff.
 Note that the input and output dimensionality must match as this
