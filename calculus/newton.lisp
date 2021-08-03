@@ -90,6 +90,9 @@ diff-prec is the precision to give to diff during Newton's method."
   "Multi-dimensional Newton's method for solving an equation.
 
 Dimensionality of inputs and outputs is handled as per multidiff.
+Note that the input and output dimensionality must match as this
+attempts to find an exact solution to a system of N equations in N
+variables.
 
 If the method converges, returns the values of x_sol, fn(x_sol), and
 the number of iterations it took to converge.
@@ -97,7 +100,10 @@ the number of iterations it took to converge.
 If the method does not converge, returns the values of nil and the
 number of iterations on failure.
 
-value is the value that fn should evaluate to.
+value is the value that fn should evaluate to.  Note that scalar
+values are interpreted as vectors with all elements equal to the
+scalar value.  This is particularly convenient for the default value
+of 0.
 
 maxtries is the maximum number of iterations to attempt a solution.
 
@@ -109,8 +115,8 @@ via diff.
 metric can be one of:
 
 :max for maximum of differences
-:norm for euclidean-norm
-:norm2 for euclidean-norm2"
+:norm for euclidean-norm of difference vector
+:norm2 for euclidean-norm2 of difference vector"
   (let* ((mfn (case metric
                 (:max
                  (lambda (x)
