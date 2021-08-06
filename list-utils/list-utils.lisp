@@ -328,6 +328,14 @@ concatenation of n lists."
           list
           :initial-value nil))
 
+(defun list->set-ht (list &optional (test 'eql))
+  (let* ((ht (make-hash-table :test test)))
+    (loop
+       for x in list
+       do (when (not (gethash x ht))
+            (setf (gethash x ht) t)))
+    ht))
+
 ;; Partitioning a list
 (defun partition (list
                   &key

@@ -51,6 +51,7 @@
            :cdrs
            ;; lists as sets
            :list->set
+           :list->set-ht
            ;;; plists
            :plist-select-fields
            :plist->alist

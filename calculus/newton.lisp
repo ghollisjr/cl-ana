@@ -141,11 +141,21 @@ metric can be one of:
                      (lisp-2d-array->tensor
                       (funcall df v)))))
          (func (lambda (x) (- (funcall fn x)
-                              value))))
+                              value)))
+         (solver (lambda (v)
+                   (lu-solve (lisp-2d-array->tensor
+                              (funcall df v))
+                             (coerce (funcall func v) 'list))))
+         )
     (do ((x guess (- x
-                     (* step-scale
-                        (matrix-mult (funcall inverse x)
-                                     (funcall func x)))))
+                     (funcall solver x)
+                     ;; (lu-solve (lisp-2d-array->tensor
+                     ;;            (funcall df x))
+                     ;;           (coerce (funcall func x) 'list))
+                     ;; (* step-scale
+                     ;;    (matrix-mult (funcall inverse x)
+                     ;;                 (funcall func x)))
+                     ))
          (i 0 (1+ i))
          (difference (* 10 prec)
                      (funcall mfn (funcall func x))))
