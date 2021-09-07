@@ -80,6 +80,15 @@ diff-prec is the precision to give to diff during Newton's method."
             :prec newton-prec
             :diff-prec diff-prec)))
 
+;; I've kept a few pieces of code in this function that aren't used
+;; because more investigration is needed as to which strategy is best
+;; for general use.
+;;
+;; LU decomposition is used to either invert the derivative matrix or
+;; solve a matrix equation involving that matrix.  Inversion of the
+;; matrix provides more stability as the same matrix is used to
+;; multiply as many inputs as desired, but lu-solve can be more
+;; efficient depending on the derivative matrix.
 (defun multinewton (fn guess &key
                                (step-scale 1)
                                (value 0)
@@ -148,13 +157,13 @@ metric can be one of:
                              (coerce (funcall func v) 'list))))
          )
     (do ((x guess (- x
-                     (funcall solver x)
+                     ;; (funcall solver x)
                      ;; (lu-solve (lisp-2d-array->tensor
                      ;;            (funcall df x))
                      ;;           (coerce (funcall func x) 'list))
-                     ;; (* step-scale
-                     ;;    (matrix-mult (funcall inverse x)
-                     ;;                 (funcall func x)))
+                     (* step-scale
+                        (matrix-mult (funcall inverse x)
+                                     (funcall func x)))
                      ))
          (i 0 (1+ i))
          (difference (* 10 prec)
