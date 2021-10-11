@@ -1,3 +1,22 @@
++ I've found a bug on at least one system with the newest HDF5 and
+  CFFI.  The groveler linker doesn't apply the "-lhdf5" flag, which is
+  necessary to link the compiled object file; the cryptic error
+  messages are about undefined references to "H5open" and
+  "H5check_version".  When I took the generated linker command and
+  just added "-lhdf5", problem solved.
+
+  Proposition: Update CFFI to add something like (ld-flags ...) and
+  (pkg-config-libs ...) syntaxes so that users can explicitly
+  configure linked libraries just like compilation flags.
+
+  The file cffi/c-toolchain.lisp has the function #'link-executable
+  which appears to generate the linker command.  This function will
+  need to support a new parameter, something like *ld-flags*, which
+  needs to be appended to *ld-exe-flags* along with inputs.
+
+  define-grovel-syntax can be used to create the new ld-flags and
+  pkg-config-libs operators.
+
 + Add restarts to makeres-generated functions so that errors don't
   require starting the entire calculation over again.
 
