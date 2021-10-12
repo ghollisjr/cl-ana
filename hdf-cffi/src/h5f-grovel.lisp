@@ -11,6 +11,7 @@
 ;;;; help@hdfgroup.org.
 
 (pkg-config-cflags "hdf5" :optional t)
+(pkg-config-libs "hdf5" :optional t)
 (define "_H5private_H")    ; See GROVELLER-HACKING-NOTE.md for explanation
 (include "hdf5.h")
 
