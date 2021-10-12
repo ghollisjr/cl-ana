@@ -17,6 +17,15 @@
   define-grovel-syntax can be used to create the new ld-flags and
   pkg-config-libs operators.
 
+  UPDATE: I've created a fork of CFFI and fixed the sources of the
+  problems I ran into.  In a nutshell, GCC's new --as-needed flag
+  means libraries need to come after objects or else they might get
+  excluded from executables, and for some reason HDF5 now needs
+  explicit linkage even for the groveler executables, so this means
+  CFFI needs to support custom library flags and preferably
+  "pkg-config X --libs" support as well, which I added and now use in
+  cl-ana.
+
 + Add restarts to makeres-generated functions so that errors don't
   require starting the entire calculation over again.
 
