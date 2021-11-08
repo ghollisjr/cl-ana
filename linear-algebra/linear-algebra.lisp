@@ -202,6 +202,17 @@ solution is possible, e.g. singular matrix."
            (coerce x 'list))
          result)))
 
+(defun grid->lisp-array (grid)
+  (cffi:convert-from-foreign
+   (grid::foreign-pointer grid)
+   (list* :array
+          ;; (grid::element-type solution)
+          (let* ((type
+                  (grid:cl-cffi
+                   (grid::element-type grid))))
+            type)
+          (grid::dimensions grid))))
+
 ;; Frontend to GSLL's lu-solve:
 (defun lu-solve (A B)
   "Frontend to GSLL.  Solves linear equation A x = B.  A should be a
@@ -219,8 +230,10 @@ list of lists, and B should be a list."
     (multiple-value-bind (matrix perm)
         (gsll:lu-decomposition matA)
       (let* ((solution
-              (gsll:lu-solve matrix matB perm)))
-        (coerce (grid:cl-array solution)
+              (gsll:lu-solve matrix matB perm))
+             (converted
+              (grid->lisp-array solution)))
+        (coerce converted
                 'list)))))
 
 ;; Frontend to GSLL's lu-invert:
@@ -238,7 +251,8 @@ lists."
         (map 'list
              (lambda (x)
                (coerce x 'list))
-             (lisp-2d-array->tensor (grid:cl-array result)))))))
+             (lisp-2d-array->tensor
+              (grid->lisp-array result)))))))
 
 ;; Frontend to GSLL's LU-determinant
 (defun lu-determinant (matrix)
