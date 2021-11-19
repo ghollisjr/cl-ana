@@ -279,10 +279,10 @@ Returns:
                                        :initial-contents matrix)))
     (multiple-value-bind (values vectors)
         (gsll:eigenvalues-eigenvectors-nonsymm mat)
-      (values (coerce (grid:cl-array values) 'list)
+      (values (coerce (grid->lisp-array values) 'list)
               (transpose
                (map 'list
                     (lambda (x)
                       (coerce x 'list))
                     (lisp-2d-array->tensor
-                     (grid:cl-array vectors))))))))
+                     (grid->lisp-array vectors))))))))
