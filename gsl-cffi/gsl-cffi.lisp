@@ -25,7 +25,11 @@
   "End-of-file return value for gsl functions")
 
 (define-foreign-library gsl-cffi
-  (t (:default "libgsl")))
+  (:darwin (:or (:framework "libgsl") "libgsl.dylib"))
+  (:windows "libgsl.dll" :convention :stdcall)
+  (:unix (:or "libgsl.so"
+              "libgsl.so.25"
+              "libgsl.so.25.1.0")))
 
 (defcfun "gsl_ntuple_read" :int
   (ntuple :pointer)) ; gsl_ntuple*
