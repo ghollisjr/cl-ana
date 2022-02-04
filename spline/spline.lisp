@@ -40,6 +40,8 @@
 ;; So instead I do this:
 (cffi:define-foreign-library gsl
   (:windows (:or "libgsl-0.dll" "cyggsl-0.dll"))
+  (:darwin
+       (:or (:framework "libgsl") "libgsl.dylib"))
   (:unix (:or
           "libgsl.so.25"
           "libgsl.so.0" "libgsl.so"))
