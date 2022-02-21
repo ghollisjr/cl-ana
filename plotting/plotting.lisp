@@ -2718,3 +2718,26 @@ supply a fresh page as the first argument for safety."
     (setf (page-layout result)
           layout)
     result))
+
+;;;; Color functions
+(defun jet (intensity)
+  "Defines jet or quasi-rainbow RGB color map given [0,1] intensity"
+  (vector (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 3.0)))
+                 0.0 1.0)
+          (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 2.0)))
+                 0.0 1.0)
+          (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 1.0)))
+                 0.0 1.0)))
+
+(defun jet-html (x)
+  "Returns HTML color string for jet color map given [0,1] intensity"
+  (let* ((jet (jet x))
+         (hexes
+          (loop
+             for c across jet
+             collecting (format nil "~2,'0x"
+                                (round (* c 255))))))
+    (apply #'concatenate
+           'string 
+           "#"
+           hexes)))

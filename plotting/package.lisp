@@ -112,6 +112,9 @@
            :pdf-term
            :epslatex-term
            :qt-term
-           :canvas-term))
+           :canvas-term
+           ;; utilities
+           :jet
+           :jet-html))
 
 (cl-ana.gmath:use-gmath :cl-ana.plotting)
