@@ -1,3 +1,5 @@
++ Use named-readtables to manage the various reader macros.
+
 + I've found a bug on at least one system with the newest HDF5 and
   CFFI.  The groveler linker doesn't apply the "-lhdf5" flag, which is
   necessary to link the compiled object file; the cryptic error
