@@ -615,3 +615,29 @@ reduction function provided."
            (destructuring-bind (type &rest amounts) x
              (list type (reduce fn amounts))))
          grouped)))
+
+(defun list-accumulator (&optional initial-contents)
+  "Returns a closure that efficiently accumulates data to the end of a
+list when supplied with an argument, and when not supplied with an
+argument returns the accumulated data.
+
+Example:
+
+(let* ((acc (list-accumulator)))
+  (funcall acc 1)
+  (funcall acc 2)
+  (funcall acc 3)
+  (funcall acc))
+==> (1 2 3)"
+  (let* ((data initial-contents)
+         (last-cons data))
+    (labels ((add-data (x)
+               (if (null last-cons)
+                   (setf data (cons x NIL)
+                         last-cons data)
+                   (setf (cdr last-cons) (cons x NIL)
+                         last-cons (cdr last-cons)))))
+      (lambda (&optional x)
+        (if x
+            (add-data x)
+            data)))))

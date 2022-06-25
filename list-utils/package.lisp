@@ -76,4 +76,5 @@
            ;; miscellaneous
            :groupby
            :reduceby
+           :list-accumulator
            ))
