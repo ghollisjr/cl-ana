@@ -1,3 +1,5 @@
++ Add base argument to generic-math log function
+
 + Use named-readtables to manage the various reader macros.
 
 + I've found a bug on at least one system with the newest HDF5 and
