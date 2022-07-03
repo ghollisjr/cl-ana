@@ -28,7 +28,7 @@
   (lambda (x y) (funcall f y x)))
 
 (defun splice (xsplit fn1 fn2)
-  "Splices two functions togother at xsplit.  If either function is
+  "Splices two functions together at xsplit.  If either function is
 nil, returns the other function or nil if both are nil."
   (cond
     ((and fn1
@@ -41,21 +41,17 @@ nil, returns the other function or nil if both are nil."
     (fn2 fn2)
     (t nil)))
 
-;; (defun compose (&rest fs)
-;;   "Arbitrary number of functions composed"
-;;   (let ((f (first fs)))
-;;     (if (= 1 (length fs))
-;; 	(first fs)
-;; 	(lambda (&rest xs)
-;; 	    (funcall f (apply (apply #'compose (rest fs)) xs))))))
-
 (defun to-pair-function (f)
   "Makes f apply to a pair instead of two arguments"
   (lambda (x) (funcall f (car x ) (cdr x))))
 
 (defun lfuncall (fn &rest args)
-  "Applies a function which takes a single list argument to an
-arbitrary number of arguments."
+  "Applies a function which takes a single list argument to an arbitrary
+number of arguments.  Opposite of #'apply in a sense.
+
+Example:
+
+(lfuncall #'reverse 1 2 3) => (3 2 1)"
   (funcall fn args))
 
 ;; Didn't really know where to put these, but they are higher-order
