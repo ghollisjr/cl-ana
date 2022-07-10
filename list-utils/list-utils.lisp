@@ -32,6 +32,35 @@
 			   (cons s result)))))
     (nreverse (range-helper start end step ()))))
 
+(defun transpose (list-of-lists)
+  "Transposes a list of lists, e.g. ((a b) (c d)) => ((a c) (b d)).
+  If sublists have different lengths, lists which run out of elements
+  before others will not have any values added to the result after
+  they are exhausted, and remaining data will occur with order
+  preserved."
+  (when list-of-lists
+    (do* ((head list-of-lists)
+          (result (cons NIL NIL))
+          (tail result))
+         (())
+      (setf (car tail) (mapcar #'car head)
+            head (remove nil (mapcar #'cdr head)))
+      (unless head
+        (return-from transpose
+          result))
+      (setf (cdr tail) (cons NIL NIL)
+            tail (cdr tail)))))
+
+;; Here's a stack-breaking version that is too beautiful to not
+;; mention:
+;;
+;; (defun transpose (list-of-lists)
+;;   (when list-of-lists
+;;     (cons (mapcar #'car list-of-lists)
+;;           (transpose (remove nil
+;;                              (mapcar #'cdr
+;;                                      list-of-lists))))))
+
 ;; Sorry: I learned Haskell before Common Lisp, so I like
 ;; zipping/unzipping lists
 
@@ -102,16 +131,6 @@ given, the elements are mapped directly (i.e. not in a list)"
                                        (cons (car lst)
                                              result))))))
     (rec lst)))
-
-(defun transpose (xs)
-  (labels
-      ((transpose-worker (xs result)
-	 (let* ((heads (remove-if #'null (mapcar #'car xs)))
-		(tails (remove-if #'null (mapcar #'cdr xs))))
-	   (if xs
-	       (transpose-worker tails (cons heads result))
-	       result))))
-    (nreverse (transpose-worker xs ()))))
 
 ;; Can't go without the Cartesian Product
 (defun cartesian-product (&rest xs)
