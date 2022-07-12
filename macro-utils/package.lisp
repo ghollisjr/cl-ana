@@ -64,7 +64,4 @@
            ;; dlambda (dispatching lambda) from let over lambda
            :dlambda
            ;; Looping over Cartesian product
-           :for-cartesian
-           ;; Looping over array indices
-           :for-array
-           ))
+           :for-cartesian))

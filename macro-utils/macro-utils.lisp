@@ -470,5 +470,3 @@ product element."
                                (setf (aref ,index ,dim) 0)
                                (incf ,dim))
                              (setf ,incr nil))))))))))
-
-
