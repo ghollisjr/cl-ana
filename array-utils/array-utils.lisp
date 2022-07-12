@@ -72,7 +72,7 @@ element."
                                (incf ,dim))
                              (setf ,incr nil))))))))))
 
-(defun map-array (array fn)
+(defun map-array (fn array)
   "Map for arrays.  fn should be of the form (lambda (value &rest
 indices)...)"
   (let* ((result (make-array (array-dimensions array))))
