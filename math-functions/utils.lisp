@@ -78,5 +78,8 @@ with periodic quantities in general."
 ;; Ensure that integer logic results are positive integers
 (defun logpos (x nbits)
   "Returns an integer representing bit-logic in nbits of space as
-  positive instead of negative."
+  positive instead of negative.
+
+E.g.: (logeqv #b111 #b111) ==> -1
+      (logpos (logeqv #b111 #b111) 3) ==> 7"
   (logand x (1- (ash 1 nbits))))
