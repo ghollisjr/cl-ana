@@ -52,6 +52,8 @@
    :for-permutations-repeating
    :for-combinations
    :for-combinations-repeating
+   ;; integer logic:
+   :logpos
    ))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)

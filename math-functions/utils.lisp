@@ -62,15 +62,21 @@ with periodic quantities in general."
          (when (exists xlo xhi)
            (let* ((iter 0))
              (loop
-                while (> diff prec)
-                do (let* ((xm (middle xlo xhi)))
-                     (incf iter)
-                     (if (zerop (- (funcall fn xm) value))
-                         (return-from solve-interval-bisection
-                           xm)
-                         (if (exists xlo xm)
-                             (setf xhi xm)
-                             (setf xlo xm)))
-                     (setf diff (- xhi xlo))))
+               while (> diff prec)
+               do (let* ((xm (middle xlo xhi)))
+                    (incf iter)
+                    (if (zerop (- (funcall fn xm) value))
+                        (return-from solve-interval-bisection
+                          xm)
+                        (if (exists xlo xm)
+                            (setf xhi xm)
+                            (setf xlo xm)))
+                    (setf diff (- xhi xlo))))
              (values (middle xlo xhi)
                      iter))))))))
+
+;; Ensure that integer logic results are positive integers
+(defun logpos (x nbits)
+  "Returns an integer representing bit-logic in nbits of space as
+  positive instead of negative."
+  (logand x (1- (ash 1 nbits))))
