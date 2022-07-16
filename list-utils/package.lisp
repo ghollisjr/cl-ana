@@ -77,4 +77,5 @@
            :groupby
            :reduceby
            :list-accumulator
+           :cxr
            ))

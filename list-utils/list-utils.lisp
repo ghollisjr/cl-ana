@@ -660,3 +660,32 @@ Example:
         (if x
             (add-data x)
             data)))))
+
+(defmacro cxr (string-or-symbol place)
+  "Extension of the car, cdr, cadr... functions.
+
+Usage: (cxr a x) <==> (car x)
+       (cxr d x) <==> (cdr x)
+       (cxr adda x) <==> (caddar x)
+
+This is a macro such that setf automatically works."
+  (do* ((result place)
+        (string (string-upcase (string string-or-symbol)))
+        (n (length string))
+        ;; loop variables
+        (i 0 (1+ i)))
+       ((= n i) result)
+    (let* ((op
+             (cond
+               ((char= (aref string i) #\A)
+                'car)
+               ((char= (aref string i) #\D)
+                'cdr)
+               (t
+                (cerror "Skip character" "Only A and D valid characters, not ~C"
+                        (aref string i))
+                NIL))))
+      (when op
+        (setf result
+              `(,op
+                ,result))))))
