@@ -54,6 +54,7 @@
    :for-combinations-repeating
    ;; integer logic:
    :logpos
+   :clz
    ))
 
 (cl-ana.gmath:use-gmath :cl-ana.math-functions)

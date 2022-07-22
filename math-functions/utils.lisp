@@ -83,3 +83,11 @@ with periodic quantities in general."
 E.g.: (logeqv #b111 #b111) ==> -1
       (logpos (logeqv #b111 #b111) 3) ==> 7"
   (logand x (1- (ash 1 nbits))))
+
+;; Count leading zeros
+(defun clz (x)
+  "Count leading zeroes function"
+  (1-
+   (integer-length
+    (logand x
+            (lognot (1- x))))))
