@@ -87,6 +87,7 @@ E.g.: (logeqv #b111 #b111) ==> -1
 ;; Count leading zeros
 (defun clz (x)
   "Count leading zeroes function"
+  (declare (integer x))
   (1-
    (integer-length
     (logand x
