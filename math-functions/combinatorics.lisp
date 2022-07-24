@@ -109,39 +109,88 @@ taken to be the number of objects of a single type."
 ;;;
 ;;; Note that for nP0, a single iteration of body is evaluated with an
 ;;; empty index array.
+;;;
+;;; Algorithm notes:
+;;;
+;;; The idea is to walk through the permutation space similar to the
+;;; way numbers are counted, but with a variable base.  E.g., counting
+;;; in binary looks like
+;;; 
+;;; 000
+;;; 001
+;;; 010
+;;; 011
+;;; ...
+;;;
+;;; In a similar way, walking through a 3P3 permutation might look
+;;; something like
+;;;
+;;; 000
+;;; 100
+;;; 200
+;;; 010
+;;; 110
+;;; 210
+;;;
+;;; where the first index gets 3 possible values to iterate through,
+;;; the second gets only 2, and the last always gets 1.  The only
+;;; problem that remains is assigning the actual permuted index values
+;;; should be assigned based on these walk-indices.  I tried to be too
+;;; clever before and ended up writing a hard to find bug, so now I do
+;;; it the unclever way and just scratch off values from a bitvector
+;;; denoting which index values have already been used.
 (defmacro for-permutations ((indexvar n r) &body body)
   "Iterates over all permutations of r objects taken from n total,
 binding an array of r index values to indexvar and evaluating body
 with that binding.  If you want to actually permute objects in a
 list/array/sequence, use the bound index array to find permutations of
 those objects."
-  (alexandria:with-gensyms (npr nn rr i j norder x k)
+  (alexandria:with-gensyms (npr nn rr i j norder x k ledger val)
     `(let* ((,nn ,n)
             (,rr ,r))
        ;; safety check
        (when (and (plusp ,nn)
                   (<= 0 ,rr ,nn))
          (let* ((,npr (npermutations ,nn ,rr))
-                (,indexvar (make-array ,rr :element-type 'integer :initial-element 0)))
+                (,indexvar (make-array ,rr
+                                       :element-type 'integer
+                                       :initial-element 0)))
            (dotimes (,i ,npr)
-             (dotimes (,j ,rr)
-               (let* ((,norder (- ,nn ,j))
-                      (,x (mod ,i ,norder)))
-                 (setf (aref ,indexvar ,j) ,x)
-                 (dotimes (,k ,j)
-                   (when (>= ,x
-                             (aref ,indexvar ,k))
-                     (incf (aref ,indexvar ,j))))))
+             (let ((,val ,i)
+                   (,ledger (make-array ,nn
+                                        :element-type 'bit
+                                        :initial-element 0)))
+               (dotimes (,j ,rr)
+                 (let* ((,norder (- ,nn ,j))
+                        (,x (mod ,val ,norder)))
+                   (setf ,val (floor ,val ,norder))
+                   (do ((,k 0))
+                       ((and (zerop ,x)
+                             (zerop (aref ,ledger ,k)))
+                        (setf (aref ,ledger ,k) 1)
+                        (setf (aref ,indexvar ,j)
+                              ,k))
+                     (when (zerop (aref ,ledger ,k))
+                       (decf ,x))
+                     (incf ,k)))))
              ,@body))))))
 
 (defun check-permutations (n r &optional print-p)
+  "Checker for for-permutations.  Keeping for test purposes."
   (let ((result (make-hash-table :test 'equalp)))
     (for-permutations (v n r)
       (unless (gethash v result)
         (setf (gethash v result) T)))
-    (when print-p (print (list :hash-table-count (hash-table-count result)
-                               :npr (npermutations n r))))
+    (when print-p
+      (print (list :hash-table-count (hash-table-count result)
+                   :npr (npermutations n r))))
     (= (hash-table-count result) (npermutations n r))))
+
+(defun test-for-permutations ()
+  (dotimes (i 7)
+    (dotimes (j i)
+      (assert (cl-ana.math-functions::check-permutations i j))))
+  t)
 
 ;; Same but with allowed repetition
 (defmacro for-permutations-repeating ((indexvar n r) &body body)

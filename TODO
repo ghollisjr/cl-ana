@@ -1,11 +1,3 @@
-+ (BUG) math-functions/combinatorics.lisp for-permutations is broken.
-  #'check-permutations function was added to aid in testing.  Try
-
-  (check-permutations 4 3 T)
-
-  for an example of a failure to produce accurate permutation index
-  arrays.
-
 + Add base argument to generic-math log function
 
 + Use named-readtables to manage the various reader macros.
@@ -614,3 +606,35 @@ makeres-table:
   the source material for a table is not present.  There should be an
   operator, perhaps stab, which allows the definition of a source
   table.
+
+- (BUG) math-functions/combinatorics.lisp for-permutations is broken.
+  #'check-permutations function was added to aid in testing.  Try
+
+  (check-permutations 4 3 T)
+
+  for an example of a failure to produce accurate permutation index
+  arrays.
+
+  UPDATE: The main algorithm appears to be fine.  The idea is to count
+  through the permutation space as if it were a normal number space
+  with a modified base system, e.g.:
+
+  If you want the 3P3 permutations represented as (a b c), then a can
+  take 3 values, b can take 2, and c always has just 1 value.
+  Therefore, counting through the space with these indices could look
+  something like
+
+  (0 0 0)
+  (1 0 0)
+  (2 0 0)
+  (0 1 0)
+  (1 1 0)
+  (2 1 0)
+
+  This is the logic behind the nested loops that are present with the
+  non-obvious (mod ,i ,norder) calculation. The part that is failing
+  is mapping from these counting index arrays to the permutations
+  themselves.  The code as written is trying to be clever about
+  eliminating used indices from the possible values for the
+  permutation list, and consequently failing due to not actually be
+  correct.
