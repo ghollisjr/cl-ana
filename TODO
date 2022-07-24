@@ -1,3 +1,11 @@
++ (BUG) math-functions/combinatorics.lisp for-permutations is broken.
+  #'check-permutations function was added to aid in testing.  Try
+
+  (check-permutations 4 3 T)
+
+  for an example of a failure to produce accurate permutation index
+  arrays.
+
 + Add base argument to generic-math log function
 
 + Use named-readtables to manage the various reader macros.

@@ -36,9 +36,9 @@ taken r at a time without repetition.  Assumes reasonable values of n
 and r.  Returns 1 for nP0.")
   (:method ((n number) (r number))
     (loop
-       for k from (- n r) upto n
-       for result = 1 then (* result k)
-       finally (return result))))
+      for k from (- n r) upto n
+      for result = 1 then (* result k)
+      finally (return result))))
 
 (defmath npermutations-repeating (n r)
   (:documentation "Returns n^r, the number of ways to permute r
@@ -85,8 +85,8 @@ taken to be the number of objects of a single type."
          (j NIL)
          (result 1))
     (loop
-       while ms
-       do
+      while ms
+      do
          (when (not m)
            (setf m (first ms))
            (setf j 1)
@@ -114,8 +114,7 @@ taken to be the number of objects of a single type."
 binding an array of r index values to indexvar and evaluating body
 with that binding.  If you want to actually permute objects in a
 list/array/sequence, use the bound index array to find permutations of
-those objects.  No safety checks are performed, so use reasonable
-values of n and r."
+those objects."
   (alexandria:with-gensyms (npr nn rr i j norder x k)
     `(let* ((,nn ,n)
             (,rr ,r))
@@ -124,23 +123,25 @@ values of n and r."
                   (<= 0 ,rr ,nn))
          (let* ((,npr (npermutations ,nn ,rr))
                 (,indexvar (make-array ,rr :element-type 'integer :initial-element 0)))
-           (loop
-              for ,i below ,npr
-              do
-                (loop
-                   for ,j below ,rr
-                   do
-                     (let* ((,norder (- ,nn ,j))
-                            (,x (mod ,i ,norder)))
-                       (setf (aref ,indexvar ,j)
-                             ,x)
-                       (loop
-                          for ,k below ,j
-                          when (>= ,x
-                                   (aref ,indexvar ,k))
-                          do (incf (aref ,indexvar ,j)))))
-                (progn
-                  ,@body)))))))
+           (dotimes (,i ,npr)
+             (dotimes (,j ,rr)
+               (let* ((,norder (- ,nn ,j))
+                      (,x (mod ,i ,norder)))
+                 (setf (aref ,indexvar ,j) ,x)
+                 (dotimes (,k ,j)
+                   (when (>= ,x
+                             (aref ,indexvar ,k))
+                     (incf (aref ,indexvar ,j))))))
+             ,@body))))))
+
+(defun check-permutations (n r &optional print-p)
+  (let ((result (make-hash-table :test 'equalp)))
+    (for-permutations (v n r)
+      (unless (gethash v result)
+        (setf (gethash v result) T)))
+    (when print-p (print (list :hash-table-count (hash-table-count result)
+                               :npr (npermutations n r))))
+    (= (hash-table-count result) (npermutations n r))))
 
 ;; Same but with allowed repetition
 (defmacro for-permutations-repeating ((indexvar n r) &body body)
@@ -161,11 +162,11 @@ values of n and r."
                 (,indexvar (make-array ,rr :element-type 'integer :initial-element 0)))
 
            (loop
-              for ,i below ,npr
-              do
+             for ,i below ,npr
+             do
                 (loop
-                   for ,j below ,rr
-                   do
+                  for ,j below ,rr
+                  do
                      (setf (aref ,indexvar ,j)
                            (mod (truncate ,i (expt ,nn ,j))
                                 ,nn)))
@@ -199,12 +200,12 @@ with an empty index array."
        (when (and (plusp ,nn)
                   (<= 0 ,rr ,nn))
          (let* ((,indexvar
-                 (make-array ,rr :element-type 'integer :initial-element 0)))
+                  (make-array ,rr :element-type 'integer :initial-element 0)))
 
            ;; init indices
            (loop
-              for ,i below ,rr
-              do (setf (aref ,indexvar ,i) ,i))
+             for ,i below ,rr
+             do (setf (aref ,indexvar ,i) ,i))
            ;; strategy:
            ;;
            ;; Indices will be strictly ordered from least to greatest.
@@ -226,12 +227,12 @@ with an empty index array."
                   (,currentindex ,lastindex)
                   (,state 0))
              (symbol-macrolet ((,current
-                                (aref ,indexvar ,currentindex))
+                                 (aref ,indexvar ,currentindex))
                                (,nextindex (1+ ,currentindex))
                                (,next (aref ,indexvar (1+ ,currentindex))))
                (loop
-                  while (not (= ,state 2))
-                  do
+                 while (not (= ,state 2))
+                 do
                     (case ,state
                       ;; execute
                       (0
@@ -253,9 +254,9 @@ with an empty index array."
                           (incf ,current)
                           (let* ((,delta (- ,current ,currentindex)))
                             (loop
-                               for ,k from (1+ ,currentindex) below ,rr
-                               do (setf (aref ,indexvar ,k)
-                                        (+ ,k ,delta))))
+                              for ,k from (1+ ,currentindex) below ,rr
+                              do (setf (aref ,indexvar ,k)
+                                       (+ ,k ,delta))))
                           (setf ,state 0)
                           (setf ,currentindex ,lastindex)))))))))))))
 
@@ -278,11 +279,11 @@ body is performed with an empty index array."
        (when (and (plusp ,nn)
                   (>= ,rr 0))
          (let* ((,indexvar
-                 (make-array ,rr :element-type 'integer :initial-element 0)))
+                  (make-array ,rr :element-type 'integer :initial-element 0)))
            ;; init indices
            (loop
-              for ,i below ,rr
-              do (setf (aref ,indexvar ,i) 0))
+             for ,i below ,rr
+             do (setf (aref ,indexvar ,i) 0))
            ;; strategy:
            ;;
            ;; Indices will be strictly ordered from least to greatest.
@@ -304,12 +305,12 @@ body is performed with an empty index array."
                   (,currentindex ,lastindex)
                   (,state 0))
              (symbol-macrolet ((,current
-                                (aref ,indexvar ,currentindex))
+                                 (aref ,indexvar ,currentindex))
                                (,nextindex (1+ ,currentindex))
                                (,next (aref ,indexvar (1+ ,currentindex))))
                (loop
-                  while (not (= ,state 2))
-                  do
+                 while (not (= ,state 2))
+                 do
                     (case ,state
                       ;; execute
                       (0
@@ -330,8 +331,8 @@ body is performed with an empty index array."
                          (t
                           (incf ,current)
                           (loop
-                             for ,k from (1+ ,currentindex) below ,rr
-                             do (setf (aref ,indexvar ,k)
-                                      ,current))
+                            for ,k from (1+ ,currentindex) below ,rr
+                            do (setf (aref ,indexvar ,k)
+                                     ,current))
                           (setf ,state 0)
                           (setf ,currentindex ,lastindex)))))))))))))
