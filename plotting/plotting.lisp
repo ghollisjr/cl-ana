@@ -87,13 +87,13 @@ transfers and can lead to hard to diagnose bugs.")
     (let* ((plotdir (plotdir)))
       (when (probe-file plotdir)
         (loop
-           for i from 1 to *gnuplot-max-file-io-index*
-           do (delete-file
-               (merge-pathnames (format nil
-                                        "data~a.dat"
-                                        i)
-                                (make-pathname :directory
-                                               (namestring plotdir)))))
+          for i from 1 to *gnuplot-max-file-io-index*
+          do (delete-file
+              (merge-pathnames (format nil
+                                       "data~a.dat"
+                                       i)
+                               (make-pathname :directory
+                                              (namestring plotdir)))))
 	(uiop:delete-directory-tree plotdir :validate t)))))
 
 (defparameter *plotting-exit-hook-p* nil)
@@ -135,16 +135,16 @@ transfers and can lead to hard to diagnose bugs.")
             (max *gnuplot-max-file-io-index*
                  *gnuplot-file-io-index*))
       (loop
-         for i from 1 to *gnuplot-file-io-index*
-         do (let ((pn
+        for i from 1 to *gnuplot-file-io-index*
+        do (let ((pn
                    (namestring
                     (merge-pathnames
                      (format nil "data~a.dat"
                              i)
                      dir))))
-              (ensure-directories-exist pn)
-              (when (probe-file pn)
-                (delete-file pn))))
+             (ensure-directories-exist pn)
+             (when (probe-file pn)
+               (delete-file pn))))
       (when (probe-file dir)
 	(uiop:delete-directory-tree dir :validate t))
       (setf *gnuplot-file-io-index* 0))))
@@ -153,11 +153,11 @@ transfers and can lead to hard to diagnose bugs.")
   (when *gnuplot-file-io*
     (let* ((dir (plotdir))
            (pn
-            (namestring
-             (merge-pathnames
-              (format nil "data~a.dat"
-                      (incf *gnuplot-file-io-index*))
-              dir))))
+             (namestring
+              (merge-pathnames
+               (format nil "data~a.dat"
+                       (incf *gnuplot-file-io-index*))
+               dir))))
       (ensure-directories-exist pn)
       pn)))
 
@@ -196,8 +196,8 @@ transfers and can lead to hard to diagnose bugs.")
 
 (defun restart-gnuplot-sessions ()
   (loop
-     for s in *gnuplot-sessions*
-     do (gnuplot-close s))
+    for s in *gnuplot-sessions*
+    do (gnuplot-close s))
   (when *gnuplot-file-io*
     (reset-data-path))
   (setf *gnuplot-sessions* nil)
@@ -215,11 +215,11 @@ transfers and can lead to hard to diagnose bugs.")
     (let* ((rawstr (mkstr x))
            (rawlen (length rawstr))
            (str
-            ;; Remove unnecessary exponents
-            (if (string= (subseq rawstr (- rawlen 2))
-                         "d0")
-                (subseq rawstr 0 (- rawlen 2))
-                rawstr)))
+             ;; Remove unnecessary exponents
+             (if (string= (subseq rawstr (- rawlen 2))
+                          "d0")
+                 (subseq rawstr 0 (- rawlen 2))
+                 rawstr)))
       (map 'string
            (lambda (char)
              (if (or (char= char #\d)
@@ -334,8 +334,8 @@ other initargs from key-args."
        (gnuplot-format s "~%"))
      (reduce #'string-append
              (loop
-                for plot in plots
-                collecting (generate-cmd plot)))
+               for plot in plots
+               collecting (generate-cmd plot)))
      (with-output-to-string (s)
        (gnuplot-format s "unset multiplot~%")
        (gnuplot-format s "set output~%")
@@ -486,9 +486,9 @@ layout specified in the page.")
    ;; thanks for the formatting emacs
    (labels
        :initarg :labels
-       :initform ()
-       :accessor plot-labels
-       :documentation "List of labels to be drawn on the plot.  Use
+     :initform ()
+     :accessor plot-labels
+     :documentation "List of labels to be drawn on the plot.  Use
        the label function to generate the command strings for each
        label.")
    (title-offset
@@ -514,7 +514,13 @@ layout specified in the page.")
     :initform (grid)
     :accessor plot-grid
     :documentation "The grid settings (if any) to be used in the plot.
-    Must use output from grid function.")))
+    Must use output from grid function.")
+   (size
+    :initarg :size
+    :initform NIL
+    :accessor plot-size
+    :documentation "The size settings (if any) for the plot.  If
+   NIL, size is set via \"set size nosquare 1,1\" prior to drawing.  NOTE: This is generally different from terminal size settings.  Some examples: * \"ratio -1\" ==> preserve axis ratio at 1:1, * \"square\" ==> force graph into square on screen, \"nosquare\" ==> don't try to control ratios.")))
 
 (defgeneric plot-cmd (plot)
   (:documentation "The command used for plotting the plot in gnuplot;
@@ -531,7 +537,8 @@ layout specified in the page.")
                    (title-offset plot-title-offset)
                    (lines plot-lines)
                    (labels plot-labels)
-                   (legend plot-legend))
+                   (legend plot-legend)
+                   (size plot-size))
       p
     (let* ((x-format (cond
                        ((typep p 'plot2d)
@@ -551,7 +558,7 @@ layout specified in the page.")
                        (t NIL)))
            (lines (remove-if #'null lines))
            (line-index->data-path
-            (make-hash-table :test 'equal)))
+             (make-hash-table :test 'equal)))
       (with-output-to-string (s)
         (gnuplot-format s "set title '~a'" title)
         (when title-offset
@@ -562,14 +569,14 @@ layout specified in the page.")
         (when legend
           (gnuplot-format s "~a~%" legend))
         (loop
-           for a in (pre-plot-cmd-settings p)
-           do (gnuplot-format s "~a~%" a))
+          for a in (pre-plot-cmd-settings p)
+          do (gnuplot-format s "~a~%" a))
         (gnuplot-format s "unset label~%")
         (loop
-           for i from 1
-           for label in labels
-           do (gnuplot-format s "set label ~a ~a~%"
-                              i label))
+          for i from 1
+          for label in labels
+          do (gnuplot-format s "set label ~a ~a~%"
+                             i label))
         (if x-format
             (gnuplot-format s "set format x ~s~%" x-format)
             (gnuplot-format s "unset format x~%")
@@ -582,56 +589,59 @@ layout specified in the page.")
             (gnuplot-format s "set format z ~s~%" z-format)
             (gnuplot-format s "unset format z~%")
             )
+        (if (not size)
+            (gnuplot-format s "set size nosquare 1,1")
+            (gnuplot-format s "set size ~a~%" size))
         (gnuplot-format s "~a " (plot-cmd p))
         (loop
-           for line-index from 0
-           for cons on lines
-           do
+          for line-index from 0
+          for cons on lines
+          do
              (progn
                (setf (gethash line-index
                               line-index->data-path)
                      (next-data-path))
                (let* ((raw-cmd (generate-cmd (car cons)))
                       (cmd
-                       (if (and *gnuplot-file-io*
-                                (line-file-io-p (car cons)))
-                           (let ((subcmd
-                                  (subseq raw-cmd 3)))
-                             (format nil
-                                     "'~a'~a"
-                                     (gethash line-index
-                                              line-index->data-path)
-                                     subcmd))
-                           raw-cmd)))
+                        (if (and *gnuplot-file-io*
+                                 (line-file-io-p (car cons)))
+                            (let ((subcmd
+                                    (subseq raw-cmd 3)))
+                              (format nil
+                                      "'~a'~a"
+                                      (gethash line-index
+                                               line-index->data-path)
+                                      subcmd))
+                            raw-cmd)))
                  (gnuplot-format s "~a" cmd)))
-           when (cdr cons)
-           do (gnuplot-format s ", "))
+          when (cdr cons)
+            do (gnuplot-format s ", "))
         (gnuplot-format s "~%")
         ;; Send data either through pipes or file IO
         (if *gnuplot-file-io*
             ;; file IO
             (loop
-               for line-index from 0
-               for line in lines
-               do (let ((pn (gethash line-index
-                                     line-index->data-path)))
-                    (with-open-file (file pn
-                                          :direction :output
-                                          :if-exists :supersede
-                                          :if-does-not-exist :create)
-                      (format file "~a~%"
-                              (line-data-cmd line)))))
+              for line-index from 0
+              for line in lines
+              do (let ((pn (gethash line-index
+                                    line-index->data-path)))
+                   (with-open-file (file pn
+                                         :direction :output
+                                         :if-exists :supersede
+                                         :if-does-not-exist :create)
+                     (format file "~a~%"
+                             (line-data-cmd line)))))
 
             ;; pipe IO
             (loop
-               for l in lines
-               do (gnuplot-format s "~a"
-                                  (map 'string
-                                       (lambda (c)
-                                         (if (eq c #\f)
-                                             #\e
-                                             c))
-                                       (line-data-cmd l)))))))))
+              for l in lines
+              do (gnuplot-format s "~a"
+                                 (map 'string
+                                      (lambda (c)
+                                        (if (eq c #\f)
+                                            #\e
+                                            c))
+                                      (line-data-cmd l)))))))))
 
 ;; A two-dimensional plot has up to four labelled axes:
 ;;
@@ -1365,27 +1375,27 @@ initargs from key-args."
   "Generates tics command(s) from tics.  axis should be :x, :y, :z,
 or :cb"
   (let ((axis
-         (case axis
-           (:x "xtics")
-           (:x2 "x2tics")
-           (:y "ytics")
-           (:y2 "y2tics")
-           (:z "ztics")
-           (:z2 "z2tics")
-           (:cb "cbtics"))))
+          (case axis
+            (:x "xtics")
+            (:x2 "x2tics")
+            (:y "ytics")
+            (:y2 "y2tics")
+            (:z "ztics")
+            (:z2 "z2tics")
+            (:cb "cbtics"))))
     (cond
       ((null tics)
        "")
       ((listp tics)
        (with-output-to-string (s)
          (loop
-            for tic in tics
-            for i from 0
-            do (if (zerop i)
-                   (gnuplot-format s "set ~a ~a~%"
-                                   axis tic)
-                   (gnuplot-format s "set ~a add ~a~%"
-                                   axis tic)))))
+           for tic in tics
+           for i from 0
+           do (if (zerop i)
+                  (gnuplot-format s "set ~a ~a~%"
+                                  axis tic)
+                  (gnuplot-format s "set ~a add ~a~%"
+                                  axis tic)))))
       (t
        (gnuplot-format nil "set ~a ~a~%"
                        axis tics)))))
@@ -1467,21 +1477,21 @@ or :cb"
     (when manual-labels
       (gnuplot-format s " (")
       (loop
-         for ml in manual-labels
-         for nleft downfrom (1- (length manual-labels))
-         do (destructuring-bind (&key name position level)
-                ml
-              (when name
-                (gnuplot-format s "~s " name))
-              (gnuplot-format s "~a" position)
-              (when level
-                (let ((level
+        for ml in manual-labels
+        for nleft downfrom (1- (length manual-labels))
+        do (destructuring-bind (&key name position level)
+               ml
+             (when name
+               (gnuplot-format s "~s " name))
+             (gnuplot-format s "~a" position)
+             (when level
+               (let ((level
                        (case level
                          (:major 0)
                          (:minor 1))))
-                  (gnuplot-format s " ~a" level)))
-              (when (not (zerop nleft))
-                (gnuplot-format s ","))))
+                 (gnuplot-format s " ~a" level)))
+             (when (not (zerop nleft))
+               (gnuplot-format s ","))))
       (gnuplot-format s ")"))
     (when font-face
       (gnuplot-format s " font \"~a"
@@ -1670,33 +1680,33 @@ all values are promoted to err-num as well with an error of 0."
                      (pm3d-ncols data-line-pm3d-ncols))
         line
       (let ((extractor
-             (if data
-                 (if pm3d-ncols
-                     (let ((ncols pm3d-ncols)
-                           (index 0))
-                       (lambda (cons)
-                         (gnuplot-format s "~{~a ~}"
-                                         (car cons))
-                         (gnuplot-format s "~a~%"
-                                         (cdr cons))
-                         (incf index)
-                         (when (= index ncols)
-                           (gnuplot-format s "~%")
-                           (setf index 0))))
-                     (if (listp (car (first data)))
-                         (lambda (cons)
-                           (gnuplot-format s "~{~a ~}"
-                                           (car cons))
-                           (gnuplot-format s "~a~%"
-                                           (cdr cons)))
-                         (lambda (cons)
-                           (gnuplot-format s "~a ~a~%"
-                                           (car cons)
-                                           (cdr cons)))))
-                 (error "Empty data in data-line"))))
+              (if data
+                  (if pm3d-ncols
+                      (let ((ncols pm3d-ncols)
+                            (index 0))
+                        (lambda (cons)
+                          (gnuplot-format s "~{~a ~}"
+                                          (car cons))
+                          (gnuplot-format s "~a~%"
+                                          (cdr cons))
+                          (incf index)
+                          (when (= index ncols)
+                            (gnuplot-format s "~%")
+                            (setf index 0))))
+                      (if (listp (car (first data)))
+                          (lambda (cons)
+                            (gnuplot-format s "~{~a ~}"
+                                            (car cons))
+                            (gnuplot-format s "~a~%"
+                                            (cdr cons)))
+                          (lambda (cons)
+                            (gnuplot-format s "~a ~a~%"
+                                            (car cons)
+                                            (cdr cons)))))
+                  (error "Empty data in data-line"))))
         (loop
-           for d in data
-           do (funcall extractor d))
+          for d in data
+          do (funcall extractor d))
         (gnuplot-format s "e~%")))))
 
 (defclass analytic-line (line)
@@ -1826,8 +1836,8 @@ and page-args, which themselves are plists for the keyword arguments
 appropriate for plots and pages respectively."
   ;; Default method for 2-D plotting
   (destructuring-bind (&key
-                       plot-args
-                       page-args)
+                         plot-args
+                         page-args)
       key-args
     (draw
      (apply #'page
@@ -1849,9 +1859,9 @@ denoting the page initargs."
 
 (defmethod draw (object &rest key-args)
   (destructuring-bind (&key
-                       page-args
-                       plot-args
-                       line-args)
+                         page-args
+                         plot-args
+                         line-args)
       key-args
     (draw
      (apply #'page
@@ -1879,7 +1889,7 @@ denoting the page initargs."
                    line-width
                    dash-type
                    color
-                   &allow-other-keys)
+                 &allow-other-keys)
   (apply #'make-instance 'analytic-line
          :fn-string s
          :style style
@@ -1905,7 +1915,7 @@ denoting the page initargs."
                    line-width
                    dash-type
                    color
-                   &allow-other-keys)
+                 &allow-other-keys)
   "Assumes"
   (when data-alist
     (apply #'make-instance 'data-line
@@ -1925,15 +1935,15 @@ denoting the page initargs."
 (defmethod line ((data-array array) &rest other-args)
   (let* ((dim (array-dimension data-array 1))
          (data-alist
-          (case dim
-            (2 (loop for i below (array-dimension data-array 0)
-                  collect (cons (aref data-array i 0)
-                                (aref data-array i 1))))
-            (3 (loop for i below (array-dimension data-array 0)
-                  collect (cons (list  (aref data-array i 0)
-                                       (aref data-array i 1))
-                                (aref data-array i 2))))
-            (otherwise (error "Data array has ~a columns, must be 2 or 3." dim)))))
+           (case dim
+             (2 (loop for i below (array-dimension data-array 0)
+                      collect (cons (aref data-array i 0)
+                                    (aref data-array i 1))))
+             (3 (loop for i below (array-dimension data-array 0)
+                      collect (cons (list  (aref data-array i 0)
+                                           (aref data-array i 1))
+                                    (aref data-array i 2))))
+             (otherwise (error "Data array has ~a columns, must be 2 or 3." dim)))))
     (apply #'line data-alist other-args)))
 
 (defun sample-function (fn lower-bounds upper-bounds nsamples)
@@ -1947,23 +1957,23 @@ Returns an alist mapping each independent value to the value of fn at
 that point."
   (let* ((atomic (atom lower-bounds))
          (lower-bounds-list
-          (mapcar #'->double-float
-                  (mklist lower-bounds)))
+           (mapcar #'->double-float
+                   (mklist lower-bounds)))
          (upper-bounds-list
-          (mapcar #'->double-float
-                  (mklist upper-bounds)))
+           (mapcar #'->double-float
+                   (mklist upper-bounds)))
          (samples-list
-          (mapcar #'->double-float
-                  (mklist nsamples)))
+           (mapcar #'->double-float
+                   (mklist nsamples)))
          ;; taking advantage of the tensor functions:
          (deltas (/ (- upper-bounds-list lower-bounds-list)
                     (- samples-list 1)))
          (raw-domain
-          (apply #'cartesian-product
-                 (mapcar #'range
-                         lower-bounds-list
-                         upper-bounds-list
-                         deltas)))
+           (apply #'cartesian-product
+                  (mapcar #'range
+                          lower-bounds-list
+                          upper-bounds-list
+                          deltas)))
          (domain (if atomic
                      (first (transpose raw-domain))
                      raw-domain)))
@@ -1985,7 +1995,7 @@ that point."
                    line-width
                    dash-type
                    color
-                   &allow-other-keys)
+                 &allow-other-keys)
   "Samples your function based on the keyword arguments and creates a
   data-line mapping your function to the output values.
 
@@ -2002,20 +2012,20 @@ single double-float argument.
 If the sampling arguments are lists, then fn is assumed to take a list
 of up to two double-float arguments."
   (let ((lower-bounds
-         (let ((low (getf sampling :low)))
-           (if low
-               low
-               -3d0)))
+          (let ((low (getf sampling :low)))
+            (if low
+                low
+                -3d0)))
         (upper-bounds
-         (let ((high (getf sampling :high)))
-           (if high
-               high
-               3d0)))
+          (let ((high (getf sampling :high)))
+            (if high
+                high
+                3d0)))
         (nsamples
-         (let ((nsamples (getf sampling :nsamples)))
-           (if nsamples
-               nsamples
-               100))))
+          (let ((nsamples (getf sampling :nsamples)))
+            (if nsamples
+                nsamples
+                100))))
     (apply #'line (sample-function fn
                                    lower-bounds
                                    upper-bounds
@@ -2040,19 +2050,19 @@ of up to two double-float arguments."
                    fill-style
                    fill-density
                    color
-                   &allow-other-keys)
+                 &allow-other-keys)
   (let* ((hist (sparse->contiguous histogram))
          (ndims (hist-ndims hist))
          (bin-data
-          (mapcar (lambda (datum-cons)
-                    (let ((bin-center (car datum-cons))
-                          (bin-value (cdr datum-cons)))
-                      (cons (if (listp bin-center)
-                                (mapcar #'->double-float
-                                        bin-center)
-                                (->double-float bin-center))
-                            (->double-float bin-value))))
-                  (map->alist hist)))
+           (mapcar (lambda (datum-cons)
+                     (let ((bin-center (car datum-cons))
+                           (bin-value (cdr datum-cons)))
+                       (cons (if (listp bin-center)
+                                 (mapcar #'->double-float
+                                         bin-center)
+                                 (->double-float bin-center))
+                             (->double-float bin-value))))
+                   (map->alist hist)))
          (first-independent (car (first bin-data))))
     (case ndims
       (1
@@ -2104,13 +2114,13 @@ of up to two double-float arguments."
   (let* ((data (cl-ana.histogram::variable-binning-histogram-content
                 vhist))
          (dim-specs
-          (cl-ana.histogram::variable-binning-histogram-dim-specs
-           vhist))
+           (cl-ana.histogram::variable-binning-histogram-dim-specs
+            vhist))
          (empty-value
-          (hist-empty-bin-value vhist))
+           (hist-empty-bin-value vhist))
          (sample-points
-          (apply #'cartesian-product
-                 dim-specs)))
+           (apply #'cartesian-product
+                  dim-specs)))
     (flet ((href (p)
              (cons p
                    (aif (gethash p data)
@@ -2144,8 +2154,8 @@ of up to two double-float arguments."
 (defun join-strings (&rest objects)
   (with-output-to-string (str)
     (loop
-       for o in objects
-       do (gnuplot-format str "~a" o))))
+      for o in objects
+      do (gnuplot-format str "~a" o))))
 
 (defvar *window-number* 0)
 
@@ -2520,44 +2530,44 @@ gnuplot to distinguish eps from ps)"
                       jsdir
                       title
                       colors)
-      "Generates the type string for a png terminal with options"
-      (string-downcase
-       (apply #'join-strings
-              (intersperse
-               " "
-               (remove-if-not
-                #'identity
-                (alexandria:flatten
-                 (list "canvas"
-                       (with-output-to-string (s)
-                         (when standalone-p
-                           (format s "standalone")
-                           (when mousing-p
-                             (format s " mousing"))))
-                       (when jsdir
-                         (format nil "jsdir '~a'" jsdir))
-                       (when title
-                         (format nil "title '~a'" title))
-                       (when size
-                         (list 'size (car size) "," (cdr size)))
-                       (when font-face
-                         (list "font"
-                               (format nil "'~a'"
-                                       font-face)
-                               (when font-point-size
-                                 font-point-size)))
-                       (when (not font-point-size)
-                         font-size)
-                       (when interlace
-                         "interlace")
-                       (when truecolor
-                         "truecolor")
-                       (when (not rounded)
-                         "butt")
-                       (when enhanced
-                         "enhanced")
-                       (when colors
-                         colors))))))))
+  "Generates the type string for a png terminal with options"
+  (string-downcase
+   (apply #'join-strings
+          (intersperse
+           " "
+           (remove-if-not
+            #'identity
+            (alexandria:flatten
+             (list "canvas"
+                   (with-output-to-string (s)
+                     (when standalone-p
+                       (format s "standalone")
+                       (when mousing-p
+                         (format s " mousing"))))
+                   (when jsdir
+                     (format nil "jsdir '~a'" jsdir))
+                   (when title
+                     (format nil "title '~a'" title))
+                   (when size
+                     (list 'size (car size) "," (cdr size)))
+                   (when font-face
+                     (list "font"
+                           (format nil "'~a'"
+                                   font-face)
+                           (when font-point-size
+                             font-point-size)))
+                   (when (not font-point-size)
+                     font-size)
+                   (when interlace
+                     "interlace")
+                   (when truecolor
+                     "truecolor")
+                   (when (not rounded)
+                     "butt")
+                   (when enhanced
+                     "enhanced")
+                   (when colors
+                     colors))))))))
 
 ;; Special function for outputting PDF plots since it requires precise
 ;; coordination between various functions
@@ -2569,27 +2579,27 @@ so if the user does not supply a :header argument then the default is
 to enable math and use the Helvetica font."
   (let* ((debug-p nil)
          (output
-          (string-append output-prefix ".tex"))
+           (string-append output-prefix ".tex"))
          (terminal
-          (apply #'epslatex-term
-                 :standalone-p t
-                 (append
-                  (when (not (find :header terminal-keywords))
-                    (list
-                     ;; Old method doesn't have capital greek symbols
-                     ;; :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"
-                     :header "\\usepackage{helvet}\\usepackage[italic]{mathastext}"
-                     ))
-                  terminal-keywords)))
+           (apply #'epslatex-term
+                  :standalone-p t
+                  (append
+                   (when (not (find :header terminal-keywords))
+                     (list
+                      ;; Old method doesn't have capital greek symbols
+                      ;; :header "\\usepackage{helvet}\\usepackage{sansmath}\\sansmath"
+                      :header "\\usepackage{helvet}\\usepackage[italic]{mathastext}"
+                      ))
+                   terminal-keywords)))
          (current-dir
-          #+sbcl
+           #+sbcl
            (namestring (sb-posix:getcwd))
            #+clisp
            (ext:cd))
          (destdir
-          (namestring
-           (make-pathname :directory
-                          (pathname-directory output)))))
+           (namestring
+            (make-pathname :directory
+                           (pathname-directory output)))))
     (ensure-directories-exist destdir)
     (setf (page-output page)
           output)
@@ -2653,9 +2663,9 @@ to do by create a fresh page and providing this to pagemerge.  Easily
 creates comparison plots from individual plots."
   (let* ((result (first plots))
          (line-lists
-          (mapcar (lambda (plot)
-                    (copy-list (plot-lines plot)))
-                  plots)))
+           (mapcar (lambda (plot)
+                     (copy-list (plot-lines plot)))
+                   plots)))
     (setf (plot-lines result)
           (apply #'append line-lists))
     ;; Handle axis limits: The widest limits should win.
@@ -2663,9 +2673,9 @@ creates comparison plots from individual plots."
     ;; I only do this for X and Y right now because I haven't decided
     ;; what to do in the case of mixed pages.
     (let* ((x-ranges
-            (mapcar #'plot-x-range plots))
+             (mapcar #'plot-x-range plots))
            (y-ranges
-            (mapcar #'plot-y-range plots)))
+             (mapcar #'plot-y-range plots)))
       (cond
         ((typep result 'plot2d)
          (setf (plot2d-x-range result)
@@ -2694,9 +2704,9 @@ your pages with plots containing NIL line lists,
 e.g. (page (list (plot2d nil))) or (page (list (plot3d nil)))."
   (let* ((result (first pages))
          (plot-lists
-          (mapcar (lambda (page)
-                    (copy-list (page-plots page)))
-                  pages)))
+           (mapcar (lambda (page)
+                     (copy-list (page-plots page)))
+                   pages)))
     (setf (page-plots result)
           (apply #'mapcar
                  (lambda (&rest plots)
@@ -2723,21 +2733,21 @@ supply a fresh page as the first argument for safety."
 (defun jet (intensity)
   "Defines jet or quasi-rainbow RGB color map given [0,1] intensity"
   (vector (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 3.0)))
-                 0.0 1.0)
+                            0.0 1.0)
           (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 2.0)))
-                 0.0 1.0)
+                            0.0 1.0)
           (alexandria:clamp (- 1.5 (abs (- (* 4.0 intensity) 1.0)))
-                 0.0 1.0)))
+                            0.0 1.0)))
 
 (defun jet-html (x)
   "Returns HTML color string for jet color map given [0,1] intensity"
   (let* ((jet (jet x))
          (hexes
-          (loop
+           (loop
              for c across jet
              collecting (format nil "~2,'0x"
                                 (round (* c 255))))))
     (apply #'concatenate
-           'string 
+           'string
            "#"
            hexes)))
