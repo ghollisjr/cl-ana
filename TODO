@@ -1,3 +1,7 @@
++ Add indexing functions in math-functions/combinatorics.lisp for
+  combinations like those for permutations, with or without
+  repetition.
+
 + Add base argument to generic-math log function
 
 + Use named-readtables to manage the various reader macros.
