@@ -520,7 +520,12 @@ layout specified in the page.")
     :initform NIL
     :accessor plot-size
     :documentation "The size settings (if any) for the plot.  If
-   NIL, size is set via \"set size nosquare 1,1\" prior to drawing.  NOTE: This is generally different from terminal size settings.  Some examples: * \"ratio -1\" ==> preserve axis ratio at 1:1, * \"square\" ==> force graph into square on screen, \"nosquare\" ==> don't try to control ratios.")))
+   NIL, size is set via \"set size nosquare 1,1\" prior to drawing.  NOTE: This is generally different from terminal size settings.  Some examples: * \"ratio -1\" ==> preserve axis ratio at 1:1, * \"square\" ==> force graph into square on screen, \"nosquare\" ==> don't try to control ratios.")
+   (border
+    :initarg :border-p
+    :initform T
+    :accessor plot-border-p
+    :documentation "Non-NIL means show border, NIL means do not.")))
 
 (defgeneric plot-cmd (plot)
   (:documentation "The command used for plotting the plot in gnuplot;
@@ -535,6 +540,7 @@ layout specified in the page.")
 (defmethod generate-cmd ((p plot))
   (with-accessors ((title title)
                    (title-offset plot-title-offset)
+                   (border-p plot-border-p)
                    (lines plot-lines)
                    (labels plot-labels)
                    (legend plot-legend)
@@ -566,6 +572,8 @@ layout specified in the page.")
                           (car title-offset)
                           (cdr title-offset)))
         (gnuplot-format s "~%")
+        (gnuplot-format s "~a border~%"
+                        (if border-p "set" "unset"))
         (when legend
           (gnuplot-format s "~a~%" legend))
         (loop
@@ -590,7 +598,7 @@ layout specified in the page.")
             (gnuplot-format s "unset format z~%")
             )
         (if (not size)
-            (gnuplot-format s "set size nosquare 1,1")
+            (gnuplot-format s "set size nosquare 1,1~%")
             (gnuplot-format s "set size ~a~%" size))
         (gnuplot-format s "~a " (plot-cmd p))
         (loop
@@ -669,11 +677,11 @@ layout specified in the page.")
     :documentation "Sets the x-axis numeric tic format via a format string.")
    (x-tics
     :initarg :x-tics
-    :initform nil
+    :initform (tics)
     :accessor plot2d-x-tics
     :documentation "Sets the x-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
-    tics function to generate string(s).")
+    tics function to generate string(s).  If NIL, axis tics will be unset.")
    (x-mtics
     :initarg :x-mtics
     :initform nil
@@ -687,7 +695,7 @@ layout specified in the page.")
     :accessor plot2d-x2-tics
     :documentation "Sets the x2-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
-    tics function to generate string(s).")
+    tics function to generate string(s).  If NIL, will not be set.")
    (x2-mtics
     :initarg :x2-mtics
     :initform nil
@@ -708,7 +716,7 @@ layout specified in the page.")
     :documentation "Sets the y-axis numeric tic format via a format string.")
    (y-tics
     :initarg :y-tics
-    :initform nil
+    :initform (tics)
     :accessor plot2d-y-tics
     :documentation "y-axis tics.  See x-tics.")
    (y-mtics
@@ -908,17 +916,28 @@ initargs from key-args."
     (with-output-to-string (s)
       ;; tics
       ;; Set defaults:
-      (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
-      (gnuplot-format s "~a" (merge-tics :x2 nil))
-      (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
-      (gnuplot-format s "~a" (merge-tics :y2 nil))
-      (gnuplot-format s "~a" (merge-tics :cb (tics)))
+      (dolist (tics (list (list "xtics" :x x-tics)
+                          (list "x2tics" :x2 x2-tics)
+                          (list "ytics" :y y-tics)
+                          (list "y2tics" :y2 y2-tics)
+                          (list "cbtics" :cb cb-tics)))
+        (gnuplot-format s "unset ~a~%" (first tics))
+        (gnuplot-format s "~a"
+                        (merge-tics (second tics) (third tics))))
+      ;; (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
+      ;; (gnuplot-format s "~a" (merge-tics :x2 nil))
+      ;; (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
+      ;; (gnuplot-format s "~a" (merge-tics :y2 nil))
+      ;; (gnuplot-format s "~a" (merge-tics :cb (tics)))
       ;; Custom settings:
       ;; Custom settings:
-      (gnuplot-format s "set tics ~a~%"
-                      (case tics-layer
-                        (:front "front")
-                        (:back "back")))
+      (when (or x-tics x2-tics
+                y-tics y2-tics
+                cb-tics)
+        (gnuplot-format s "set tics ~a~%"
+                        (case tics-layer
+                          (:front "front")
+                          (:back "back"))))
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :x2 x2-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
@@ -1007,7 +1026,7 @@ initargs from key-args."
     :documentation "Sets the x-axis numeric tic format via a format string.")
    (x-tics
     :initarg :x-tics
-    :initform nil
+    :initform (tics)
     :accessor plot3d-x-tics
     :documentation "Sets the x-axis tic options.  Can be a single
     string or a list of strings which will be added together.  Use
@@ -1032,7 +1051,7 @@ initargs from key-args."
     :documentation "Sets the y-axis numeric tic format via a format string.")
    (y-tics
     :initarg :y-tics
-    :initform nil
+    :initform (tics)
     :accessor plot3d-y-tics
     :documentation "y-axis tics.  See x-tics.")
    (y-mtics
@@ -1055,7 +1074,7 @@ initargs from key-args."
     :documentation "Sets the z-axis numeric tic format via a format string.")
    (z-tics
     :initarg :z-tics
-    :initform nil
+    :initform (tics)
     :accessor plot3d-z-tics
     :documentation "z-axis tics.  See x-tics.")
    (z-mtics
@@ -1072,7 +1091,7 @@ initargs from key-args."
     :documentation "color box tics.  See x-tics.")
    (cb-tics
     :initarg :cb-tics
-    :initform nil
+    :initform (tics)
     :accessor plot2d-cb-tics
     :documentation "Sets the color box tic options.  Use tics function
     to generate string.")
@@ -1163,15 +1182,26 @@ initargs from key-args."
     (with-output-to-string (s)
       ;; tics
       ;; Set defaults:
-      (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
-      (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
-      (gnuplot-format s "~a" (merge-tics :z (tics :axis-p nil)))
-      (gnuplot-format s "~a" (merge-tics :cb (tics :axis-p nil)))
+      (dolist (tics (list (list "xtics" :x x-tics)
+                          (list "ytics" :y y-tics)
+                          (list "ztics" :z z-tics)
+                          (list "cbtics" :cb cb-tics)))
+        (gnuplot-format s "unset ~a~%" (first tics))
+        (gnuplot-format s "~a"
+                        (merge-tics (second tics) (third tics))))
+      ;; (gnuplot-format s "~a" (merge-tics :x (tics :axis-p nil)))
+      ;; (gnuplot-format s "~a" (merge-tics :y (tics :axis-p nil)))
+      ;; (gnuplot-format s "~a" (merge-tics :z (tics :axis-p nil)))
+      ;; (gnuplot-format s "~a" (merge-tics :cb (tics :axis-p nil)))
       ;; Custom settings:
-      (gnuplot-format s "set tics ~a~%"
-                      (case tics-layer
-                        (:front "front")
-                        (:back "back")))
+      (when (or x-tics
+                y-tics
+                z-tics
+                cb-tics)
+        (gnuplot-format s "set tics ~a~%"
+                        (case tics-layer
+                          (:front "front")
+                          (:back "back"))))
       (gnuplot-format s "~a" (merge-tics :x x-tics))
       (gnuplot-format s "~a" (merge-tics :y y-tics))
       (gnuplot-format s "~a" (merge-tics :z z-tics))
