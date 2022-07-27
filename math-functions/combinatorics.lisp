@@ -175,6 +175,76 @@ those objects."
                      (incf ,k)))))
              ,@body))))))
 
+(declaim (inline index->permutation permutation->index))
+
+(defun index->permutation (n r index &optional result-place)
+  "Index function for permutations.  Returns permutation indices given
+an index.  Uses same strategy as for-permutations."
+  (let ((result (if result-place
+                    result-place
+                    (make-array r
+                                :element-type 'integer
+                                :initial-element 0)))
+        (ledger (make-array n
+                            :element-type 'bit
+                            :initial-element 0)))
+    (dotimes (j r)
+      (let* ((norder (- n j))
+             (x (mod index norder)))
+        (setf index (floor index norder))
+        (do ((k 0))
+            ((and (zerop x)
+                  (zerop (aref ledger k)))
+             (setf (aref ledger k) 1)
+             (setf (aref result j)
+                   k))
+          (when (zerop (aref ledger k))
+            (decf x))
+          (incf k))))
+    result))
+
+(defun permutation->index (n r permutation)
+  "Inverse function for index->permutation.  See index->permutation
+documentation."
+  (let* ((ledger (make-array n
+                             :element-type 'bit
+                             :initial-element 0))
+         (indices (make-array r
+                             :element-type 'integer
+                             :initial-element 0)))
+    (dotimes (i r)
+      (let ((index (aref permutation i)))
+        (decf index
+            (let ((count 0))
+              (dotimes (k i count)
+                (when (and (plusp (aref ledger k))
+                           (< (aref permutation k)
+                              (aref permutation i)))
+                  (incf count)))))
+        (setf (aref indices i) index
+              (aref ledger i) 1)))
+    (let ((sum 0)
+          (product 1))
+      (dotimes (i r sum)
+        (incf sum
+            (* product
+               (aref indices i)))
+        (setf product
+              (* product (- n i)))))))
+
+(defun test-permutation<->index (&optional (n-range (list 2 8)))
+  "Check permutation->index and index->permutation simultaneously"
+  (do ((n (first n-range) (1+ n)))
+      ((> n (second n-range)))
+    (dotimes (r (1+ n))
+      (dotimes (k (npermutations n r))
+        (assert (= k
+                   (permutation->index
+                    n r
+                    (index->permutation n r k))))))
+    T))
+               
+
 (defun check-permutations (n r &optional print-p)
   "Checker for for-permutations.  Keeping for test purposes."
   (let ((result (make-hash-table :test 'equalp)))

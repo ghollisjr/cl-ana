@@ -40,6 +40,8 @@
    :ncombinations-repeating
    :binomial
    :multinomial
+   :permutation->index
+   :index->permutation
    ;; misc
    :logistic
    :logistic-derivative
