@@ -26,7 +26,6 @@
   (:export
    ;; distributions:
    :erf
-   :sinc
    :normal-pdf
    :normal-cdf
    :normal-cdf-inv
@@ -43,6 +42,7 @@
    :permutation->index
    :index->permutation
    ;; misc
+   :sinc
    :logistic
    :logistic-derivative
    ;; utils:
