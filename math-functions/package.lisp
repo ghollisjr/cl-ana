@@ -43,6 +43,7 @@
    :index->permutation
    ;; misc
    :sinc
+   :sincn
    :logistic
    :logistic-derivative
    ;; utils:
