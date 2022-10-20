@@ -38,7 +38,7 @@
 
 ;;;; U.S. force & power
 (define-unit :pound-force
-  (* +graviational-acceleration+ :pound))
+  (* +gravitational-acceleration+ :pound))
 
 (define-unit :horsepower
     (* 33000 :foot :pound-force (/ :minute)))
