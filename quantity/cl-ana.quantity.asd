@@ -39,6 +39,7 @@
                (:file "si")
                (:file "metric-non-si")
                (:file "us")
+               (:file "troy")
                (:file "constants")
                (:file "temperature")
                (:file "post-constants")
