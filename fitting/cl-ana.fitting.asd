@@ -35,4 +35,5 @@
 	       #:cl-ana.map)
   :components ((:file "package")
 	       (:file "fitting")
-	       (:file "functions")))
+	       (:file "functions")
+               (:file "guess-fit-params")))

@@ -39,6 +39,8 @@
            :gaussian-skew-factor
            :gauss-amp
            :poisson
-           :poisson-alist))
+           :poisson-alist
+           ;; parameter guessing:
+           :guess-fit-params))
 
 (cl-ana.gmath:use-gmath :cl-ana.fitting)
