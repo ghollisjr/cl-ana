@@ -30,33 +30,8 @@
 
 (defun GSL-ITERSOLVE-GMRES ()
   (cffi:foreign-symbol-pointer
-   "gsl_splinalg_itersolve_gmres"))
-
-;; I want to use this, but on my system this causes strange memory
-;; bugs.
-;;
-;; (cffi:use-foreign-library gsll::libgsl)
-;;
-;; So instead I do this:
-(cffi:define-foreign-library gsl
-  (:windows (:or "libgsl-0.dll" "cyggsl-0.dll"))
-  (:darwin
-       (:or (:framework "libgsl") "libgsl.dylib"))
-  (:unix (:or
-          "libgsl.so.25"
-          "libgsl.so.0" "libgsl.so"))
-  (t (:default "libgsl")))
-
-(cffi:use-foreign-library gsl)
-
-;; From GSLL.  Only needed while this library loads GSL on its own.
-;; See above note about memory issues.
-(defun establish-handler ()
-  (cffi:foreign-funcall
-   "gsl_set_error_handler"
-   :pointer (cffi:callback gsll::gsl-error)))
-
-(establish-handler)
+   "gsl_splinalg_itersolve_gmres"
+   :library 'gsll::libgsl))
 
 ;; Vectors
 (cffi:defcfun "gsl_vector_alloc" :pointer
