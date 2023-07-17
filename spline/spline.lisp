@@ -49,6 +49,15 @@
 
 (cffi:use-foreign-library gsl)
 
+;; From GSLL.  Only needed while this library loads GSL on its own.
+;; See above note about memory issues.
+(defun establish-handler ()
+  (cffi:foreign-funcall
+   "gsl_set_error_handler"
+   :pointer (cffi:callback gsll::gsl-error)))
+
+(establish-handler)
+
 ;; Vectors
 (cffi:defcfun "gsl_vector_alloc" :pointer
   (nelements :int))
